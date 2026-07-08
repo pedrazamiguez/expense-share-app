@@ -82,15 +82,8 @@ private fun handleAction(
         is GroupDetailUiAction.ShowError -> {
             pillController.showPill(message = action.message.asString(context))
         }
-        is GroupDetailUiAction.DeleteSuccess -> handleGroupExitAction(
-            action.message,
-            groupId,
-            selectedGroupId,
-            pillController,
-            sharedViewModel,
-            navController,
-            context
-        )
+        is GroupDetailUiAction.ArchiveSuccess,
+        is GroupDetailUiAction.DeleteSuccess,
         is GroupDetailUiAction.LeaveSuccess -> handleGroupExitAction(
             action.message,
             groupId,
@@ -100,11 +93,14 @@ private fun handleAction(
             navController,
             context
         )
+        is GroupDetailUiAction.NavigateToSettlementOverview -> {
+            navController.navigate(Routes.groupSettlementOverviewRoute(action.groupId))
+        }
     }
 }
 
 private fun handleGroupExitAction(
-    message: UiText,
+    message: UiText?,
     groupId: String,
     selectedGroupId: String?,
     pillController: TopPillController,
@@ -112,7 +108,9 @@ private fun handleGroupExitAction(
     navController: NavController,
     context: Context
 ) {
-    pillController.showPill(message = message.asString(context))
+    if (message != null) {
+        pillController.showPill(message = message.asString(context))
+    }
     if (selectedGroupId == groupId) {
         sharedViewModel.selectGroup(null, null, null)
     }

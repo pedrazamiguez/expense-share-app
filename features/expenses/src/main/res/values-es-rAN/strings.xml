@@ -201,7 +201,7 @@
     <string name="expense_review_funding_source">Pagao dêdde</string>
     <string name="expense_contribution_scope_title">¿A quién çe le acredita?</string>
     <string name="expense_contribution_scope_for_group">Pa tó er grupo</string>
-    <string name="expense_contribution_scope_for_me">Pa mí</string>
+    <string name="expense_contribution_scope_for_you">Pa ti</string>
     <string name="expense_contribution_scope_for_subunit">Pa %1$s</string>
     <string name="expense_wizard_step_contribution_scope">Crédito</string>
     <string name="expense_review_contribution_scope">Pagao pa</string>

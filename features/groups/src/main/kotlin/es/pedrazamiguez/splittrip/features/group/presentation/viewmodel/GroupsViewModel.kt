@@ -5,48 +5,41 @@ import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
+import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.auth.IsUserAnonymousUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.group.LeaveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupsUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupsUiEvent
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupLeaveWizardEventHandler
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupsUiState
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-/**
- * ViewModel for the Groups screen.
- *
- * Uses Offline-First pattern:
- * - Groups are loaded automatically from local database (instant, no shimmer)
- * - Background sync with cloud happens automatically
- * - UI state is derived from the groups Flow using stateIn
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class GroupsViewModel(
     getUserGroupsFlowUseCase: GetUserGroupsFlowUseCase,
@@ -56,15 +49,23 @@ class GroupsViewModel(
     private val isUserAnonymousUseCase: IsUserAnonymousUseCase,
     private val authenticationService: AuthenticationService,
     private val archiveGroupUseCase: ArchiveGroupUseCase,
-    private val leaveGroupUseCase: LeaveGroupUseCase
+    private val leaveWizardEventHandler: GroupLeaveWizardEventHandler
 ) : ViewModel() {
+
+    init {
+        leaveWizardEventHandler.bind(
+            scope = viewModelScope,
+            onLeaveSuccess = { message -> _actions.send(GroupsUiAction.ShowLeaveSuccess(message)) },
+            onError = { message -> _actions.send(GroupsUiAction.ShowLeaveError(message)) }
+        )
+    }
 
     // Scroll state is managed separately as it's UI-only state
     private val _scrollState = MutableStateFlow(ScrollState())
 
     // Actions for one-shot events like success/error messages
-    private val _actions = MutableSharedFlow<GroupsUiAction>()
-    val actions: SharedFlow<GroupsUiAction> = _actions.asSharedFlow()
+    private val _actions = Channel<GroupsUiAction>(Channel.BUFFERED)
+    val actions: Flow<GroupsUiAction> = _actions.receiveAsFlow()
 
     /**
      * UI state derived from the groups Flow.
@@ -128,7 +129,7 @@ class GroupsViewModel(
             .catch { e ->
                 Timber.e(e, "Error loading groups")
                 viewModelScope.launch {
-                    _actions.emit(
+                    _actions.send(
                         GroupsUiAction.ShowLoadError(
                             UiText.StringResource(R.string.groups_error_loading)
                         )
@@ -143,15 +144,18 @@ class GroupsViewModel(
             },
         _scrollState,
         isUserAnonymousUseCase(),
-        flowOf(authenticationService.currentUserId())
-    ) { dataState, scrollState, isAnonymous, currentUserId ->
+        flowOf(authenticationService.currentUserId()),
+        leaveWizardEventHandler.wizardState
+    ) { dataState, scrollState, isAnonymous, currentUserId, wizardState ->
         GroupsUiState(
             isLoading = dataState.isLoading,
             groups = dataState.groups,
             scrollPosition = scrollState.position,
             scrollOffset = scrollState.offset,
             isAnonymous = isAnonymous,
-            currentUserId = currentUserId
+            currentUserId = currentUserId,
+            leaveWizardState = wizardState,
+            isLeaving = wizardState.isLeaving
         )
     }.stateIn(
         scope = viewModelScope,
@@ -176,7 +180,15 @@ class GroupsViewModel(
 
             is GroupsUiEvent.DeleteGroup -> handleDeleteGroup(event.groupId)
             is GroupsUiEvent.ArchiveGroup -> handleArchiveGroup(event.groupId)
-            is GroupsUiEvent.LeaveGroup -> handleLeaveGroup(event.groupId)
+            is GroupsUiEvent.LeaveGroup -> leaveWizardEventHandler.handleLeaveClicked(event.groupId)
+            is GroupsUiEvent.WizardNextClicked -> leaveWizardEventHandler.handleWizardNext(event.groupId)
+            GroupsUiEvent.WizardBackClicked -> leaveWizardEventHandler.handleWizardBack()
+            GroupsUiEvent.WizardCancelled -> leaveWizardEventHandler.handleWizardCancelled()
+            is GroupsUiEvent.ConfirmSettlementClicked -> leaveWizardEventHandler.handleConfirmSettlement(
+                event.groupId,
+                event.settlementId
+            )
+            is GroupsUiEvent.LeaveConfirmed -> leaveWizardEventHandler.handleLeave(event.groupId)
         }
     }
 
@@ -184,14 +196,14 @@ class GroupsViewModel(
         viewModelScope.launch {
             try {
                 deleteGroupUseCase(groupId)
-                _actions.emit(
+                _actions.send(
                     GroupsUiAction.ShowDeleteSuccess(
                         UiText.StringResource(R.string.group_deleted_successfully)
                     )
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete group: $groupId")
-                _actions.emit(
+                _actions.send(
                     GroupsUiAction.ShowDeleteError(
                         UiText.StringResource(R.string.error_deleting_group)
                     )
@@ -204,7 +216,7 @@ class GroupsViewModel(
         viewModelScope.launch {
             archiveGroupUseCase(groupId).fold(
                 onSuccess = {
-                    _actions.emit(
+                    _actions.send(
                         GroupsUiAction.ShowArchiveSuccess(
                             UiText.StringResource(R.string.group_archived_successfully)
                         )
@@ -212,35 +224,13 @@ class GroupsViewModel(
                 },
                 onFailure = { e ->
                     Timber.e(e, "Failed to archive group: $groupId")
-                    _actions.emit(
-                        GroupsUiAction.ShowArchiveError(
-                            UiText.StringResource(DesignSystemR.string.group_error_archiving_failed)
-                        )
-                    )
-                }
-            )
-        }
-    }
-
-    private fun handleLeaveGroup(groupId: String) {
-        viewModelScope.launch {
-            leaveGroupUseCase(groupId).fold(
-                onSuccess = {
-                    _actions.emit(
-                        GroupsUiAction.ShowLeaveSuccess(
-                            UiText.StringResource(R.string.group_leave_success)
-                        )
-                    )
-                },
-                onFailure = { e ->
-                    Timber.e(e, "Failed to leave group: $groupId")
-                    val message = when {
-                        e.message?.contains("non_zero_balance") == true ->
-                            UiText.StringResource(R.string.group_leave_error_balance)
+                    val message = when (e) {
+                        is UnresolvedSettlementsException ->
+                            UiText.StringResource(DesignSystemR.string.group_error_archiving_unresolved_settlements)
                         else ->
-                            UiText.StringResource(R.string.group_leave_error_general)
+                            UiText.StringResource(DesignSystemR.string.group_error_archiving_failed)
                     }
-                    _actions.emit(GroupsUiAction.ShowLeaveError(message))
+                    _actions.send(GroupsUiAction.ShowArchiveError(message))
                 }
             )
         }

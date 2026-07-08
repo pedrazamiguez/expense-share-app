@@ -10,6 +10,7 @@ import es.pedrazamiguez.splittrip.domain.converter.CurrencyConverter
 import es.pedrazamiguez.splittrip.domain.exception.GroupArchivedException
 import es.pedrazamiguez.splittrip.domain.exception.ValidationException
 import es.pedrazamiguez.splittrip.domain.model.Subunit
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.SubunitShareDistributionService
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.CreateSubunitUseCase
@@ -63,7 +64,8 @@ class CreateEditSubunitViewModel(
     private val getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase,
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
     private val subunitUiMapper: SubunitUiMapper,
-    private val shareDistributionService: SubunitShareDistributionService
+    private val shareDistributionService: SubunitShareDistributionService,
+    private val authenticationService: AuthenticationService
 ) : ViewModel() {
 
     private data class InitParams(val groupId: String, val subunitId: String?)
@@ -101,7 +103,8 @@ class CreateEditSubunitViewModel(
                 nameError = form.nameError,
                 membersError = form.membersError,
                 sharesError = form.sharesError,
-                currentStep = form.currentStep
+                currentStep = form.currentStep,
+                hasUserModifiedAnyField = form.hasUserModifiedAnyField
             )
         }
     }.stateIn(
@@ -145,11 +148,13 @@ class CreateEditSubunitViewModel(
                                 _formState.update { it.copy(initialized = true) }
                             }
 
+                            val currentUserId = authenticationService.currentUserId()
                             subunitUiMapper.toMemberUiModelList(
                                 memberIds = memberIds,
                                 memberProfiles = memberProfiles,
                                 subunits = subunits,
-                                excludeSubunitId = subunitId
+                                excludeSubunitId = subunitId,
+                                currentUserId = currentUserId
                             )
                         }
                 }
@@ -230,8 +235,13 @@ class CreateEditSubunitViewModel(
                     it.copy(currentStep = result.step, nameError = null, membersError = null, sharesError = null)
                 }
 
-            WizardNavigator.NavigationResult.ExitWizard ->
-                viewModelScope.launch { _actions.emit(CreateEditSubunitUiAction.NavigateBack) }
+            WizardNavigator.NavigationResult.ExitWizard -> {
+                if (form.hasUserModifiedAnyField) {
+                    viewModelScope.launch { _actions.emit(CreateEditSubunitUiAction.RequestExitConfirmation) }
+                } else {
+                    viewModelScope.launch { _actions.emit(CreateEditSubunitUiAction.NavigateBack) }
+                }
+            }
         }
     }
 
@@ -249,7 +259,7 @@ class CreateEditSubunitViewModel(
     }
 
     private fun updateName(name: String) {
-        _formState.update { it.copy(name = name, nameError = null) }
+        _formState.update { it.copy(name = name, nameError = null, hasUserModifiedAnyField = true) }
     }
 
     private fun toggleMember(userId: String) {
@@ -271,7 +281,8 @@ class CreateEditSubunitViewModel(
                 selectedMemberIds = updatedIds,
                 memberShares = updatedShares,
                 lockedMemberIds = emptySet(),
-                membersError = null
+                membersError = null,
+                hasUserModifiedAnyField = true
             )
         }
     }
@@ -320,7 +331,8 @@ class CreateEditSubunitViewModel(
             form.copy(
                 memberShares = updatedShares,
                 lockedMemberIds = updatedLocks,
-                sharesError = null
+                sharesError = null,
+                hasUserModifiedAnyField = true
             )
         }
     }
@@ -332,7 +344,7 @@ class CreateEditSubunitViewModel(
             } else {
                 form.lockedMemberIds + userId
             }
-            form.copy(lockedMemberIds = updatedLocks)
+            form.copy(lockedMemberIds = updatedLocks, hasUserModifiedAnyField = true)
         }
     }
 
@@ -430,6 +442,7 @@ class CreateEditSubunitViewModel(
         val nameError: UiText? = null,
         val membersError: UiText? = null,
         val sharesError: UiText? = null,
-        val currentStep: CreateEditSubunitStep = CreateEditSubunitStep.NAME
+        val currentStep: CreateEditSubunitStep = CreateEditSubunitStep.NAME,
+        val hasUserModifiedAnyField: Boolean = false
     )
 }

@@ -40,4 +40,8 @@
 
     <!-- Notification group summary -->
     <string name="notification_group_summary">%1$d new notifications</string>
+    <string name="notification_settlement_request_title">Settlement request</string>
+    <string name="notification_settlement_request_body">%1$s requested a settlement of %2$s</string>
+    <string name="notification_settlement_confirmed_body">%1$s confirmed receiving %2$s from you</string>
+    <string name="notification_settlement_disputed_body">%1$s disputed a settlement of %2$s</string>
 </resources>

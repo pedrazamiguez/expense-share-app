@@ -7,7 +7,7 @@ appcompat = "1.7.1"
 camerax = "1.6.1"
 coil = "3.5.0"
 compileSdk = "37"
-composeBom = "2026.06.00"
+composeBom = "2026.06.01"
 coreKtx = "1.19.0"
 coroutines = "1.11.0"
 cpd = "3.5"
@@ -26,17 +26,17 @@ graphicsShapes = "1.1.0"
 haze = "1.7.2"
 jacoco = "0.8.12"
 junit4 = "4.13.2"
-junit5 = "6.1.0"
+junit5 = "6.1.1"
 koin = "4.2.2"
 konsist = "0.17.3"
 kotlin = "2.4.0"
-kotlinxCollectionsImmutable = "0.5.0"
+kotlinxCollectionsImmutable = "0.5.1"
 ksp = "2.3.9"
 ktlint = "1.5.0"
 ktlintPlugin = "14.2.0"
 leakcanary = "2.14"
 lifecycleRuntimeKtx = "2.11.0"
-material3 = "1.5.0-alpha22"
+material3 = "1.5.0-alpha23"
 minSdk = "26"
 mlkitBarcodeScanning = "18.3.1"
 mlkitTextRecognition = "19.0.1"
@@ -51,7 +51,7 @@ room = "2.8.4"
 sonarqube = "7.3.1.8318"
 targetSdk = "37"
 timber = "5.0.1"
-uiautomator = "2.3.0"
+uiautomator = "2.4.0"
 versionCatalogUpdate = "1.1.0"
 workRuntime = "2.11.2"
 zxing = "3.5.4"
@@ -121,7 +121,7 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
-ktlint-gradlePlugin = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlintPlugin" }
+ktlint-gradlePlugin = { module = "org.jlleitschuh.gradle.ktlint:org.jlleitschuh.gradle.ktlint.gradle.plugin", version.ref = "ktlintPlugin" }
 leakcanary = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }

@@ -13,6 +13,8 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUi
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.splittrip.features.withdrawal.R
+import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.AddCashWithdrawalViewModel
+import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.event.AddCashWithdrawalUiEvent
 import org.koin.androidx.compose.koinViewModel
 
 class AddCashWithdrawalScreenUiProviderImpl(override val route: String = Routes.ADD_CASH_WITHDRAWAL) :
@@ -26,10 +28,15 @@ class AddCashWithdrawalScreenUiProviderImpl(override val route: String = Routes.
         )
         val groupName by sharedViewModel.selectedGroupName.collectAsStateWithLifecycle()
 
+        val backStackEntry = navController.currentBackStackEntry
+        val vm: AddCashWithdrawalViewModel? = backStackEntry?.let {
+            koinViewModel(viewModelStoreOwner = it)
+        }
+
         DynamicTopAppBar(
             title = stringResource(R.string.withdrawal_cash_title),
             subtitle = groupName,
-            onBack = { navController.popBackStack() },
+            onBack = { vm?.onEvent(AddCashWithdrawalUiEvent.PreviousStep) ?: navController.popBackStack() },
             pinned = true
         )
     }

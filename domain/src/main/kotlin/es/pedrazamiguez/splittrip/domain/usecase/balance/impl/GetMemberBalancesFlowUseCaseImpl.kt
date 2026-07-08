@@ -15,6 +15,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.support.balanceDistribu
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.balanceDistributeEvenly
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.buildCashInHandByCurrency
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.buildCurrencyAmountList
+import es.pedrazamiguez.splittrip.domain.usecase.balance.support.buildWithdrawnByCurrency
 import java.math.BigDecimal
 
 /**
@@ -40,7 +41,8 @@ import java.math.BigDecimal
  *
  * All helper logic lives in top-level internal functions:
  * [attributeContributions], [attributeWithdrawals], [attributeRemainingByScope],
- * [attributeExpensesByPaymentMethod], [buildCashInHandByCurrency], [buildCurrencyAmountList].
+ * [attributeExpensesByPaymentMethod], [buildCashInHandByCurrency], [buildCurrencyAmountList],
+ * [buildWithdrawnByCurrency].
  * Distribution helpers: [balanceDistributeByShares], [balanceDistributeEvenly].
  */
 class GetMemberBalancesFlowUseCaseImpl(
@@ -97,6 +99,10 @@ class GetMemberBalancesFlowUseCaseImpl(
                 nonCashSpentByCurrency = buildCurrencyAmountList(
                     byCurrencyMap = expenseResult.nonCashSpentByCurrency[userId] ?: emptyMap(),
                     equivByCurrency = expenseResult.nonCashEquivByCurrency[userId] ?: emptyMap(),
+                    groupCurrency = groupCurrency
+                ),
+                withdrawnByCurrency = buildWithdrawnByCurrency(
+                    byCurrencyMap = withdrawalResult.byCurrency[userId] ?: emptyMap(),
                     groupCurrency = groupCurrency
                 )
             )

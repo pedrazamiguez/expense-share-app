@@ -1,11 +1,14 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatAmount
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatSourceAmount
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.model.Contribution
@@ -24,7 +27,8 @@ import kotlinx.collections.immutable.toImmutableList
 class ExpenseUiMapper(
     private val localeProvider: LocaleProvider,
     private val resourceProvider: ResourceProvider,
-    private val scheduledBadgeUiMapper: ScheduledBadgeUiMapper
+    private val scheduledBadgeUiMapper: ScheduledBadgeUiMapper,
+    private val userUiMapper: UserUiMapper
 ) {
 
     fun map(
@@ -32,7 +36,8 @@ class ExpenseUiMapper(
         memberProfiles: Map<String, User> = emptyMap(),
         currentUserId: String? = null,
         pairedContributions: Map<String, Contribution> = emptyMap(),
-        subunits: Map<String, Subunit> = emptyMap()
+        subunits: Map<String, Subunit> = emptyMap(),
+        groupMemberIds: List<String> = emptyList()
     ): ExpenseUiModel {
         val appLocale = localeProvider.getCurrentLocale()
         val (badgeText, isPastDue) = scheduledBadgeUiMapper.buildBadge(expense)
@@ -49,7 +54,12 @@ class ExpenseUiMapper(
         )
 
         return with(expense) {
-            val resolvedName = resolveDisplayName(createdBy, memberProfiles)
+            val resolvedName = resolveDisplayName(createdBy, memberProfiles, currentUserId)
+            val creatorDisplay = if (createdBy !in groupMemberIds) {
+                MemberDisplay.Former(createdBy, resolvedName)
+            } else {
+                MemberDisplay.Active(createdBy, resolvedName)
+            }
             ExpenseUiModel(
                 id = id,
                 title = title,
@@ -65,6 +75,7 @@ class ExpenseUiMapper(
                 paymentMethodText = resourceProvider.getString(paymentMethod.toStringRes()),
                 paymentStatusText = resourceProvider.getString(paymentStatus.toStringRes()),
                 paidByText = resourceProvider.getString(R.string.paid_by, resolvedName),
+                creatorDisplay = creatorDisplay,
                 dateText = createdAt?.formatShortDate(appLocale) ?: "",
                 scheduledBadgeText = badgeText,
                 isScheduledPastDue = isPastDue,
@@ -85,9 +96,12 @@ class ExpenseUiMapper(
         memberProfiles: Map<String, User> = emptyMap(),
         currentUserId: String? = null,
         pairedContributions: Map<String, Contribution> = emptyMap(),
-        subunits: Map<String, Subunit> = emptyMap()
+        subunits: Map<String, Subunit> = emptyMap(),
+        groupMemberIds: List<String> = emptyList()
     ): ImmutableList<ExpenseUiModel> =
-        expenses.map { map(it, memberProfiles, currentUserId, pairedContributions, subunits) }.toImmutableList()
+        expenses.map {
+            map(it, memberProfiles, currentUserId, pairedContributions, subunits, groupMemberIds)
+        }.toImmutableList()
 
     /**
      * Groups expenses by date (from createdAt) and produces date headers
@@ -101,7 +115,8 @@ class ExpenseUiMapper(
         memberProfiles: Map<String, User> = emptyMap(),
         currentUserId: String? = null,
         pairedContributions: Map<String, Contribution> = emptyMap(),
-        subunits: Map<String, Subunit> = emptyMap()
+        subunits: Map<String, Subunit> = emptyMap(),
+        groupMemberIds: List<String> = emptyList()
     ): ImmutableList<ExpenseDateGroupUiModel> {
         if (expenses.isEmpty()) return emptyList<ExpenseDateGroupUiModel>().toImmutableList()
 
@@ -129,7 +144,7 @@ class ExpenseUiMapper(
                     dateText = dateText,
                     formattedDayTotal = formattedDayTotal,
                     expenses = dayExpenses.map {
-                        map(it, memberProfiles, currentUserId, pairedContributions, subunits)
+                        map(it, memberProfiles, currentUserId, pairedContributions, subunits, groupMemberIds)
                     }.toImmutableList()
                 )
             }
@@ -163,12 +178,13 @@ class ExpenseUiMapper(
             PayerType.SUBUNIT -> buildSubunitScopeText(
                 isCurrentUser,
                 payerId,
+                currentUserId,
                 pairedContribution,
                 subunits,
                 memberProfiles
             )
-            PayerType.GROUP -> buildGroupScopeText(isCurrentUser, payerId, memberProfiles)
-            else -> buildPersonalScopeText(isCurrentUser, payerId, memberProfiles)
+            PayerType.GROUP -> buildGroupScopeText(isCurrentUser, payerId, currentUserId, memberProfiles)
+            else -> buildPersonalScopeText(isCurrentUser, payerId, currentUserId, memberProfiles)
         }
 
         return ScopeInfo(
@@ -181,27 +197,32 @@ class ExpenseUiMapper(
     private fun buildPersonalScopeText(
         isCurrentUser: Boolean,
         payerId: String,
+        @Suppress("UNUSED_PARAMETER") currentUserId: String?,
         memberProfiles: Map<String, User>
     ): String = if (isCurrentUser) {
         resourceProvider.getString(R.string.expense_paid_by_me)
     } else {
-        resourceProvider.getString(R.string.expense_paid_by_member, resolveDisplayName(payerId, memberProfiles))
+        resourceProvider.getString(
+            R.string.expense_paid_by_member,
+            resolveDisplayName(payerId, memberProfiles, currentUserId)
+        )
     }
 
     private fun buildSubunitScopeText(
         isCurrentUser: Boolean,
         payerId: String,
+        currentUserId: String?,
         pairedContribution: Contribution?,
         subunits: Map<String, Subunit>,
         memberProfiles: Map<String, User>
     ): String {
         val subunitName = pairedContribution?.subunitId?.let { subunits[it]?.name }
-            ?: return buildPersonalScopeText(isCurrentUser, payerId, memberProfiles)
+            ?: return buildPersonalScopeText(isCurrentUser, payerId, currentUserId, memberProfiles)
 
         return if (isCurrentUser) {
             resourceProvider.getString(R.string.expense_paid_for_scope, subunitName)
         } else {
-            val payerName = resolveDisplayName(payerId, memberProfiles)
+            val payerName = resolveDisplayName(payerId, memberProfiles, currentUserId)
             resourceProvider.getString(R.string.expense_paid_by_member_for_scope, payerName, subunitName)
         }
     }
@@ -209,26 +230,25 @@ class ExpenseUiMapper(
     private fun buildGroupScopeText(
         isCurrentUser: Boolean,
         payerId: String,
+        currentUserId: String?,
         memberProfiles: Map<String, User>
     ): String {
         val everyoneLabel = resourceProvider.getString(R.string.expense_scope_everyone)
         return if (isCurrentUser) {
             resourceProvider.getString(R.string.expense_paid_for_scope, everyoneLabel)
         } else {
-            val payerName = resolveDisplayName(payerId, memberProfiles)
+            val payerName = resolveDisplayName(payerId, memberProfiles, currentUserId)
             resourceProvider.getString(R.string.expense_paid_by_member_for_scope, payerName, everyoneLabel)
         }
     }
 
-    /**
-     * Resolves a userId to a human-readable display name using the
-     * fallback hierarchy: displayName → email → raw userId.
-     */
-    private fun resolveDisplayName(userId: String, memberProfiles: Map<String, User>): String {
-        val user = memberProfiles[userId] ?: return userId
-        return user.displayName?.takeIf { it.isNotBlank() }
-            ?: user.email.takeIf { it.isNotBlank() }
-            ?: userId
+    private fun resolveDisplayName(userId: String, memberProfiles: Map<String, User>, currentUserId: String?): String {
+        return userUiMapper.mapToDisplayName(
+            user = memberProfiles[userId],
+            fallbackUserId = userId,
+            currentUserId = currentUserId,
+            selfIdentificationContext = SelfIdentificationContext.NOMINATIVE
+        )
     }
 
     /**

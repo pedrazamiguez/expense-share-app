@@ -18,6 +18,7 @@ import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.Gr
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
+@Suppress("LongMethod")
 @Composable
 fun GroupsFeature(
     groupsViewModel: GroupsViewModel = koinViewModel<GroupsViewModel>(),
@@ -87,6 +88,13 @@ fun GroupsFeature(
             navController.navigate(Routes.manageSubunitsRoute(groupId))
         },
         onArchiveGroup = { groupsViewModel.onEvent(GroupsUiEvent.ArchiveGroup(it)) },
-        onLeaveGroup = { groupsViewModel.onEvent(GroupsUiEvent.LeaveGroup(it)) }
+        onLeaveGroup = { groupsViewModel.onEvent(GroupsUiEvent.LeaveGroup(it)) },
+        onWizardNextClicked = { groupsViewModel.onEvent(GroupsUiEvent.WizardNextClicked(it)) },
+        onWizardBackClicked = { groupsViewModel.onEvent(GroupsUiEvent.WizardBackClicked) },
+        onWizardCancelled = { groupsViewModel.onEvent(GroupsUiEvent.WizardCancelled) },
+        onConfirmSettlement = { groupId, settlementId ->
+            groupsViewModel.onEvent(GroupsUiEvent.ConfirmSettlementClicked(groupId, settlementId))
+        },
+        onConfirmLeave = { groupsViewModel.onEvent(GroupsUiEvent.LeaveConfirmed(it)) }
     )
 }

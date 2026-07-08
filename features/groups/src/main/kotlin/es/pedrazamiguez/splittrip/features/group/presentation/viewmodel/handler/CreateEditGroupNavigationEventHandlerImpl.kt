@@ -38,8 +38,13 @@ class CreateEditGroupNavigationEventHandlerImpl : CreateEditGroupNavigationEvent
                     is WizardNavigator.NavigationResult.WithStep ->
                         _uiState.update { it.copy(currentStep = result.step, error = null) }
 
-                    WizardNavigator.NavigationResult.ExitWizard ->
-                        scope.launch { _actions.emit(CreateEditGroupUiAction.NavigateBack) }
+                    WizardNavigator.NavigationResult.ExitWizard -> {
+                        if (state.hasUserModifiedAnyField) {
+                            scope.launch { _actions.emit(CreateEditGroupUiAction.RequestExitConfirmation) }
+                        } else {
+                            scope.launch { _actions.emit(CreateEditGroupUiAction.NavigateBack) }
+                        }
+                    }
                 }
             }
             is CreateEditGroupUiEvent.JumpToStep -> {

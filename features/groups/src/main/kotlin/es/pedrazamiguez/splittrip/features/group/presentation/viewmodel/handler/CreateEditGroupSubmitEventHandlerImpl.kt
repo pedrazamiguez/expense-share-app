@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.core.logging.TelemetryTracker
 import es.pedrazamiguez.splittrip.domain.exception.CannotRemoveMemberException
 import es.pedrazamiguez.splittrip.domain.exception.GroupArchivedException
 import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedLimit
@@ -15,6 +16,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.RemoveGroupMemberUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.UpdateGroupUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.SetSelectedGroupUseCase
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.CreateEditGroupUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.CreateEditGroupUiState
@@ -34,7 +36,8 @@ class CreateEditGroupSubmitEventHandlerImpl(
     private val telemetryTracker: TelemetryTracker,
     private val appConfigService: AppConfigService,
     private val addGroupMembersUseCase: AddGroupMembersUseCase,
-    private val removeGroupMemberUseCase: RemoveGroupMemberUseCase
+    private val removeGroupMemberUseCase: RemoveGroupMemberUseCase,
+    private val setSelectedGroupUseCase: SetSelectedGroupUseCase
 ) : CreateEditGroupSubmitEventHandler {
     private lateinit var _uiState: MutableStateFlow<CreateEditGroupUiState>
     private lateinit var _actions: MutableSharedFlow<CreateEditGroupUiAction>
@@ -102,7 +105,7 @@ class CreateEditGroupSubmitEventHandlerImpl(
 
     private suspend fun syncMemberChanges(
         group: Group,
-        membersToAdd: List<es.pedrazamiguez.splittrip.domain.model.User>,
+        membersToAdd: List<User>,
         membersToRemove: List<String>
     ): Boolean {
         var hasError = false
@@ -211,19 +214,24 @@ class CreateEditGroupSubmitEventHandlerImpl(
             _uiState.update { it.copy(isLoading = true, error = null) }
 
             val state = _uiState.value
-            val groupName = state.groupName
+            val groupName = state.groupName.trim()
 
             createGroupUseCase(
                 Group(
                     name = groupName,
-                    description = state.groupDescription,
+                    description = state.groupDescription.trim(),
                     currency = state.selectedCurrency?.code ?: appConfigService.defaultCurrencyCode.value,
                     extraCurrencies = state.extraCurrencies.map { it.code },
                     members = state.selectedMembers.map { it.userId },
                     mainImagePath = state.localGroupImagePath
                 ),
                 state.selectedMembers
-            ).onSuccess {
+            ).onSuccess { groupId ->
+                setSelectedGroupUseCase(
+                    groupId,
+                    state.groupName.trim(),
+                    state.selectedCurrency?.code ?: appConfigService.defaultCurrencyCode.value
+                )
                 _uiState.update { it.copy(isLoading = false) }
                 telemetryTracker.trackEvent(
                     "group_created",

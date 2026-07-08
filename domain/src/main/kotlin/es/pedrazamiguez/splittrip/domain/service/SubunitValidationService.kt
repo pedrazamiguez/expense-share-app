@@ -58,7 +58,7 @@ class SubunitValidationService {
             .flatMapTo(mutableSetOf()) { it.memberIds }
 
         return when {
-            subunit.name.isBlank() -> ValidationResult.Invalid(ValidationError.EMPTY_NAME)
+            subunit.name.trim().isBlank() -> ValidationResult.Invalid(ValidationError.EMPTY_NAME)
             subunit.memberIds.isEmpty() -> ValidationResult.Invalid(ValidationError.NO_MEMBERS)
             subunit.memberIds.any { it !in groupMemberSet } ->
                 ValidationResult.Invalid(ValidationError.MEMBER_NOT_IN_GROUP)

@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.balance.presentation.mapper
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
@@ -48,6 +49,24 @@ class BalancesUiMapperTest {
         every {
             resourceProvider.getString(es.pedrazamiguez.splittrip.core.designsystem.R.string.user_pending_fallback)
         } returns "Pending member"
+        every {
+            resourceProvider.getString(
+                es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_nominative
+            )
+        } returns "You"
+        every {
+            resourceProvider.getString(
+                es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_beneficiary
+            )
+        } returns "For you"
+        every {
+            resourceProvider.getString(es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_agent)
+        } returns "By you"
+        every {
+            resourceProvider.getString(
+                es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_recipient
+            )
+        } returns "To you"
         mapper = BalancesUiMapper(localeProvider, resourceProvider, UserUiMapper(resourceProvider))
     }
 
@@ -1377,6 +1396,78 @@ class BalancesUiMapperTest {
 
             assertEquals("You", feesSection.items[4].parentTitle)
             assertEquals(PayerType.USER, feesSection.items[4].scopeType)
+        }
+    }
+
+    @Nested
+    @DisplayName("Former vs Active Member mapping")
+    inner class FormerMemberMapping {
+
+        @Test
+        fun `maps active and former members correctly in contributions`() {
+            val contributionActive = Contribution(
+                id = "c1",
+                groupId = "g1",
+                userId = "u_active",
+                amount = 1000,
+                currency = "EUR",
+                createdAt = LocalDateTime.now()
+            )
+            val contributionFormer = Contribution(
+                id = "c2",
+                groupId = "g1",
+                userId = "u_former",
+                amount = 2000,
+                currency = "EUR",
+                createdAt = LocalDateTime.now()
+            )
+            val memberProfiles = mapOf(
+                "u_active" to User(userId = "u_active", email = "active@test.com", displayName = "Active User"),
+                "u_former" to User(userId = "u_former", email = "former@test.com", displayName = "Former User")
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(contributionActive, contributionFormer),
+                currentUserId = "u_active",
+                memberProfiles = memberProfiles,
+                groupMemberIds = listOf("u_active")
+            )
+
+            assertEquals(2, result.size)
+            assertTrue(result[0].memberDisplay is MemberDisplay.Active)
+            assertEquals("You", result[0].memberDisplay.displayName)
+            assertTrue(result[1].memberDisplay is MemberDisplay.Former)
+            assertEquals("Former User", result[1].memberDisplay.displayName)
+        }
+
+        @Test
+        fun `maps active and former members correctly in withdrawals`() {
+            val withdrawalActive = cashWithdrawal(
+                id = "cw1",
+                withdrawnBy = "u_active"
+            )
+            val withdrawalFormer = cashWithdrawal(
+                id = "cw2",
+                withdrawnBy = "u_former"
+            )
+            val memberProfiles = mapOf(
+                "u_active" to User(userId = "u_active", email = "active@test.com", displayName = "Active User"),
+                "u_former" to User(userId = "u_former", email = "former@test.com", displayName = "Former User")
+            )
+
+            val result = mapper.mapCashWithdrawals(
+                withdrawals = listOf(withdrawalActive, withdrawalFormer),
+                groupCurrency = "EUR",
+                currentUserId = "u_active",
+                memberProfiles = memberProfiles,
+                groupMemberIds = listOf("u_active")
+            )
+
+            assertEquals(2, result.size)
+            assertTrue(result[0].memberDisplay is MemberDisplay.Active)
+            assertEquals("You", result[0].memberDisplay.displayName)
+            assertTrue(result[1].memberDisplay is MemberDisplay.Former)
+            assertEquals("Former User", result[1].memberDisplay.displayName)
         }
     }
 }

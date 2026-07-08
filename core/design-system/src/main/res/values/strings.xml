@@ -45,6 +45,11 @@
     <string name="action_copy">Copy</string>
     <string name="action_copied">Copied!</string>
 
+    <!-- Wizard Exit Dialog -->
+    <string name="wizard_exit_dialog_title">Discard changes?</string>
+    <string name="wizard_exit_dialog_message">You have unsaved changes. Discard them and exit?</string>
+    <string name="wizard_exit_dialog_confirm">Discard</string>
+
     <!-- Empty States -->
     <string name="empty_state_no_expenses_title">No expenses yet</string>
     <string name="empty_state_no_expenses_description">Add your first expense to get started!</string>
@@ -64,8 +69,16 @@
     <string name="content_description_menu">Open menu</string>
     <string name="content_description_profile">User profile</string>
 
+    <!-- Self-Identification Pronouns -->
+    <string name="self_identification_nominative">You</string>
+    <string name="self_identification_beneficiary">For you</string>
+    <string name="self_identification_agent">By you</string>
+    <string name="self_identification_recipient">To you</string>
+
     <!-- User Fallback -->
     <string name="user_pending_fallback">Pending member</string>
+    <string name="balance_you">You</string>
+    <string name="member_left_group_badge">Former</string>
 
     <!-- Sync Status -->
     <string name="sync_status_pending">Not yet synced to server</string>
@@ -123,6 +136,16 @@
     <string name="group_detail_end_trip_confirm">End Trip</string>
     <string name="group_detail_archived_label">Archived</string>
     <string name="group_error_archiving_failed">Failed to archive the trip. Please try again.</string>
+    <string name="group_error_archiving_unresolved_settlements">Cannot end trip while there are unresolved balances or settlements.</string>
+
+    <!-- Settlement Widget -->
+    <string name="settlement_pocket_type_virtual">Virtual pocket</string>
+    <string name="settlement_pocket_type_cash">Cash</string>
+    <string name="settlement_pocket_type_net">Net balance</string>
+    <string name="settlement_status_pending">Pending</string>
+    <string name="settlement_status_awaiting_confirmation">Awaiting confirmation</string>
+    <string name="settlement_status_confirmed">Confirmed</string>
+    <string name="settlement_status_disputed">Disputed</string>
 
     <!-- App Name -->
     <string name="app_name" translatable="false">SplitTrip</string>

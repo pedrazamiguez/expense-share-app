@@ -10,6 +10,7 @@ import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.ExpenseDe
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.ExpenseUpdatedHandler
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.MemberAddedHandler
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.MemberRemovedHandler
+import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.SettlementRequestHandler
 import es.pedrazamiguez.splittrip.domain.enums.NotificationType
 import es.pedrazamiguez.splittrip.domain.handler.NotificationHandler
 
@@ -23,6 +24,7 @@ class NotificationHandlerFactory(private val context: Context, private val local
         NotificationType.MEMBER_REMOVED -> MemberRemovedHandler(context)
         NotificationType.CASH_WITHDRAWAL -> CashWithdrawalHandler(context, localeProvider)
         NotificationType.CONTRIBUTION_ADDED -> ContributionAddedHandler(context, localeProvider)
+        NotificationType.SETTLEMENT_REQUEST -> SettlementRequestHandler(context, localeProvider)
         else -> DefaultHandler(context)
     }
 }

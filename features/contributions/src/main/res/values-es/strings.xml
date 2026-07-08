@@ -10,7 +10,7 @@
     <string name="contribution_add_money_error_subunit">Selección de subunidad inválida. Inténtalo de nuevo</string>
     <string name="contribution_add_money_contributing_for">Aportando</string>
     <string name="contribution_add_money_for_group">Para todo el grupo</string>
-    <string name="contribution_add_money_for_me">Para mí</string>
+    <string name="contribution_add_money_for_you">Solo para ti</string>
     <string name="contribution_add_money_for_member">Para %1$s</string>
     <string name="contribution_add_money_for_subunit">Para %1$s</string>
 

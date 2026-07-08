@@ -30,26 +30,43 @@ internal fun GroupsScreenOverlays(
     onMenuDismiss: () -> Unit,
     onDeleteRequested: (GroupUiModel) -> Unit,
     onArchiveRequested: (GroupUiModel) -> Unit,
-    onLeaveRequested: (GroupUiModel) -> Unit
+    onLeaveRequested: (GroupUiModel) -> Unit,
+    isLeaving: Boolean = false
 ) {
     selectedGroup?.let { group ->
         val isActive = group.id == selectedGroupId
+        val selectActionText = if (isActive) {
+            stringResource(R.string.action_deselect_group)
+        } else {
+            stringResource(R.string.action_select_active_group)
+        }
+        val endTripText = stringResource(DesignSystemR.string.group_detail_end_trip)
+        val deleteGroupText = stringResource(R.string.action_delete_group)
+        val leaveGroupText = stringResource(R.string.action_leave_group)
+        val editGroupText = stringResource(R.string.action_edit_group)
+        val manageSubunitsText = stringResource(R.string.action_manage_subunits)
+
         val selectAction = selectActionForGroup(
             group = group,
             isActive = isActive,
             isSoleGroup = isSoleGroup,
+            text = selectActionText,
             onSelectGroup = onSelectGroup,
             onMenuDismiss = onMenuDismiss
         )
         val ownerActions = ownerActionsForGroup(
             group = group,
             currentUserId = currentUserId,
+            endTripText = endTripText,
+            deleteGroupText = deleteGroupText,
             onDeleteRequested = onDeleteRequested,
             onArchiveRequested = onArchiveRequested
         )
         val leaveAction = leaveActionForGroup(
             group = group,
             currentUserId = currentUserId,
+            text = leaveGroupText,
+            isLeaving = isLeaving,
             onLeaveRequested = onLeaveRequested,
             onMenuDismiss = onMenuDismiss
         )
@@ -62,6 +79,8 @@ internal fun GroupsScreenOverlays(
                 selectAction = selectAction,
                 ownerActions = ownerActions,
                 leaveAction = leaveAction,
+                editGroupText = editGroupText,
+                manageSubunitsText = manageSubunitsText,
                 onEditGroup = onEditGroup,
                 onManageSubunits = onManageSubunits,
                 onMenuDismiss = onMenuDismiss
@@ -71,22 +90,15 @@ internal fun GroupsScreenOverlays(
     }
 }
 
-@Composable
 private fun selectActionForGroup(
     group: GroupUiModel,
     isActive: Boolean,
     isSoleGroup: Boolean,
+    text: String,
     onSelectGroup: (groupId: String, groupName: String, currency: String) -> Unit,
     onMenuDismiss: () -> Unit
 ): SheetAction? {
     if (isActive && isSoleGroup) return null
-    val text = if (isActive) {
-        stringResource(
-            R.string.action_deselect_group
-        )
-    } else {
-        stringResource(R.string.action_select_active_group)
-    }
     val icon = if (isActive) TablerIcons.Outline.X else TablerIcons.Outline.CircleCheck
     return SheetAction(
         text = text,
@@ -98,23 +110,24 @@ private fun selectActionForGroup(
     )
 }
 
-@Composable
 private fun ownerActionsForGroup(
     group: GroupUiModel,
     currentUserId: String?,
+    endTripText: String,
+    deleteGroupText: String,
     onDeleteRequested: (GroupUiModel) -> Unit,
     onArchiveRequested: (GroupUiModel) -> Unit
 ): List<SheetAction> {
     if (group.status != GroupStatus.ACTIVE || group.createdBy != currentUserId) return emptyList()
     return listOf(
         SheetAction(
-            text = stringResource(DesignSystemR.string.group_detail_end_trip),
+            text = endTripText,
             icon = TablerIcons.Outline.Lock,
             onClick = { onArchiveRequested(group) },
             isDestructive = true
         ),
         SheetAction(
-            text = stringResource(R.string.action_delete_group),
+            text = deleteGroupText,
             icon = TablerIcons.Outline.Trash,
             onClick = { onDeleteRequested(group) },
             isDestructive = true
@@ -122,38 +135,42 @@ private fun ownerActionsForGroup(
     )
 }
 
-@Composable
 private fun leaveActionForGroup(
     group: GroupUiModel,
     currentUserId: String?,
+    text: String,
+    isLeaving: Boolean,
     onLeaveRequested: (GroupUiModel) -> Unit,
     onMenuDismiss: () -> Unit
 ): SheetAction? {
     if (group.status != GroupStatus.ACTIVE || group.createdBy == currentUserId || currentUserId == null) return null
     return SheetAction(
-        text = stringResource(R.string.action_leave_group),
+        text = text,
         icon = TablerIcons.Outline.X,
         onClick = {
             onLeaveRequested(group)
             onMenuDismiss()
         },
+        enabled = !isLeaving,
         isDestructive = true
     )
 }
 
-@Composable
+@Suppress("LongParameterList")
 private fun sheetActionsForGroup(
     group: GroupUiModel,
     selectAction: SheetAction?,
     ownerActions: List<SheetAction>,
     leaveAction: SheetAction?,
+    editGroupText: String,
+    manageSubunitsText: String,
     onEditGroup: (String) -> Unit,
     onManageSubunits: (String) -> Unit,
     onMenuDismiss: () -> Unit
 ): List<SheetAction> = listOfNotNull(
     selectAction,
     SheetAction(
-        text = stringResource(R.string.action_edit_group),
+        text = editGroupText,
         icon = TablerIcons.Outline.Edit,
         onClick = {
             onEditGroup(group.id)
@@ -161,7 +178,7 @@ private fun sheetActionsForGroup(
         }
     ).takeIf { group.status == GroupStatus.ACTIVE },
     SheetAction(
-        text = stringResource(R.string.action_manage_subunits),
+        text = manageSubunitsText,
         icon = TablerIcons.Outline.Sitemap,
         onClick = {
             onManageSubunits(group.id)

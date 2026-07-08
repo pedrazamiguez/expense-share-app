@@ -6,4 +6,5 @@ sealed interface CreateEditGroupUiAction {
     data object NavigateBack : CreateEditGroupUiAction
     data class ShowSuccess(val message: UiText) : CreateEditGroupUiAction
     data class ShowError(val message: UiText) : CreateEditGroupUiAction
+    data object RequestExitConfirmation : CreateEditGroupUiAction
 }

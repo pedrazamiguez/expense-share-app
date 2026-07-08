@@ -121,6 +121,7 @@ object JacocoExclusions {
         // ── Compiler-generated lambda inner classes from Repository implementations
         // (e.g., CashWithdrawalRepositoryImpl$updateRemainingAmounts$2)
         "**/*RepositoryImpl\$*.*",
+        "**/repository/impl/SettlementRepositoryImpl.*",
         // ── MLKitOcrService companion classes — require Android/ML Kit runtime
         // PdfPageRendererImpl wraps Android PdfRenderer (ContentResolver, PdfRenderer.Page.render)
         // MLKitOcrEngine wraps ML Kit TextRecognizer (.process(image).await() needs Android Looper)

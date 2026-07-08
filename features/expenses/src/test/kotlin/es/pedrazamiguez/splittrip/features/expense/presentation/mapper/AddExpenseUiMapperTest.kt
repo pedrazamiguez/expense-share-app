@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.splittrip.domain.constant.DomainConstants
 import es.pedrazamiguez.splittrip.domain.enums.AddOnMode
@@ -71,11 +72,13 @@ class AddExpenseUiMapperTest {
             )
         val splitPreviewService = SplitPreviewServiceImpl()
         val remainderDistributionService = RemainderDistributionServiceImpl()
+        val userUiMapper = mockk<UserUiMapper>(relaxed = true)
         splitMapper = AddExpenseSplitUiMapper(
             localeProvider,
             formattingHelper,
             splitPreviewService,
-            EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
+            EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService),
+            userUiMapper
         )
         addOnMapper = AddExpenseAddOnUiMapper()
         mapper = AddExpenseUiMapper(
@@ -570,6 +573,75 @@ class AddExpenseUiMapperTest {
 
             val result = mapper.mapToDomain(state, "group-123")
 
+            assertTrue(result.isSuccess)
+            assertNull(result.getOrThrow().notes)
+        }
+
+        @Test
+        fun `mapToDomain_trimsExpenseTitleBeforePersistence`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Dinner  ",
+                sourceAmount = "5.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod
+            )
+            val result = mapper.mapToDomain(state, "group-123")
+            assertTrue(result.isSuccess)
+            assertEquals("Dinner", result.getOrThrow().title)
+        }
+
+        @Test
+        fun `mapToDomain_trimsVendorAndNotes`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Dinner",
+                sourceAmount = "5.00",
+                vendor = "  Prada  ",
+                notes = "  Great place  ",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod
+            )
+            val result = mapper.mapToDomain(state, "group-123")
+            assertTrue(result.isSuccess)
+            assertEquals("Prada", result.getOrThrow().vendor)
+            assertEquals("Great place", result.getOrThrow().notes)
+        }
+
+        @Test
+        fun `mapToDomain_treatsWhitespaceOnlyVendorAsNull`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Dinner",
+                sourceAmount = "5.00",
+                vendor = "   ",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod
+            )
+            val result = mapper.mapToDomain(state, "group-123")
+            assertTrue(result.isSuccess)
+            assertNull(result.getOrThrow().vendor)
+        }
+
+        @Test
+        fun `mapToDomain_treatsWhitespaceOnlyNotesAsNull`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Dinner",
+                sourceAmount = "5.00",
+                notes = "   ",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod
+            )
+            val result = mapper.mapToDomain(state, "group-123")
             assertTrue(result.isSuccess)
             assertNull(result.getOrThrow().notes)
         }

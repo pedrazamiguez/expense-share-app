@@ -24,6 +24,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.setting.SetLastSeenBalanceUseCa
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.BalancesUiMapper
+import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.SettlementsUiMapper
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.ContributionUiModel
@@ -77,6 +78,7 @@ class BalancesViewModelTest {
     private lateinit var getGroupByIdUseCase: GetGroupByIdUseCase
     private lateinit var authenticationService: AuthenticationService
     private lateinit var balancesUiMapper: BalancesUiMapper
+    private lateinit var settlementsUiMapper: SettlementsUiMapper
     private lateinit var getLastSeenBalanceUseCase: GetLastSeenBalanceUseCase
     private lateinit var setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
@@ -141,6 +143,7 @@ class BalancesViewModelTest {
         getGroupByIdUseCase = mockk()
         authenticationService = mockk()
         balancesUiMapper = mockk()
+        settlementsUiMapper = mockk()
         getLastSeenBalanceUseCase = mockk()
         setLastSeenBalanceUseCase = mockk()
         getMemberProfilesUseCase = mockk()
@@ -180,13 +183,12 @@ class BalancesViewModelTest {
         // Default mock for expenses flow (empty by default)
         every { getGroupExpensesFlowUseCase(any()) } returns flowOf(emptyList())
 
-        // Default mock for mapper
         every { balancesUiMapper.mapBalance(any(), any()) } returns testBalanceUiModel
         every { balancesUiMapper.mapExtrasBreakdown(any(), any(), any(), any(), any(), any()) } returns
             persistentListOf()
         every { balancesUiMapper.mapMemberBalances(any(), any(), any(), any(), any(), any()) } returns
             persistentListOf()
-        every { balancesUiMapper.mapSettlements(any(), any(), any(), any()) } returns
+        every { settlementsUiMapper.mapSettlements(any(), any(), any(), any()) } returns
             persistentListOf()
         every { balancesUiMapper.mapContributions(any(), any(), any(), any()) } answers {
             val contributions = firstArg<List<Contribution>>()
@@ -781,6 +783,7 @@ class BalancesViewModelTest {
         ),
         authenticationService = authenticationService,
         balancesUiMapper = balancesUiMapper,
+        settlementsUiMapper = settlementsUiMapper,
         activityEventHandler = BalancesActivityEventHandlerImpl(
             deleteContributionUseCase = deleteContributionUseCase,
             deleteCashWithdrawalUseCase = deleteCashWithdrawalUseCase

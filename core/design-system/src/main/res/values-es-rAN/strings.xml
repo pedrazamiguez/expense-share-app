@@ -43,6 +43,9 @@
     <string name="action_delete">Eliminâh</string>
     <string name="action_copy">Copiâh</string>
     <string name="action_copied">¡Copiao!</string>
+    <string name="wizard_exit_dialog_title">¿Dêccartâh cambiô?</string>
+    <string name="wizard_exit_dialog_message">Tienê cambiô çin guardâh. ¿Çalîh y dêccartâl-lô?</string>
+    <string name="wizard_exit_dialog_confirm">Dêccartâh</string>
     <string name="empty_state_no_expenses_title">Çin gâttô aún</string>
     <string name="empty_state_no_expenses_description">¡Añade tu primêh gâtto pa empeçâh!</string>
     <string name="nav_groups">Grupô</string>
@@ -54,7 +57,13 @@
     <string name="content_description_close">Çerrâh</string>
     <string name="content_description_menu">Abrîh menú</string>
     <string name="content_description_profile">Perfîh de uçuario</string>
+    <string name="self_identification_nominative">Tú</string>
+    <string name="self_identification_beneficiary">Pa ti</string>
+    <string name="self_identification_agent">Por ti</string>
+    <string name="self_identification_recipient">A ti</string>
     <string name="user_pending_fallback">Miembro pendiente</string>
+    <string name="balance_you">Tú</string>
+    <string name="member_left_group_badge">Antiguo</string>
     <string name="sync_status_pending">Aún no çincroniçao con er çerbidôh</string>
     <string name="sync_status_failed">Errôh de çincroniçaçión</string>
     <string name="stale_rate_warning">Lô tipô de cambio podrían êttâh deçâttualiçáô</string>
@@ -100,5 +109,13 @@
     <string name="group_detail_end_trip_confirm">Finaliçâh biahe</string>
     <string name="group_detail_archived_label">Arxibao</string>
     <string name="group_error_archiving_failed">Errôh al arxibâh er biahe. Por fabôh, inténtalo de nuebo.</string>
+    <string name="group_error_archiving_unresolved_settlements">No çe puede finaliçâh er biahe mientrâ êççîttan çardô o pagô pendientê çin reçorbêh.</string>
+    <string name="settlement_pocket_type_virtual">Borçiyo birtuâh</string>
+    <string name="settlement_pocket_type_cash">Efêttibo</string>
+    <string name="settlement_pocket_type_net">Çardo neto</string>
+    <string name="settlement_status_pending">Pendiente</string>
+    <string name="settlement_status_awaiting_confirmation">Êpperando confirmaçión</string>
+    <string name="settlement_status_confirmed">Confirmao</string>
+    <string name="settlement_status_disputed">Dîpputao</string>
     <string name="app_name" translatable="false">SplitTrip</string>
 </resources>

@@ -9,9 +9,17 @@ import kotlinx.collections.immutable.ImmutableList
 
 interface SubunitUiMapper {
 
-    fun toSubunitUiModel(subunit: Subunit, memberProfiles: Map<String, User>): SubunitUiModel
+    fun toSubunitUiModel(
+        subunit: Subunit,
+        memberProfiles: Map<String, User>,
+        currentUserId: String? = null
+    ): SubunitUiModel
 
-    fun toSubunitUiModelList(subunits: List<Subunit>, memberProfiles: Map<String, User>): ImmutableList<SubunitUiModel>
+    fun toSubunitUiModelList(
+        subunits: List<Subunit>,
+        memberProfiles: Map<String, User>,
+        currentUserId: String? = null
+    ): ImmutableList<SubunitUiModel>
 
     /**
      * Builds the member selection list for the form.
@@ -20,12 +28,14 @@ interface SubunitUiMapper {
      * @param memberProfiles Resolved user profiles.
      * @param subunits Existing subunits in the group.
      * @param excludeSubunitId When editing, exclude this subunit from the "already assigned" check.
+     * @param currentUserId Authenticated user ID, used to show "You" / "Tú" for self-identification.
      */
     fun toMemberUiModelList(
         memberIds: List<String>,
         memberProfiles: Map<String, User>,
         subunits: List<Subunit>,
-        excludeSubunitId: String? = null
+        excludeSubunitId: String? = null,
+        currentUserId: String? = null
     ): ImmutableList<MemberUiModel>
 
     /**

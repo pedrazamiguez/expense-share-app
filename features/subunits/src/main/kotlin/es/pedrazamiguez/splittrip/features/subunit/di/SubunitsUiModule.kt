@@ -3,7 +3,9 @@ package es.pedrazamiguez.splittrip.features.subunit.di
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.TabGraphContributor
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.SubunitShareDistributionService
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
@@ -29,7 +31,8 @@ val subunitsUiModule = module {
     single<SubunitUiMapper> {
         SubunitUiMapperImpl(
             localeProvider = get<LocaleProvider>(),
-            resourceProvider = get<ResourceProvider>()
+            resourceProvider = get<ResourceProvider>(),
+            userUiMapper = get<UserUiMapper>()
         )
     }
 
@@ -52,7 +55,8 @@ val subunitsUiModule = module {
             getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>(),
             getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
             subunitUiMapper = get<SubunitUiMapper>(),
-            shareDistributionService = get<SubunitShareDistributionService>()
+            shareDistributionService = get<SubunitShareDistributionService>(),
+            authenticationService = get<AuthenticationService>()
         )
     }
 

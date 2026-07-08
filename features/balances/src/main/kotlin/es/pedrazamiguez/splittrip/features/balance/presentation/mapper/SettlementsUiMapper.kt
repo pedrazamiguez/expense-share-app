@@ -1,0 +1,91 @@
+package es.pedrazamiguez.splittrip.features.balance.presentation.mapper
+
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
+import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
+import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatCurrencyAmount
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
+import es.pedrazamiguez.splittrip.domain.model.Settlement
+import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
+import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
+import es.pedrazamiguez.splittrip.domain.model.User
+import es.pedrazamiguez.splittrip.features.balance.presentation.model.SettlementUiModel
+import es.pedrazamiguez.splittrip.features.balance.presentation.model.StatusChipStyle
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
+
+class SettlementsUiMapper(
+    private val localeProvider: LocaleProvider,
+    private val resourceProvider: ResourceProvider,
+    private val userUiMapper: UserUiMapper
+) {
+    companion object {
+        private val POCKET_RES_MAP = mapOf(
+            SettlementPocketType.POCKET to DesignSystemR.string.settlement_pocket_type_virtual,
+            SettlementPocketType.CASH to DesignSystemR.string.settlement_pocket_type_cash,
+            SettlementPocketType.NET to DesignSystemR.string.settlement_pocket_type_net
+        )
+
+        private val STATUS_RES_MAP = mapOf(
+            SettlementStatus.SUGGESTED to DesignSystemR.string.settlement_status_pending,
+            SettlementStatus.CONFIRMED_BY_PAYER to DesignSystemR.string.settlement_status_awaiting_confirmation,
+            SettlementStatus.DISPUTED to DesignSystemR.string.settlement_status_disputed,
+            SettlementStatus.RESOLVED to DesignSystemR.string.settlement_status_confirmed
+        )
+
+        private val STATUS_STYLE_MAP = mapOf(
+            SettlementStatus.SUGGESTED to StatusChipStyle.NEUTRAL,
+            SettlementStatus.CONFIRMED_BY_PAYER to StatusChipStyle.WARNING,
+            SettlementStatus.DISPUTED to StatusChipStyle.ERROR,
+            SettlementStatus.RESOLVED to StatusChipStyle.SUCCESS
+        )
+    }
+
+    fun mapSettlements(
+        settlements: List<Settlement>,
+        currency: String,
+        currentUserId: String,
+        memberProfiles: Map<String, User>
+    ): ImmutableList<SettlementUiModel> {
+        val locale = localeProvider.getCurrentLocale()
+        return settlements.map { s ->
+            val isDebtor = s.fromUserId == currentUserId
+            val isCreditor = s.toUserId == currentUserId
+            val status = SettlementStatus.SUGGESTED
+            SettlementUiModel(
+                debtorId = s.fromUserId,
+                creditorId = s.toUserId,
+                debtorName = userUiMapper.mapToDisplayName(
+                    user = memberProfiles[s.fromUserId],
+                    fallbackUserId = s.fromUserId,
+                    currentUserId = currentUserId,
+                    selfIdentificationContext = SelfIdentificationContext.NOMINATIVE
+                ),
+                creditorName = userUiMapper.mapToDisplayName(
+                    user = memberProfiles[s.toUserId],
+                    fallbackUserId = s.toUserId,
+                    currentUserId = currentUserId,
+                    selfIdentificationContext = SelfIdentificationContext.NOMINATIVE
+                ),
+                formattedAmount = formatCurrencyAmount(s.amount, s.currency.ifEmpty { currency }, locale),
+                isCurrentUserDebtor = isDebtor,
+                isCurrentUserCreditor = isCreditor,
+                pocketType = s.sourcePocket,
+                currencyCode = s.currency.ifEmpty { currency },
+                pocketTypeLabel = resourceProvider.getString(POCKET_RES_MAP[s.sourcePocket]!!),
+                statusLabel = resourceProvider.getString(STATUS_RES_MAP[status]!!),
+                statusChipStyle = STATUS_STYLE_MAP[status]!!,
+                status = status
+            )
+        }.sortedWith { a, b ->
+            val aInvolved = a.isCurrentUserDebtor || a.isCurrentUserCreditor
+            val bInvolved = b.isCurrentUserDebtor || b.isCurrentUserCreditor
+            when {
+                aInvolved && !bInvolved -> -1
+                !aInvolved && bInvolved -> 1
+                else -> a.debtorName.compareTo(b.debtorName, ignoreCase = true)
+            }
+        }.toImmutableList()
+    }
+}

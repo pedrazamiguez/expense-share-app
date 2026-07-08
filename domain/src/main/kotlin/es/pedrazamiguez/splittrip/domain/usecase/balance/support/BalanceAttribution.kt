@@ -238,6 +238,20 @@ internal fun buildCashInHandByCurrency(
 }.sortedBy { it.currency }
 
 /**
+ * Builds per-currency [CurrencyAmount] list for total cash withdrawn attributed to a member.
+ */
+internal fun buildWithdrawnByCurrency(
+    byCurrencyMap: Map<String, WithdrawalCurrencyAttribution>,
+    groupCurrency: String
+): List<CurrencyAmount> {
+    if (byCurrencyMap.isEmpty()) return emptyList()
+    return byCurrencyMap.map { (currency, attribution) ->
+        val equivalent = if (currency == groupCurrency) attribution.nativeAmount else attribution.groupEquivalent
+        CurrencyAmount(currency = currency, amountCents = attribution.nativeAmount, equivalentCents = equivalent)
+    }.sortedBy { it.currency }
+}
+
+/**
  * Builds per-currency [CurrencyAmount] list for expense breakdowns using exact per-user equivalents.
  */
 internal fun buildCurrencyAmountList(

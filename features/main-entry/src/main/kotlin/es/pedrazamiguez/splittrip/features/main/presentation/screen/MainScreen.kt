@@ -2,12 +2,19 @@ package es.pedrazamiguez.splittrip.features.main.presentation.screen
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -77,12 +84,13 @@ fun MainScreen(
     val telemetryTracker = remember(koin) { koin.get<TelemetryTracker>() }
     val hazeState = remember { HazeState() }
 
-    // Compute visibleProviders internally from SharedViewModel's selectedGroupId.
+    // Compute visibleProviders internally from SharedViewModel's selectedGroup.
     // This keeps the reactive state INSIDE MainScreen (a @Composable context),
     // preventing it from destabilizing the NavHost builder closure in AppNavHost.
-    val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
-    val visibleProviders = remember(navigationProviders, selectedGroupId) {
-        NavigationUtils.filterVisibleProviders(navigationProviders, selectedGroupId)
+    val selectedGroup by sharedViewModel.selectedGroup.collectAsStateWithLifecycle()
+    val isInitialLoadComplete by sharedViewModel.isInitialLoadComplete.collectAsStateWithLifecycle()
+    val visibleProviders = remember(navigationProviders, selectedGroup) {
+        NavigationUtils.filterVisibleProviders(navigationProviders, selectedGroup)
     }
 
     // Only clear invisible bundles when the visible providers change
@@ -191,13 +199,30 @@ fun MainScreen(
                     )
                 },
                 bottomBar = {
-                    BottomNavigationBar(
-                        selectedRoute = selectedRoute,
-                        onTabSelected = { route -> selectedRoute = route },
-                        items = visibleProviders,
-                        mainAction = currentUiProvider?.mainAction,
-                        hazeState = hazeState
-                    )
+                    AnimatedVisibility(
+                        visible = isInitialLoadComplete,
+                        enter = slideInVertically(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            ),
+                            initialOffsetY = { it }
+                        ) + fadeIn(),
+                        exit = slideOutVertically(
+                            animationSpec = spring(
+                                stiffness = Spring.StiffnessMedium
+                            ),
+                            targetOffsetY = { it }
+                        ) + fadeOut()
+                    ) {
+                        BottomNavigationBar(
+                            selectedRoute = selectedRoute,
+                            onTabSelected = { route -> selectedRoute = route },
+                            items = visibleProviders,
+                            mainAction = currentUiProvider?.mainAction,
+                            hazeState = hazeState
+                        )
+                    }
                 },
                 // Remove default content window insets since we're handling padding manually
                 contentWindowInsets = WindowInsets(0, 0, 0, 0)

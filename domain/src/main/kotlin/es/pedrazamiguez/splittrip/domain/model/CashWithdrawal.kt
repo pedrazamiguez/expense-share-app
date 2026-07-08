@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.model
 
+import es.pedrazamiguez.splittrip.domain.enums.CashWithdrawalReason
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import java.math.BigDecimal
@@ -48,5 +49,6 @@ data class CashWithdrawal(
     val receiptLocalUri: String? = null,
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null,
-    val syncStatus: SyncStatus = SyncStatus.SYNCED
+    val syncStatus: SyncStatus = SyncStatus.SYNCED,
+    val reason: CashWithdrawalReason = CashWithdrawalReason.ATM
 )

@@ -11,10 +11,17 @@ import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.repository.UserRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.EmailValidationService
+import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.splittrip.domain.service.GroupMembershipService
 import es.pedrazamiguez.splittrip.domain.service.impl.EmailValidationServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.GroupMembershipServiceImpl
+import es.pedrazamiguez.splittrip.domain.usecase.balance.AreGroupSettlementsResolvedUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.ResolveCashOnLeaveUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.ResolveCashOnLeaveUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.AddGroupMembersUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.CreateGroupUseCase
@@ -37,6 +44,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.group.impl.ObserveGroupUseCaseI
 import es.pedrazamiguez.splittrip.domain.usecase.group.impl.ObserveSelectedGroupUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.group.impl.RemoveGroupMemberUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.group.impl.UpdateGroupUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.subunit.ReassignSubunitSharesUseCase
 import org.koin.dsl.module
 
 val groupsDomainModule = module {
@@ -90,7 +98,11 @@ val groupsDomainModule = module {
     }
     factory<ArchiveGroupUseCase> {
         createLoggingProxy<ArchiveGroupUseCase>(
-            ArchiveGroupUseCaseImpl(groupRepository = get<GroupRepository>()),
+            ArchiveGroupUseCaseImpl(
+                groupRepository = get<GroupRepository>(),
+                getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>(),
+                areGroupSettlementsResolvedUseCase = get<AreGroupSettlementsResolvedUseCase>()
+            ),
             LogTag.USE_CASE
         )
     }
@@ -131,16 +143,30 @@ val groupsDomainModule = module {
             LogTag.USE_CASE
         )
     }
+    factory<ResolveCashOnLeaveUseCase> {
+        createLoggingProxy<ResolveCashOnLeaveUseCase>(
+            ResolveCashOnLeaveUseCaseImpl(
+                cashWithdrawalRepository = get<CashWithdrawalRepository>(),
+                exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
+                getExchangeRateUseCase = get<GetExchangeRateUseCase>()
+            ),
+            LogTag.USE_CASE
+        )
+    }
     factory<LeaveGroupUseCase> {
         createLoggingProxy<LeaveGroupUseCase>(
             LeaveGroupUseCaseImpl(
                 groupRepository = get<GroupRepository>(),
                 authenticationService = get<AuthenticationService>(),
+                getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>(),
+                areMemberSettlementsResolvedUseCase = get<AreMemberSettlementsResolvedUseCase>(),
+                reassignSubunitSharesUseCase = get<ReassignSubunitSharesUseCase>(),
                 expenseRepository = get<ExpenseRepository>(),
                 contributionRepository = get<ContributionRepository>(),
                 cashWithdrawalRepository = get<CashWithdrawalRepository>(),
                 subunitRepository = get<SubunitRepository>(),
-                getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
+                getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>(),
+                resolveCashOnLeaveUseCase = get<ResolveCashOnLeaveUseCase>()
             ),
             LogTag.USE_CASE
         )

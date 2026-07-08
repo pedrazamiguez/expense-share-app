@@ -154,12 +154,13 @@ class ConfigEventHandler(
 
         val memberIds = config.group.members
         val memberProfiles = getMemberProfilesUseCase(memberIds)
+        val currentUserId = authenticationService.currentUserId()
         val initialSplits = addExpenseSplitMapper.buildInitialSplits(
             memberIds = memberIds,
             shares = emptyList(),
-            memberProfiles = memberProfiles
+            memberProfiles = memberProfiles,
+            currentUserId = currentUserId
         )
-        val currentUserId = authenticationService.currentUserId()
         val userSubunitOptions = filterSubunitsForCurrentUser(currentUserId, config)
 
         val isAiCapable = receiptExtractionService.capability() == ExtractionCapability.ON_DEVICE_AI

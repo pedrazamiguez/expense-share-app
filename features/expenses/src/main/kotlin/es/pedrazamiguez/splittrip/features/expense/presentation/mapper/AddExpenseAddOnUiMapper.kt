@@ -41,7 +41,7 @@ class AddExpenseAddOnUiMapper {
                         PaymentMethod.fromString(it.id)
                     }.getOrDefault(PaymentMethod.OTHER)
                 } ?: PaymentMethod.OTHER,
-                description = uiModel.description.ifBlank { null }
+                description = uiModel.description.trim().ifBlank { null }
             )
         }
 

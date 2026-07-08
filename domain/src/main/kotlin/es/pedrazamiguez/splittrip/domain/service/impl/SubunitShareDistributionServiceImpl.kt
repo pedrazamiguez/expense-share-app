@@ -147,5 +147,20 @@ class SubunitShareDistributionServiceImpl : SubunitShareDistributionService {
         }
     }
 
+    override fun rescaleSharesAfterRemoval(
+        removedMemberId: String,
+        currentShares: Map<String, BigDecimal>
+    ): Map<String, BigDecimal> {
+        val remaining = currentShares.filterKeys { it != removedMemberId }
+        if (remaining.isEmpty()) return emptyMap()
+
+        val totalWeight = remaining.values.fold(BigDecimal.ZERO, BigDecimal::add)
+        if (totalWeight.compareTo(BigDecimal.ZERO) == 0) return remaining
+
+        return remaining.mapValues { (_, share) ->
+            share.divide(totalWeight, SHARE_SCALE, RoundingMode.HALF_UP)
+        }
+    }
+
     private fun BigDecimal.coerceAtLeast(minimum: BigDecimal): BigDecimal = if (this < minimum) minimum else this
 }

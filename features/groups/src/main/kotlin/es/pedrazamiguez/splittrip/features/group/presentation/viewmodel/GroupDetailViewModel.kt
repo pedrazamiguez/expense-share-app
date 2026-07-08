@@ -5,20 +5,26 @@ import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
+import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
+import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.group.LeaveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
+import es.pedrazamiguez.splittrip.features.group.presentation.mapper.LeaveWizardUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupDetailUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupDetailUiEvent
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupDetailViewModelLocalState
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupLeaveWizardEventHandler
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupDetailUiState
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,11 +46,9 @@ import timber.log.Timber
  * ViewModel for the Group Detail screen.
  *
  * Reactively observes group info via [ObserveGroupUseCase] and subunit count via
- * [GetGroupSubunitsFlowUseCase]. Follows the same `_groupId`-gated `flatMapLatest` +
- * `stateIn` pattern.
- *
- * Group selection is handled in [GroupDetailFeature] via [SharedViewModel].
+ * [GetGroupSubunitsFlowUseCase]. Delegating leave wizard events to [GroupLeaveWizardEventHandler].
  */
+@Suppress("LongParameterList")
 @OptIn(ExperimentalCoroutinesApi::class)
 class GroupDetailViewModel(
     private val observeGroupUseCase: ObserveGroupUseCase,
@@ -55,15 +59,25 @@ class GroupDetailViewModel(
     private val authenticationService: AuthenticationService,
     private val archiveGroupUseCase: ArchiveGroupUseCase,
     private val deleteGroupUseCase: DeleteGroupUseCase,
-    private val leaveGroupUseCase: LeaveGroupUseCase
+    private val getGroupSettlementsFlowUseCase: GetGroupSettlementsFlowUseCase,
+    private val leaveWizardUiMapper: LeaveWizardUiMapper,
+    private val leaveWizardEventHandler: GroupLeaveWizardEventHandler
 ) : ViewModel() {
 
     private val _groupId = MutableStateFlow("")
 
-    private val _localUiState = MutableStateFlow(LocalUiState())
+    private val _localUiState = MutableStateFlow(GroupDetailViewModelLocalState())
 
     private val _actions = Channel<GroupDetailUiAction>(Channel.BUFFERED)
     val actions = _actions.receiveAsFlow()
+
+    init {
+        leaveWizardEventHandler.bind(
+            scope = viewModelScope,
+            onLeaveSuccess = { message -> _actions.send(GroupDetailUiAction.LeaveSuccess(message)) },
+            onError = { message -> _actions.send(GroupDetailUiAction.ShowError(message)) }
+        )
+    }
 
     val uiState: StateFlow<GroupDetailUiState> = _groupId
         .filter { it.isNotBlank() }
@@ -93,9 +107,30 @@ class GroupDetailViewModel(
                     combine(
                         getGroupSubunitsFlowUseCase(groupId).distinctUntilChanged(),
                         getUserGroupsFlowUseCase().distinctUntilChanged(),
-                        _localUiState
-                    ) { subunits, userGroups, localState ->
+                        getGroupSettlementsFlowUseCase(groupId).distinctUntilChanged(),
+                        _localUiState,
+                        leaveWizardEventHandler.wizardState
+                    ) { subunits, userGroups, settlementRecords, localState, wizardState ->
                         val currentUserId = authenticationService.requireUserId()
+
+                        val updatedWizardState = if (wizardState.showSheet) {
+                            val unresolved = settlementRecords.filter { record ->
+                                record.status != SettlementStatus.RESOLVED &&
+                                    (
+                                        record.settlement.fromUserId == currentUserId ||
+                                            record.settlement.toUserId == currentUserId
+                                        )
+                            }
+                            val mappedSettlements = leaveWizardUiMapper.toSettlementUiModels(
+                                unresolved,
+                                memberProfiles,
+                                currentUserId
+                            )
+                            wizardState.copy(settlements = mappedSettlements.toImmutableList())
+                        } else {
+                            wizardState
+                        }
+
                         GroupDetailUiState(
                             group = groupUiModel,
                             isLoading = false,
@@ -106,8 +141,8 @@ class GroupDetailViewModel(
                             isArchiving = localState.isArchiving,
                             showDeleteConfirmation = localState.showDeleteConfirmation,
                             isDeleting = localState.isDeleting,
-                            showLeaveConfirmation = localState.showLeaveConfirmation,
-                            isLeaving = localState.isLeaving
+                            isLeaving = wizardState.isLeaving,
+                            leaveWizardState = updatedWizardState
                         )
                     }
                         .catch { e ->
@@ -148,9 +183,14 @@ class GroupDetailViewModel(
             GroupDetailUiEvent.DeleteClicked -> _localUiState.update { it.copy(showDeleteConfirmation = true) }
             GroupDetailUiEvent.DeleteCancelled -> _localUiState.update { it.copy(showDeleteConfirmation = false) }
             GroupDetailUiEvent.DeleteConfirmed -> handleDelete()
-            GroupDetailUiEvent.LeaveClicked -> _localUiState.update { it.copy(showLeaveConfirmation = true) }
-            GroupDetailUiEvent.LeaveCancelled -> _localUiState.update { it.copy(showLeaveConfirmation = false) }
-            GroupDetailUiEvent.LeaveConfirmed -> handleLeave()
+            GroupDetailUiEvent.LeaveClicked -> leaveWizardEventHandler.handleLeaveClicked(_groupId.value)
+            GroupDetailUiEvent.LeaveCancelled,
+            GroupDetailUiEvent.WizardCancelled -> leaveWizardEventHandler.handleWizardCancelled()
+            GroupDetailUiEvent.LeaveConfirmed -> leaveWizardEventHandler.handleLeave(_groupId.value)
+            GroupDetailUiEvent.WizardNextClicked -> leaveWizardEventHandler.handleWizardNext(_groupId.value)
+            GroupDetailUiEvent.WizardBackClicked -> leaveWizardEventHandler.handleWizardBack()
+            is GroupDetailUiEvent.ConfirmSettlementClicked ->
+                leaveWizardEventHandler.handleConfirmSettlement(_groupId.value, event.settlementId)
         }
     }
 
@@ -158,14 +198,26 @@ class GroupDetailViewModel(
         _localUiState.update { it.copy(showArchiveConfirmation = false, isArchiving = true) }
         viewModelScope.launch {
             archiveGroupUseCase(_groupId.value).fold(
-                onSuccess = { _localUiState.update { it.copy(isArchiving = false) } },
-                onFailure = {
+                onSuccess = {
                     _localUiState.update { it.copy(isArchiving = false) }
                     _actions.send(
-                        GroupDetailUiAction.ShowError(
-                            UiText.StringResource(DesignSystemR.string.group_error_archiving_failed)
+                        GroupDetailUiAction.ArchiveSuccess(
+                            UiText.StringResource(R.string.group_archived_successfully)
                         )
                     )
+                },
+                onFailure = { e ->
+                    _localUiState.update { it.copy(isArchiving = false) }
+                    when (e) {
+                        is UnresolvedSettlementsException ->
+                            _actions.send(GroupDetailUiAction.NavigateToSettlementOverview(_groupId.value))
+                        else ->
+                            _actions.send(
+                                GroupDetailUiAction.ShowError(
+                                    UiText.StringResource(DesignSystemR.string.group_error_archiving_failed)
+                                )
+                            )
+                    }
                 }
             )
         }
@@ -187,38 +239,4 @@ class GroupDetailViewModel(
             }
         }
     }
-
-    private fun handleLeave() {
-        _localUiState.update { it.copy(showLeaveConfirmation = false, isLeaving = true) }
-        viewModelScope.launch {
-            leaveGroupUseCase(_groupId.value).fold(
-                onSuccess = {
-                    _localUiState.update { it.copy(isLeaving = false) }
-                    _actions.send(GroupDetailUiAction.LeaveSuccess(UiText.StringResource(R.string.group_leave_success)))
-                },
-                onFailure = { e ->
-                    _localUiState.update { it.copy(isLeaving = false) }
-                    val message = when {
-                        e.message?.contains(
-                            "non_zero_balance"
-                        ) == true -> UiText.StringResource(R.string.group_leave_error_balance)
-                        e.message?.contains(
-                            "is_creator"
-                        ) == true -> UiText.StringResource(R.string.group_leave_error_admin)
-                        else -> UiText.StringResource(R.string.group_leave_error_general)
-                    }
-                    _actions.send(GroupDetailUiAction.ShowError(message))
-                }
-            )
-        }
-    }
-
-    private data class LocalUiState(
-        val showArchiveConfirmation: Boolean = false,
-        val isArchiving: Boolean = false,
-        val showDeleteConfirmation: Boolean = false,
-        val isDeleting: Boolean = false,
-        val showLeaveConfirmation: Boolean = false,
-        val isLeaving: Boolean = false
-    )
 }

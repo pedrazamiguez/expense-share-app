@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.AddOnMode
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.domain.enums.AddOnValueType
@@ -1325,6 +1326,60 @@ class ExpenseDetailUiMapperTest {
             val result = mapper.map(baseExpense, memberProfiles, currentUserId)
 
             assertNotNull(result.paymentStatusIcon)
+        }
+    }
+
+    @Nested
+    inner class MemberDisplayMapping {
+
+        @Test
+        fun `maps payerDisplay, creatorDisplay, and split memberDisplay to Active when in groupMemberIds`() {
+            val expense = baseExpense.copy(
+                createdBy = currentUserId,
+                payerId = otherUserId,
+                splits = listOf(
+                    ExpenseSplit(userId = currentUserId, amountCents = 2500),
+                    ExpenseSplit(userId = otherUserId, amountCents = 2500)
+                )
+            )
+            val groupMemberIds = listOf(currentUserId, otherUserId)
+
+            val result = mapper.map(
+                expense = expense,
+                memberProfiles = memberProfiles,
+                currentUserId = currentUserId,
+                groupMemberIds = groupMemberIds
+            )
+
+            assertTrue(result.payerDisplay is MemberDisplay.Active)
+            assertTrue(result.creatorDisplay is MemberDisplay.Active)
+            assertTrue(result.splits[0].memberDisplay is MemberDisplay.Active)
+            assertTrue(result.splits[1].memberDisplay is MemberDisplay.Active)
+        }
+
+        @Test
+        fun `maps payerDisplay, creatorDisplay, and split memberDisplay to Former when not in groupMemberIds`() {
+            val expense = baseExpense.copy(
+                createdBy = "user-former-1",
+                payerId = "user-former-2",
+                splits = listOf(
+                    ExpenseSplit(userId = "user-former-1", amountCents = 2500),
+                    ExpenseSplit(userId = "user-former-2", amountCents = 2500)
+                )
+            )
+            val groupMemberIds = listOf(currentUserId, otherUserId)
+
+            val result = mapper.map(
+                expense = expense,
+                memberProfiles = memberProfiles,
+                currentUserId = currentUserId,
+                groupMemberIds = groupMemberIds
+            )
+
+            assertTrue(result.payerDisplay is MemberDisplay.Former)
+            assertTrue(result.creatorDisplay is MemberDisplay.Former)
+            assertTrue(result.splits[0].memberDisplay is MemberDisplay.Former)
+            assertTrue(result.splits[1].memberDisplay is MemberDisplay.Former)
         }
     }
 }

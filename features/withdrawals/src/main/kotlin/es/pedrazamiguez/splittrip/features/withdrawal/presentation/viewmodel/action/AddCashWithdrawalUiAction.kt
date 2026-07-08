@@ -8,4 +8,7 @@ sealed interface AddCashWithdrawalUiAction {
 
     /** Signals the Feature to pop the back stack (Back pressed on the first wizard step). */
     data object NavigateBack : AddCashWithdrawalUiAction
+
+    /** Fired when the user requests exit while the form has unsaved changes. */
+    data object RequestExitConfirmation : AddCashWithdrawalUiAction
 }

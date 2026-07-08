@@ -10,7 +10,7 @@
     <string name="contribution_add_money_error_subunit">Çelêççión de çubunidá imbálida. Inténtalo de nuebo</string>
     <string name="contribution_add_money_contributing_for">Aportando</string>
     <string name="contribution_add_money_for_group">Pa tó er grupo</string>
-    <string name="contribution_add_money_for_me">Pa mí</string>
+    <string name="contribution_add_money_for_you">Çolo pa ti</string>
     <string name="contribution_add_money_for_member">Pa %1$s</string>
     <string name="contribution_add_money_for_subunit">Pa %1$s</string>
     <string name="contribution_wizard_next">Çigiente</string>

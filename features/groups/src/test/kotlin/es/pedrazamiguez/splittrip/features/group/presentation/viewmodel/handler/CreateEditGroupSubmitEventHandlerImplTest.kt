@@ -11,6 +11,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.RemoveGroupMemberUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.UpdateGroupUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.SetSelectedGroupUseCase
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.CreateEditGroupUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.CreateEditGroupUiState
 import io.mockk.coEvery
@@ -45,6 +46,7 @@ class CreateEditGroupSubmitEventHandlerImplTest {
     private lateinit var addGroupMembersUseCase: AddGroupMembersUseCase
     private lateinit var removeGroupMemberUseCase: RemoveGroupMemberUseCase
     private lateinit var getUserGroupsFlowUseCase: GetUserGroupsFlowUseCase
+    private lateinit var setSelectedGroupUseCase: SetSelectedGroupUseCase
     private lateinit var featureGateService: FeatureGateService
     private lateinit var telemetryTracker: TelemetryTracker
     private lateinit var appConfigService: AppConfigService
@@ -69,6 +71,7 @@ class CreateEditGroupSubmitEventHandlerImplTest {
         addGroupMembersUseCase = mockk(relaxed = true)
         removeGroupMemberUseCase = mockk(relaxed = true)
         getUserGroupsFlowUseCase = mockk(relaxed = true)
+        setSelectedGroupUseCase = mockk(relaxed = true)
         featureGateService = mockk(relaxed = true)
         telemetryTracker = mockk(relaxed = true)
         appConfigService = mockk(relaxed = true) {
@@ -85,7 +88,8 @@ class CreateEditGroupSubmitEventHandlerImplTest {
             telemetryTracker = telemetryTracker,
             appConfigService = appConfigService,
             addGroupMembersUseCase = addGroupMembersUseCase,
-            removeGroupMemberUseCase = removeGroupMemberUseCase
+            removeGroupMemberUseCase = removeGroupMemberUseCase,
+            setSelectedGroupUseCase = setSelectedGroupUseCase
         )
         handler.bind(stateFlow, actionsFlow, kotlinx.coroutines.MainScope())
     }
@@ -179,6 +183,39 @@ class CreateEditGroupSubmitEventHandlerImplTest {
     }
 
     @Nested
+    @org.junit.jupiter.api.DisplayName("createGroup — auto-selection")
+    inner class AutoSelection {
+
+        @BeforeEach
+        fun setUpCreate() {
+            every { getUserGroupsFlowUseCase() } returns flowOf(emptyList())
+            coEvery { featureGateService.checkLimit(any(), any()) } returns flowOf(LimitResult.Allowed)
+        }
+
+        @Test
+        fun `auto-selects newly created group on success`() = runTest(testDispatcher) {
+            coEvery { createGroupUseCase(any(), any()) } returns Result.success("new-group-id")
+            stateFlow.value = CreateEditGroupUiState(groupName = "My Trip", selectedCurrency = null, isEditMode = false)
+
+            handler.handleSubmit {}
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { setSelectedGroupUseCase("new-group-id", "My Trip", "EUR") }
+        }
+
+        @Test
+        fun `does not auto-select when group creation fails`() = runTest(testDispatcher) {
+            coEvery { createGroupUseCase(any(), any()) } returns Result.failure(RuntimeException("fail"))
+            stateFlow.value = CreateEditGroupUiState(groupName = "My Trip", isEditMode = false)
+
+            handler.handleSubmit {}
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { setSelectedGroupUseCase(any(), any(), any()) }
+        }
+    }
+
+    @Nested
     inner class EditMode {
 
         @BeforeEach
@@ -268,6 +305,43 @@ class CreateEditGroupSubmitEventHandlerImplTest {
             advanceUntilIdle()
 
             coVerify(exactly = 1) { updateGroupUseCase(match { it.id == testGroup.id && it.name == "Modified" }) }
+        }
+    }
+
+    @Nested
+    inner class WhitespaceTrimming {
+
+        @BeforeEach
+        fun setUpCreate() {
+            every { getUserGroupsFlowUseCase() } returns flowOf(emptyList())
+            coEvery { featureGateService.checkLimit(any(), any()) } returns flowOf(LimitResult.Allowed)
+            coEvery { createGroupUseCase(any(), any()) } returns Result.success("new-group-id")
+        }
+
+        @Test
+        fun `createGroup_trimsLeadingAndTrailingWhitespaceFromGroupNameAndDescription`() = runTest(testDispatcher) {
+            stateFlow.value = CreateEditGroupUiState(
+                groupName = "  Japan Trip  ",
+                groupDescription = "  A trip  ",
+                isEditMode = false
+            )
+
+            handler.handleSubmit {}
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) {
+                createGroupUseCase(match { it.name == "Japan Trip" && it.description == "A trip" }, any())
+            }
+        }
+
+        @Test
+        fun `createGroup_usesWhitespaceOnlyNameAfterTrimCheck`() = runTest(testDispatcher) {
+            stateFlow.value = CreateEditGroupUiState(groupName = "   ", isEditMode = false)
+
+            handler.handleSubmit {}
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { createGroupUseCase(any(), any()) }
         }
     }
 }

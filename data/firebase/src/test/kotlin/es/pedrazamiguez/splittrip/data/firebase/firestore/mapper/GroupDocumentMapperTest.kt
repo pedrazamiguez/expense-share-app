@@ -119,7 +119,7 @@ class GroupDocumentMapperTest {
 
         @Test
         fun `maps all core fields correctly`() {
-            val group = fullDocument.toDomain()
+            val group = fullDocument.toDomain()!!
 
             assertEquals(testGroupId, group.id)
             assertEquals("Trip to Japan", group.name)
@@ -130,7 +130,7 @@ class GroupDocumentMapperTest {
 
         @Test
         fun `maps lists correctly`() {
-            val group = fullDocument.toDomain()
+            val group = fullDocument.toDomain()!!
 
             assertEquals(listOf("JPY", "THB"), group.extraCurrencies)
             assertEquals(listOf("user-1", "user-2", "user-3"), group.members)
@@ -138,7 +138,7 @@ class GroupDocumentMapperTest {
 
         @Test
         fun `maps timestamps correctly`() {
-            val group = fullDocument.toDomain()
+            val group = fullDocument.toDomain()!!
 
             assertEquals(testTimestamp, group.createdAt)
             assertEquals(testTimestamp, group.lastUpdatedAt)
@@ -151,7 +151,7 @@ class GroupDocumentMapperTest {
                 lastUpdatedAt = null
             )
 
-            val group = documentNullTimestamps.toDomain()
+            val group = documentNullTimestamps.toDomain()!!
 
             assertNull(group.createdAt)
             assertNull(group.lastUpdatedAt)
@@ -164,10 +164,29 @@ class GroupDocumentMapperTest {
                 memberIds = emptyList()
             )
 
-            val group = documentEmptyLists.toDomain()
+            val group = documentEmptyLists.toDomain()!!
 
             assertTrue(group.extraCurrencies.isEmpty())
             assertTrue(group.members.isEmpty())
+        }
+
+        @Test
+        fun `returns null when deletionRequested is true`() {
+            val deletedDocument = fullDocument.copy(deletionRequested = true)
+
+            val group = deletedDocument.toDomain()
+
+            assertNull(group)
+        }
+
+        @Test
+        fun `returns group when deletionRequested is false`() {
+            val activeDocument = fullDocument.copy(deletionRequested = false)
+
+            val group = activeDocument.toDomain()
+
+            assertNotNull(group)
+            assertEquals(testGroupId, group!!.id)
         }
     }
 

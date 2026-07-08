@@ -8,7 +8,7 @@
     <string name="withdrawal_cash_withdrawing_for">Withdrawing</string>
     <string name="withdrawal_cash_for_group">For the whole group</string>
     <string name="withdrawal_cash_for_subunit">For %1$s</string>
-    <string name="withdrawal_cash_for_me">For me</string>
+    <string name="withdrawal_cash_for_you">Only for you</string>
     <string name="withdrawal_cash_for_member">For %1$s</string>
     <string name="withdrawal_scope_personal">Personal</string>
     <string name="withdrawal_scope_group">Group</string>

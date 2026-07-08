@@ -45,6 +45,11 @@
     <string name="action_copy">Copiar</string>
     <string name="action_copied">¡Copiado!</string>
 
+    <!-- Wizard Exit Dialog -->
+    <string name="wizard_exit_dialog_title">¿Descartar cambios?</string>
+    <string name="wizard_exit_dialog_message">Tienes cambios sin guardar. ¿Salir y descartarlos?</string>
+    <string name="wizard_exit_dialog_confirm">Descartar</string>
+
     <!-- Empty States -->
     <string name="empty_state_no_expenses_title">Sin gastos aún</string>
     <string name="empty_state_no_expenses_description">¡Añade tu primer gasto para empezar!</string>
@@ -64,8 +69,16 @@
     <string name="content_description_menu">Abrir menú</string>
     <string name="content_description_profile">Perfil de usuario</string>
 
+    <!-- Self-Identification Pronouns -->
+    <string name="self_identification_nominative">Tú</string>
+    <string name="self_identification_beneficiary">Para ti</string>
+    <string name="self_identification_agent">Por ti</string>
+    <string name="self_identification_recipient">A ti</string>
+
     <!-- User Fallback -->
     <string name="user_pending_fallback">Miembro pendiente</string>
+    <string name="balance_you">Tú</string>
+    <string name="member_left_group_badge">Antiguo</string>
 
     <!-- Sync Status -->
     <string name="sync_status_pending">Aún no sincronizado con el servidor</string>
@@ -123,6 +136,16 @@
     <string name="group_detail_end_trip_confirm">Finalizar viaje</string>
     <string name="group_detail_archived_label">Archivado</string>
     <string name="group_error_archiving_failed">Error al archivar el viaje. Por favor, inténtalo de nuevo.</string>
+    <string name="group_error_archiving_unresolved_settlements">No se puede finalizar el viaje mientras existan saldos o pagos pendientes sin resolver.</string>
+
+    <!-- Settlement Widget -->
+    <string name="settlement_pocket_type_virtual">Bolsillo virtual</string>
+    <string name="settlement_pocket_type_cash">Efectivo</string>
+    <string name="settlement_pocket_type_net">Saldo neto</string>
+    <string name="settlement_status_pending">Pendiente</string>
+    <string name="settlement_status_awaiting_confirmation">Esperando confirmación</string>
+    <string name="settlement_status_confirmed">Confirmado</string>
+    <string name="settlement_status_disputed">Disputado</string>
 
     <!-- App Name -->
     <string name="app_name" translatable="false">SplitTrip</string>

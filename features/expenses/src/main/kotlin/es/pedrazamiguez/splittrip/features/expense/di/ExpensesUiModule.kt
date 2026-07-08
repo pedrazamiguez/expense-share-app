@@ -105,7 +105,8 @@ val expensesUiModule = module {
             localeProvider = get<LocaleProvider>(),
             formattingHelper = get<FormattingHelper>(),
             splitPreviewService = get<SplitPreviewService>(),
-            entitySplitFlattenDelegate = entitySplitFlattenDelegate
+            entitySplitFlattenDelegate = entitySplitFlattenDelegate,
+            userUiMapper = get<UserUiMapper>()
         )
     }
 
@@ -132,7 +133,8 @@ val expensesUiModule = module {
         ExpenseUiMapper(
             localeProvider = get<LocaleProvider>(),
             resourceProvider = get<ResourceProvider>(),
-            scheduledBadgeUiMapper = get<ScheduledBadgeUiMapper>()
+            scheduledBadgeUiMapper = get<ScheduledBadgeUiMapper>(),
+            userUiMapper = get<UserUiMapper>()
         )
     }
 

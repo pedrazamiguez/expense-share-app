@@ -243,7 +243,7 @@
     <!-- Contribution Scope (out-of-pocket) -->
     <string name="expense_contribution_scope_title">¿A quién se le acredita?</string>
     <string name="expense_contribution_scope_for_group">Para todo el grupo</string>
-    <string name="expense_contribution_scope_for_me">Para mí</string>
+    <string name="expense_contribution_scope_for_you">Para ti</string>
     <string name="expense_contribution_scope_for_subunit">Para %1$s</string>
     <string name="expense_wizard_step_contribution_scope">Crédito</string>
     <string name="expense_review_contribution_scope">Pagado para</string>

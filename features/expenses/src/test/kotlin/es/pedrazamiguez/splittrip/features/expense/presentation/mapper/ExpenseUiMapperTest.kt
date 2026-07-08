@@ -2,7 +2,10 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
@@ -35,6 +38,7 @@ class ExpenseUiMapperTest {
     private lateinit var mapper: ExpenseUiMapper
     private lateinit var localeProvider: LocaleProvider
     private lateinit var resourceProvider: ResourceProvider
+    private lateinit var userUiMapper: UserUiMapper
 
     @BeforeEach
     fun setUp() {
@@ -96,16 +100,22 @@ class ExpenseUiMapperTest {
             "Refundable until ${varargs[0]}"
         }
 
+        // Stub UserUiMapper dependencies
+        every { resourceProvider.getString(DesignSystemR.string.self_identification_nominative) } returns "You"
+        every { resourceProvider.getString(DesignSystemR.string.user_pending_fallback) } returns "Pending member"
+
         val formattingHelper = FormattingHelper(localeProvider)
         val scheduledBadgeUiMapper = ScheduledBadgeUiMapper(
             formattingHelper = formattingHelper,
             resourceProvider = resourceProvider
         )
 
+        userUiMapper = UserUiMapper(resourceProvider)
         mapper = ExpenseUiMapper(
             localeProvider = localeProvider,
             resourceProvider = resourceProvider,
-            scheduledBadgeUiMapper = scheduledBadgeUiMapper
+            scheduledBadgeUiMapper = scheduledBadgeUiMapper,
+            userUiMapper = userUiMapper
         )
     }
 
@@ -1425,6 +1435,29 @@ class ExpenseUiMapperTest {
         fun `maps SYNC_FAILED status`() {
             val expense = Expense(id = "ss-3", syncStatus = SyncStatus.SYNC_FAILED)
             assertEquals(SyncStatus.SYNC_FAILED, mapper.map(expense).syncStatus)
+        }
+    }
+
+    @Nested
+    @DisplayName("MemberDisplay mapping based on groupMemberIds")
+    inner class MemberDisplayMapping {
+
+        @Test
+        fun `maps creatorDisplay to Active when createdBy is in groupMemberIds`() {
+            val expense = Expense(id = "e1", createdBy = "user-1")
+            val groupMemberIds = listOf("user-1", "user-2")
+            val result = mapper.map(expense = expense, groupMemberIds = groupMemberIds)
+            assertTrue(result.creatorDisplay is MemberDisplay.Active)
+            assertEquals("user-1", result.creatorDisplay.userId)
+        }
+
+        @Test
+        fun `maps creatorDisplay to Former when createdBy is not in groupMemberIds`() {
+            val expense = Expense(id = "e1", createdBy = "user-3")
+            val groupMemberIds = listOf("user-1", "user-2")
+            val result = mapper.map(expense = expense, groupMemberIds = groupMemberIds)
+            assertTrue(result.creatorDisplay is MemberDisplay.Former)
+            assertEquals("user-3", result.creatorDisplay.userId)
         }
     }
 }

@@ -2,7 +2,9 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handl
 
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
+import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
@@ -143,13 +145,16 @@ class SubunitSplitEventHandlerTest {
             formattingHelper = formattingHelper
         )
 
+        val resourceProvider = mockk<ResourceProvider>(relaxed = true)
+        val userUiMapper = UserUiMapper(resourceProvider)
         handler = SubunitSplitEventHandler(
             splitPreviewService = splitPreviewService,
             addExpenseSplitMapper = AddExpenseSplitUiMapper(
                 localeProvider,
                 formattingHelper,
                 splitPreviewService,
-                EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
+                EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService),
+                userUiMapper
             ),
             intraSubunitSplitDelegate = intraSubunitSplitDelegate,
             splitRowMappingDelegate = splitRowMappingDelegate,

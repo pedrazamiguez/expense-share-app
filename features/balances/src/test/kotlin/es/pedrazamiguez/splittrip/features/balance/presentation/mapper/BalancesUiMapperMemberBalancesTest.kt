@@ -55,6 +55,24 @@ class BalancesUiMapperMemberBalancesTest {
         every {
             resourceProvider.getString(es.pedrazamiguez.splittrip.core.designsystem.R.string.user_pending_fallback)
         } returns "Pending member"
+        every {
+            resourceProvider.getString(
+                es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_nominative
+            )
+        } returns "You"
+        every {
+            resourceProvider.getString(
+                es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_beneficiary
+            )
+        } returns "For you"
+        every {
+            resourceProvider.getString(es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_agent)
+        } returns "By you"
+        every {
+            resourceProvider.getString(
+                es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_recipient
+            )
+        } returns "To you"
         mapper = BalancesUiMapper(localeProvider, resourceProvider, UserUiMapper(resourceProvider))
     }
 
@@ -129,7 +147,7 @@ class BalancesUiMapperMemberBalancesTest {
             )
 
             val byUser = result.associateBy { it.userId }
-            assertEquals("Alice", byUser["user-1"]!!.displayName)
+            assertEquals("You", byUser["user-1"]!!.displayName)
             assertEquals("Bob", byUser["user-2"]!!.displayName)
             // user-3 has no displayName, falls back to email
             assertEquals("charlie@test.com", byUser["user-3"]!!.displayName)

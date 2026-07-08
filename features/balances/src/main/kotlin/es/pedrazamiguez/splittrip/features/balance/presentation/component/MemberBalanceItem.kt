@@ -12,7 +12,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.MemberBalanceUiModel
 
@@ -42,8 +44,11 @@ fun MemberBalanceItem(memberBalance: MemberBalanceUiModel, modifier: Modifier = 
         stringResource(R.string.balances_member_expand, displayName)
     }
 
+    val isFormer = memberBalance.memberDisplay is MemberDisplay.Former
+    val cardModifier = if (isFormer) modifier.alpha(0.6f) else modifier
+
     MemberBalanceCard(
-        modifier = modifier,
+        modifier = cardModifier,
         expandedStateDesc = expandedStateDesc,
         toggleContentDesc = toggleContentDesc,
         onToggle = { isExpanded = !isExpanded }

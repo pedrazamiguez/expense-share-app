@@ -63,7 +63,8 @@ class SubunitSplitEventHandler(
     fun initEntitySplits(
         memberIds: List<String>,
         subunits: List<Subunit>,
-        memberProfiles: Map<String, User> = emptyMap()
+        memberProfiles: Map<String, User> = emptyMap(),
+        currentUserId: String? = null
     ) {
         groupSubunits = subunits
         if (subunits.isEmpty()) return
@@ -81,7 +82,7 @@ class SubunitSplitEventHandler(
             entityRows.add(
                 SplitUiModel(
                     userId = userId,
-                    displayName = addExpenseSplitMapper.resolveDisplayName(userId, memberProfiles),
+                    displayName = addExpenseSplitMapper.resolveDisplayName(userId, memberProfiles, currentUserId),
                     isEntityRow = true
                 )
             )
@@ -92,7 +93,7 @@ class SubunitSplitEventHandler(
             val memberRows = subunit.memberIds.map { memberId ->
                 SplitUiModel(
                     userId = memberId,
-                    displayName = addExpenseSplitMapper.resolveDisplayName(memberId, memberProfiles),
+                    displayName = addExpenseSplitMapper.resolveDisplayName(memberId, memberProfiles, currentUserId),
                     subunitId = subunit.id
                 )
             }.sortedWith(

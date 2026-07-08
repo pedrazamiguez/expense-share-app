@@ -27,4 +27,7 @@ sealed interface AddExpenseUiAction {
         val availableAmountForInput: String?,
         val availableAmountDisplay: String?
     ) : AddExpenseUiAction
+
+    /** Fired when the user requests exit while the form has unsaved changes. */
+    data object RequestExitConfirmation : AddExpenseUiAction
 }

@@ -29,7 +29,7 @@ fun ContributionScopeStep(
 ) {
     val selectedMember = uiState.groupMembers.firstOrNull { it.userId == uiState.selectedMemberId }
     val personalLabel = if (selectedMember == null || selectedMember.isCurrentUser) {
-        stringResource(R.string.contribution_add_money_for_me)
+        stringResource(R.string.contribution_add_money_for_you)
     } else {
         stringResource(R.string.contribution_add_money_for_member, selectedMember.displayName)
     }

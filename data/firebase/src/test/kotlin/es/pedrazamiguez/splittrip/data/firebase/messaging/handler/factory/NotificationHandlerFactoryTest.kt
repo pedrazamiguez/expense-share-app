@@ -10,6 +10,7 @@ import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.ExpenseDe
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.ExpenseUpdatedHandler
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.MemberAddedHandler
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.MemberRemovedHandler
+import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.SettlementRequestHandler
 import es.pedrazamiguez.splittrip.domain.enums.NotificationType
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -75,8 +76,8 @@ class NotificationHandlerFactoryTest {
     }
 
     @Test
-    fun `SETTLEMENT_REQUEST falls through to DefaultHandler`() {
-        assertTrue(factory.getHandler(NotificationType.SETTLEMENT_REQUEST) is DefaultHandler)
+    fun `SETTLEMENT_REQUEST returns SettlementRequestHandler`() {
+        assertTrue(factory.getHandler(NotificationType.SETTLEMENT_REQUEST) is SettlementRequestHandler)
     }
 
     @Test

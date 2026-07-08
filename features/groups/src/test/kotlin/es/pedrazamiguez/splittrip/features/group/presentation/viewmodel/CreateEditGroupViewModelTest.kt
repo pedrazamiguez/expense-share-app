@@ -18,6 +18,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.RemoveGroupMemberUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.UpdateGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetUserDefaultCurrencyUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.SetSelectedGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.SearchUsersByEmailUseCase
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
@@ -60,6 +61,7 @@ class CreateEditGroupViewModelTest {
     private lateinit var updateGroupUseCase: UpdateGroupUseCase
     private lateinit var addGroupMembersUseCase: AddGroupMembersUseCase
     private lateinit var removeGroupMemberUseCase: RemoveGroupMemberUseCase
+    private lateinit var setSelectedGroupUseCase: SetSelectedGroupUseCase
     private lateinit var getUserGroupsFlowUseCase: GetUserGroupsFlowUseCase
     private lateinit var featureGateService: FeatureGateService
     private lateinit var getSupportedCurrenciesUseCase: GetSupportedCurrenciesUseCase
@@ -96,6 +98,7 @@ class CreateEditGroupViewModelTest {
         updateGroupUseCase = mockk(relaxed = true)
         addGroupMembersUseCase = mockk(relaxed = true)
         removeGroupMemberUseCase = mockk(relaxed = true)
+        setSelectedGroupUseCase = mockk(relaxed = true)
         getUserGroupsFlowUseCase = mockk(relaxed = true)
         featureGateService = mockk(relaxed = true)
         getSupportedCurrenciesUseCase = mockk(relaxed = true)
@@ -133,7 +136,8 @@ class CreateEditGroupViewModelTest {
             telemetryTracker = telemetryTracker,
             appConfigService = appConfigService,
             addGroupMembersUseCase = addGroupMembersUseCase,
-            removeGroupMemberUseCase = removeGroupMemberUseCase
+            removeGroupMemberUseCase = removeGroupMemberUseCase,
+            setSelectedGroupUseCase = setSelectedGroupUseCase
         )
         return CreateEditGroupViewModel(
             navigationEventHandler = navigationEventHandler,

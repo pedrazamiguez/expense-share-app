@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.model
 
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
+
 /** Per-member row in the split breakdown section of the expense detail screen. */
 data class SplitDetailUiModel(
     val displayName: String,
@@ -16,5 +18,6 @@ data class SplitDetailUiModel(
      */
     val subunitId: String? = null,
     /** Human-readable subunit name resolved from the lookup. */
-    val subunitLabel: String? = null
+    val subunitLabel: String? = null,
+    val memberDisplay: MemberDisplay = MemberDisplay.Active("", "")
 )

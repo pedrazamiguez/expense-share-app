@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
@@ -199,11 +200,13 @@ class AddExpenseViewModelTest {
         val formattingHelper = FormattingHelper(localeProvider, appConfigService)
         val splitPreviewService = SplitPreviewServiceImpl()
         val remainderDistributionService = RemainderDistributionServiceImpl()
+        val userUiMapper = mockk<UserUiMapper>(relaxed = true)
         val addExpenseSplitMapper = AddExpenseSplitUiMapper(
             localeProvider,
             formattingHelper,
             splitPreviewService,
-            EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
+            EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService),
+            userUiMapper
         )
         addExpenseUiMapper = AddExpenseUiMapper(
             localeProvider,
@@ -1486,9 +1489,10 @@ class AddExpenseViewModelTest {
         }
 
         @Test
-        fun `PreviousStep on first step emits NavigateBack`() = runTest {
-            // Ensure we're on the first step
+        fun `PreviousStep on first step with clean state emits NavigateBack`() = runTest {
+            // Ensure we're on the first step and state is clean (no inputs)
             assertEquals(0, viewModel.uiState.value.currentStepIndex)
+            assertFalse(viewModel.uiState.value.isDirty)
 
             val emittedActions = mutableListOf<AddExpenseUiAction>()
             val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
@@ -1499,6 +1503,24 @@ class AddExpenseViewModelTest {
             job.cancel()
 
             assertTrue(emittedActions.any { it is AddExpenseUiAction.NavigateBack })
+        }
+
+        @Test
+        fun `PreviousStep on first step with dirty state emits RequestExitConfirmation`() = runTest {
+            // Make the state dirty by changing the title
+            viewModel.onEvent(AddExpenseUiEvent.TitleChanged("Coffee break"))
+            assertEquals(0, viewModel.uiState.value.currentStepIndex)
+            assertTrue(viewModel.uiState.value.isDirty)
+
+            val emittedActions = mutableListOf<AddExpenseUiAction>()
+            val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
+
+            viewModel.onEvent(AddExpenseUiEvent.PreviousStep)
+            advanceUntilIdle()
+
+            job.cancel()
+
+            assertTrue(emittedActions.any { it is AddExpenseUiAction.RequestExitConfirmation })
         }
 
         @Test

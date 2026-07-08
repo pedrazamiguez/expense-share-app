@@ -24,6 +24,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUse
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.balance.navigation.impl.BalancesNavigationProviderImpl
 import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.BalancesUiMapper
+import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.SettlementsUiMapper
 import es.pedrazamiguez.splittrip.features.balance.presentation.screen.impl.BalancesScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.BalancesUseCases
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.BalancesViewModel
@@ -38,6 +39,14 @@ val balancesUiModule = module {
 
     single {
         BalancesUiMapper(
+            localeProvider = get<LocaleProvider>(),
+            resourceProvider = get<ResourceProvider>(),
+            userUiMapper = get<UserUiMapper>()
+        )
+    }
+
+    single {
+        SettlementsUiMapper(
             localeProvider = get<LocaleProvider>(),
             resourceProvider = get<ResourceProvider>(),
             userUiMapper = get<UserUiMapper>()
@@ -74,6 +83,7 @@ val balancesUiModule = module {
             ),
             authenticationService = get<AuthenticationService>(),
             balancesUiMapper = get<BalancesUiMapper>(),
+            settlementsUiMapper = get<SettlementsUiMapper>(),
             activityEventHandler = balancesActivityEventHandler,
             appConfigService = appConfigService,
             computationDispatcher = Dispatchers.Default
