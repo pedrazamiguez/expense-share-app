@@ -4,12 +4,15 @@ import es.pedrazamiguez.splittrip.domain.model.ValidationResult
 import es.pedrazamiguez.splittrip.domain.service.UserValidationService
 
 class UserValidationServiceImpl : UserValidationService {
-    override fun validateDisplayName(displayName: String): ValidationResult = when {
-        displayName.isBlank() -> ValidationResult.Invalid("Display name cannot be empty")
-        displayName.length > MAX_DISPLAY_NAME_LENGTH -> ValidationResult.Invalid(
-            "Display name cannot exceed $MAX_DISPLAY_NAME_LENGTH characters"
-        )
-        else -> ValidationResult.Valid
+    override fun validateDisplayName(displayName: String): ValidationResult {
+        val trimmed = displayName.trim()
+        return when {
+            trimmed.isBlank() -> ValidationResult.Invalid("Display name cannot be empty")
+            trimmed.length > MAX_DISPLAY_NAME_LENGTH -> ValidationResult.Invalid(
+                "Display name cannot exceed $MAX_DISPLAY_NAME_LENGTH characters"
+            )
+            else -> ValidationResult.Valid
+        }
     }
 
     override fun validateBio(bio: String?): ValidationResult = when {

@@ -16,7 +16,7 @@ class ExpenseValidationServiceImpl(
 ) : ExpenseValidationService {
 
     override fun validateTitle(title: String): ValidationResult = when {
-        title.isBlank() -> ValidationResult.Invalid("Title cannot be empty")
+        title.trim().isBlank() -> ValidationResult.Invalid("Title cannot be empty")
         else -> ValidationResult.Valid
     }
 

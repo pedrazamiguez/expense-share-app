@@ -479,5 +479,59 @@ class EditProfileViewModelTest {
 
             collectJob.cancel()
         }
+
+        @Test
+        fun `saveProfile_trimsDisplayNameBeforePersistence`() = runTest(testDispatcher) {
+            coEvery { getCurrentUserProfileUseCase() } returns testUser
+            createViewModel()
+            advanceUntilIdle()
+
+            viewModel.onEvent(EditProfileUiEvent.OnDisplayNameChanged("  Alice  "))
+
+            every { userValidationService.validateDisplayName("Alice") } returns ValidationResult.Valid
+            every { userValidationService.validateBio(any()) } returns ValidationResult.Valid
+            coEvery { updateUserProfileUseCase(any(), any(), any(), any()) } returns Result.success(Unit)
+
+            viewModel.onEvent(EditProfileUiEvent.OnSaveClicked)
+            advanceUntilIdle()
+
+            coVerify { updateUserProfileUseCase("user-123", "Alice", any(), any()) }
+        }
+
+        @Test
+        fun `saveProfile_trimsBioBeforePersistence`() = runTest(testDispatcher) {
+            coEvery { getCurrentUserProfileUseCase() } returns testUser
+            createViewModel()
+            advanceUntilIdle()
+
+            viewModel.onEvent(EditProfileUiEvent.OnBioChanged("  My bio  "))
+
+            every { userValidationService.validateDisplayName(any()) } returns ValidationResult.Valid
+            every { userValidationService.validateBio("My bio") } returns ValidationResult.Valid
+            coEvery { updateUserProfileUseCase(any(), any(), any(), any()) } returns Result.success(Unit)
+
+            viewModel.onEvent(EditProfileUiEvent.OnSaveClicked)
+            advanceUntilIdle()
+
+            coVerify { updateUserProfileUseCase("user-123", any(), "My bio", any()) }
+        }
+
+        @Test
+        fun `saveProfile_treatsWhitespaceOnlyBioAsNull`() = runTest(testDispatcher) {
+            coEvery { getCurrentUserProfileUseCase() } returns testUser
+            createViewModel()
+            advanceUntilIdle()
+
+            viewModel.onEvent(EditProfileUiEvent.OnBioChanged("   "))
+
+            every { userValidationService.validateDisplayName(any()) } returns ValidationResult.Valid
+            every { userValidationService.validateBio(null) } returns ValidationResult.Valid
+            coEvery { updateUserProfileUseCase(any(), any(), any(), any()) } returns Result.success(Unit)
+
+            viewModel.onEvent(EditProfileUiEvent.OnSaveClicked)
+            advanceUntilIdle()
+
+            coVerify { updateUserProfileUseCase("user-123", any(), null, any()) }
+        }
     }
 }

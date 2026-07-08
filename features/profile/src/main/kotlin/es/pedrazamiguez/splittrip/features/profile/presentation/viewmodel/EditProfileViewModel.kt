@@ -166,8 +166,8 @@ class EditProfileViewModel(
             }
             return
         }
-        val displayName = _uiState.value.displayName
-        val bio = _uiState.value.bio.takeIf { it.isNotBlank() }
+        val displayName = _uiState.value.displayName.trim()
+        val bio = _uiState.value.bio.trim().takeIf { it.isNotBlank() }
 
         if (!validateInputs(displayName, bio)) return
 

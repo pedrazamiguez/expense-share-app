@@ -575,6 +575,75 @@ class AddExpenseUiMapperTest {
         }
 
         @Test
+        fun `mapToDomain_trimsExpenseTitleBeforePersistence`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Dinner  ",
+                sourceAmount = "5.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod
+            )
+            val result = mapper.mapToDomain(state, "group-123")
+            assertTrue(result.isSuccess)
+            assertEquals("Dinner", result.getOrThrow().title)
+        }
+
+        @Test
+        fun `mapToDomain_trimsVendorAndNotes`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Dinner",
+                sourceAmount = "5.00",
+                vendor = "  Prada  ",
+                notes = "  Great place  ",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod
+            )
+            val result = mapper.mapToDomain(state, "group-123")
+            assertTrue(result.isSuccess)
+            assertEquals("Prada", result.getOrThrow().vendor)
+            assertEquals("Great place", result.getOrThrow().notes)
+        }
+
+        @Test
+        fun `mapToDomain_treatsWhitespaceOnlyVendorAsNull`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Dinner",
+                sourceAmount = "5.00",
+                vendor = "   ",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod
+            )
+            val result = mapper.mapToDomain(state, "group-123")
+            assertTrue(result.isSuccess)
+            assertNull(result.getOrThrow().vendor)
+        }
+
+        @Test
+        fun `mapToDomain_treatsWhitespaceOnlyNotesAsNull`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Dinner",
+                sourceAmount = "5.00",
+                notes = "   ",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod
+            )
+            val result = mapper.mapToDomain(state, "group-123")
+            assertTrue(result.isSuccess)
+            assertNull(result.getOrThrow().notes)
+        }
+
+        @Test
         fun `maps payment status from selected status UI model`() {
             val state = AddExpenseUiState(
                 expenseTitle = "Bill",

@@ -214,12 +214,12 @@ class CreateEditGroupSubmitEventHandlerImpl(
             _uiState.update { it.copy(isLoading = true, error = null) }
 
             val state = _uiState.value
-            val groupName = state.groupName
+            val groupName = state.groupName.trim()
 
             createGroupUseCase(
                 Group(
                     name = groupName,
-                    description = state.groupDescription,
+                    description = state.groupDescription.trim(),
                     currency = state.selectedCurrency?.code ?: appConfigService.defaultCurrencyCode.value,
                     extraCurrencies = state.extraCurrencies.map { it.code },
                     members = state.selectedMembers.map { it.userId },

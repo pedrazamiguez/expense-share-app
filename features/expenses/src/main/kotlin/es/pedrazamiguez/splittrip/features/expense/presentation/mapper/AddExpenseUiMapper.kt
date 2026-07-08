@@ -155,7 +155,7 @@ class AddExpenseUiMapper(
 
         val expense = Expense(
             groupId = groupId,
-            title = state.expenseTitle,
+            title = state.expenseTitle.trim(),
             sourceAmount = sourceAmount,
             sourceCurrency = sourceCurrencyCode ?: "EUR",
             groupAmount = groupAmount,
@@ -163,8 +163,8 @@ class AddExpenseUiMapper(
             exchangeRate = internalRate,
             addOns = addOns,
             category = category,
-            vendor = state.vendor.ifBlank { null },
-            notes = state.notes.ifBlank { null },
+            vendor = state.vendor.trim().ifBlank { null },
+            notes = state.notes.trim().ifBlank { null },
             paymentMethod = paymentMethod,
             paymentStatus = paymentStatus,
             dueDate = dueDate,
