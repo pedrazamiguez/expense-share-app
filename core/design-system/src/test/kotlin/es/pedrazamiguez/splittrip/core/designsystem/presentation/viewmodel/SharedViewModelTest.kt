@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel
 
+import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveSelectedGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupCurrencyUseCase
@@ -66,6 +67,54 @@ class SharedViewModelTest {
         observeSelectedGroupUseCase = observeSelectedGroupUseCase,
         observeGroupUseCase = observeGroupUseCase
     )
+
+    @Nested
+    @DisplayName("isInitialLoadComplete")
+    inner class IsInitialLoadComplete {
+
+        @Test
+        fun `initial value is false before use case emits`() = runTest(testDispatcher) {
+            every { observeSelectedGroupUseCase() } returns flowOf()
+            every { getSelectedGroupIdUseCase() } returns flowOf()
+            every { getSelectedGroupNameUseCase() } returns flowOf()
+            every { getSelectedGroupCurrencyUseCase() } returns flowOf()
+
+            val viewModel = createViewModel()
+
+            assertEquals(false, viewModel.isInitialLoadComplete.value)
+        }
+
+        @Test
+        fun `emits true once use case emits null`() = runTest(testDispatcher) {
+            every { getSelectedGroupIdUseCase() } returns flowOf()
+            every { getSelectedGroupNameUseCase() } returns flowOf()
+            every { getSelectedGroupCurrencyUseCase() } returns flowOf()
+
+            val viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.isInitialLoadComplete.collect {} }
+            advanceUntilIdle()
+
+            assertEquals(true, viewModel.isInitialLoadComplete.value)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `emits true once use case emits group`() = runTest(testDispatcher) {
+            every { observeSelectedGroupUseCase() } returns flowOf(mockk<Group>())
+            every { getSelectedGroupIdUseCase() } returns flowOf()
+            every { getSelectedGroupNameUseCase() } returns flowOf()
+            every { getSelectedGroupCurrencyUseCase() } returns flowOf()
+
+            val viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.isInitialLoadComplete.collect {} }
+            advanceUntilIdle()
+
+            assertEquals(true, viewModel.isInitialLoadComplete.value)
+
+            collectJob.cancel()
+        }
+    }
 
     @Nested
     @DisplayName("selectedGroupId")
