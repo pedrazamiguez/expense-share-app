@@ -157,7 +157,7 @@ val groupsUiModule = module {
         val isUserAnonymousUseCase = get<IsUserAnonymousUseCase>()
         val authenticationService = get<AuthenticationService>()
         val archiveGroupUseCase = get<ArchiveGroupUseCase>()
-        val leaveGroupUseCase = get<LeaveGroupUseCase>()
+        val groupLeaveWizardEventHandler = get<GroupLeaveWizardEventHandler>()
         GroupsViewModel(
             getUserGroupsFlowUseCase = getUserGroupsFlowUseCase,
             deleteGroupUseCase = deleteGroupUseCase,
@@ -166,7 +166,7 @@ val groupsUiModule = module {
             isUserAnonymousUseCase = isUserAnonymousUseCase,
             authenticationService = authenticationService,
             archiveGroupUseCase = archiveGroupUseCase,
-            leaveGroupUseCase = leaveGroupUseCase
+            leaveWizardEventHandler = groupLeaveWizardEventHandler
         )
     }
 

@@ -1,19 +1,20 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler
 
+import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardUiState
-import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupDetailUiAction
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Event handler responsible for the Group Leave Wizard flow.
  */
 interface GroupLeaveWizardEventHandler {
+    val wizardState: StateFlow<LeaveWizardUiState>
+
     fun bind(
-        localUiStateFlow: MutableStateFlow<GroupDetailViewModelLocalState>,
-        actionsChannel: Channel<GroupDetailUiAction>,
-        scope: CoroutineScope
+        scope: CoroutineScope,
+        onLeaveSuccess: suspend (UiText) -> Unit,
+        onError: suspend (UiText) -> Unit
     )
 
     fun handleLeaveClicked(groupId: String)
@@ -31,8 +32,5 @@ data class GroupDetailViewModelLocalState(
     val showArchiveConfirmation: Boolean = false,
     val isArchiving: Boolean = false,
     val showDeleteConfirmation: Boolean = false,
-    val isDeleting: Boolean = false,
-    val isLeaving: Boolean = false,
-    val leaveWizardState: LeaveWizardUiState =
-        LeaveWizardUiState()
+    val isDeleting: Boolean = false
 )

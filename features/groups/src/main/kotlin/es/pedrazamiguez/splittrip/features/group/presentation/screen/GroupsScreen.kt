@@ -15,13 +15,13 @@ import es.pedrazamiguez.splittrip.features.group.presentation.component.ArchiveC
 import es.pedrazamiguez.splittrip.features.group.presentation.component.DeleteConfirmationDialog
 import es.pedrazamiguez.splittrip.features.group.presentation.component.GroupsScreenContent
 import es.pedrazamiguez.splittrip.features.group.presentation.component.GroupsScreenOverlays
-import es.pedrazamiguez.splittrip.features.group.presentation.component.LeaveConfirmationDialog
 import es.pedrazamiguez.splittrip.features.group.presentation.component.RestoreScrollEffect
 import es.pedrazamiguez.splittrip.features.group.presentation.component.TrackScrollEffect
+import es.pedrazamiguez.splittrip.features.group.presentation.component.leave.GroupLeaveWizardSheet
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupsUiState
 
-@Suppress("kotlin:S107")
+@Suppress("kotlin:S107", "LongMethod", "LongParameterList")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupsScreen(
@@ -35,7 +35,12 @@ fun GroupsScreen(
     onDeleteGroup: (groupId: String) -> Unit = {},
     onManageSubunits: (groupId: String) -> Unit = {},
     onArchiveGroup: (groupId: String) -> Unit = {},
-    onLeaveGroup: (groupId: String) -> Unit = {}
+    onLeaveGroup: (groupId: String) -> Unit = {},
+    onWizardNextClicked: (String) -> Unit = {},
+    onWizardBackClicked: () -> Unit = {},
+    onWizardCancelled: () -> Unit = {},
+    onConfirmSettlement: (String, String) -> Unit = { _, _ -> },
+    onConfirmLeave: (String) -> Unit = {}
 ) {
     val listState = rememberLazyListState()
     var selectedGroupForMenu by remember { mutableStateOf<GroupUiModel?>(null) }
@@ -66,6 +71,7 @@ fun GroupsScreen(
         selectedGroupId = selectedGroupId,
         isSoleGroup = uiState.groups.size == 1,
         currentUserId = uiState.currentUserId,
+        isLeaving = uiState.isLeaving,
         onSelectGroup = onSelectGroup,
         onEditGroup = onEditGroup,
         onManageSubunits = onManageSubunits,
@@ -81,6 +87,7 @@ fun GroupsScreen(
         onLeaveRequested = { group ->
             groupToLeave = group
             selectedGroupForMenu = null
+            onLeaveGroup(group.id)
         }
     )
 
@@ -88,5 +95,21 @@ fun GroupsScreen(
 
     ArchiveConfirmationDialog(groupToArchive, onArchiveGroup) { groupToArchive = null }
 
-    LeaveConfirmationDialog(groupToLeave, onLeaveGroup) { groupToLeave = null }
+    if (uiState.leaveWizardState.showSheet && groupToLeave != null) {
+        GroupLeaveWizardSheet(
+            groupName = groupToLeave!!.name,
+            leaveWizardState = uiState.leaveWizardState,
+            onNextClicked = { onWizardNextClicked(groupToLeave!!.id) },
+            onBackClicked = onWizardBackClicked,
+            onDismissRequest = {
+                onWizardCancelled()
+                groupToLeave = null
+            },
+            onConfirmSettlement = { onConfirmSettlement(groupToLeave!!.id, it) },
+            onConfirmLeave = { onConfirmLeave(groupToLeave!!.id) }
+        )
+    } else if (!uiState.leaveWizardState.showSheet && groupToLeave != null && !uiState.isLeaving) {
+        // Clear groupToLeave when the sheet is closed and not loading
+        groupToLeave = null
+    }
 }

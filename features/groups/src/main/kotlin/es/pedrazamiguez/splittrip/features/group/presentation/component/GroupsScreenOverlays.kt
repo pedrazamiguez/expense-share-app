@@ -30,7 +30,8 @@ internal fun GroupsScreenOverlays(
     onMenuDismiss: () -> Unit,
     onDeleteRequested: (GroupUiModel) -> Unit,
     onArchiveRequested: (GroupUiModel) -> Unit,
-    onLeaveRequested: (GroupUiModel) -> Unit
+    onLeaveRequested: (GroupUiModel) -> Unit,
+    isLeaving: Boolean = false
 ) {
     selectedGroup?.let { group ->
         val isActive = group.id == selectedGroupId
@@ -65,6 +66,7 @@ internal fun GroupsScreenOverlays(
             group = group,
             currentUserId = currentUserId,
             text = leaveGroupText,
+            isLeaving = isLeaving,
             onLeaveRequested = onLeaveRequested,
             onMenuDismiss = onMenuDismiss
         )
@@ -137,6 +139,7 @@ private fun leaveActionForGroup(
     group: GroupUiModel,
     currentUserId: String?,
     text: String,
+    isLeaving: Boolean,
     onLeaveRequested: (GroupUiModel) -> Unit,
     onMenuDismiss: () -> Unit
 ): SheetAction? {
@@ -148,6 +151,7 @@ private fun leaveActionForGroup(
             onLeaveRequested(group)
             onMenuDismiss()
         },
+        enabled = !isLeaving,
         isDestructive = true
     )
 }
