@@ -238,7 +238,8 @@ class AddExpenseUiMapper(
             expense = expense,
             currentState = currentState,
             memberProfiles = memberProfiles,
-            subunits = subunits
+            subunits = subunits,
+            currentUserId = currentState.currentUserId
         )
 
         val expenseDateMillis =
@@ -354,7 +355,8 @@ class AddExpenseUiMapper(
         expense: Expense,
         currentState: AddExpenseUiState,
         memberProfiles: Map<String, User>,
-        subunits: List<Subunit>
+        subunits: List<Subunit>,
+        currentUserId: String? = null
     ): Pair<ImmutableList<SplitUiModel>, ImmutableList<SplitUiModel>> {
         val hasSubunitSplits = expense.splits.any { it.subunitId != null }
 
@@ -364,7 +366,8 @@ class AddExpenseUiMapper(
             splitMapper.mapDomainToSplits(
                 memberIds = currentState.memberIds,
                 shares = expense.splits,
-                memberProfiles = memberProfiles
+                memberProfiles = memberProfiles,
+                currentUserId = currentUserId
             )
         }
 
@@ -374,7 +377,8 @@ class AddExpenseUiMapper(
                 subunits = subunits,
                 shares = expense.splits,
                 availableSplitTypes = currentState.availableSplitTypes,
-                memberProfiles = memberProfiles
+                memberProfiles = memberProfiles,
+                currentUserId = currentUserId
             )
         } else {
             currentState.entitySplits
