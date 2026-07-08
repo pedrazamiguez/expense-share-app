@@ -23,17 +23,17 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
@@ -55,8 +55,8 @@ class GroupsViewModel(
     init {
         leaveWizardEventHandler.bind(
             scope = viewModelScope,
-            onLeaveSuccess = { message -> _actions.tryEmit(GroupsUiAction.ShowLeaveSuccess(message)) },
-            onError = { message -> _actions.tryEmit(GroupsUiAction.ShowLeaveError(message)) }
+            onLeaveSuccess = { message -> _actions.send(GroupsUiAction.ShowLeaveSuccess(message)) },
+            onError = { message -> _actions.send(GroupsUiAction.ShowLeaveError(message)) }
         )
     }
 
@@ -64,8 +64,8 @@ class GroupsViewModel(
     private val _scrollState = MutableStateFlow(ScrollState())
 
     // Actions for one-shot events like success/error messages
-    private val _actions = MutableSharedFlow<GroupsUiAction>()
-    val actions: SharedFlow<GroupsUiAction> = _actions.asSharedFlow()
+    private val _actions = Channel<GroupsUiAction>(Channel.BUFFERED)
+    val actions: Flow<GroupsUiAction> = _actions.receiveAsFlow()
 
     /**
      * UI state derived from the groups Flow.
@@ -129,7 +129,7 @@ class GroupsViewModel(
             .catch { e ->
                 Timber.e(e, "Error loading groups")
                 viewModelScope.launch {
-                    _actions.emit(
+                    _actions.send(
                         GroupsUiAction.ShowLoadError(
                             UiText.StringResource(R.string.groups_error_loading)
                         )
@@ -196,14 +196,14 @@ class GroupsViewModel(
         viewModelScope.launch {
             try {
                 deleteGroupUseCase(groupId)
-                _actions.emit(
+                _actions.send(
                     GroupsUiAction.ShowDeleteSuccess(
                         UiText.StringResource(R.string.group_deleted_successfully)
                     )
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete group: $groupId")
-                _actions.emit(
+                _actions.send(
                     GroupsUiAction.ShowDeleteError(
                         UiText.StringResource(R.string.error_deleting_group)
                     )
@@ -216,7 +216,7 @@ class GroupsViewModel(
         viewModelScope.launch {
             archiveGroupUseCase(groupId).fold(
                 onSuccess = {
-                    _actions.emit(
+                    _actions.send(
                         GroupsUiAction.ShowArchiveSuccess(
                             UiText.StringResource(R.string.group_archived_successfully)
                         )
@@ -230,7 +230,7 @@ class GroupsViewModel(
                         else ->
                             UiText.StringResource(DesignSystemR.string.group_error_archiving_failed)
                     }
-                    _actions.emit(GroupsUiAction.ShowArchiveError(message))
+                    _actions.send(GroupsUiAction.ShowArchiveError(message))
                 }
             )
         }

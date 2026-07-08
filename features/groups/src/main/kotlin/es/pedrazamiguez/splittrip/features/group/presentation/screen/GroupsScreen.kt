@@ -95,6 +95,11 @@ fun GroupsScreen(
 
     ArchiveConfirmationDialog(groupToArchive, onArchiveGroup) { groupToArchive = null }
 
+    val shouldClearGroupToLeave = !uiState.leaveWizardState.showSheet &&
+        groupToLeave != null &&
+        !uiState.isLeaving &&
+        !uiState.leaveWizardState.isLoading
+
     if (uiState.leaveWizardState.showSheet && groupToLeave != null) {
         GroupLeaveWizardSheet(
             groupName = groupToLeave!!.name,
@@ -108,7 +113,7 @@ fun GroupsScreen(
             onConfirmSettlement = { onConfirmSettlement(groupToLeave!!.id, it) },
             onConfirmLeave = { onConfirmLeave(groupToLeave!!.id) }
         )
-    } else if (!uiState.leaveWizardState.showSheet && groupToLeave != null && !uiState.isLeaving) {
+    } else if (shouldClearGroupToLeave) {
         // Clear groupToLeave when the sheet is closed and not loading
         groupToLeave = null
     }

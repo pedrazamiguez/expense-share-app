@@ -67,6 +67,8 @@ class GroupLeaveWizardEventHandlerImpl(
     override fun handleLeaveClicked(groupId: String) {
         if (groupId.isBlank()) return
 
+        _wizardState.update { it.copy(isLoading = true) }
+
         coroutineScope.launch {
             try {
                 val currentUserId = authenticationService.requireUserId()
