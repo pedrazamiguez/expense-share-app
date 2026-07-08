@@ -8,6 +8,7 @@ data class SettlementRowUiModel(
     val creditorId: String,
     val debtorName: String,
     val creditorName: String,
+    val directionTitle: String,
     val formattedAmount: String,
     val isCurrentUserDebtor: Boolean,
     val isCurrentUserCreditor: Boolean,

@@ -170,6 +170,9 @@
     <string name="settlement_overview_status_confirmed_by_payer">Esperando cobrador</string>
     <string name="settlement_overview_status_disputed">Disputada</string>
     <string name="settlement_overview_status_resolved">Resuelta</string>
+    <string name="settlement_overview_direction_owes_you">%1$s te debe</string>
+    <string name="settlement_overview_direction_you_owe">Debes a %1$s</string>
+    <string name="settlement_overview_direction_other_owes">%1$s debe a %2$s</string>
     <!-- Leave Group Wizard -->
     <string name="leave_wizard_step_balance">Balances</string>
     <string name="leave_wizard_step_settlements">Liquidaciones</string>

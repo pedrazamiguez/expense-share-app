@@ -53,6 +53,7 @@ class GroupSettlementOverviewUiMapperImpl(
         val creditorName = resolveMemberName(record.settlement.toUserId, memberProfiles, currentUserId)
         val isDebtor = record.settlement.fromUserId == currentUserId
         val isCreditor = record.settlement.toUserId == currentUserId
+        val directionTitle = resolveDirectionTitle(isDebtor, isCreditor, debtorName, creditorName)
 
         return SettlementRowUiModel(
             settlementId = record.id,
@@ -60,6 +61,7 @@ class GroupSettlementOverviewUiMapperImpl(
             creditorId = record.settlement.toUserId,
             debtorName = debtorName,
             creditorName = creditorName,
+            directionTitle = directionTitle,
             formattedAmount = formatAmount(record.settlement.amount, record.settlement.currency),
             isCurrentUserDebtor = isDebtor,
             isCurrentUserCreditor = isCreditor,
@@ -73,6 +75,17 @@ class GroupSettlementOverviewUiMapperImpl(
             disputeReason = record.disputeReason,
             status = record.status
         )
+    }
+
+    private fun resolveDirectionTitle(
+        isDebtor: Boolean,
+        isCreditor: Boolean,
+        debtorName: String,
+        creditorName: String
+    ): String = when {
+        isCreditor -> resourceProvider.getString(R.string.settlement_overview_direction_owes_you, debtorName)
+        isDebtor -> resourceProvider.getString(R.string.settlement_overview_direction_you_owe, creditorName)
+        else -> resourceProvider.getString(R.string.settlement_overview_direction_other_owes, debtorName, creditorName)
     }
 
     private fun resolveMemberName(

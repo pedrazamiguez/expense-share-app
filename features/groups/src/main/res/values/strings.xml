@@ -169,6 +169,9 @@
     <string name="settlement_overview_status_confirmed_by_payer">Awaiting Payee</string>
     <string name="settlement_overview_status_disputed">Disputed</string>
     <string name="settlement_overview_status_resolved">Resolved</string>
+    <string name="settlement_overview_direction_owes_you">%1$s owes you</string>
+    <string name="settlement_overview_direction_you_owe">You owe %1$s</string>
+    <string name="settlement_overview_direction_other_owes">%1$s owes %2$s</string>
     <!-- Leave Group Wizard -->
     <string name="leave_wizard_step_balance">Balances</string>
     <string name="leave_wizard_step_settlements">Settlements</string>
