@@ -36,6 +36,17 @@ class SharedViewModel(
         initialValue = null
     )
 
+    val isInitialLoadComplete: StateFlow<Boolean> = observeSelectedGroupUseCase()
+        .map { true }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(
+                stopTimeoutMillis = AppConstants.FLOW_RETENTION_TIME,
+                replayExpirationMillis = AppConstants.FLOW_REPLAY_EXPIRATION
+            ),
+            initialValue = false
+        )
+
     val selectedGroupId: StateFlow<String?> = getSelectedGroupIdUseCase().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(
