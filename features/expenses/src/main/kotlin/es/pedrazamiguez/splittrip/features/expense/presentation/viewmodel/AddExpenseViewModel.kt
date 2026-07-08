@@ -102,7 +102,8 @@ class AddExpenseViewModel(
                     subunitSplitEventHandler.initEntitySplits(
                         action.memberIds,
                         action.subunits,
-                        action.memberProfiles
+                        action.memberProfiles,
+                        _uiState.value.currentUserId
                     )
 
                 is PostConfigAction.ClearEntitySplits ->

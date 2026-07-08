@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.mapper
 
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
@@ -9,7 +10,6 @@ import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.model.User
-import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.SettlementUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.StatusChipStyle
 import kotlinx.collections.immutable.ImmutableList
@@ -49,7 +49,6 @@ class SettlementsUiMapper(
         memberProfiles: Map<String, User>
     ): ImmutableList<SettlementUiModel> {
         val locale = localeProvider.getCurrentLocale()
-        val youStr = resourceProvider.getString(R.string.balances_member_you)
         return settlements.map { s ->
             val isDebtor = s.fromUserId == currentUserId
             val isCreditor = s.toUserId == currentUserId
@@ -57,18 +56,18 @@ class SettlementsUiMapper(
             SettlementUiModel(
                 debtorId = s.fromUserId,
                 creditorId = s.toUserId,
-                debtorName = if (isDebtor) {
-                    youStr
-                } else {
-                    memberProfiles[s.fromUserId]?.let { userUiMapper.mapToDisplayName(it) }
-                        ?: ""
-                },
-                creditorName = if (isCreditor) {
-                    youStr
-                } else {
-                    memberProfiles[s.toUserId]?.let { userUiMapper.mapToDisplayName(it) }
-                        ?: ""
-                },
+                debtorName = userUiMapper.mapToDisplayName(
+                    user = memberProfiles[s.fromUserId],
+                    fallbackUserId = s.fromUserId,
+                    currentUserId = currentUserId,
+                    selfIdentificationContext = SelfIdentificationContext.NOMINATIVE
+                ),
+                creditorName = userUiMapper.mapToDisplayName(
+                    user = memberProfiles[s.toUserId],
+                    fallbackUserId = s.toUserId,
+                    currentUserId = currentUserId,
+                    selfIdentificationContext = SelfIdentificationContext.NOMINATIVE
+                ),
                 formattedAmount = formatCurrencyAmount(s.amount, s.currency.ifEmpty { currency }, locale),
                 isCurrentUserDebtor = isDebtor,
                 isCurrentUserCreditor = isCreditor,

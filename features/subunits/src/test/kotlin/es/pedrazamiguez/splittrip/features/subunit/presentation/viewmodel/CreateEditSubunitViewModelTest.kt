@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.model.User
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.SubunitShareDistributionService
 import es.pedrazamiguez.splittrip.domain.service.impl.SubunitShareDistributionServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
@@ -57,6 +58,7 @@ class CreateEditSubunitViewModelTest {
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
     private lateinit var subunitUiMapper: SubunitUiMapper
     private lateinit var shareDistributionService: SubunitShareDistributionService
+    private lateinit var authenticationService: AuthenticationService
     private lateinit var viewModel: CreateEditSubunitViewModel
 
     private val testGroup = Group(
@@ -95,6 +97,9 @@ class CreateEditSubunitViewModelTest {
         getMemberProfilesUseCase = mockk()
         subunitUiMapper = mockk()
         shareDistributionService = SubunitShareDistributionServiceImpl()
+        authenticationService = mockk {
+            every { currentUserId() } returns "user-1"
+        }
     }
 
     @AfterEach
@@ -110,7 +115,8 @@ class CreateEditSubunitViewModelTest {
             getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             subunitUiMapper = subunitUiMapper,
-            shareDistributionService = shareDistributionService
+            shareDistributionService = shareDistributionService,
+            authenticationService = authenticationService
         )
     }
 
@@ -119,7 +125,7 @@ class CreateEditSubunitViewModelTest {
         coEvery { getMemberProfilesUseCase(testGroup.members) } returns testMemberProfiles
         every { getGroupSubunitsFlowUseCase("group-1") } returns flowOf(subunits)
         every {
-            subunitUiMapper.toMemberUiModelList(any(), any(), any(), any())
+            subunitUiMapper.toMemberUiModelList(any(), any(), any(), any(), any())
         } returns testMemberUiModels
         // Stub formatShareAsPercentage — called by toggleMember/updateMemberShare/edit-mode pre-fill
         every { subunitUiMapper.formatShareAsPercentage(any()) } answers {

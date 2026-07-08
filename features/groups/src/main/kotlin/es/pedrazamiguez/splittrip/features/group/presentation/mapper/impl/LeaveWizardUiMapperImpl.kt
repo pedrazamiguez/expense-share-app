@@ -1,8 +1,10 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl
 
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
@@ -21,7 +23,8 @@ import kotlinx.collections.immutable.toImmutableList
 
 class LeaveWizardUiMapperImpl(
     private val formattingHelper: FormattingHelper,
-    private val resourceProvider: ResourceProvider
+    private val resourceProvider: ResourceProvider,
+    private val userUiMapper: UserUiMapper
 ) : LeaveWizardUiMapper {
 
     override fun toBalanceSummaryUiModel(
@@ -178,11 +181,12 @@ class LeaveWizardUiMapperImpl(
         profiles: Map<String, User>,
         currentUserId: String
     ): String {
-        if (userId == currentUserId) {
-            return resourceProvider.getString(DesignSystemR.string.balance_you)
-        }
-        return profiles[userId]?.displayName
-            ?: resourceProvider.getString(DesignSystemR.string.user_pending_fallback)
+        return userUiMapper.mapToDisplayName(
+            user = profiles[userId],
+            fallbackUserId = userId,
+            currentUserId = currentUserId,
+            selfIdentificationContext = SelfIdentificationContext.NOMINATIVE
+        )
     }
 
     private fun resolvePocketTypeLabel(type: SettlementPocketType): String {

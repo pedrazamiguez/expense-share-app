@@ -9,7 +9,7 @@
     <string name="withdrawal_cash_withdrawing_for">Retirando</string>
     <string name="withdrawal_cash_for_group">Pa tó er grupo</string>
     <string name="withdrawal_cash_for_subunit">Pa %1$s</string>
-    <string name="withdrawal_cash_for_me">Pa mí</string>
+    <string name="withdrawal_cash_for_you">Çolo pa ti</string>
     <string name="withdrawal_cash_for_member">Pa %1$s</string>
     <string name="withdrawal_scope_personal">Perçonâh</string>
     <string name="withdrawal_scope_group">Grupo</string>

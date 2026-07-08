@@ -1,8 +1,10 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
 import es.pedrazamiguez.splittrip.core.common.extensions.localeAwareComparator
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.enums.SplitType
 import es.pedrazamiguez.splittrip.domain.model.ExpenseSplit
 import es.pedrazamiguez.splittrip.domain.model.Subunit
@@ -32,7 +34,8 @@ class AddExpenseSplitUiMapper(
     private val localeProvider: LocaleProvider,
     private val formattingHelper: FormattingHelper,
     private val splitPreviewService: SplitPreviewService,
-    private val entitySplitFlattenDelegate: EntitySplitFlattenDelegate
+    private val entitySplitFlattenDelegate: EntitySplitFlattenDelegate,
+    private val userUiMapper: UserUiMapper
 ) {
 
     /**
@@ -41,14 +44,15 @@ class AddExpenseSplitUiMapper(
     fun buildInitialSplits(
         memberIds: List<String>,
         shares: List<ExpenseSplit>,
-        memberProfiles: Map<String, User> = emptyMap()
+        memberProfiles: Map<String, User> = emptyMap(),
+        currentUserId: String? = null
     ): ImmutableList<SplitUiModel> =
         memberIds.map { userId ->
             val share = shares.find { it.userId == userId }
             val amountCents = share?.amountCents ?: 0L
             SplitUiModel(
                 userId = userId,
-                displayName = resolveDisplayName(userId, memberProfiles),
+                displayName = resolveDisplayName(userId, memberProfiles, currentUserId),
                 amountCents = amountCents,
                 formattedAmount = formattingHelper.formatCentsValue(amountCents),
                 amountInput = formattingHelper.formatCentsValue(amountCents),
@@ -61,12 +65,16 @@ class AddExpenseSplitUiMapper(
     /**
      * Resolves a userId to a human-readable display name using the
      * fallback hierarchy: displayName → email → raw userId.
+     *
+     * When [currentUserId] matches, returns the NOMINATIVE self-identification pronoun ("You" / "Tú").
      */
-    fun resolveDisplayName(userId: String, memberProfiles: Map<String, User>): String {
-        val user = memberProfiles[userId] ?: return userId
-        return user.displayName?.takeIf { it.isNotBlank() }
-            ?: user.email.takeIf { it.isNotBlank() }
-            ?: userId
+    fun resolveDisplayName(userId: String, memberProfiles: Map<String, User>, currentUserId: String? = null): String {
+        return userUiMapper.mapToDisplayName(
+            user = memberProfiles[userId],
+            fallbackUserId = userId,
+            currentUserId = currentUserId,
+            selfIdentificationContext = if (currentUserId != null) SelfIdentificationContext.NOMINATIVE else null
+        )
     }
 
     /**
@@ -110,7 +118,8 @@ class AddExpenseSplitUiMapper(
     fun mapDomainToSplits(
         memberIds: List<String>,
         shares: List<ExpenseSplit>,
-        memberProfiles: Map<String, User> = emptyMap()
+        memberProfiles: Map<String, User> = emptyMap(),
+        currentUserId: String? = null
     ): ImmutableList<SplitUiModel> =
         memberIds.map { userId ->
             val share = shares.find { it.userId == userId }
@@ -118,7 +127,7 @@ class AddExpenseSplitUiMapper(
             val amountCents = share?.amountCents ?: 0L
             SplitUiModel(
                 userId = userId,
-                displayName = resolveDisplayName(userId, memberProfiles),
+                displayName = resolveDisplayName(userId, memberProfiles, currentUserId),
                 amountCents = amountCents,
                 formattedAmount = formattingHelper.formatCentsValue(amountCents),
                 amountInput = formattingHelper.formatCentsValue(amountCents),
@@ -137,7 +146,8 @@ class AddExpenseSplitUiMapper(
         subunits: List<Subunit>,
         shares: List<ExpenseSplit>,
         availableSplitTypes: List<SplitTypeUiModel>,
-        memberProfiles: Map<String, User> = emptyMap()
+        memberProfiles: Map<String, User> = emptyMap(),
+        currentUserId: String? = null
     ): ImmutableList<SplitUiModel> {
         val subunitMemberIds = subunits.flatMap { it.memberIds }.toSet()
         val soloMemberIds = memberIds.filter { it !in subunitMemberIds }
@@ -145,8 +155,10 @@ class AddExpenseSplitUiMapper(
 
         val entityRows = mutableListOf<SplitUiModel>()
 
-        entityRows.addAll(buildSoloMemberRows(soloMemberIds, shares, memberProfiles))
-        entityRows.addAll(buildSubunitRows(subunits, shares, availableSplitTypes, defaultSplitType, memberProfiles))
+        entityRows.addAll(buildSoloMemberRows(soloMemberIds, shares, memberProfiles, currentUserId))
+        entityRows.addAll(
+            buildSubunitRows(subunits, shares, availableSplitTypes, defaultSplitType, memberProfiles, currentUserId)
+        )
 
         val localeComparator =
             localeAwareComparator(localeProvider.getCurrentLocale()) { model: SplitUiModel -> model.displayName }
@@ -159,7 +171,8 @@ class AddExpenseSplitUiMapper(
     private fun buildSoloMemberRows(
         soloMemberIds: List<String>,
         shares: List<ExpenseSplit>,
-        memberProfiles: Map<String, User>
+        memberProfiles: Map<String, User>,
+        currentUserId: String? = null
     ): List<SplitUiModel> {
         return soloMemberIds.map { userId ->
             val share = shares.find { it.userId == userId && it.subunitId == null }
@@ -167,7 +180,7 @@ class AddExpenseSplitUiMapper(
             val amountCents = share?.amountCents ?: 0L
             SplitUiModel(
                 userId = userId,
-                displayName = resolveDisplayName(userId, memberProfiles),
+                displayName = resolveDisplayName(userId, memberProfiles, currentUserId),
                 isEntityRow = true,
                 amountCents = amountCents,
                 formattedAmount = formattingHelper.formatCentsValue(amountCents),
@@ -183,7 +196,8 @@ class AddExpenseSplitUiMapper(
         shares: List<ExpenseSplit>,
         availableSplitTypes: List<SplitTypeUiModel>,
         defaultSplitType: SplitTypeUiModel?,
-        memberProfiles: Map<String, User>
+        memberProfiles: Map<String, User>,
+        currentUserId: String? = null
     ): List<SplitUiModel> {
         return subunits.map { subunit ->
             val subunitShares = shares.filter { it.subunitId == subunit.id }
@@ -199,7 +213,7 @@ class AddExpenseSplitUiMapper(
                 val amountCents = share?.amountCents ?: 0L
                 SplitUiModel(
                     userId = memberId,
-                    displayName = resolveDisplayName(memberId, memberProfiles),
+                    displayName = resolveDisplayName(memberId, memberProfiles, currentUserId),
                     subunitId = subunit.id,
                     amountCents = amountCents,
                     formattedAmount = formattingHelper.formatCentsValue(amountCents),

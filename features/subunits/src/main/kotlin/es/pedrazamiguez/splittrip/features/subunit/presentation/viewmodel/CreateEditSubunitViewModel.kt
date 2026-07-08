@@ -10,6 +10,7 @@ import es.pedrazamiguez.splittrip.domain.converter.CurrencyConverter
 import es.pedrazamiguez.splittrip.domain.exception.GroupArchivedException
 import es.pedrazamiguez.splittrip.domain.exception.ValidationException
 import es.pedrazamiguez.splittrip.domain.model.Subunit
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.SubunitShareDistributionService
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.CreateSubunitUseCase
@@ -63,7 +64,8 @@ class CreateEditSubunitViewModel(
     private val getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase,
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
     private val subunitUiMapper: SubunitUiMapper,
-    private val shareDistributionService: SubunitShareDistributionService
+    private val shareDistributionService: SubunitShareDistributionService,
+    private val authenticationService: AuthenticationService
 ) : ViewModel() {
 
     private data class InitParams(val groupId: String, val subunitId: String?)
@@ -146,11 +148,13 @@ class CreateEditSubunitViewModel(
                                 _formState.update { it.copy(initialized = true) }
                             }
 
+                            val currentUserId = authenticationService.currentUserId()
                             subunitUiMapper.toMemberUiModelList(
                                 memberIds = memberIds,
                                 memberProfiles = memberProfiles,
                                 subunits = subunits,
-                                excludeSubunitId = subunitId
+                                excludeSubunitId = subunitId,
+                                currentUserId = currentUserId
                             )
                         }
                 }
