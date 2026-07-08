@@ -143,6 +143,9 @@
     <string name="settlement_overview_status_confirmed_by_payer">Êpperando cobradôh</string>
     <string name="settlement_overview_status_disputed">Dîpputá</string>
     <string name="settlement_overview_status_resolved">Reçuerta</string>
+    <string name="settlement_overview_direction_owes_you">%1$s te debe</string>
+    <string name="settlement_overview_direction_you_owe">Debê a %1$s</string>
+    <string name="settlement_overview_direction_other_owes">%1$s debe a %2$s</string>
     <string name="leave_wizard_step_balance">Balançê</string>
     <string name="leave_wizard_step_settlements">Liquidaçionê</string>
     <string name="leave_wizard_step_cash">Efêttibo</string>

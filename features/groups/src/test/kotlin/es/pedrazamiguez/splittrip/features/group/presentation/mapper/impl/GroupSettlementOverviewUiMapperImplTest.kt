@@ -140,6 +140,10 @@ class GroupSettlementOverviewUiMapperImplTest {
 
         @Test
         fun `maps debtor and creditor names from member profiles`() {
+            every {
+                resourceProvider.getString(R.string.settlement_overview_direction_other_owes, "Alice", "Bob")
+            } returns "Alice owes Bob"
+
             val settlements = listOf(
                 createRecord("s-1", SettlementStatus.SUGGESTED, fromUser = "user-1", toUser = "user-2")
             )
@@ -152,6 +156,7 @@ class GroupSettlementOverviewUiMapperImplTest {
             val row = result.pendingSettlements.first()
             assertEquals("Alice", row.debtorName)
             assertEquals("Bob", row.creditorName)
+            assertEquals("Alice owes Bob", row.directionTitle)
         }
 
         @Test
@@ -159,6 +164,9 @@ class GroupSettlementOverviewUiMapperImplTest {
             every {
                 resourceProvider.getString(DesignSystemR.string.balance_you)
             } returns "You"
+            every {
+                resourceProvider.getString(R.string.settlement_overview_direction_you_owe, "Bob")
+            } returns "You owe Bob"
 
             val settlements = listOf(
                 createRecord("s-1", SettlementStatus.SUGGESTED, fromUser = "user-1", toUser = "user-2")
@@ -172,6 +180,7 @@ class GroupSettlementOverviewUiMapperImplTest {
             val row = result.pendingSettlements.first()
             assertEquals("You", row.debtorName)
             assertEquals("Bob", row.creditorName)
+            assertEquals("You owe Bob", row.directionTitle)
         }
 
         @Test
@@ -317,6 +326,86 @@ class GroupSettlementOverviewUiMapperImplTest {
             assertEquals(SettlementRowStatusStyle.WARNING, result.pendingSettlements[1].statusChipStyle)
             assertEquals(SettlementRowStatusStyle.ERROR, result.disputedSettlements[0].statusChipStyle)
             assertEquals(SettlementRowStatusStyle.SUCCESS, result.resolvedSettlements[0].statusChipStyle)
+        }
+
+        @Test
+        fun `directionTitle is owes_you when current user is creditor`() {
+            every {
+                resourceProvider.getString(R.string.settlement_overview_direction_owes_you, "Antonio")
+            } returns "Antonio owes you"
+
+            val settlements = listOf(
+                createRecord("s-1", SettlementStatus.SUGGESTED, fromUser = "user-2", toUser = "user-1")
+            )
+            val profiles = mapOf(
+                "user-2" to User(userId = "user-2", email = "a@b.com", displayName = "Antonio")
+            )
+            val result = mapper.toUiState(settlements, profiles, "user-1")
+
+            val row = result.pendingSettlements.first()
+            assertEquals("Antonio owes you", row.directionTitle)
+        }
+
+        @Test
+        fun `directionTitle is you_owe when current user is debtor`() {
+            every {
+                resourceProvider.getString(R.string.settlement_overview_direction_you_owe, "Antonio")
+            } returns "You owe Antonio"
+
+            val settlements = listOf(
+                createRecord("s-1", SettlementStatus.SUGGESTED, fromUser = "user-1", toUser = "user-2")
+            )
+            val profiles = mapOf(
+                "user-2" to User(userId = "user-2", email = "a@b.com", displayName = "Antonio")
+            )
+            val result = mapper.toUiState(settlements, profiles, "user-1")
+
+            val row = result.pendingSettlements.first()
+            assertEquals("You owe Antonio", row.directionTitle)
+        }
+
+        @Test
+        fun `directionTitle is other_owes when current user is uninvolved`() {
+            every {
+                resourceProvider.getString(R.string.settlement_overview_direction_other_owes, "Antonio", "Bernardo")
+            } returns "Antonio owes Bernardo"
+
+            val settlements = listOf(
+                createRecord("s-1", SettlementStatus.SUGGESTED, fromUser = "user-2", toUser = "user-3")
+            )
+            val profiles = mapOf(
+                "user-2" to User(userId = "user-2", email = "a@b.com", displayName = "Antonio"),
+                "user-3" to User(userId = "user-3", email = "c@d.com", displayName = "Bernardo")
+            )
+            val result = mapper.toUiState(settlements, profiles, "user-1")
+
+            val row = result.pendingSettlements.first()
+            assertEquals("Antonio owes Bernardo", row.directionTitle)
+        }
+
+        @Test
+        fun `directionTitle uses fallback for unknown member in other_owes`() {
+            every {
+                resourceProvider.getString(DesignSystemR.string.user_pending_fallback)
+            } returns "Pending member"
+            every {
+                resourceProvider.getString(
+                    R.string.settlement_overview_direction_other_owes,
+                    "Pending member",
+                    "Bernardo"
+                )
+            } returns "Pending member owes Bernardo"
+
+            val settlements = listOf(
+                createRecord("s-1", SettlementStatus.SUGGESTED, fromUser = "unknown", toUser = "user-3")
+            )
+            val profiles = mapOf(
+                "user-3" to User(userId = "user-3", email = "c@d.com", displayName = "Bernardo")
+            )
+            val result = mapper.toUiState(settlements, profiles, "user-1")
+
+            val row = result.pendingSettlements.first()
+            assertEquals("Pending member owes Bernardo", row.directionTitle)
         }
     }
 
