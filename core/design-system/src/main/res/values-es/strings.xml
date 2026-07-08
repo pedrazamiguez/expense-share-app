@@ -69,6 +69,12 @@
     <string name="content_description_menu">Abrir menú</string>
     <string name="content_description_profile">Perfil de usuario</string>
 
+    <!-- Self-Identification Pronouns -->
+    <string name="self_identification_nominative">Tú</string>
+    <string name="self_identification_beneficiary">Para ti</string>
+    <string name="self_identification_agent">Por ti</string>
+    <string name="self_identification_recipient">A ti</string>
+
     <!-- User Fallback -->
     <string name="user_pending_fallback">Miembro pendiente</string>
     <string name="balance_you">Tú</string>

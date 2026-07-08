@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
@@ -199,11 +200,13 @@ class AddExpenseViewModelTest {
         val formattingHelper = FormattingHelper(localeProvider, appConfigService)
         val splitPreviewService = SplitPreviewServiceImpl()
         val remainderDistributionService = RemainderDistributionServiceImpl()
+        val userUiMapper = mockk<UserUiMapper>(relaxed = true)
         val addExpenseSplitMapper = AddExpenseSplitUiMapper(
             localeProvider,
             formattingHelper,
             splitPreviewService,
-            EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
+            EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService),
+            userUiMapper
         )
         addExpenseUiMapper = AddExpenseUiMapper(
             localeProvider,

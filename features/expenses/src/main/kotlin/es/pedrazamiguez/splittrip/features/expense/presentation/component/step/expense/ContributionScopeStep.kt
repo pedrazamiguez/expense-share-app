@@ -30,7 +30,7 @@ fun ContributionScopeStep(
             labels = PayerTypeScopeCardLabels(
                 title = stringResource(R.string.expense_contribution_scope_title),
                 groupLabel = stringResource(R.string.expense_contribution_scope_for_group),
-                personalLabel = stringResource(R.string.expense_contribution_scope_for_me),
+                personalLabel = stringResource(R.string.expense_contribution_scope_for_you),
                 subunitLabelTemplate = stringResource(
                     R.string.expense_contribution_scope_for_subunit
                 )

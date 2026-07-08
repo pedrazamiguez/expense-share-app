@@ -1,8 +1,10 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
 import es.pedrazamiguez.splittrip.core.common.extensions.localeAwareComparator
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.enums.SplitType
 import es.pedrazamiguez.splittrip.domain.model.ExpenseSplit
 import es.pedrazamiguez.splittrip.domain.model.Subunit
@@ -32,7 +34,8 @@ class AddExpenseSplitUiMapper(
     private val localeProvider: LocaleProvider,
     private val formattingHelper: FormattingHelper,
     private val splitPreviewService: SplitPreviewService,
-    private val entitySplitFlattenDelegate: EntitySplitFlattenDelegate
+    private val entitySplitFlattenDelegate: EntitySplitFlattenDelegate,
+    private val userUiMapper: UserUiMapper
 ) {
 
     /**
@@ -61,12 +64,16 @@ class AddExpenseSplitUiMapper(
     /**
      * Resolves a userId to a human-readable display name using the
      * fallback hierarchy: displayName → email → raw userId.
+     *
+     * When [currentUserId] matches, returns the NOMINATIVE self-identification pronoun ("You" / "Tú").
      */
-    fun resolveDisplayName(userId: String, memberProfiles: Map<String, User>): String {
-        val user = memberProfiles[userId] ?: return userId
-        return user.displayName?.takeIf { it.isNotBlank() }
-            ?: user.email.takeIf { it.isNotBlank() }
-            ?: userId
+    fun resolveDisplayName(userId: String, memberProfiles: Map<String, User>, currentUserId: String? = null): String {
+        return userUiMapper.mapToDisplayName(
+            user = memberProfiles[userId],
+            fallbackUserId = userId,
+            currentUserId = currentUserId,
+            selfIdentificationContext = if (currentUserId != null) SelfIdentificationContext.NOMINATIVE else null
+        )
     }
 
     /**

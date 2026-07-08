@@ -49,6 +49,24 @@ class BalancesUiMapperTest {
         every {
             resourceProvider.getString(es.pedrazamiguez.splittrip.core.designsystem.R.string.user_pending_fallback)
         } returns "Pending member"
+        every {
+            resourceProvider.getString(
+                es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_nominative
+            )
+        } returns "You"
+        every {
+            resourceProvider.getString(
+                es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_beneficiary
+            )
+        } returns "For you"
+        every {
+            resourceProvider.getString(es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_agent)
+        } returns "By you"
+        every {
+            resourceProvider.getString(
+                es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_recipient
+            )
+        } returns "To you"
         mapper = BalancesUiMapper(localeProvider, resourceProvider, UserUiMapper(resourceProvider))
     }
 
@@ -1417,7 +1435,7 @@ class BalancesUiMapperTest {
 
             assertEquals(2, result.size)
             assertTrue(result[0].memberDisplay is MemberDisplay.Active)
-            assertEquals("Active User", result[0].memberDisplay.displayName)
+            assertEquals("You", result[0].memberDisplay.displayName)
             assertTrue(result[1].memberDisplay is MemberDisplay.Former)
             assertEquals("Former User", result[1].memberDisplay.displayName)
         }
@@ -1447,7 +1465,7 @@ class BalancesUiMapperTest {
 
             assertEquals(2, result.size)
             assertTrue(result[0].memberDisplay is MemberDisplay.Active)
-            assertEquals("Active User", result[0].memberDisplay.displayName)
+            assertEquals("You", result[0].memberDisplay.displayName)
             assertTrue(result[1].memberDisplay is MemberDisplay.Former)
             assertEquals("Former User", result[1].memberDisplay.displayName)
         }

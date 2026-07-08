@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handl
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.model.Currency
 import es.pedrazamiguez.splittrip.domain.model.Group
@@ -92,11 +93,13 @@ class ConfigEventHandlerTest {
         val splitPreviewService = SplitPreviewServiceImpl()
         val remainderDistributionService = RemainderDistributionServiceImpl()
 
+        val userUiMapper = mockk<UserUiMapper>(relaxed = true)
         val addExpenseSplitMapper = AddExpenseSplitUiMapper(
             localeProvider,
             FormattingHelper(localeProvider),
             splitPreviewService,
-            EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
+            EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService),
+            userUiMapper
         )
         addExpenseUiMapper = AddExpenseUiMapper(
             localeProvider = localeProvider,

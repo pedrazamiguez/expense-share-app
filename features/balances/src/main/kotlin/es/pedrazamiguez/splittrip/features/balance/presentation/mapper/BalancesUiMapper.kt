@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.mapper
 
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
 import es.pedrazamiguez.splittrip.core.common.extensions.localeAwareComparator
 import es.pedrazamiguez.splittrip.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
@@ -94,9 +95,15 @@ class BalancesUiMapper(
     private fun resolveMemberDisplay(
         userId: String,
         groupMemberIds: List<String>,
-        memberProfiles: Map<String, User>
+        memberProfiles: Map<String, User>,
+        currentUserId: String? = null
     ): MemberDisplay {
-        val resolvedName = userUiMapper.mapToDisplayName(memberProfiles[userId], userId)
+        val resolvedName = userUiMapper.mapToDisplayName(
+            user = memberProfiles[userId],
+            fallbackUserId = userId,
+            currentUserId = currentUserId,
+            selfIdentificationContext = if (currentUserId != null) SelfIdentificationContext.NOMINATIVE else null
+        )
         return if (userId !in groupMemberIds) {
             MemberDisplay.Former(userId, resolvedName)
         } else {
@@ -125,12 +132,14 @@ class BalancesUiMapper(
             val createdByDisplayName = resolveCreatedByDisplayName(
                 createdBy = contribution.createdBy,
                 targetUserId = contribution.userId,
-                memberProfiles = memberProfiles
+                memberProfiles = memberProfiles,
+                currentUserId = currentUserId
             )
             val memberDisplay = resolveMemberDisplay(
                 userId = contribution.userId,
                 groupMemberIds = groupMemberIds,
-                memberProfiles = memberProfiles
+                memberProfiles = memberProfiles,
+                currentUserId = currentUserId
             )
             ContributionUiModel(
                 id = contribution.id,
@@ -172,12 +181,14 @@ class BalancesUiMapper(
             val createdByDisplayName = resolveCreatedByDisplayName(
                 createdBy = withdrawal.createdBy,
                 targetUserId = withdrawal.withdrawnBy,
-                memberProfiles = memberProfiles
+                memberProfiles = memberProfiles,
+                currentUserId = currentUserId
             )
             val memberDisplay = resolveMemberDisplay(
                 userId = withdrawal.withdrawnBy,
                 groupMemberIds = groupMemberIds,
-                memberProfiles = memberProfiles
+                memberProfiles = memberProfiles,
+                currentUserId = currentUserId
             )
             CashWithdrawalUiModel(
                 id = withdrawal.id,
@@ -353,7 +364,8 @@ class BalancesUiMapper(
         val memberDisplay = resolveMemberDisplay(
             userId = balance.userId,
             groupMemberIds = groupMemberIds,
-            memberProfiles = memberProfiles
+            memberProfiles = memberProfiles,
+            currentUserId = currentUserId
         )
 
         return MemberBalanceUiModel(
@@ -530,10 +542,16 @@ class BalancesUiMapper(
     private fun resolveCreatedByDisplayName(
         createdBy: String,
         targetUserId: String,
-        memberProfiles: Map<String, User>
+        memberProfiles: Map<String, User>,
+        currentUserId: String? = null
     ): String? {
         if (createdBy.isBlank() || createdBy == targetUserId) return null
         val user = memberProfiles[createdBy] ?: return null
-        return userUiMapper.mapToDisplayName(user)
+        return userUiMapper.mapToDisplayName(
+            user = user,
+            fallbackUserId = createdBy,
+            currentUserId = currentUserId,
+            selfIdentificationContext = if (currentUserId != null) SelfIdentificationContext.NOMINATIVE else null
+        )
     }
 }

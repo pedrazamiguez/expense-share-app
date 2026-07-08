@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.subunit.presentation.mapper.impl
 
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.features.subunit.R
@@ -20,6 +21,7 @@ class SubunitUiMapperImplTest {
 
     private lateinit var localeProvider: LocaleProvider
     private lateinit var resourceProvider: ResourceProvider
+    private lateinit var userUiMapper: UserUiMapper
     private lateinit var mapper: SubunitUiMapperImpl
 
     private val testLocale = Locale.US
@@ -30,7 +32,8 @@ class SubunitUiMapperImplTest {
             every { getCurrentLocale() } returns testLocale
         }
         resourceProvider = mockk(relaxed = true)
-        mapper = SubunitUiMapperImpl(localeProvider, resourceProvider)
+        userUiMapper = UserUiMapper(resourceProvider)
+        mapper = SubunitUiMapperImpl(localeProvider, resourceProvider, userUiMapper)
     }
 
     private fun createUser(id: String, displayName: String? = null, email: String = "$id@test.com") =
@@ -157,7 +160,7 @@ class SubunitUiMapperImplTest {
             val esLocaleProvider = mockk<LocaleProvider> {
                 every { getCurrentLocale() } returns esLocale
             }
-            return SubunitUiMapperImpl(esLocaleProvider, resourceProvider)
+            return SubunitUiMapperImpl(esLocaleProvider, resourceProvider, userUiMapper)
         }
 
         @Test

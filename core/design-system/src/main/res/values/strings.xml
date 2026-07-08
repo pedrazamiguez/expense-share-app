@@ -69,6 +69,12 @@
     <string name="content_description_menu">Open menu</string>
     <string name="content_description_profile">User profile</string>
 
+    <!-- Self-Identification Pronouns -->
+    <string name="self_identification_nominative">You</string>
+    <string name="self_identification_beneficiary">For you</string>
+    <string name="self_identification_agent">By you</string>
+    <string name="self_identification_recipient">To you</string>
+
     <!-- User Fallback -->
     <string name="user_pending_fallback">Pending member</string>
     <string name="balance_you">You</string>

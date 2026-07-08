@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
@@ -27,6 +28,7 @@ class GroupSettlementOverviewUiMapperImplTest {
     private lateinit var localeProvider: LocaleProvider
     private lateinit var resourceProvider: ResourceProvider
     private lateinit var formattingHelper: FormattingHelper
+    private lateinit var userUiMapper: UserUiMapper
     private lateinit var mapper: GroupSettlementOverviewUiMapperImpl
 
     private val testLocale = Locale.US
@@ -38,8 +40,11 @@ class GroupSettlementOverviewUiMapperImplTest {
             every { getCurrentLocale() } returns testLocale
         }
         resourceProvider = mockk(relaxed = true)
+        every { resourceProvider.getString(DesignSystemR.string.self_identification_nominative) } returns "You"
+        every { resourceProvider.getString(DesignSystemR.string.user_pending_fallback) } returns "Pending member"
         formattingHelper = FormattingHelper(localeProvider)
-        mapper = GroupSettlementOverviewUiMapperImpl(formattingHelper, resourceProvider)
+        userUiMapper = UserUiMapper(resourceProvider)
+        mapper = GroupSettlementOverviewUiMapperImpl(formattingHelper, resourceProvider, userUiMapper)
     }
 
     @Nested
@@ -190,7 +195,12 @@ class GroupSettlementOverviewUiMapperImplTest {
             } returns "Pending member"
 
             val settlements = listOf(
-                createRecord("s-1", SettlementStatus.SUGGESTED, fromUser = "unknown-1", toUser = "unknown-2")
+                createRecord(
+                    "s-1",
+                    SettlementStatus.SUGGESTED,
+                    fromUser = "pending_member_1",
+                    toUser = "pending_member_2"
+                )
             )
             val result = mapper.toUiState(settlements, emptyMap(), currentUserId)
 
@@ -397,7 +407,7 @@ class GroupSettlementOverviewUiMapperImplTest {
             } returns "Pending member owes Bernardo"
 
             val settlements = listOf(
-                createRecord("s-1", SettlementStatus.SUGGESTED, fromUser = "unknown", toUser = "user-3")
+                createRecord("s-1", SettlementStatus.SUGGESTED, fromUser = "pending_member", toUser = "user-3")
             )
             val profiles = mapOf(
                 "user-3" to User(userId = "user-3", email = "c@d.com", displayName = "Bernardo")

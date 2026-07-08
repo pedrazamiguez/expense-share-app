@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.preview.MappedPreview
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Expense
@@ -22,7 +23,8 @@ private fun buildExpenseUiMapper(localeProvider: LocaleProvider, resourceProvide
         scheduledBadgeUiMapper = ScheduledBadgeUiMapper(
             formattingHelper = FormattingHelper(localeProvider),
             resourceProvider = resourceProvider
-        )
+        ),
+        userUiMapper = UserUiMapper(resourceProvider)
     )
 
 @Composable

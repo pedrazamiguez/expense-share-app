@@ -1,7 +1,9 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
+import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.enums.SplitType
 import es.pedrazamiguez.splittrip.domain.model.ExpenseSplit
 import es.pedrazamiguez.splittrip.domain.model.Subunit
@@ -28,9 +30,11 @@ import org.junit.jupiter.api.Test
 class AddExpenseSplitUiMapperTest {
 
     private lateinit var localeProvider: LocaleProvider
+    private lateinit var resourceProvider: ResourceProvider
     private lateinit var formattingHelper: FormattingHelper
     private lateinit var splitPreviewService: SplitPreviewService
     private lateinit var entitySplitFlattenDelegate: EntitySplitFlattenDelegate
+    private lateinit var userUiMapper: UserUiMapper
     private lateinit var mapper: AddExpenseSplitUiMapper
 
     private val user1 = User(userId = "user-1", email = "a@test.com", displayName = "Andrés")
@@ -40,18 +44,21 @@ class AddExpenseSplitUiMapperTest {
     @BeforeEach
     fun setUp() {
         localeProvider = mockk()
+        resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
 
         formattingHelper = FormattingHelper(localeProvider)
         splitPreviewService = SplitPreviewServiceImpl()
         val remainderDistributionService = RemainderDistributionServiceImpl()
         entitySplitFlattenDelegate = EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
+        userUiMapper = UserUiMapper(resourceProvider)
 
         mapper = AddExpenseSplitUiMapper(
             localeProvider,
             formattingHelper,
             splitPreviewService,
-            entitySplitFlattenDelegate
+            entitySplitFlattenDelegate,
+            userUiMapper
         )
     }
 

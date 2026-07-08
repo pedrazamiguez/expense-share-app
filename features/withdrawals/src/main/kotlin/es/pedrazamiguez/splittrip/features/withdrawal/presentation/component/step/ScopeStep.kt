@@ -29,7 +29,7 @@ fun ScopeStep(
 ) {
     val selectedMember = uiState.groupMembers.firstOrNull { it.userId == uiState.selectedMemberId }
     val personalLabel = if (selectedMember == null || selectedMember.isCurrentUser) {
-        stringResource(R.string.withdrawal_cash_for_me)
+        stringResource(R.string.withdrawal_cash_for_you)
     } else {
         stringResource(R.string.withdrawal_cash_for_member, selectedMember.displayName)
     }

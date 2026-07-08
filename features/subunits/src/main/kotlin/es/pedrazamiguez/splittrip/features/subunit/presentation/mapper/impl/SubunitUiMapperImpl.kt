@@ -1,9 +1,11 @@
 package es.pedrazamiguez.splittrip.features.subunit.presentation.mapper.impl
 
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
 import es.pedrazamiguez.splittrip.core.common.extensions.localeAwareComparator
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatNumberForDisplay
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.features.subunit.R
@@ -17,10 +19,18 @@ import java.text.NumberFormat
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
-class SubunitUiMapperImpl(private val localeProvider: LocaleProvider, private val resourceProvider: ResourceProvider) :
+class SubunitUiMapperImpl(
+    private val localeProvider: LocaleProvider,
+    private val resourceProvider: ResourceProvider,
+    private val userUiMapper: UserUiMapper
+) :
     SubunitUiMapper {
 
-    override fun toSubunitUiModel(subunit: Subunit, memberProfiles: Map<String, User>): SubunitUiModel {
+    override fun toSubunitUiModel(
+        subunit: Subunit,
+        memberProfiles: Map<String, User>,
+        currentUserId: String?
+    ): SubunitUiModel {
         val memberCount = subunit.memberIds.size
         val memberCountText = resourceProvider.getQuantityString(
             R.plurals.subunit_member_count,
@@ -28,7 +38,7 @@ class SubunitUiMapperImpl(private val localeProvider: LocaleProvider, private va
             memberCount
         )
 
-        val memberShares = toMemberShareUiModels(subunit, memberProfiles)
+        val memberShares = toMemberShareUiModels(subunit, memberProfiles, currentUserId)
 
         return SubunitUiModel(
             id = subunit.id,
@@ -40,14 +50,18 @@ class SubunitUiMapperImpl(private val localeProvider: LocaleProvider, private va
 
     override fun toSubunitUiModelList(
         subunits: List<Subunit>,
-        memberProfiles: Map<String, User>
-    ): ImmutableList<SubunitUiModel> = subunits.map { toSubunitUiModel(it, memberProfiles) }.toImmutableList()
+        memberProfiles: Map<String, User>,
+        currentUserId: String?
+    ): ImmutableList<SubunitUiModel> = subunits.map {
+        toSubunitUiModel(it, memberProfiles, currentUserId)
+    }.toImmutableList()
 
     override fun toMemberUiModelList(
         memberIds: List<String>,
         memberProfiles: Map<String, User>,
         subunits: List<Subunit>,
-        excludeSubunitId: String?
+        excludeSubunitId: String?,
+        currentUserId: String?
     ): ImmutableList<MemberUiModel> {
         // Build a lookup: userId → subunit name (excluding the subunit being edited)
         val assignmentMap = buildMap<String, String> {
@@ -62,7 +76,12 @@ class SubunitUiMapperImpl(private val localeProvider: LocaleProvider, private va
 
         return memberIds.map { userId ->
             val profile = memberProfiles[userId]
-            val displayName = profile?.displayName ?: profile?.email ?: userId
+            val displayName = userUiMapper.mapToDisplayName(
+                user = profile,
+                fallbackUserId = userId,
+                currentUserId = currentUserId,
+                selfIdentificationContext = if (currentUserId != null) SelfIdentificationContext.NOMINATIVE else null
+            )
             val assignedSubunitName = assignmentMap[userId]
 
             MemberUiModel(
@@ -94,7 +113,8 @@ class SubunitUiMapperImpl(private val localeProvider: LocaleProvider, private va
      */
     private fun toMemberShareUiModels(
         subunit: Subunit,
-        memberProfiles: Map<String, User>
+        memberProfiles: Map<String, User>,
+        currentUserId: String?
     ): ImmutableList<MemberShareUiModel> {
         if (subunit.memberShares.isEmpty()) return emptyList<MemberShareUiModel>().toImmutableList()
 
@@ -105,9 +125,12 @@ class SubunitUiMapperImpl(private val localeProvider: LocaleProvider, private va
 
         return subunit.memberIds.mapNotNull { userId ->
             val share = subunit.memberShares[userId] ?: return@mapNotNull null
-            val displayName = memberProfiles[userId]?.displayName
-                ?: memberProfiles[userId]?.email
-                ?: userId
+            val displayName = userUiMapper.mapToDisplayName(
+                user = memberProfiles[userId],
+                fallbackUserId = userId,
+                currentUserId = currentUserId,
+                selfIdentificationContext = if (currentUserId != null) SelfIdentificationContext.NOMINATIVE else null
+            )
 
             MemberShareUiModel(
                 displayName = displayName,

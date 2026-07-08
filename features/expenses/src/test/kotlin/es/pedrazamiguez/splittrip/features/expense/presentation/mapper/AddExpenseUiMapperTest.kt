@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.splittrip.domain.constant.DomainConstants
 import es.pedrazamiguez.splittrip.domain.enums.AddOnMode
@@ -71,11 +72,13 @@ class AddExpenseUiMapperTest {
             )
         val splitPreviewService = SplitPreviewServiceImpl()
         val remainderDistributionService = RemainderDistributionServiceImpl()
+        val userUiMapper = mockk<UserUiMapper>(relaxed = true)
         splitMapper = AddExpenseSplitUiMapper(
             localeProvider,
             formattingHelper,
             splitPreviewService,
-            EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
+            EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService),
+            userUiMapper
         )
         addOnMapper = AddExpenseAddOnUiMapper()
         mapper = AddExpenseUiMapper(

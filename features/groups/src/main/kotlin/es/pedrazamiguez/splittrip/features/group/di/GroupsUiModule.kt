@@ -5,6 +5,7 @@ import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.TabGraphContributor
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.splittrip.core.logging.TelemetryTracker
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
@@ -79,7 +80,8 @@ val groupsUiModule = module {
     single<LeaveWizardUiMapper> {
         LeaveWizardUiMapperImpl(
             formattingHelper = get<FormattingHelper>(),
-            resourceProvider = get<ResourceProvider>()
+            resourceProvider = get<ResourceProvider>(),
+            userUiMapper = get<UserUiMapper>()
         )
     }
 
@@ -236,7 +238,8 @@ val groupsUiModule = module {
         val resourceProvider = get<ResourceProvider>()
         GroupSettlementOverviewUiMapperImpl(
             formattingHelper = formattingHelper,
-            resourceProvider = resourceProvider
+            resourceProvider = resourceProvider,
+            userUiMapper = get<UserUiMapper>()
         )
     }
 
