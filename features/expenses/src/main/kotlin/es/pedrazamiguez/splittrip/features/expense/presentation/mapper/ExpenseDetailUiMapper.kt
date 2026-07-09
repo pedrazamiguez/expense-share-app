@@ -1,6 +1,11 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Receipt
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReceiptRefund
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
@@ -34,7 +39,7 @@ class ExpenseDetailUiMapper(
     private val resourceProvider: ResourceProvider,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val addOnCalculationService: AddOnCalculationService,
-    private val scheduledBadgeUiMapper: ScheduledBadgeUiMapper,
+    private val paymentStatusBadgeUiMapper: PaymentStatusBadgeUiMapper,
     private val userUiMapper: UserUiMapper
 ) {
 
@@ -69,7 +74,22 @@ class ExpenseDetailUiMapper(
             val youLabel = resourceProvider.getString(R.string.you_label)
             val (soloSplits, splitGroups) = resolveSplits()
             val isForeign = expense.sourceCurrency != expense.groupCurrency
-            val (scheduledBadgeText, isScheduledPastDue) = scheduledBadgeUiMapper.buildBadge(expense)
+            val badgeData = paymentStatusBadgeUiMapper.buildBadge(expense)
+            val badgeIcon = badgeData?.let {
+                when (expense.paymentStatus) {
+                    PaymentStatus.SCHEDULED -> if (it.isPassed) {
+                        TablerIcons.Outline.CircleCheck
+                    } else {
+                        TablerIcons.Outline.Calendar
+                    }
+                    PaymentStatus.REFUNDABLE -> if (it.isPassed) {
+                        TablerIcons.Outline.Receipt
+                    } else {
+                        TablerIcons.Outline.ReceiptRefund
+                    }
+                    else -> null
+                }
+            }
 
             val effectivePayerId = expense.payerId ?: expense.createdBy.takeIf { it.isNotBlank() }
             val payerDisplay = resolvePayerDisplay(effectivePayerId, youLabel)
@@ -108,8 +128,9 @@ class ExpenseDetailUiMapper(
                 dateText = resolveDateText(expense, formattingHelper),
                 vendorText = expense.vendor?.takeIf { it.isNotBlank() },
                 notesText = expense.notes?.takeIf { it.isNotBlank() },
-                scheduledBadgeText = scheduledBadgeText,
-                isScheduledPastDue = isScheduledPastDue,
+                badgeText = badgeData?.text,
+                badgeIcon = badgeIcon,
+                isBadgeUrgent = badgeData?.isPassed == true,
                 isOutOfPocket = expense.payerType == PayerType.USER,
                 fundingSourceText = buildFundingSourceText(
                     expense,
@@ -147,7 +168,7 @@ class ExpenseDetailUiMapper(
                 createdAtText = formattingHelper.formatShortDate(expense.createdAt),
                 syncStatus = expense.syncStatus,
                 isCancelled = expense.paymentStatus == PaymentStatus.CANCELLED,
-                isRefundable = expense.paymentStatus == PaymentStatus.REFUNDABLE
+                isRefundable = expense.paymentStatus == PaymentStatus.REFUNDABLE && badgeData?.isPassed != true
             )
         }
 

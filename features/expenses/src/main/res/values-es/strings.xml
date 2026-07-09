@@ -127,11 +127,10 @@
     <!-- Validation Errors - New -->
     <string name="expense_error_due_date_required">Selecciona una fecha de vencimiento para el pago programado</string>
 
-    <!-- Scheduled Payment Badge -->
-    <string name="expense_scheduled_due_on">%1$s</string>
-    <string name="expense_scheduled_due_today">Hoy</string>
-    <string name="expense_scheduled_due_tomorrow">Mañana</string>
-    <string name="expense_scheduled_paid">Pagado</string>
+    <!-- Payment Status Badge -->
+    <string name="expense_relative_today">Hoy</string>
+    <string name="expense_relative_tomorrow">Mañana</string>
+    <string name="expense_relative_yesterday">Ayer</string>
     <string name="expense_status_cancelled_refunded">Cancelado - Reembolsado</string>
     <string name="expense_refundable_until">Reembolsable hasta %1$s</string>
 

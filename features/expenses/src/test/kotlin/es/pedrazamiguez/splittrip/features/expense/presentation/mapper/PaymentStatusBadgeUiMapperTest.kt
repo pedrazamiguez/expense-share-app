@@ -20,10 +20,10 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
-@DisplayName("ScheduledBadgeUiMapper")
-class ScheduledBadgeUiMapperTest {
+@DisplayName("PaymentStatusBadgeUiMapper")
+class PaymentStatusBadgeUiMapperTest {
 
-    private lateinit var mapper: ScheduledBadgeUiMapper
+    private lateinit var mapper: PaymentStatusBadgeUiMapper
     private lateinit var localeProvider: LocaleProvider
     private lateinit var resourceProvider: ResourceProvider
 
@@ -34,12 +34,12 @@ class ScheduledBadgeUiMapperTest {
 
         every { localeProvider.getCurrentLocale() } returns Locale.US
 
-        every { resourceProvider.getString(R.string.expense_scheduled_paid) } returns "Paid"
-        every { resourceProvider.getString(R.string.expense_scheduled_due_today) } returns "Today"
-        every { resourceProvider.getString(R.string.expense_scheduled_due_tomorrow) } returns "Tomorrow"
+        every { resourceProvider.getString(R.string.expense_relative_yesterday) } returns "Paid"
+        every { resourceProvider.getString(R.string.expense_relative_today) } returns "Today"
+        every { resourceProvider.getString(R.string.expense_relative_tomorrow) } returns "Tomorrow"
         every { resourceProvider.getString(R.string.expense_status_cancelled_refunded) } returns "Cancelled - Refunded"
 
-        mapper = ScheduledBadgeUiMapper(
+        mapper = PaymentStatusBadgeUiMapper(
             formattingHelper = FormattingHelper(localeProvider),
             resourceProvider = resourceProvider
         )
@@ -52,7 +52,9 @@ class ScheduledBadgeUiMapperTest {
         @Test
         fun `returns null badge and isPastDue false for FINISHED expense`() {
             val expense = Expense(id = "e1", paymentStatus = PaymentStatus.FINISHED)
-            val (badge, isPastDue) = mapper.buildBadge(expense)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
             assertNull(badge)
             assertFalse(isPastDue)
         }
@@ -60,16 +62,20 @@ class ScheduledBadgeUiMapperTest {
         @Test
         fun `returns null badge and isPastDue false for PENDING expense`() {
             val expense = Expense(id = "e2", paymentStatus = PaymentStatus.PENDING)
-            val (badge, isPastDue) = mapper.buildBadge(expense)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
             assertNull(badge)
             assertFalse(isPastDue)
         }
 
         @Test
-        fun `returns cancelled badge and isPastDue false for CANCELLED expense`() {
+        fun `returns null badge and isPastDue false for CANCELLED expense`() {
             val expense = Expense(id = "e3", paymentStatus = PaymentStatus.CANCELLED)
-            val (badge, isPastDue) = mapper.buildBadge(expense)
-            assertEquals("Cancelled - Refunded", badge)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
+            assertNull(badge)
             assertFalse(isPastDue)
         }
     }
@@ -81,7 +87,9 @@ class ScheduledBadgeUiMapperTest {
         @Test
         fun `returns null badge and isPastDue false when dueDate is null`() {
             val expense = Expense(id = "e4", paymentStatus = PaymentStatus.SCHEDULED, dueDate = null)
-            val (badge, isPastDue) = mapper.buildBadge(expense)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
             assertNull(badge)
             assertFalse(isPastDue)
         }
@@ -98,22 +106,26 @@ class ScheduledBadgeUiMapperTest {
                 paymentStatus = PaymentStatus.SCHEDULED,
                 dueDate = LocalDateTime.now().minusDays(5)
             )
-            val (badge, isPastDue) = mapper.buildBadge(expense)
-            assertEquals("Paid", badge)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
+            assertEquals(LocalDateTime.now().minusDays(5).formatShortDate(Locale.US), badge)
             assertTrue(isPastDue)
         }
 
         @Test
         fun `returns Paid badge in ES locale for past due expense`() {
             every { localeProvider.getCurrentLocale() } returns Locale.forLanguageTag("es-ES")
-            every { resourceProvider.getString(R.string.expense_scheduled_paid) } returns "Pagado"
+            every { resourceProvider.getString(R.string.expense_relative_yesterday) } returns "Pagado"
 
             val expense = Expense(
                 id = "e6",
                 paymentStatus = PaymentStatus.SCHEDULED,
                 dueDate = LocalDateTime.now().minusDays(1)
             )
-            val (badge, isPastDue) = mapper.buildBadge(expense)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
             assertEquals("Pagado", badge)
             assertTrue(isPastDue)
         }
@@ -130,24 +142,28 @@ class ScheduledBadgeUiMapperTest {
                 paymentStatus = PaymentStatus.SCHEDULED,
                 dueDate = LocalDateTime.now().withHour(12).withMinute(0)
             )
-            val (badge, isPastDue) = mapper.buildBadge(expense)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
             assertEquals("Today", badge)
-            assertTrue(isPastDue)
+            assertFalse(isPastDue)
         }
 
         @Test
         fun `returns ES badge for due today`() {
             every { localeProvider.getCurrentLocale() } returns Locale.forLanguageTag("es-ES")
-            every { resourceProvider.getString(R.string.expense_scheduled_due_today) } returns "Hoy"
+            every { resourceProvider.getString(R.string.expense_relative_today) } returns "Hoy"
 
             val expense = Expense(
                 id = "e8",
                 paymentStatus = PaymentStatus.SCHEDULED,
                 dueDate = LocalDateTime.now().withHour(10).withMinute(0)
             )
-            val (badge, isPastDue) = mapper.buildBadge(expense)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
             assertEquals("Hoy", badge)
-            assertTrue(isPastDue)
+            assertFalse(isPastDue)
         }
     }
 
@@ -162,7 +178,9 @@ class ScheduledBadgeUiMapperTest {
                 paymentStatus = PaymentStatus.SCHEDULED,
                 dueDate = LocalDateTime.now().plusDays(1).withHour(12).withMinute(0)
             )
-            val (badge, isPastDue) = mapper.buildBadge(expense)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
             assertEquals("Tomorrow", badge)
             assertFalse(isPastDue)
         }
@@ -170,14 +188,16 @@ class ScheduledBadgeUiMapperTest {
         @Test
         fun `returns ES badge for due tomorrow`() {
             every { localeProvider.getCurrentLocale() } returns Locale.forLanguageTag("es-ES")
-            every { resourceProvider.getString(R.string.expense_scheduled_due_tomorrow) } returns "Mañana"
+            every { resourceProvider.getString(R.string.expense_relative_tomorrow) } returns "Mañana"
 
             val expense = Expense(
                 id = "e10",
                 paymentStatus = PaymentStatus.SCHEDULED,
                 dueDate = LocalDateTime.now().plusDays(1).withHour(9).withMinute(0)
             )
-            val (badge, isPastDue) = mapper.buildBadge(expense)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
             assertEquals("Mañana", badge)
             assertFalse(isPastDue)
         }
@@ -195,7 +215,9 @@ class ScheduledBadgeUiMapperTest {
                 paymentStatus = PaymentStatus.SCHEDULED,
                 dueDate = futureDate
             )
-            val (badge, isPastDue) = mapper.buildBadge(expense)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
             assertEquals(futureDate.formatShortDate(Locale.US), badge)
             assertFalse(isPastDue)
         }
@@ -211,7 +233,9 @@ class ScheduledBadgeUiMapperTest {
                 paymentStatus = PaymentStatus.SCHEDULED,
                 dueDate = futureDate
             )
-            val (badge, isPastDue) = mapper.buildBadge(expense)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
             assertEquals(futureDate.formatShortDate(esLocale), badge)
             assertFalse(isPastDue)
         }
@@ -224,7 +248,9 @@ class ScheduledBadgeUiMapperTest {
                 paymentStatus = PaymentStatus.SCHEDULED,
                 dueDate = futureDate
             )
-            val (badge, isPastDue) = mapper.buildBadge(expense)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
             assertEquals("20 Aug", badge)
             assertFalse(isPastDue)
         }
@@ -242,7 +268,9 @@ class ScheduledBadgeUiMapperTest {
                 paymentStatus = PaymentStatus.REFUNDABLE,
                 dueDate = futureDate
             )
-            val (badge, isPastDue) = mapper.buildBadge(expense)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
             assertEquals("20 Aug", badge)
             assertFalse(isPastDue)
         }
@@ -254,7 +282,9 @@ class ScheduledBadgeUiMapperTest {
                 paymentStatus = PaymentStatus.REFUNDABLE,
                 dueDate = LocalDateTime.now().withHour(12).withMinute(0)
             )
-            val (badge, isPastDue) = mapper.buildBadge(expense)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
             assertEquals("Today", badge)
             assertFalse(isPastDue)
         }
@@ -266,21 +296,25 @@ class ScheduledBadgeUiMapperTest {
                 paymentStatus = PaymentStatus.REFUNDABLE,
                 dueDate = LocalDateTime.now().plusDays(1).withHour(12).withMinute(0)
             )
-            val (badge, isPastDue) = mapper.buildBadge(expense)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
             assertEquals("Tomorrow", badge)
             assertFalse(isPastDue)
         }
 
         @Test
-        fun `returns null badge when due date is in the past`() {
+        fun `returns yesterday badge when due date was yesterday`() {
             val expense = Expense(
                 id = "e14d",
                 paymentStatus = PaymentStatus.REFUNDABLE,
                 dueDate = LocalDateTime.now().minusDays(1)
             )
-            val (badge, isPastDue) = mapper.buildBadge(expense)
-            assertNull(badge)
-            assertFalse(isPastDue)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
+            assertEquals("Paid", badge)
+            assertTrue(isPastDue)
         }
 
         @Test
@@ -290,7 +324,9 @@ class ScheduledBadgeUiMapperTest {
                 paymentStatus = PaymentStatus.REFUNDABLE,
                 dueDate = null
             )
-            val (badge, isPastDue) = mapper.buildBadge(expense)
+            val badgeData = mapper.buildBadge(expense)
+            val badge = badgeData?.text
+            val isPastDue = badgeData?.isPassed ?: false
             assertNull(badge)
             assertFalse(isPastDue)
         }

@@ -39,8 +39,9 @@ data class ExpenseDetailUiModel(
     val dateText: String = "",
     val vendorText: String? = null,
     val notesText: String? = null,
-    val scheduledBadgeText: String? = null,
-    val isScheduledPastDue: Boolean = false,
+    val badgeText: String? = null,
+    val badgeIcon: ImageVector? = null,
+    val isBadgeUrgent: Boolean = false,
 
     // Funding source
     val isOutOfPocket: Boolean = false,

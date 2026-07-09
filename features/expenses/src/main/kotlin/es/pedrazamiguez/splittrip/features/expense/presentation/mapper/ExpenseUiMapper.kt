@@ -1,8 +1,14 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
+import androidx.compose.ui.graphics.vector.ImageVector
 import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Receipt
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReceiptRefund
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatAmount
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatShortDate
@@ -27,7 +33,7 @@ import kotlinx.collections.immutable.toImmutableList
 class ExpenseUiMapper(
     private val localeProvider: LocaleProvider,
     private val resourceProvider: ResourceProvider,
-    private val scheduledBadgeUiMapper: ScheduledBadgeUiMapper,
+    private val paymentStatusBadgeUiMapper: PaymentStatusBadgeUiMapper,
     private val userUiMapper: UserUiMapper
 ) {
 
@@ -40,7 +46,8 @@ class ExpenseUiMapper(
         groupMemberIds: List<String> = emptyList()
     ): ExpenseUiModel {
         val appLocale = localeProvider.getCurrentLocale()
-        val (badgeText, isPastDue) = scheduledBadgeUiMapper.buildBadge(expense)
+        val badgeData = paymentStatusBadgeUiMapper.buildBadge(expense)
+        val badgeIcon = resolveBadgeIcon(expense.paymentStatus, badgeData)
         val outOfPocket = expense.payerType == PayerType.USER
         val pairedContribution = pairedContributions[expense.id]
         val effectivePayerId = expense.payerId ?: expense.createdBy.takeIf { it.isNotBlank() }
@@ -77,8 +84,9 @@ class ExpenseUiMapper(
                 paidByText = resourceProvider.getString(R.string.paid_by, resolvedName),
                 creatorDisplay = creatorDisplay,
                 dateText = createdAt?.formatShortDate(appLocale) ?: "",
-                scheduledBadgeText = badgeText,
-                isScheduledPastDue = isPastDue,
+                badgeText = badgeData?.text,
+                badgeIcon = badgeIcon,
+                isBadgeUrgent = badgeData?.isPassed == true,
                 hasAddOns = addOns.isNotEmpty(),
                 isOutOfPocket = outOfPocket,
                 fundingSourceText = scopeInfo.text,
@@ -86,7 +94,7 @@ class ExpenseUiMapper(
                 isGroupScope = scopeInfo.isGroup,
                 syncStatus = syncStatus,
                 isCancelled = expense.paymentStatus == PaymentStatus.CANCELLED,
-                isRefundable = expense.paymentStatus == PaymentStatus.REFUNDABLE
+                isRefundable = expense.paymentStatus == PaymentStatus.REFUNDABLE && badgeData?.isPassed != true
             )
         }
     }
@@ -249,6 +257,23 @@ class ExpenseUiMapper(
             currentUserId = currentUserId,
             selfIdentificationContext = SelfIdentificationContext.NOMINATIVE
         )
+    }
+
+    private fun resolveBadgeIcon(paymentStatus: PaymentStatus, badgeData: PaymentBadgeData?): ImageVector? {
+        if (badgeData == null) return null
+        return when (paymentStatus) {
+            PaymentStatus.SCHEDULED -> if (badgeData.isPassed) {
+                TablerIcons.Outline.CircleCheck
+            } else {
+                TablerIcons.Outline.Calendar
+            }
+            PaymentStatus.REFUNDABLE -> if (badgeData.isPassed) {
+                TablerIcons.Outline.Receipt
+            } else {
+                TablerIcons.Outline.ReceiptRefund
+            }
+            else -> null
+        }
     }
 
     /**

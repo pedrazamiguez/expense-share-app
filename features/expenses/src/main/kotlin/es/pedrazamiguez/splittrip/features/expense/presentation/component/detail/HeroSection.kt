@@ -65,8 +65,8 @@ internal fun HeroSection(
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
             ) {
                 StatusBadgeChip(
-                    icon = expense.paymentStatusIcon,
-                    label = expense.paymentStatusText
+                    icon = expense.badgeIcon ?: expense.paymentStatusIcon,
+                    label = expense.badgeText ?: expense.paymentStatusText
                 )
                 DateChip(text = expense.dateText)
             }

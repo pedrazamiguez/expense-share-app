@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.model
 
+import androidx.compose.ui.graphics.vector.ImageVector
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
@@ -18,17 +19,20 @@ data class ExpenseUiModel(
     val creatorDisplay: MemberDisplay = MemberDisplay.Active("", ""),
     val dateText: String = "",
     /**
-     * Badge text for SCHEDULED expenses. Null when not applicable.
-     * - Future: "Due on 15 Mar"
-     * - Today:  "Due today"
-     * - Past:   "Paid"
+     * Text for the dynamic payment status badge (e.g., "Yesterday", "15 Mar").
+     * Null when no badge should be shown.
      */
-    val scheduledBadgeText: String? = null,
+    val badgeText: String? = null,
     /**
-     * True when the scheduled payment's due date has passed or is today,
-     * used to pick the check icon (✅) vs clock icon (🕐) in the UI.
+     * The icon for the dynamic payment status badge.
+     * Evaluated based on the PaymentStatus and whether the date has passed.
      */
-    val isScheduledPastDue: Boolean = false,
+    val badgeIcon: ImageVector? = null,
+    /**
+     * True when the badge represents an urgent state (e.g. due today).
+     * Used for styling.
+     */
+    val isBadgeUrgent: Boolean = false,
     /**
      * True when the expense has add-ons (fees, tips, surcharges, discounts).
      * Used to display an indicator badge in the expense list item.

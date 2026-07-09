@@ -82,7 +82,7 @@ class ExpenseUiMapperTest {
         every { resourceProvider.getString(DesignSystemR.string.user_pending_fallback) } returns "Pending member"
 
         val formattingHelper = FormattingHelper(localeProvider)
-        val scheduledBadgeUiMapper = ScheduledBadgeUiMapper(
+        val paymentStatusBadgeUiMapper = PaymentStatusBadgeUiMapper(
             formattingHelper = formattingHelper,
             resourceProvider = resourceProvider
         )
@@ -91,7 +91,7 @@ class ExpenseUiMapperTest {
         mapper = ExpenseUiMapper(
             localeProvider = localeProvider,
             resourceProvider = resourceProvider,
-            scheduledBadgeUiMapper = scheduledBadgeUiMapper,
+            paymentStatusBadgeUiMapper = paymentStatusBadgeUiMapper,
             userUiMapper = userUiMapper
         )
     }
@@ -538,8 +538,8 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertNull(result.scheduledBadgeText)
-            assertFalse(result.isScheduledPastDue)
+            assertNull(result.badgeText)
+            assertFalse(result.isBadgeUrgent)
         }
 
         @Test
@@ -552,8 +552,8 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertNull(result.scheduledBadgeText)
-            assertFalse(result.isScheduledPastDue)
+            assertNull(result.badgeText)
+            assertFalse(result.isBadgeUrgent)
         }
 
         @Test
@@ -567,8 +567,8 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertEquals(futureDueDate.formatShortDate(Locale.US), result.scheduledBadgeText)
-            assertFalse(result.isScheduledPastDue)
+            assertEquals(futureDueDate.formatShortDate(Locale.US), result.badgeText)
+            assertFalse(result.isBadgeUrgent)
         }
 
         @Test
@@ -582,8 +582,8 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertEquals("Paid", result.scheduledBadgeText)
-            assertTrue(result.isScheduledPastDue)
+            assertEquals(pastDueDate.formatShortDate(Locale.US), result.badgeText)
+            assertTrue(result.isBadgeUrgent)
         }
 
         @Test
@@ -597,8 +597,8 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertEquals("Today", result.scheduledBadgeText)
-            assertTrue(result.isScheduledPastDue)
+            assertEquals("Today", result.badgeText)
+            assertFalse(result.isBadgeUrgent)
         }
 
         @Test
@@ -612,8 +612,8 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertEquals("Tomorrow", result.scheduledBadgeText)
-            assertFalse(result.isScheduledPastDue)
+            assertEquals("Tomorrow", result.badgeText)
+            assertFalse(result.isBadgeUrgent)
         }
 
         @Test
@@ -627,8 +627,8 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertEquals(futureDueDate.formatShortDate(Locale.US), result.scheduledBadgeText)
-            assertFalse(result.isScheduledPastDue)
+            assertEquals(futureDueDate.formatShortDate(Locale.US), result.badgeText)
+            assertFalse(result.isBadgeUrgent)
             assertTrue(result.isRefundable)
         }
     }
@@ -1453,9 +1453,9 @@ class ExpenseUiMapperTest {
     }
 
     private fun stubScheduledBadgeStrings() {
-        every { resourceProvider.getString(R.string.expense_scheduled_due_today) } returns "Today"
-        every { resourceProvider.getString(R.string.expense_scheduled_due_tomorrow) } returns "Tomorrow"
-        every { resourceProvider.getString(R.string.expense_scheduled_paid) } returns "Paid"
+        every { resourceProvider.getString(R.string.expense_relative_today) } returns "Today"
+        every { resourceProvider.getString(R.string.expense_relative_tomorrow) } returns "Tomorrow"
+        every { resourceProvider.getString(R.string.expense_relative_yesterday) } returns "Paid"
         every { resourceProvider.getString(R.string.expense_status_cancelled_refunded) } returns "Cancelled - Refunded"
     }
 }

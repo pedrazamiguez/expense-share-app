@@ -30,10 +30,7 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CirclePlus
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReceiptRefund
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
@@ -163,7 +160,7 @@ fun ExpenseItem(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val badgesModifier = if (expenseUiModel.scheduledBadgeText != null) {
+                    val badgesModifier = if (expenseUiModel.badgeText != null) {
                         Modifier.weight(1f)
                     } else {
                         Modifier
@@ -237,8 +234,8 @@ fun ExpenseItem(
                         }
                     }
 
-                    if (expenseUiModel.scheduledBadgeText != null) {
-                        val tintColor = if (expenseUiModel.isScheduledPastDue) {
+                    if (expenseUiModel.badgeText != null && expenseUiModel.badgeIcon != null) {
+                        val tintColor = if (expenseUiModel.isBadgeUrgent) {
                             MaterialTheme.colorScheme.tertiary
                         } else {
                             MaterialTheme.colorScheme.onSurfaceVariant
@@ -249,19 +246,13 @@ fun ExpenseItem(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = if (expenseUiModel.isRefundable) {
-                                    TablerIcons.Outline.ReceiptRefund
-                                } else if (expenseUiModel.isScheduledPastDue) {
-                                    TablerIcons.Outline.CircleCheck
-                                } else {
-                                    TablerIcons.Outline.Calendar
-                                },
+                                imageVector = expenseUiModel.badgeIcon,
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp),
                                 tint = tintColor
                             )
                             Text(
-                                text = expenseUiModel.scheduledBadgeText,
+                                text = expenseUiModel.badgeText,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = tintColor
                             )
