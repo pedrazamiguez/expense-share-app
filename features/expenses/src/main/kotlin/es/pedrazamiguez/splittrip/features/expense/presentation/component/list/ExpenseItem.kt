@@ -30,9 +30,9 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CirclePlus
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Clock
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReceiptRefund
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
@@ -254,7 +254,7 @@ fun ExpenseItem(
                                 } else if (expenseUiModel.isScheduledPastDue) {
                                     TablerIcons.Outline.CircleCheck
                                 } else {
-                                    TablerIcons.Outline.Clock
+                                    TablerIcons.Outline.Calendar
                                 },
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp),
