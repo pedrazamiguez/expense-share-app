@@ -16,14 +16,12 @@ arguments:
   - name: screenshot_path
     description: Optional path to a screenshot or image demonstrating the issue. This path is automatically populated by the system when a screenshot is attached to the conversation (the user does not write this path manually).
     required: false
----
-# Follow-Up on Issue
+---# Follow-Up on Issue
 
 Follow up on the work for this issue:
 - Issue Number: $ISSUE_NUMBER
 - Follow-Up Description: $FOLLOW_UP_DESCRIPTION
 - Screenshot Path: $SCREENSHOT_PATH
-
 ---
 
 ## Step 0 — Validate Branch and Context
@@ -39,7 +37,6 @@ Because this follow-up may be initiated in a new conversation without prior cont
    ```bash
    git pull
    ```
-
 ---
 
 ## Step 1 — Load issue context
@@ -51,7 +48,6 @@ Because this follow-up may be initiated in a new conversation without prior cont
    > - UI components / design tokens → `wiki/horizon-narrative-design-language.md`
    > - Reusable services or components → `wiki/core-services-catalog.md` (relevant section only)
    > - Data mapping → `wiki/data-mapping-strategy-and-architecture.md`
-
 ---
 
 ## Step 2 — Triage the Follow-Up Request & Screenshot
@@ -71,7 +67,6 @@ The comment must include:
 - Architecture compliance checklist confirmed for each new/modified component
 
 Stick to the plan. If the plan needs to change, update the comment on the issue (also automatically using the github-mcp-server).
-
 ---
 
 ## Step 4 — File-Size Guard (600-line hard limit, enforced by Konsist)
@@ -87,7 +82,6 @@ After editing, re-check:
 wc -l <path/to/file.kt>
 ```
 If the result exceeds 600 lines, refactor immediately — do not move on.
-
 ---
 
 ## Step 5 — Implement
@@ -101,7 +95,6 @@ If the result exceeds 600 lines, refactor immediately — do not move on.
 - REQUIREMENT: Production source files ≤ 600 lines.
 - REQUIREMENT: Formatting in UiMappers only. Never in ViewModels or Domain Services.
 - REQUIREMENT: Comment the *why*, not the *what*. No redundant comments.
-
 ---
 
 ## Step 6 — Local Verification Gate (run BEFORE declaring done)
@@ -112,7 +105,6 @@ make check   # Konsist architecture rules + all unit tests + debug compilation �
 ```
 
 If any check fails, fix it before finishing. Do not leave the user to discover failures in CI.
-
 ---
 
 ## Step 7 — Post walkthrough as an issue comment
