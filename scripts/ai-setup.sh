@@ -225,7 +225,7 @@ with open(path) as f:
     try:
         config = json.load(f)
     except json.JSONDecodeError:
-        print('  Failed to parse opencode.jsonc (maybe it contains comments)')
+        print('  Warning: Failed to parse opencode.jsonc. If it contains comments, please merge manually to avoid losing them.')
         exit(0)
 
 # Merge MCP
