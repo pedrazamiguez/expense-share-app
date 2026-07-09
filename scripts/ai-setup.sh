@@ -238,20 +238,7 @@ if 'codebase-memory-mcp' not in servers:
     }
     print('  Added codebase-memory-mcp to opencode.jsonc')
 
-# Merge Rules and Skills
-rules_path = os.path.join(project_root, '.agents/rules')
-skills_path = os.path.join(project_root, '.agents/skills')
 
-rules = config.setdefault('rules', [])
-skills = config.setdefault('skills', [])
-
-if rules_path not in rules:
-    rules.append(rules_path)
-    print('  Added rules path to opencode.jsonc')
-
-if skills_path not in skills:
-    skills.append(skills_path)
-    print('  Added skills path to opencode.jsonc')
 
 # Write back (Note: this drops comments, but opencode.jsonc is usually managed programmatically)
 with open(path, 'w') as f:
