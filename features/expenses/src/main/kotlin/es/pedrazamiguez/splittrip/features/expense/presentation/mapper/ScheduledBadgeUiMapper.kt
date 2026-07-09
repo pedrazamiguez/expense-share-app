@@ -45,37 +45,13 @@ class ScheduledBadgeUiMapper(
                 }
 
             dueDateLocal.isEqual(today) ->
-                resolveBadgeText(
-                    isRefundable,
-                    R.string.expense_scheduled_due_today,
-                    R.string.expense_refundable_until_today
-                ) to
-                    !isRefundable
+                resourceProvider.getString(R.string.expense_scheduled_due_today) to !isRefundable
 
             dueDateLocal.isEqual(today.plusDays(1)) ->
-                resolveBadgeText(
-                    isRefundable,
-                    R.string.expense_scheduled_due_tomorrow,
-                    R.string.expense_refundable_until_tomorrow
-                ) to
-                    false
+                resourceProvider.getString(R.string.expense_scheduled_due_tomorrow) to false
 
             else ->
-                resolveBadgeText(
-                    isRefundable,
-                    R.string.expense_scheduled_due_on,
-                    R.string.expense_refundable_until_short,
-                    formattingHelper.formatShortDate(dueDate)
-                ) to false
+                formattingHelper.formatShortDate(dueDate) to false
         }
-    }
-
-    private fun resolveBadgeText(
-        isRefundable: Boolean,
-        scheduledRes: Int,
-        refundableRes: Int,
-        vararg args: Any
-    ): String {
-        return resourceProvider.getString(if (isRefundable) refundableRes else scheduledRes, *args)
     }
 }

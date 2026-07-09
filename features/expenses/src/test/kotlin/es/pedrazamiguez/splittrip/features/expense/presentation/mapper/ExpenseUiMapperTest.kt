@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
@@ -24,7 +25,6 @@ import java.time.LocalDateTime
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -557,7 +557,7 @@ class ExpenseUiMapperTest {
         }
 
         @Test
-        fun `scheduled expense with future dueDate shows due on date`() {
+        fun `scheduled expense with future dueDate shows formatted date`() {
             val futureDueDate = LocalDateTime.now().plusDays(10)
             val expense = Expense(
                 id = "e3",
@@ -567,8 +567,7 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertNotNull(result.scheduledBadgeText)
-            assertTrue(result.scheduledBadgeText!!.startsWith("Due on"))
+            assertEquals(futureDueDate.formatShortDate(Locale.US), result.scheduledBadgeText)
             assertFalse(result.isScheduledPastDue)
         }
 
@@ -588,8 +587,7 @@ class ExpenseUiMapperTest {
         }
 
         @Test
-        fun `scheduled expense due today shows due today`() {
-            // Use a time today but not midnight to ensure toLocalDate() is today
+        fun `scheduled expense due today shows Today`() {
             val todayDueDate = LocalDateTime.now().withHour(12).withMinute(0)
             val expense = Expense(
                 id = "e5",
@@ -599,12 +597,12 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertEquals("Due today", result.scheduledBadgeText)
+            assertEquals("Today", result.scheduledBadgeText)
             assertTrue(result.isScheduledPastDue)
         }
 
         @Test
-        fun `scheduled expense due tomorrow shows due tomorrow`() {
+        fun `scheduled expense due tomorrow shows Tomorrow`() {
             val tomorrowDueDate = LocalDateTime.now().plusDays(1).withHour(12).withMinute(0)
             val expense = Expense(
                 id = "e6",
@@ -614,12 +612,12 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertEquals("Due tomorrow", result.scheduledBadgeText)
+            assertEquals("Tomorrow", result.scheduledBadgeText)
             assertFalse(result.isScheduledPastDue)
         }
 
         @Test
-        fun `refundable expense with dueDate shows until date`() {
+        fun `refundable expense with dueDate shows formatted date`() {
             val futureDueDate = LocalDateTime.now().plusDays(10)
             val expense = Expense(
                 id = "e7",
@@ -629,8 +627,7 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertNotNull(result.scheduledBadgeText)
-            assertTrue(result.scheduledBadgeText!!.startsWith("Until"))
+            assertEquals(futureDueDate.formatShortDate(Locale.US), result.scheduledBadgeText)
             assertFalse(result.isScheduledPastDue)
             assertTrue(result.isRefundable)
         }
@@ -1456,22 +1453,9 @@ class ExpenseUiMapperTest {
     }
 
     private fun stubScheduledBadgeStrings() {
-        every { resourceProvider.getString(R.string.expense_scheduled_due_today, *anyVararg()) } returns "Due today"
-        every { resourceProvider.getString(R.string.expense_scheduled_due_tomorrow, *anyVararg()) } returns
-            "Due tomorrow"
+        every { resourceProvider.getString(R.string.expense_scheduled_due_today) } returns "Today"
+        every { resourceProvider.getString(R.string.expense_scheduled_due_tomorrow) } returns "Tomorrow"
         every { resourceProvider.getString(R.string.expense_scheduled_paid) } returns "Paid"
-        every { resourceProvider.getString(R.string.expense_scheduled_due_on, *anyVararg()) } answers {
-            val varargs = it.invocation.args[1] as Array<*>
-            "Due on ${varargs[0]}"
-        }
         every { resourceProvider.getString(R.string.expense_status_cancelled_refunded) } returns "Cancelled - Refunded"
-        every { resourceProvider.getString(R.string.expense_refundable_until_short, *anyVararg()) } answers {
-            val varargs = it.invocation.args[1] as Array<*>
-            "Until ${varargs[0]}"
-        }
-        every { resourceProvider.getString(R.string.expense_refundable_until_today, *anyVararg()) } returns
-            "Until today"
-        every { resourceProvider.getString(R.string.expense_refundable_until_tomorrow, *anyVararg()) } returns
-            "Until tomorrow"
     }
 }

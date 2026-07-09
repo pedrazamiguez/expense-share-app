@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.features.expense.R
@@ -34,22 +35,9 @@ class ScheduledBadgeUiMapperTest {
         every { localeProvider.getCurrentLocale() } returns Locale.US
 
         every { resourceProvider.getString(R.string.expense_scheduled_paid) } returns "Paid"
-        every { resourceProvider.getString(R.string.expense_scheduled_due_today, *anyVararg()) } returns "Due today"
-        every { resourceProvider.getString(R.string.expense_scheduled_due_tomorrow, *anyVararg()) } returns
-            "Due tomorrow"
-        every { resourceProvider.getString(R.string.expense_scheduled_due_on, *anyVararg()) } answers {
-            val varargs = it.invocation.args[1] as Array<*>
-            "Due on ${varargs[0]}"
-        }
+        every { resourceProvider.getString(R.string.expense_scheduled_due_today) } returns "Today"
+        every { resourceProvider.getString(R.string.expense_scheduled_due_tomorrow) } returns "Tomorrow"
         every { resourceProvider.getString(R.string.expense_status_cancelled_refunded) } returns "Cancelled - Refunded"
-        every { resourceProvider.getString(R.string.expense_refundable_until_short, *anyVararg()) } answers {
-            val varargs = it.invocation.args[1] as Array<*>
-            "Until ${varargs[0]}"
-        }
-        every { resourceProvider.getString(R.string.expense_refundable_until_today, *anyVararg()) } returns
-            "Until today"
-        every { resourceProvider.getString(R.string.expense_refundable_until_tomorrow, *anyVararg()) } returns
-            "Until tomorrow"
 
         mapper = ScheduledBadgeUiMapper(
             formattingHelper = FormattingHelper(localeProvider),
@@ -136,21 +124,21 @@ class ScheduledBadgeUiMapperTest {
     inner class DueToday {
 
         @Test
-        fun `returns Due today badge and isPastDue true`() {
+        fun `returns badge with Today and isPastDue true`() {
             val expense = Expense(
                 id = "e7",
                 paymentStatus = PaymentStatus.SCHEDULED,
                 dueDate = LocalDateTime.now().withHour(12).withMinute(0)
             )
             val (badge, isPastDue) = mapper.buildBadge(expense)
-            assertEquals("Due today", badge)
+            assertEquals("Today", badge)
             assertTrue(isPastDue)
         }
 
         @Test
         fun `returns ES badge for due today`() {
             every { localeProvider.getCurrentLocale() } returns Locale.forLanguageTag("es-ES")
-            every { resourceProvider.getString(R.string.expense_scheduled_due_today, *anyVararg()) } returns "Vence hoy"
+            every { resourceProvider.getString(R.string.expense_scheduled_due_today) } returns "Hoy"
 
             val expense = Expense(
                 id = "e8",
@@ -158,7 +146,7 @@ class ScheduledBadgeUiMapperTest {
                 dueDate = LocalDateTime.now().withHour(10).withMinute(0)
             )
             val (badge, isPastDue) = mapper.buildBadge(expense)
-            assertEquals("Vence hoy", badge)
+            assertEquals("Hoy", badge)
             assertTrue(isPastDue)
         }
     }
@@ -168,22 +156,21 @@ class ScheduledBadgeUiMapperTest {
     inner class DueTomorrow {
 
         @Test
-        fun `returns Due tomorrow badge and isPastDue false`() {
+        fun `returns Tomorrow badge and isPastDue false`() {
             val expense = Expense(
                 id = "e9",
                 paymentStatus = PaymentStatus.SCHEDULED,
                 dueDate = LocalDateTime.now().plusDays(1).withHour(12).withMinute(0)
             )
             val (badge, isPastDue) = mapper.buildBadge(expense)
-            assertEquals("Due tomorrow", badge)
+            assertEquals("Tomorrow", badge)
             assertFalse(isPastDue)
         }
 
         @Test
         fun `returns ES badge for due tomorrow`() {
             every { localeProvider.getCurrentLocale() } returns Locale.forLanguageTag("es-ES")
-            every { resourceProvider.getString(R.string.expense_scheduled_due_tomorrow, *anyVararg()) } returns
-                "Vence mañana"
+            every { resourceProvider.getString(R.string.expense_scheduled_due_tomorrow) } returns "Mañana"
 
             val expense = Expense(
                 id = "e10",
@@ -191,7 +178,7 @@ class ScheduledBadgeUiMapperTest {
                 dueDate = LocalDateTime.now().plusDays(1).withHour(9).withMinute(0)
             )
             val (badge, isPastDue) = mapper.buildBadge(expense)
-            assertEquals("Vence mañana", badge)
+            assertEquals("Mañana", badge)
             assertFalse(isPastDue)
         }
     }
@@ -201,7 +188,7 @@ class ScheduledBadgeUiMapperTest {
     inner class FutureDate {
 
         @Test
-        fun `returns Due on date badge and isPastDue false for EN locale`() {
+        fun `returns formatted date badge for future date in EN locale`() {
             val futureDate = LocalDateTime.now().plusDays(10).withHour(12).withMinute(0)
             val expense = Expense(
                 id = "e11",
@@ -209,21 +196,15 @@ class ScheduledBadgeUiMapperTest {
                 dueDate = futureDate
             )
             val (badge, isPastDue) = mapper.buildBadge(expense)
-            assertTrue(badge!!.startsWith("Due on"))
+            assertEquals(futureDate.formatShortDate(Locale.US), badge)
             assertFalse(isPastDue)
         }
 
         @Test
-        fun `returns Due on date badge with formatted date in ES locale`() {
-            every { localeProvider.getCurrentLocale() } returns Locale.forLanguageTag("es-ES")
-            every {
-                resourceProvider.getString(R.string.expense_scheduled_due_on, *anyVararg())
-            } answers {
-                val varargs = it.invocation.args[1] as Array<*>
-                "Vence el ${varargs[0]}"
-            }
+        fun `returns formatted date badge for future date in ES locale`() {
+            val esLocale = Locale.forLanguageTag("es-ES")
+            every { localeProvider.getCurrentLocale() } returns esLocale
 
-            // Use a known date so we can assert the formatted output
             val futureDate = LocalDateTime.of(2027, 8, 20, 12, 0)
             val expense = Expense(
                 id = "e12",
@@ -231,13 +212,12 @@ class ScheduledBadgeUiMapperTest {
                 dueDate = futureDate
             )
             val (badge, isPastDue) = mapper.buildBadge(expense)
-            // ES locale formats "20 ago" (short month in Spanish)
-            assertEquals("Vence el 20 ago", badge)
+            assertEquals(futureDate.formatShortDate(esLocale), badge)
             assertFalse(isPastDue)
         }
 
         @Test
-        fun `returns Due on date badge with formatted date in EN locale`() {
+        fun `returns formatted date badge for known date in EN locale`() {
             val futureDate = LocalDateTime.of(2027, 8, 20, 12, 0)
             val expense = Expense(
                 id = "e13",
@@ -245,7 +225,7 @@ class ScheduledBadgeUiMapperTest {
                 dueDate = futureDate
             )
             val (badge, isPastDue) = mapper.buildBadge(expense)
-            assertEquals("Due on 20 Aug", badge)
+            assertEquals("20 Aug", badge)
             assertFalse(isPastDue)
         }
     }
@@ -255,7 +235,7 @@ class ScheduledBadgeUiMapperTest {
     inner class RefundableStatus {
 
         @Test
-        fun `returns Until date badge with formatted date`() {
+        fun `returns formatted date badge for future date`() {
             val futureDate = LocalDateTime.of(2027, 8, 20, 12, 0)
             val expense = Expense(
                 id = "e14",
@@ -263,31 +243,31 @@ class ScheduledBadgeUiMapperTest {
                 dueDate = futureDate
             )
             val (badge, isPastDue) = mapper.buildBadge(expense)
-            assertEquals("Until 20 Aug", badge)
+            assertEquals("20 Aug", badge)
             assertFalse(isPastDue)
         }
 
         @Test
-        fun `returns Until today when due today`() {
+        fun `returns badge with Today when due today`() {
             val expense = Expense(
                 id = "e14b",
                 paymentStatus = PaymentStatus.REFUNDABLE,
                 dueDate = LocalDateTime.now().withHour(12).withMinute(0)
             )
             val (badge, isPastDue) = mapper.buildBadge(expense)
-            assertEquals("Until today", badge)
+            assertEquals("Today", badge)
             assertFalse(isPastDue)
         }
 
         @Test
-        fun `returns Until tomorrow when due tomorrow`() {
+        fun `returns badge with Tomorrow when due tomorrow`() {
             val expense = Expense(
                 id = "e14c",
                 paymentStatus = PaymentStatus.REFUNDABLE,
                 dueDate = LocalDateTime.now().plusDays(1).withHour(12).withMinute(0)
             )
             val (badge, isPastDue) = mapper.buildBadge(expense)
-            assertEquals("Until tomorrow", badge)
+            assertEquals("Tomorrow", badge)
             assertFalse(isPastDue)
         }
 

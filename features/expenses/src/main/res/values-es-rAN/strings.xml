@@ -110,14 +110,11 @@
     <string name="add_expense_receipt_remove">Eliminâh foto</string>
     <string name="add_expense_receipt_image_description">Foto del reçibo</string>
     <string name="expense_error_due_date_required">Çelêççiona una fexa de bençimiento pa er pago programao</string>
-    <string name="expense_scheduled_due_on">Bençe el %1$s</string>
-    <string name="expense_scheduled_due_today">Bençe oy</string>
-    <string name="expense_scheduled_due_tomorrow">Bençe mañana</string>
+    <string name="expense_scheduled_due_on">%1$s</string>
+    <string name="expense_scheduled_due_today">Oy</string>
+    <string name="expense_scheduled_due_tomorrow">Mañana</string>
     <string name="expense_scheduled_paid">Pagao</string>
     <string name="expense_status_cancelled_refunded">Cançelao - Reemborçao</string>
-    <string name="expense_refundable_until_short">Âtta %1$s</string>
-    <string name="expense_refundable_until_today">Âtta oy</string>
-    <string name="expense_refundable_until_tomorrow">Âtta mañana</string>
     <string name="expense_refundable_until">Reemborçable âtta %1$s</string>
     <string name="split_type_equal">Partê igualê</string>
     <string name="split_type_exact">Cantidadê</string>

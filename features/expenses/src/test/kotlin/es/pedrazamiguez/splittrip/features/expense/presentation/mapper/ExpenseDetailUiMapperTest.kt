@@ -1125,16 +1125,14 @@ class ExpenseDetailUiMapperTest {
         }
 
         @Test
-        fun `scheduledBadgeText shows due tomorrow for scheduled expense due tomorrow`() {
-            // Stub only the specific resource ID so the test fails if the wrong branch is hit.
-            every { resourceProvider.getString(R.string.expense_scheduled_due_tomorrow, *anyVararg()) } returns
-                "Due tomorrow"
+        fun `scheduledBadgeText shows Tomorrow for scheduled expense due tomorrow`() {
+            every { resourceProvider.getString(R.string.expense_scheduled_due_tomorrow) } returns "Tomorrow"
             val expense = baseExpense.copy(
                 paymentStatus = PaymentStatus.SCHEDULED,
                 dueDate = LocalDateTime.now().plusDays(1).withHour(12).withMinute(0)
             )
             val result = mapper.map(expense, memberProfiles, currentUserId)
-            assertEquals("Due tomorrow", result.scheduledBadgeText)
+            assertEquals("Tomorrow", result.scheduledBadgeText)
             assertFalse(result.isScheduledPastDue)
         }
     }
