@@ -16,14 +16,12 @@ arguments:
   - name: issue_key
     description: Optional specific SonarQube issue key to retrieve and resolve.
     required: false
----
-# Address Sonar Issues
+---# Address Sonar Issues
 
 Identify, analyze, and resolve SonarQube code quality issues (bugs, code smells, vulnerabilities) or coverage gaps:
 - Project Key: $PROJECT_KEY
 - Component Path: $COMPONENT_PATH
 - Issue Key: $ISSUE_KEY
-
 ---
 
 ## Step 1 — Query SonarQube via MCP
@@ -34,7 +32,6 @@ Query the target SonarQube instance to check project health and identify current
 2. **Check Quality Gate Status:** Run the `sonarqube` MCP server tool `get_project_quality_gate_status` using `$PROJECT_KEY` to evaluate the overall health and determine which specific quality gate conditions are failing.
 3. **Find Code Quality Issues:** Use the `sonarqube` MCP server tool `search_sonar_issues_in_projects` to locate outstanding bugs, vulnerabilities, or code smells. Filter by project key, and optionally `issueStatuses=["OPEN"]` and/or component paths.
 4. **Find Coverage Gaps:** Use the `sonarqube` MCP server tool `search_files_by_coverage` to find files with low test coverage. Sort ascending to find the worst-covered files first.
-
 ---
 
 ## Step 2 — Retrieve Detailed Context
@@ -44,7 +41,6 @@ Before starting implementation, retrieve precise failure details:
 1. **Retrieve Rule Details:** For code quality issues, run the `sonarqube` MCP server tool `show_rule` using the rule key of the identified issue to understand the pattern violated and how it should be resolved.
 2. **Locate Code Smells:** Identify the exact file path and line numbers from the issue details.
 3. **Retrieve Coverage Details:** For coverage gaps, use `get_file_coverage_details` with the file key to retrieve line-by-line coverage metrics, showing precisely which lines are uncovered or partially covered.
-
 ---
 
 ## Step 3 — File-Size Guard (600-line hard limit)
@@ -57,7 +53,6 @@ wc -l <path/to/file.kt>
 
 - **Before editing:** If a file is at or near the 600-line hard limit, plan to refactor, extract event handlers, or create delegate classes **before** adding new logic.
 - **After editing:** Re-check the file's line count. If your edits pushed the file over the 600-line hard limit, immediately refactor it (e.g., by extracting event handlers, delegates, or smaller components) to bring it back under the 600-line limit.
-
 ---
 
 ## Step 4 — Plan and Implement Fixes
@@ -80,7 +75,6 @@ Implement code modifications and unit tests, adhering strictly to all project ar
    - Implement unit tests using JUnit 5 and MockK targeting the uncovered lines.
    - **Crucial assertion rule:** NEVER use Kotlin's `assert()`. ALWAYS use JUnit assertions (e.g., `Assert.assertTrue(...)`, `Assert.assertEquals(...)`).
    - **Coroutine testing:** Inject `CoroutineDispatcher` (using `StandardTestDispatcher()`) into classes that launch background coroutines to ensure deterministic test execution.
-
 ---
 
 ## Step 5 — Local Verification Gate
@@ -96,7 +90,6 @@ Ensure all local verification checks pass successfully:
    ```bash
    make coverage
    ```
-
 ---
 
 ## Step 6 — Update SonarQube Status

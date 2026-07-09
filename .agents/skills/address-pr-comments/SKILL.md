@@ -7,19 +7,13 @@ tools:
   - githubRepo
   - terminalLastCommand
 arguments:
-  - name: pr_url
-    description: The URL of the GitHub pull request to address comments on.
-    required: true
   - name: pr_number
     description: The number of the GitHub pull request to address comments on.
-    required: false
----
-# Address Pull Request Comments
+    required: true
+---# Address Pull Request Comments
 
 Address and resolve existing comments/feedback raised on this PR:
-- PR URL: $PR_URL
 - PR Number: $PR_NUMBER
-
 ---
 
 ## Step 1 — Read and triage all comments
@@ -37,7 +31,6 @@ Retrieve the review comments and threads for the pull request to identify outsta
      - ✅ **Valid** — address it with a code change.
      - ℹ️ **Partially valid** — address the spirit of the comment, explain any deviation in a reply.
      - ❌ **False positive / Declined** — reply with a clear technical reason why no change is needed (e.g., if applying it causes compilation issues or breaks standard architecture).
-
 ---
 
 ## Step 2 — File-size guard before editing
@@ -49,7 +42,6 @@ wc -l <path/to/file.kt>
 ```
 
 If a file is at or near 600 lines (the Konsist hard limit), plan a split or extraction **before** adding code. After editing, re-check and refactor immediately if over 600 lines.
-
 ---
 
 ## Step 3 — Implement changes
@@ -65,7 +57,6 @@ Ensure you adhere to the project quality and style standards, including detekt r
 - REQUIREMENT: Production source files ≤ 600 lines.
 - REQUIREMENT: Formatting in UiMappers only. Never in ViewModels or Domain Services.
 - REQUIREMENT: Comment the *why*, not the *what*. No redundant comments.
-
 ---
 
 ## Step 4 — Local verification gate (run BEFORE declaring done)
@@ -77,7 +68,6 @@ make check   # Konsist architecture rules + all unit tests + debug compilation �
 ```
 
 If any check fails, fix it before finishing. Do not leave failures for CI to catch.
-
 ---
 
 ## Step 5 — Post replies on GitHub

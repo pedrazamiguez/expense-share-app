@@ -7,19 +7,13 @@ tools:
   - githubRepo
   - terminalLastCommand
 arguments:
-  - name: pr_url
-    description: The URL of the GitHub pull request to review.
-    required: true
   - name: pr_number
     description: The number of the GitHub pull request to review.
-    required: false
----
-# Review Pull Request
+    required: true
+---# Review Pull Request
 
 Review the code changes on the following pull request:
-- PR URL: $PR_URL
 - PR Number: $PR_NUMBER
-
 ---
 
 ## Step 1 — Fetch Metadata, Existing Comments & Diff Analysis
@@ -33,7 +27,6 @@ Perform the following operations to prepare for the review:
    git diff origin/<target-branch>...HEAD
    ```
 5. List all modified and newly created files to plan your review.
-
 ---
 
 ## Step 2 — Deep Architecture & Logic Review
@@ -57,7 +50,6 @@ Do not perform a superficial checklist review. Inspect every modified and new fi
 - CHECK: Resource & Memory Management — Check that temporary files, camera files, bitmap streams, and memory objects are safely recycled/deleted in `try-finally` blocks.
 - CHECK: Environmental/Build Variances — Verify file provider authorities, path mappings, package names, and app ID suffixes work correctly across different build variants (debug vs release).
 - CHECK: UI/Compose Best Practices — Ensure Compose-friendly resource resolution is used (`stringResource(...)` or standard `UiText.asString()` Composable extensions) rather than piping `LocalContext` down where avoidable. Ensure padding rules use proper constants.
-
 ---
 
 ## Step 3 — Issue Categorization
@@ -84,7 +76,6 @@ Style adjustments, recommendations, or minor refactorings. These trigger a `COMM
 - Style improvements, typos in documentation/comments.
 - Minor performance refactoring suggestions.
 - Redundant comments (describing *what* instead of *why*).
-
 ---
 
 ## Step 4 — Submit Review with Inline Comments
