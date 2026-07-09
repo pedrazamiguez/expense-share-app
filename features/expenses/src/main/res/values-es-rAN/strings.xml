@@ -112,7 +112,7 @@
     <string name="expense_error_due_date_required">Çelêççiona una fexa de bençimiento pa er pago programao</string>
     <string name="expense_relative_today">Oy</string>
     <string name="expense_relative_tomorrow">Mañana</string>
-    <string name="expense_relative_yesterday">Ayeri</string>
+    <string name="expense_relative_yesterday">Ayêh</string>
     <string name="expense_status_cancelled_refunded">Cançelao - Reemborçao</string>
     <string name="expense_refundable_until">Reemborçable âtta %1$s</string>
     <string name="split_type_equal">Partê igualê</string>

@@ -24,5 +24,10 @@ data class GroupPocketBalanceUiModel(
      * Pre-formatted total extras amount (fees, tips, surcharges, ATM fees).
      * Null when there are no add-ons, so the UI hides the row.
      */
-    val formattedTotalExtras: String? = null
+    val formattedTotalExtras: String? = null,
+    /**
+     * Pre-formatted "on hold" balance for refundable expenses.
+     * Null when there are no refundable expenses.
+     */
+    val formattedRefundableHoldAmount: String? = null
 )

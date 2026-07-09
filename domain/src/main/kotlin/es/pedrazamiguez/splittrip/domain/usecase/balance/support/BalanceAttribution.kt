@@ -184,7 +184,11 @@ internal fun attributeExpensesByPaymentMethod(
     val nonCashEquivByCurrency = mutableMapOf<String, MutableMap<String, Long>>()
 
     for (expense in expenses) {
-        if (expense.paymentStatus == PaymentStatus.CANCELLED) continue
+        if (expense.paymentStatus == PaymentStatus.CANCELLED ||
+            expense.paymentStatus == PaymentStatus.REFUNDABLE
+        ) {
+            continue
+        }
         val isCash = expense.paymentMethod == PaymentMethod.CASH
         val targetMap = if (isCash) cashResult else nonCashResult
         val targetByCurrency = if (isCash) cashByCurrency else nonCashByCurrency

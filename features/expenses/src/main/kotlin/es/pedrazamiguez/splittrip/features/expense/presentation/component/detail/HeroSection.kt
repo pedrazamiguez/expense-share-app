@@ -69,6 +69,9 @@ internal fun HeroSection(
                     label = expense.badgeText ?: expense.paymentStatusText
                 )
                 DateChip(text = expense.dateText)
+                if (expense.secondaryDateText != null) {
+                    DateChip(text = expense.secondaryDateText, icon = expense.secondaryDateIcon)
+                }
             }
         }
 

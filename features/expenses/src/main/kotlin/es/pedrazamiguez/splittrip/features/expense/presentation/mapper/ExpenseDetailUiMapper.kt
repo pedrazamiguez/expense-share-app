@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
+import androidx.compose.ui.graphics.vector.ImageVector
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
@@ -125,7 +126,9 @@ class ExpenseDetailUiMapper(
                 ),
                 payerDisplay = payerDisplay,
                 creatorDisplay = creatorDisplay,
-                dateText = resolveDateText(expense, formattingHelper),
+                dateText = formattingHelper.formatShortDate(expense.createdAt),
+                secondaryDateText = resolveSecondaryDateText(expense, formattingHelper),
+                secondaryDateIcon = resolveSecondaryDateIcon(expense),
                 vendorText = expense.vendor?.takeIf { it.isNotBlank() },
                 notesText = expense.notes?.takeIf { it.isNotBlank() },
                 badgeText = badgeData?.text,
@@ -520,11 +523,20 @@ private fun resolveEffectiveTotal(
     }
 }
 
-private fun resolveDateText(expense: Expense, formattingHelper: FormattingHelper): String {
-    return if (expense.paymentStatus == PaymentStatus.SCHEDULED && expense.dueDate != null) {
-        formattingHelper.formatShortDate(expense.dueDate)
-    } else {
-        formattingHelper.formatShortDate(expense.createdAt)
+private fun resolveSecondaryDateText(expense: Expense, formattingHelper: FormattingHelper): String? {
+    return when (expense.paymentStatus) {
+        PaymentStatus.SCHEDULED, PaymentStatus.REFUNDABLE -> expense.dueDate?.let {
+            formattingHelper.formatShortDate(it)
+        }
+        else -> null
+    }
+}
+
+private fun resolveSecondaryDateIcon(expense: Expense): ImageVector? {
+    return when (expense.paymentStatus) {
+        PaymentStatus.SCHEDULED -> TablerIcons.Outline.Calendar
+        PaymentStatus.REFUNDABLE -> TablerIcons.Outline.ReceiptRefund
+        else -> null
     }
 }
 
