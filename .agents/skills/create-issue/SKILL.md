@@ -10,19 +10,16 @@ arguments:
   - name: description
     description: The plain English description of the feature, bug, or improvement.
     required: true
----
-# Create Issue
+---# Create Issue
 
 Create a GitHub issue for the following idea or problem:
 
 > $DESCRIPTION
-
 ---
 
 ## Your job
 
 Turn the description above into a well-formed GitHub issue ready to be picked up by a developer. Present the draft to the user, and once approved, create the issue on GitHub. Do NOT implement anything — output the issue draft only first.
-
 ---
 
 ## Step 1 — Understand the context
@@ -32,7 +29,6 @@ Turn the description above into a well-formed GitHub issue ready to be picked up
    > - Sync / offline patterns → `wiki/offline-first-architecture.md`
    > - UI components / Horizon design → `wiki/horizon-narrative-design-language.md`
    > - Domain services → `wiki/core-services-catalog.md` (relevant section only)
-
 ---
 
 ## Step 2 — Draft the GitHub issue
@@ -75,7 +71,6 @@ Explicitly list anything that this issue should NOT include, to prevent scope cr
 
 ### Related Issues / PRs
 Link any parent issues, child issues, or prior PRs that provide context.
-
 ---
 
 ## Step 3 — Review and Create

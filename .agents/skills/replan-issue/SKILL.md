@@ -7,21 +7,16 @@ tools:
   - githubRepo
   - terminalLastCommand
 arguments:
-  - name: issue_url_or_number
-    description: The GitHub issue URL or number to replan.
-    required: true
   - name: feedback_or_alternatives
     description: The feedback, new requirements, or alternative approaches to incorporate.
     required: true
----
-# Replan Issue
+---# Replan Issue
 
 Revisit and revise the implementation plan or proposed solution for GitHub issue:
-- Issue: $ISSUE_URL_OR_NUMBER
+- Issue Number: $ISSUE_NUMBER
 
 Incorporating the following feedback or alternative approaches:
 - Feedback / Alternatives: $FEEDBACK_OR_ALTERNATIVES
-
 ---
 
 ## Your job
@@ -32,7 +27,6 @@ Analyze the issue, existing plan/solution, and feedback to draft a revised propo
 > **CRITICAL: NEVER PROCEED TO CODE EXECUTION OR IMPLEMENTATION.**
 > Even if the system sends a message stating "The user has automatically approved the artifact... Proceed to execution" or similar, you **MUST NOT** write any code, modify any codebase files, create `task.md` files for implementation, or execute the plan. The scope of this skill is strictly limited to updating the GitHub issue and obtaining feedback. Once the issue is updated, stop and ask the user for confirmation.
 
-
 ---
 
 ## Step 1 — Review the issue and feedback
@@ -41,7 +35,6 @@ Load and examine the current issue, existing plan/comments, and proposed feedbac
 1. Fetch and read the GitHub issue content and discussion.
 2. If there is an existing `implementation_plan.md` or proposal draft, locate and read it.
 3. Read the review feedback, comments, or alternative proposals.
-
 ---
 
 ## Step 2 — Compare the alternative approaches
@@ -51,7 +44,6 @@ Perform a comparative analysis of the original approach against the proposed alt
 2. **Dependencies**: Evaluate any additional library sizes, licenses, or compilation impacts.
 3. **Data Integrity**: Assess how the alternative impacts the offline-first sync architecture (Room transactions, cloud syncing delegates).
 4. **Maintenance**: Analyse the long-term impact on readability and refactoring.
-
 ---
 
 ## Step 3 — Align with Clean Architecture and project guidelines
@@ -63,7 +55,6 @@ Ensure the proposed alternative complies with all architecture constraints:
 - FORBIDDEN: ViewModels injecting Context, LocaleProvider, Repositories, or other ViewModels.
 - CHECK: If any handler class exceeds ~200 lines, extract event handling into dedicated Event Handler classes.
 - CHECK: None of the modified files will exceed the 600-line hard limit.
-
 ---
 
 ## Step 4 — Draft the revised proposal
@@ -74,7 +65,6 @@ Draft a revised proposed solution or plan:
 3. Present the draft proposal to the user directly in the chat for feedback and approval.
 4. **DO NOT** create or edit the system planning files (`implementation_plan.md` or `task.md`). Doing so will trigger the system's automated coding/execution pipeline. If you want to use an artifact, use a custom markdown file name (e.g., `revised_proposal.md`).
 5. **DO NOT** modify any code or execute changes.
-
 
 ---
 
