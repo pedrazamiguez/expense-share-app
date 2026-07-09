@@ -81,7 +81,7 @@ class ExpenseDetailUiMapperTest {
         val formattingHelper = FormattingHelper(localeProvider)
         val expenseCalculatorService = ExpenseCalculatorServiceImpl()
         val addOnCalculationService = AddOnCalculationServiceImpl()
-        val scheduledBadgeUiMapper = ScheduledBadgeUiMapper(
+        val paymentStatusBadgeUiMapper = PaymentStatusBadgeUiMapper(
             formattingHelper = formattingHelper,
             resourceProvider = resourceProvider
         )
@@ -91,7 +91,7 @@ class ExpenseDetailUiMapperTest {
             resourceProvider = resourceProvider,
             expenseCalculatorService = expenseCalculatorService,
             addOnCalculationService = addOnCalculationService,
-            scheduledBadgeUiMapper = scheduledBadgeUiMapper,
+            paymentStatusBadgeUiMapper = paymentStatusBadgeUiMapper,
             userUiMapper = UserUiMapper(resourceProvider)
         )
     }
@@ -1102,39 +1102,38 @@ class ExpenseDetailUiMapperTest {
     inner class ScheduledBadge {
 
         @Test
-        fun `scheduledBadgeText is null for finished expense`() {
+        fun `badgeText is null for finished expense`() {
             val expense = baseExpense.copy(paymentStatus = PaymentStatus.FINISHED)
             val result = mapper.map(expense, memberProfiles, currentUserId)
-            assertNull(result.scheduledBadgeText)
+            assertNull(result.badgeText)
         }
 
         @Test
-        fun `scheduledBadgeText is null for scheduled expense without due date`() {
+        fun `badgeText is null for scheduled expense without due date`() {
             val expense = baseExpense.copy(
                 paymentStatus = PaymentStatus.SCHEDULED,
                 dueDate = null
             )
             val result = mapper.map(expense, memberProfiles, currentUserId)
-            assertNull(result.scheduledBadgeText)
+            assertNull(result.badgeText)
         }
 
         @Test
-        fun `isScheduledPastDue is false for non-scheduled expense`() {
+        fun `isBadgeUrgent is false for non-scheduled expense`() {
             val result = mapper.map(baseExpense, memberProfiles, currentUserId)
-            assertFalse(result.isScheduledPastDue)
+            assertFalse(result.isBadgeUrgent)
         }
 
         @Test
-        fun `scheduledBadgeText shows due tomorrow for scheduled expense due tomorrow`() {
-            // Stub only the specific resource ID so the test fails if the wrong branch is hit.
-            every { resourceProvider.getString(R.string.expense_scheduled_due_tomorrow) } returns "Due tomorrow"
+        fun `badgeText shows Tomorrow for scheduled expense due tomorrow`() {
+            every { resourceProvider.getString(R.string.expense_relative_tomorrow) } returns "Tomorrow"
             val expense = baseExpense.copy(
                 paymentStatus = PaymentStatus.SCHEDULED,
                 dueDate = LocalDateTime.now().plusDays(1).withHour(12).withMinute(0)
             )
             val result = mapper.map(expense, memberProfiles, currentUserId)
-            assertEquals("Due tomorrow", result.scheduledBadgeText)
-            assertFalse(result.isScheduledPastDue)
+            assertEquals("Tomorrow", result.badgeText)
+            assertFalse(result.isBadgeUrgent)
         }
     }
 
