@@ -115,6 +115,9 @@
     <string name="expense_scheduled_due_tomorrow">Bençe mañana</string>
     <string name="expense_scheduled_paid">Pagao</string>
     <string name="expense_status_cancelled_refunded">Cançelao - Reemborçao</string>
+    <string name="expense_refundable_until_short">Âtta %1$s</string>
+    <string name="expense_refundable_until_today">Âtta oy</string>
+    <string name="expense_refundable_until_tomorrow">Âtta mañana</string>
     <string name="expense_refundable_until">Reemborçable âtta %1$s</string>
     <string name="split_type_equal">Partê igualê</string>
     <string name="split_type_exact">Cantidadê</string>

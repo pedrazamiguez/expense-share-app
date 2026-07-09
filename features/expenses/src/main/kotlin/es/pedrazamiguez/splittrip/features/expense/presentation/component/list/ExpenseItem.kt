@@ -33,6 +33,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CirclePlus
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Clock
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReceiptRefund
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
@@ -248,7 +249,9 @@ fun ExpenseItem(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = if (expenseUiModel.isScheduledPastDue) {
+                                imageVector = if (expenseUiModel.isRefundable) {
+                                    TablerIcons.Outline.ReceiptRefund
+                                } else if (expenseUiModel.isScheduledPastDue) {
                                     TablerIcons.Outline.CircleCheck
                                 } else {
                                     TablerIcons.Outline.Clock

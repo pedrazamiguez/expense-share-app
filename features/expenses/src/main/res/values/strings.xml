@@ -132,6 +132,9 @@
     <string name="expense_scheduled_due_tomorrow">Due tomorrow</string>
     <string name="expense_scheduled_paid">Paid</string>
     <string name="expense_status_cancelled_refunded">Cancelled - Refunded</string>
+    <string name="expense_refundable_until_short">Until %1$s</string>
+    <string name="expense_refundable_until_today">Until today</string>
+    <string name="expense_refundable_until_tomorrow">Until tomorrow</string>
     <string name="expense_refundable_until">Refundable until %1$s</string>
 
     <!-- Split Types -->

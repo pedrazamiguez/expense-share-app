@@ -25,35 +25,57 @@ class ScheduledBadgeUiMapper(
             return resourceProvider.getString(R.string.expense_status_cancelled_refunded) to false
         }
         val dueDate = expense.dueDate
-        if ((expense.paymentStatus != PaymentStatus.SCHEDULED && expense.paymentStatus != PaymentStatus.REFUNDABLE) ||
+        val status = expense.paymentStatus
+        if ((status != PaymentStatus.SCHEDULED && status != PaymentStatus.REFUNDABLE) ||
             dueDate == null
         ) {
             return null to false
         }
 
-        if (expense.paymentStatus == PaymentStatus.REFUNDABLE) {
-            val formattedDate = formattingHelper.formatShortDate(dueDate)
-            return resourceProvider.getString(R.string.expense_refundable_until, formattedDate) to false
-        }
-
         val today = LocalDate.now()
         val dueDateLocal = dueDate.toLocalDate()
+        val isRefundable = status == PaymentStatus.REFUNDABLE
 
         return when {
             dueDateLocal.isBefore(today) ->
-                resourceProvider.getString(R.string.expense_scheduled_paid) to true
+                if (isRefundable) {
+                    null to false
+                } else {
+                    resourceProvider.getString(R.string.expense_scheduled_paid) to true
+                }
 
             dueDateLocal.isEqual(today) ->
-                resourceProvider.getString(R.string.expense_scheduled_due_today) to true
+                resolveBadgeText(
+                    isRefundable,
+                    R.string.expense_scheduled_due_today,
+                    R.string.expense_refundable_until_today
+                ) to
+                    !isRefundable
 
             dueDateLocal.isEqual(today.plusDays(1)) ->
-                resourceProvider.getString(R.string.expense_scheduled_due_tomorrow) to false
+                resolveBadgeText(
+                    isRefundable,
+                    R.string.expense_scheduled_due_tomorrow,
+                    R.string.expense_refundable_until_tomorrow
+                ) to
+                    false
 
             else ->
-                resourceProvider.getString(
+                resolveBadgeText(
+                    isRefundable,
                     R.string.expense_scheduled_due_on,
+                    R.string.expense_refundable_until_short,
                     formattingHelper.formatShortDate(dueDate)
                 ) to false
         }
+    }
+
+    private fun resolveBadgeText(
+        isRefundable: Boolean,
+        scheduledRes: Int,
+        refundableRes: Int,
+        vararg args: Any
+    ): String {
+        return resourceProvider.getString(if (isRefundable) refundableRes else scheduledRes, *args)
     }
 }

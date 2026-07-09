@@ -47,19 +47,14 @@ class ExpenseUiMapperTest {
 
         every { localeProvider.getCurrentLocale() } returns Locale.US
 
-        // Stub paid_by pattern — vararg overload packs trailing args into an Array
         every { resourceProvider.getString(R.string.paid_by, *anyVararg()) } answers {
             val varargs = it.invocation.args[1] as Array<*>
             "Paid by ${varargs[0]}"
         }
-
-        // Stub expense_paid_by_member pattern (out-of-pocket badge)
         every { resourceProvider.getString(R.string.expense_paid_by_member, *anyVararg()) } answers {
             val varargs = it.invocation.args[1] as Array<*>
             "Paid by ${varargs[0]}"
         }
-
-        // Stub scope-aware badge strings
         every { resourceProvider.getString(R.string.expense_paid_by_me) } returns "Paid by me"
         every { resourceProvider.getString(R.string.expense_paid_for_scope, *anyVararg()) } answers {
             val varargs = it.invocation.args[1] as Array<*>
@@ -71,36 +66,18 @@ class ExpenseUiMapperTest {
         }
         every { resourceProvider.getString(R.string.expense_scope_everyone) } returns "everyone"
 
-        // Stub all payment method string resources
         PaymentMethod.entries.forEach { method ->
             every { resourceProvider.getString(method.toStringRes()) } returns method.name
         }
-
-        // Stub all expense category string resources
         ExpenseCategory.entries.forEach { category ->
             every { resourceProvider.getString(category.toStringRes()) } returns category.name
         }
-
-        // Stub all payment status string resources
         PaymentStatus.entries.forEach { status ->
             every { resourceProvider.getString(status.toStringRes()) } returns status.name
         }
 
-        // Stub scheduled badge strings
-        every { resourceProvider.getString(R.string.expense_scheduled_due_today) } returns "Due today"
-        every { resourceProvider.getString(R.string.expense_scheduled_due_tomorrow) } returns "Due tomorrow"
-        every { resourceProvider.getString(R.string.expense_scheduled_paid) } returns "Paid"
-        every { resourceProvider.getString(R.string.expense_scheduled_due_on, *anyVararg()) } answers {
-            val varargs = it.invocation.args[1] as Array<*>
-            "Due on ${varargs[0]}"
-        }
-        every { resourceProvider.getString(R.string.expense_status_cancelled_refunded) } returns "Cancelled - Refunded"
-        every { resourceProvider.getString(R.string.expense_refundable_until, *anyVararg()) } answers {
-            val varargs = it.invocation.args[1] as Array<*>
-            "Refundable until ${varargs[0]}"
-        }
+        stubScheduledBadgeStrings()
 
-        // Stub UserUiMapper dependencies
         every { resourceProvider.getString(DesignSystemR.string.self_identification_nominative) } returns "You"
         every { resourceProvider.getString(DesignSystemR.string.user_pending_fallback) } returns "Pending member"
 
@@ -639,6 +616,23 @@ class ExpenseUiMapperTest {
 
             assertEquals("Due tomorrow", result.scheduledBadgeText)
             assertFalse(result.isScheduledPastDue)
+        }
+
+        @Test
+        fun `refundable expense with dueDate shows until date`() {
+            val futureDueDate = LocalDateTime.now().plusDays(10)
+            val expense = Expense(
+                id = "e7",
+                paymentStatus = PaymentStatus.REFUNDABLE,
+                dueDate = futureDueDate
+            )
+
+            val result = mapper.map(expense)
+
+            assertNotNull(result.scheduledBadgeText)
+            assertTrue(result.scheduledBadgeText!!.startsWith("Until"))
+            assertFalse(result.isScheduledPastDue)
+            assertTrue(result.isRefundable)
         }
     }
 
@@ -1459,5 +1453,25 @@ class ExpenseUiMapperTest {
             assertTrue(result.creatorDisplay is MemberDisplay.Former)
             assertEquals("user-3", result.creatorDisplay.userId)
         }
+    }
+
+    private fun stubScheduledBadgeStrings() {
+        every { resourceProvider.getString(R.string.expense_scheduled_due_today, *anyVararg()) } returns "Due today"
+        every { resourceProvider.getString(R.string.expense_scheduled_due_tomorrow, *anyVararg()) } returns
+            "Due tomorrow"
+        every { resourceProvider.getString(R.string.expense_scheduled_paid) } returns "Paid"
+        every { resourceProvider.getString(R.string.expense_scheduled_due_on, *anyVararg()) } answers {
+            val varargs = it.invocation.args[1] as Array<*>
+            "Due on ${varargs[0]}"
+        }
+        every { resourceProvider.getString(R.string.expense_status_cancelled_refunded) } returns "Cancelled - Refunded"
+        every { resourceProvider.getString(R.string.expense_refundable_until_short, *anyVararg()) } answers {
+            val varargs = it.invocation.args[1] as Array<*>
+            "Until ${varargs[0]}"
+        }
+        every { resourceProvider.getString(R.string.expense_refundable_until_today, *anyVararg()) } returns
+            "Until today"
+        every { resourceProvider.getString(R.string.expense_refundable_until_tomorrow, *anyVararg()) } returns
+            "Until tomorrow"
     }
 }
