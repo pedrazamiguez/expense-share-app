@@ -2,7 +2,6 @@ package es.pedrazamiguez.splittrip.features.balance.presentation.component
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -11,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.AnimatedAmount
 import es.pedrazamiguez.splittrip.features.balance.R
@@ -59,54 +57,5 @@ internal fun PocketBalanceMainSection(
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.Small))
             SecondaryBalancesRow(balance)
         }
-    }
-}
-
-@Composable
-internal fun SecondaryBalancesRow(balance: GroupPocketBalanceUiModel) {
-    androidx.compose.foundation.layout.Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center
-    ) {
-        if (balance.formattedAvailableBalance != null) {
-            SecondaryBalanceColumn(
-                label = stringResource(R.string.balances_available),
-                amount = balance.formattedAvailableBalance,
-                modifier = if (balance.formattedRefundableHoldAmount != null) Modifier.weight(1f) else Modifier
-            )
-        }
-
-        if (balance.formattedRefundableHoldAmount != null) {
-            SecondaryBalanceColumn(
-                label = stringResource(R.string.balances_on_hold),
-                amount = balance.formattedRefundableHoldAmount,
-                modifier = if (balance.formattedAvailableBalance != null) Modifier.weight(1f) else Modifier
-            )
-        }
-    }
-}
-
-@Composable
-private fun SecondaryBalanceColumn(
-    label: String,
-    amount: String,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = amount,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-        )
     }
 }

@@ -1,6 +1,5 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
-import androidx.compose.ui.graphics.vector.ImageVector
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
@@ -31,7 +30,6 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.model.CashTranch
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseDetailUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitDetailUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SubunitSplitGroupUiModel
-import java.math.BigDecimal
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
@@ -478,153 +476,3 @@ private fun getCreatedByText(
     val paidByName = resolveDisplayName(expense.createdBy, memberProfiles, currentUserId, youLabel, userUiMapper)
     return resolveCreatedByText(expense.createdBy, currentUserId, paidByName, resourceProvider)
 }
-
-private fun buildOriginalEnteredTotal(baseGroupAmount: Long, addOns: List<AddOn>): Long {
-    val includedNonDiscountTotal = addOns
-        .filter { it.mode == AddOnMode.INCLUDED && it.type != AddOnType.DISCOUNT }
-        .sumOf { it.groupAmountCents }
-    return (baseGroupAmount + includedNonDiscountTotal).coerceAtLeast(0L)
-}
-
-private fun resolveDisplayName(
-    userId: String,
-    memberProfiles: Map<String, User>,
-    currentUserId: String?,
-    youLabel: String,
-    userUiMapper: UserUiMapper
-): String {
-    val user = memberProfiles[userId]
-    return userUiMapper.mapToDisplayName(
-        user = user,
-        fallbackUserId = userId,
-        currentUserId = currentUserId,
-        youLabel = youLabel
-    )
-}
-
-private fun resolvePaidByText(
-    createdBy: String,
-    currentUserId: String?,
-    paidByName: String,
-    resourceProvider: ResourceProvider
-): String {
-    return if (createdBy == currentUserId) {
-        resourceProvider.getString(R.string.paid_by_you)
-    } else {
-        resourceProvider.getString(R.string.paid_by, paidByName)
-    }
-}
-
-private fun resolveEffectiveTotal(
-    groupAmount: Long,
-    addOns: List<AddOn>,
-    addOnCalculationService: AddOnCalculationService
-): Long? {
-    return if (addOns.isNotEmpty()) {
-        addOnCalculationService.calculateEffectiveGroupAmount(groupAmount, addOns)
-    } else {
-        null
-    }
-}
-
-private fun resolveSecondaryDateText(expense: Expense, formattingHelper: FormattingHelper): String? {
-    return when (expense.paymentStatus) {
-        PaymentStatus.SCHEDULED, PaymentStatus.REFUNDABLE -> expense.dueDate?.let {
-            formattingHelper.formatShortDate(it)
-        }
-        else -> null
-    }
-}
-
-private fun resolveSecondaryDateIcon(expense: Expense): ImageVector? {
-    return when (expense.paymentStatus) {
-        PaymentStatus.SCHEDULED -> TablerIcons.Outline.Calendar
-        PaymentStatus.REFUNDABLE -> TablerIcons.Outline.ReceiptRefund
-        else -> null
-    }
-}
-
-private fun resolveCreatedByText(
-    createdBy: String,
-    currentUserId: String?,
-    paidByName: String,
-    resourceProvider: ResourceProvider
-): String {
-    return if (createdBy == currentUserId) {
-        resourceProvider.getString(R.string.expense_detail_created_by_you)
-    } else {
-        resourceProvider.getString(R.string.expense_detail_created_by, paidByName)
-    }
-}
-
-private fun buildAddOnLabel(addOn: AddOn, resourceProvider: ResourceProvider): String {
-    val typeName = resourceProvider.getString(addOn.type.toStringRes())
-    return if (!addOn.description.isNullOrBlank()) {
-        "${addOn.description} ($typeName)"
-    } else {
-        typeName
-    }
-}
-
-private fun buildTrancheRate(
-    withdrawal: CashWithdrawal?,
-    groupCurrency: String,
-    formattingHelper: FormattingHelper,
-    resourceProvider: ResourceProvider
-): String? {
-    if (withdrawal == null) return null
-    if (withdrawal.currency == groupCurrency) return null
-    if (withdrawal.exchangeRate.compareTo(BigDecimal.ZERO) == 0) return null
-    return resourceProvider.getString(
-        R.string.expense_detail_exchange_rate_full,
-        withdrawal.currency,
-        formattingHelper.formatRateForDisplay(withdrawal.exchangeRate.toPlainString()),
-        groupCurrency
-    )
-}
-
-private fun resolveTrancheScopeText(
-    withdrawal: CashWithdrawal?,
-    subunitNameLookup: Map<String, String>,
-    resourceProvider: ResourceProvider
-): String? {
-    if (withdrawal == null) return null
-    return when (withdrawal.withdrawalScope) {
-        PayerType.GROUP -> resourceProvider.getString(R.string.expense_detail_tranche_scope_group)
-        PayerType.USER -> resourceProvider.getString(R.string.expense_detail_tranche_scope_personal)
-        PayerType.SUBUNIT -> {
-            val name = withdrawal.subunitId?.let { subunitNameLookup[it] }
-            if (!name.isNullOrBlank()) {
-                resourceProvider.getString(R.string.expense_detail_tranche_scope_subunit, name)
-            } else {
-                null
-            }
-        }
-    }
-}
-
-private fun buildFundingSourceText(
-    expense: Expense,
-    currentUserId: String?,
-    memberProfiles: Map<String, User>,
-    resourceProvider: ResourceProvider,
-    userUiMapper: UserUiMapper
-): String? {
-    val payerId = expense.payerId ?: expense.createdBy.takeIf { it.isNotBlank() }
-    if (expense.payerType != PayerType.USER || payerId == null) return null
-    return if (currentUserId != null && payerId == currentUserId) {
-        resourceProvider.getString(R.string.expense_paid_by_me)
-    } else {
-        resourceProvider.getString(
-            R.string.expense_paid_by_member,
-            resolveDisplayName(payerId, memberProfiles, currentUserId = null, youLabel = "", userUiMapper)
-        )
-    }
-}
-
-private fun buildExpenseScopeLabel(payerType: PayerType, resourceProvider: ResourceProvider): String =
-    when (payerType) {
-        PayerType.GROUP -> resourceProvider.getString(R.string.expense_scope_group)
-        PayerType.SUBUNIT -> resourceProvider.getString(R.string.expense_scope_subunit)
-        PayerType.USER -> resourceProvider.getString(R.string.expense_scope_personal)
-    }
