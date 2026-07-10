@@ -101,6 +101,7 @@
     <string name="payment_status_scheduled">Scheduled</string>
     <string name="payment_status_cancelled">Cancelled</string>
     <string name="payment_status_refundable">Paid (Refundable)</string>
+    <string name="expense_detail_on_hold">On hold</string>
 
     <!-- Add Expense Form - New Sections -->
     <string name="add_expense_category_title">Category</string>

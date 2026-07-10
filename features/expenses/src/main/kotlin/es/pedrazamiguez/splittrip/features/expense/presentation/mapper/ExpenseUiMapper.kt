@@ -25,6 +25,7 @@ import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.extensions.toStringRes
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseDateGroupUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseUiModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentBadgeData
 import java.time.LocalDateTime
 import java.time.LocalTime
 import kotlinx.collections.immutable.ImmutableList

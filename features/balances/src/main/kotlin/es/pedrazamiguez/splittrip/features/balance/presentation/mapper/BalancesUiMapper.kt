@@ -78,9 +78,14 @@ class BalancesUiMapper(
             } else {
                 ""
             },
-            formattedAvailableBalance = if (balance.scheduledHoldAmount > 0) {
-                val available = balance.virtualBalance - balance.scheduledHoldAmount
+            formattedAvailableBalance = if (balance.scheduledHoldAmount > 0 || balance.refundableHoldAmount > 0) {
+                val available = balance.virtualBalance - balance.scheduledHoldAmount - balance.refundableHoldAmount
                 formatCurrencyAmount(available, balance.currency, locale)
+            } else {
+                null
+            },
+            formattedRefundableHoldAmount = if (balance.refundableHoldAmount > 0) {
+                formatCurrencyAmount(balance.refundableHoldAmount, balance.currency, locale)
             } else {
                 null
             },

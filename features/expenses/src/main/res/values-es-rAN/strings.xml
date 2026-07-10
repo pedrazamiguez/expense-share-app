@@ -90,6 +90,7 @@
     <string name="payment_status_scheduled">Programao</string>
     <string name="payment_status_cancelled">Cançelao</string>
     <string name="payment_status_refundable">Pagao (Reemborçable)</string>
+    <string name="expense_detail_on_hold">Retenío</string>
     <string name="add_expense_category_title">Categoría</string>
     <string name="add_expense_vendor_label">Empreça / Comerçio (ôççionâh)</string>
     <string name="add_expense_vendor_helper">¿Dónde comprâtte êtto?</string>

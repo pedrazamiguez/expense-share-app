@@ -5,13 +5,8 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.Forma
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.features.expense.R
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentBadgeData
 import java.time.LocalDate
-
-data class PaymentBadgeData(
-    val text: String,
-    val isPassed: Boolean,
-    val isToday: Boolean
-)
 
 /**
  * Centralises payment badge logic for [PaymentStatus.SCHEDULED] and [PaymentStatus.REFUNDABLE] expenses.

@@ -102,6 +102,7 @@
     <string name="payment_status_scheduled">Programado</string>
     <string name="payment_status_cancelled">Cancelado</string>
     <string name="payment_status_refundable">Pagado (Reembolsable)</string>
+    <string name="expense_detail_on_hold">Retenido</string>
 
     <!-- Add Expense Form - New Sections -->
     <string name="add_expense_category_title">Categoría</string>

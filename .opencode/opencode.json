@@ -2,11 +2,5 @@
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
     ".opencode/plugins/graphify.js"
-  ],
-  "rules": [
-    ".agents/rules"
-  ],
-  "skills": [
-    ".agents/skills"
   ]
 }
