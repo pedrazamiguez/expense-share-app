@@ -122,7 +122,8 @@ abstract class BasePersistExpenseStrategy(
             subunitId = sanitizedSubunitId,
             amount = effectiveAmount,
             currency = expense.groupCurrency,
-            linkedExpenseId = expense.id
+            linkedExpenseId = expense.id,
+            createdAt = expense.createdAt // propagate expense date so paired contribution isn't stamped with today
         )
         contributionRepository.addContribution(groupId, pairedContribution)
     }
