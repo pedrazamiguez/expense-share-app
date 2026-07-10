@@ -1125,14 +1125,14 @@ class ExpenseDetailUiMapperTest {
         }
 
         @Test
-        fun `badgeText shows Tomorrow for scheduled expense due tomorrow`() {
+        fun `badgeText is always null for scheduled expense due tomorrow`() {
             every { resourceProvider.getString(R.string.expense_relative_tomorrow) } returns "Tomorrow"
             val expense = baseExpense.copy(
                 paymentStatus = PaymentStatus.SCHEDULED,
                 dueDate = LocalDateTime.now().plusDays(1).withHour(12).withMinute(0)
             )
             val result = mapper.map(expense, memberProfiles, currentUserId)
-            assertEquals("Tomorrow", result.badgeText)
+            assertNull(result.badgeText)
             assertFalse(result.isBadgeUrgent)
         }
     }

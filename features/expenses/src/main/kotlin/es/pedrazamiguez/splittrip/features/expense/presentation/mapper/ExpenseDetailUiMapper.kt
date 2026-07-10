@@ -113,7 +113,11 @@ class ExpenseDetailUiMapper(
                 isForeignCurrency = isForeign,
                 paymentMethodText = resourceProvider.getString(expense.paymentMethod.toStringRes()),
                 paymentMethodIcon = expense.paymentMethod.toIconVector(),
-                paymentStatusText = resourceProvider.getString(expense.paymentStatus.toStringRes()),
+                paymentStatusText = when (expense.paymentStatus) {
+                    PaymentStatus.SCHEDULED -> resourceProvider.getString(R.string.payment_status_pending)
+                    PaymentStatus.REFUNDABLE -> resourceProvider.getString(R.string.expense_detail_on_hold)
+                    else -> resourceProvider.getString(expense.paymentStatus.toStringRes())
+                },
                 paymentStatusIcon = expense.paymentStatus.toIconVector(),
                 expenseScopeLabel = buildExpenseScopeLabel(expense.payerType, resourceProvider),
                 paidByText = getPaidByText(
@@ -131,7 +135,7 @@ class ExpenseDetailUiMapper(
                 secondaryDateIcon = resolveSecondaryDateIcon(expense),
                 vendorText = expense.vendor?.takeIf { it.isNotBlank() },
                 notesText = expense.notes?.takeIf { it.isNotBlank() },
-                badgeText = badgeData?.text,
+                badgeText = null,
                 badgeIcon = badgeIcon,
                 isBadgeUrgent = badgeData?.isPassed == true,
                 isOutOfPocket = expense.payerType == PayerType.USER,
