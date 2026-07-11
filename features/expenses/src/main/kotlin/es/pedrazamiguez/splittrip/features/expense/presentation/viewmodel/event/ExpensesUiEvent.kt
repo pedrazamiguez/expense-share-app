@@ -5,4 +5,5 @@ sealed interface ExpensesUiEvent {
     data class ScrollPositionChanged(val index: Int, val offset: Int) : ExpensesUiEvent
     data class DeleteExpense(val expenseId: String) : ExpensesUiEvent
     data class CancelExpense(val expenseId: String) : ExpensesUiEvent
+    data object ExpenseAdded : ExpensesUiEvent
 }

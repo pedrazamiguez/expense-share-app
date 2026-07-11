@@ -16,11 +16,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
-import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.extension.sharedElementAnimation
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
@@ -39,18 +37,21 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.remember
 import es.pedrazamiguez.splittrip.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.splittrip.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.splittrip.features.expense.R
+import es.pedrazamiguez.splittrip.features.expense.presentation.component.RestoreScrollEffect
+import es.pedrazamiguez.splittrip.features.expense.presentation.component.TrackScrollEffect
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.list.DateHeaderItem
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.list.ExpenseItem
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseUiModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.ExpensesUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.ExpensesUiState
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.Flow
 
 @Suppress("LongMethod", "CyclomaticComplexMethod", "CognitiveComplexMethod")
-@OptIn(FlowPreview::class, ExperimentalSharedTransitionApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun ExpensesScreen(
     uiState: ExpensesUiState = ExpensesUiState(),
+    actions: Flow<ExpensesUiAction>? = null,
     onExpenseClicked: (String) -> Unit = { _ -> },
     onEditExpenseClick: (String) -> Unit = {},
     onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> },
@@ -69,18 +70,17 @@ fun ExpensesScreen(
         initialFirstVisibleItemScrollOffset = uiState.scrollOffset
     )
 
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
-            .debounce(UiConstants.SCROLL_POSITION_DEBOUNCE_MS)
-            .collect { (index, offset) ->
-                onScrollPositionChanged(index, offset)
-            }
-    }
+    RestoreScrollEffect(listState = listState, uiState = uiState)
+    TrackScrollEffect(listState = listState, onScrollPositionChanged = onScrollPositionChanged)
 
-    val totalExpenseCount = uiState.expenseGroups.sumOf { it.expenses.size }
-    LaunchedEffect(totalExpenseCount) {
-        if (totalExpenseCount > 0 && !uiState.isLoading && listState.firstVisibleItemIndex > 0) {
-            listState.animateScrollToItem(0)
+    LaunchedEffect(actions) {
+        actions?.collect { action ->
+            when (action) {
+                is ExpensesUiAction.ScrollToTop -> {
+                    listState.animateScrollToItem(0)
+                }
+                else -> Unit
+            }
         }
     }
 
