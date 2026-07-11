@@ -806,6 +806,20 @@ class AddExpenseUseCaseTest {
 
             assertEquals(scheduledOopExpense.id, contributionSlot.captured.linkedExpenseId)
         }
+
+        @Test
+        fun `paired contribution createdAt matches expense createdAt`() = runTest {
+            val expenseDate = LocalDateTime.of(2025, 3, 15, 10, 30)
+            val oopExpenseWithDate = oopExpense.copy(createdAt = expenseDate)
+            val contributionSlot = slot<Contribution>()
+            coEvery {
+                contributionRepository.addContribution(any(), capture(contributionSlot))
+            } just Runs
+
+            useCase(groupId, oopExpenseWithDate)
+
+            assertEquals(expenseDate, contributionSlot.captured.createdAt)
+        }
     }
 
     // ── Out-of-pocket: atomicity (compensating rollback) ──────────────────────

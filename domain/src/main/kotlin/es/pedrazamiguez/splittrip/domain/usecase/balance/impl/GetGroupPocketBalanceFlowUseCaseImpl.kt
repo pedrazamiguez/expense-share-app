@@ -36,12 +36,24 @@ class GetGroupPocketBalanceFlowUseCaseImpl(
 
         // Separate future scheduled expenses (reservations not yet paid).
         // A scheduled expense is "future" when its dueDate is strictly after today.
-        val (futureScheduled, effectiveExpenses) = activeExpenses.partition { expense ->
+        val (futureScheduled, nonScheduled) = activeExpenses.partition { expense ->
             expense.paymentStatus == PaymentStatus.SCHEDULED &&
                 expense.dueDate?.toLocalDate()?.isAfter(today) == true
         }
 
+        // Separate refundable expenses
+        val (refundable, effectiveExpenses) = nonScheduled.partition { expense ->
+            expense.paymentStatus == PaymentStatus.REFUNDABLE
+        }
+
         val scheduledHoldAmount = futureScheduled.sumOf { expense ->
+            addOnCalculationService.calculateEffectiveGroupAmount(
+                expense.groupAmount,
+                expense.addOns
+            )
+        }
+
+        val refundableHoldAmount = refundable.sumOf { expense ->
             addOnCalculationService.calculateEffectiveGroupAmount(
                 expense.groupAmount,
                 expense.addOns
@@ -144,6 +156,7 @@ class GetGroupPocketBalanceFlowUseCaseImpl(
             cashEquivalents = cashEquivalents,
             totalCashEquivalent = totalCashEquivalent,
             scheduledHoldAmount = scheduledHoldAmount,
+            refundableHoldAmount = refundableHoldAmount,
             totalExtras = totalExtras
         )
     }

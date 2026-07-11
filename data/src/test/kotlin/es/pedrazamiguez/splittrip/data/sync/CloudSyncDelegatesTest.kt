@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.data.sync
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
@@ -26,6 +27,11 @@ class CloudSyncDelegatesTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
+    private val mockPerformanceMonitor = mockk<PerformanceMonitor>(relaxed = true) {
+        io.mockk.coEvery { traceAsync<Any?>(any(), any()) } coAnswers { secondArg<suspend () -> Any?>().invoke() }
+        io.mockk.every { trace<Any?>(any(), any()) } answers { secondArg<() -> Any?>().invoke() }
+    }
+
     @Nested
     @DisplayName("subscribeAndReconcile")
     inner class SubscribeAndReconcileTests {
@@ -42,7 +48,8 @@ class CloudSyncDelegatesTest {
                 verifyOnServer = { true },
                 markSynced = { },
                 entityLabel = "test",
-                logContext = "for test"
+                logContext = "for test",
+                performanceMonitor = mockPerformanceMonitor
             )
 
             assertEquals(1, reconciled.size)
@@ -60,7 +67,8 @@ class CloudSyncDelegatesTest {
                 verifyOnServer = { true },
                 markSynced = { confirmedIds.add(it) },
                 entityLabel = "test",
-                logContext = ""
+                logContext = "",
+                performanceMonitor = mockPerformanceMonitor
             )
 
             assertEquals(listOf("pending-1", "pending-2"), confirmedIds)
@@ -82,7 +90,8 @@ class CloudSyncDelegatesTest {
                 verifyOnServer = { true },
                 markSynced = { },
                 entityLabel = "test",
-                logContext = ""
+                logContext = "",
+                performanceMonitor = mockPerformanceMonitor
             )
 
             assertEquals(1, reconcileCallCount)
@@ -103,7 +112,8 @@ class CloudSyncDelegatesTest {
                     },
                     markSynced = { },
                     entityLabel = "test",
-                    logContext = ""
+                    logContext = "",
+                    performanceMonitor = mockPerformanceMonitor
                 )
 
                 assertEquals(false, verifyOnServerCalled)
@@ -120,7 +130,8 @@ class CloudSyncDelegatesTest {
                 verifyOnServer = { true },
                 markSynced = { },
                 entityLabel = "test",
-                logContext = "test context"
+                logContext = "test context",
+                performanceMonitor = mockPerformanceMonitor
             )
 
             // Should complete without throwing; reconcileLocal never reached
@@ -137,7 +148,8 @@ class CloudSyncDelegatesTest {
                     verifyOnServer = { true },
                     markSynced = { },
                     entityLabel = "test",
-                    logContext = ""
+                    logContext = "",
+                    performanceMonitor = mockPerformanceMonitor
                 )
             }.exceptionOrNull()
 
@@ -258,7 +270,8 @@ class CloudSyncDelegatesTest {
                 entityId = "entity-1",
                 cloudWrite = cloudWrite,
                 updateSyncStatus = updateSyncStatus,
-                entityLabel = "test"
+                entityLabel = "test",
+                performanceMonitor = mockPerformanceMonitor
             )
             advanceUntilIdle()
 
@@ -277,7 +290,8 @@ class CloudSyncDelegatesTest {
                 entityId = "entity-1",
                 cloudWrite = { throw IOException("Network error") },
                 updateSyncStatus = updateSyncStatus,
-                entityLabel = "test"
+                entityLabel = "test",
+                performanceMonitor = mockPerformanceMonitor
             )
             advanceUntilIdle()
 
@@ -298,7 +312,8 @@ class CloudSyncDelegatesTest {
                 entityId = "entity-1",
                 cloudWrite = { cloudWriteCalled = true },
                 updateSyncStatus = { _, _ -> },
-                entityLabel = "test"
+                entityLabel = "test",
+                performanceMonitor = mockPerformanceMonitor
             )
 
             // Before advanceUntilIdle, cloud write should not have completed yet
@@ -318,7 +333,8 @@ class CloudSyncDelegatesTest {
                 cloudWrite = { throw IOException("Network error") },
                 updateSyncStatus = updateSyncStatus,
                 getCurrentSyncStatus = { SyncStatus.SYNCED },
-                entityLabel = "test"
+                entityLabel = "test",
+                performanceMonitor = mockPerformanceMonitor
             )
             advanceUntilIdle()
 
@@ -336,7 +352,8 @@ class CloudSyncDelegatesTest {
                     entityId = "entity-1",
                     cloudWrite = { throw CancellationException("Job cancelled") },
                     updateSyncStatus = updateSyncStatus,
-                    entityLabel = "test"
+                    entityLabel = "test",
+                    performanceMonitor = mockPerformanceMonitor
                 )
                 advanceUntilIdle()
 

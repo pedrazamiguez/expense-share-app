@@ -112,7 +112,7 @@ class ExpenseDetailViewModelTest {
         cashTranches = persistentListOf(),
         isOutOfPocket = false,
         hasAddOns = false,
-        isScheduledPastDue = false,
+        isBadgeUrgent = false,
         syncStatus = SyncStatus.SYNCED,
         createdByText = "Alice",
         createdAtText = "Jun 15, 2024"

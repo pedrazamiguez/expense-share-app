@@ -686,6 +686,43 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             // Then
             assertEquals(0L, result.scheduledHoldAmount)
         }
+
+        @Test
+        fun `refundable expense populates refundableHoldAmount and is excluded from totals`() = runTest {
+            // Given: 500 contributed, one refundable expense (100), one finished (50)
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(Contribution(amount = 50000L, currency = currency))
+            )
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        groupAmount = 10000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.DEBIT_CARD,
+                        paymentStatus = PaymentStatus.REFUNDABLE
+                    ),
+                    Expense(
+                        groupAmount = 5000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.DEBIT_CARD,
+                        paymentStatus = PaymentStatus.FINISHED
+                    )
+                )
+            )
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
+                emptyList()
+            )
+
+            // When
+            val result = useCase(groupId, currency).first()
+
+            // Then: totalExpenses only includes the finished expense
+            assertEquals(5000L, result.totalExpenses)
+            // virtualBalance = 50000 - 5000 (non-cash effective) - 0 = 45000
+            assertEquals(45000L, result.virtualBalance)
+            // refundableHoldAmount = 10000 (the refundable expense)
+            assertEquals(10000L, result.refundableHoldAmount)
+        }
     }
 
     @Nested

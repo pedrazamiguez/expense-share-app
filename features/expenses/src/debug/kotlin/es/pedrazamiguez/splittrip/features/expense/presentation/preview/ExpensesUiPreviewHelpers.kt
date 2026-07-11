@@ -11,7 +11,7 @@ import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.ExpenseUiMapper
-import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.ScheduledBadgeUiMapper
+import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.PaymentStatusBadgeUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseDateGroupUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseUiModel
 import kotlinx.collections.immutable.ImmutableList
@@ -20,7 +20,7 @@ private fun buildExpenseUiMapper(localeProvider: LocaleProvider, resourceProvide
     ExpenseUiMapper(
         localeProvider = localeProvider,
         resourceProvider = resourceProvider,
-        scheduledBadgeUiMapper = ScheduledBadgeUiMapper(
+        paymentStatusBadgeUiMapper = PaymentStatusBadgeUiMapper(
             formattingHelper = FormattingHelper(localeProvider),
             resourceProvider = resourceProvider
         ),

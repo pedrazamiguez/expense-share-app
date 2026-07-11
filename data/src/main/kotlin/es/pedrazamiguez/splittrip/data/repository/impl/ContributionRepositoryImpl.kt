@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
+import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudContributionDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalContributionDataSource
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
@@ -23,6 +25,7 @@ class ContributionRepositoryImpl(
     private val cloudContributionDataSource: CloudContributionDataSource,
     private val localContributionDataSource: LocalContributionDataSource,
     private val authenticationService: AuthenticationService,
+    private val performanceMonitor: PerformanceMonitor,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ContributionRepository {
 
@@ -37,43 +40,45 @@ class ContributionRepositoryImpl(
     private val cloudSubscriptionJobs = ConcurrentHashMap<String, Job>()
 
     override suspend fun addContribution(groupId: String, contribution: Contribution) {
-        val contributionId = contribution.id.ifBlank { UUID.randomUUID().toString() }
-        val currentUserId = authenticationService.currentUserId() ?: ""
-        val currentTimestamp = LocalDateTime.now()
+        performanceMonitor.traceAsync(PerformanceTraces.CONTRIBUTION_ADD) {
+            val contributionId = contribution.id.ifBlank { UUID.randomUUID().toString() }
+            val currentUserId = authenticationService.currentUserId() ?: ""
+            val currentTimestamp = LocalDateTime.now()
 
-        val contributionWithMetadata = contribution.copy(
-            id = contributionId,
-            groupId = groupId,
-            userId = contribution.userId.ifBlank { currentUserId },
-            createdBy = currentUserId,
-            createdAt = contribution.createdAt ?: currentTimestamp,
-            lastUpdatedAt = currentTimestamp,
-            syncStatus = SyncStatus.PENDING_SYNC
-        )
+            val contributionWithMetadata = contribution.copy(
+                id = contributionId,
+                groupId = groupId,
+                userId = contribution.userId.ifBlank { currentUserId },
+                createdBy = currentUserId,
+                createdAt = contribution.createdAt ?: currentTimestamp,
+                lastUpdatedAt = currentTimestamp,
+                syncStatus = SyncStatus.PENDING_SYNC
+            )
 
-        // Save to local first - UI updates instantly via Flow
-        localContributionDataSource.saveContribution(contributionWithMetadata)
+            // Save to local first - UI updates instantly via Flow
+            localContributionDataSource.saveContribution(contributionWithMetadata)
 
-        // Sync to cloud in background
-        syncScope.launch {
-            try {
-                cloudContributionDataSource.addContribution(groupId, contributionWithMetadata)
-                localContributionDataSource.updateSyncStatus(contributionWithMetadata.id, SyncStatus.SYNCED)
-                Timber.d("Contribution synced to cloud: ${contributionWithMetadata.id}")
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                // Only downgrade to SYNC_FAILED if the snapshot listener has not already
-                // confirmed the entity as SYNCED (guards against the ACK-loss race condition).
-                val currentStatus = localContributionDataSource
-                    .findContributionById(contributionWithMetadata.id)?.syncStatus
-                if (currentStatus == SyncStatus.PENDING_SYNC) {
-                    localContributionDataSource.updateSyncStatus(
-                        contributionWithMetadata.id,
-                        SyncStatus.SYNC_FAILED
-                    )
+            // Sync to cloud in background
+            syncScope.launch {
+                try {
+                    cloudContributionDataSource.addContribution(groupId, contributionWithMetadata)
+                    localContributionDataSource.updateSyncStatus(contributionWithMetadata.id, SyncStatus.SYNCED)
+                    Timber.d("Contribution synced to cloud: ${contributionWithMetadata.id}")
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    // Only downgrade to SYNC_FAILED if the snapshot listener has not already
+                    // confirmed the entity as SYNCED (guards against the ACK-loss race condition).
+                    val currentStatus = localContributionDataSource
+                        .findContributionById(contributionWithMetadata.id)?.syncStatus
+                    if (currentStatus == SyncStatus.PENDING_SYNC) {
+                        localContributionDataSource.updateSyncStatus(
+                            contributionWithMetadata.id,
+                            SyncStatus.SYNC_FAILED
+                        )
+                    }
+                    Timber.w(e, "Failed to sync contribution to cloud")
                 }
-                Timber.w(e, "Failed to sync contribution to cloud")
             }
         }
     }

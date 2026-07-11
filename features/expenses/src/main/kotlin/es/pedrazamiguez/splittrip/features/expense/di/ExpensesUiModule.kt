@@ -54,7 +54,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpens
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.ExpenseDetailUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.ExpenseUiMapper
-import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.ScheduledBadgeUiMapper
+import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.PaymentStatusBadgeUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.screen.impl.AddExpenseScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.expense.presentation.screen.impl.ExpenseDetailScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.expense.presentation.screen.impl.ExpensesScreenUiProviderImpl
@@ -89,7 +89,7 @@ import org.koin.dsl.module
 val expensesUiModule = module {
 
     factory {
-        ScheduledBadgeUiMapper(
+        PaymentStatusBadgeUiMapper(
             formattingHelper = get<FormattingHelper>(),
             resourceProvider = get<ResourceProvider>()
         )
@@ -133,7 +133,7 @@ val expensesUiModule = module {
         ExpenseUiMapper(
             localeProvider = get<LocaleProvider>(),
             resourceProvider = get<ResourceProvider>(),
-            scheduledBadgeUiMapper = get<ScheduledBadgeUiMapper>(),
+            paymentStatusBadgeUiMapper = get<PaymentStatusBadgeUiMapper>(),
             userUiMapper = get<UserUiMapper>()
         )
     }
@@ -336,7 +336,7 @@ val expensesUiModule = module {
             resourceProvider = get<ResourceProvider>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
             addOnCalculationService = get<AddOnCalculationService>(),
-            scheduledBadgeUiMapper = get<ScheduledBadgeUiMapper>(),
+            paymentStatusBadgeUiMapper = get<PaymentStatusBadgeUiMapper>(),
             userUiMapper = get<UserUiMapper>()
         )
     }

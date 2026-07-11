@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudSubunitDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalSubunitDataSource
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
@@ -35,6 +36,7 @@ class SubunitRepositoryImplTest {
     private lateinit var cloudSubunitDataSource: CloudSubunitDataSource
     private lateinit var localSubunitDataSource: LocalSubunitDataSource
     private lateinit var authenticationService: AuthenticationService
+    private lateinit var performanceMonitor: PerformanceMonitor
     private lateinit var repository: SubunitRepositoryImpl
 
     private val testGroupId = "group-123"
@@ -80,6 +82,10 @@ class SubunitRepositoryImplTest {
         cloudSubunitDataSource = mockk(relaxed = true)
         localSubunitDataSource = mockk(relaxed = true)
         authenticationService = mockk()
+        performanceMonitor = mockk(relaxed = true) {
+            io.mockk.coEvery { traceAsync<Any?>(any(), any()) } coAnswers { secondArg<suspend () -> Any?>().invoke() }
+            io.mockk.every { trace<Any?>(any(), any()) } answers { secondArg<() -> Any?>().invoke() }
+        }
 
         coEvery { authenticationService.currentUserId() } returns testUserId
 
@@ -87,6 +93,7 @@ class SubunitRepositoryImplTest {
             cloudSubunitDataSource = cloudSubunitDataSource,
             localSubunitDataSource = localSubunitDataSource,
             authenticationService = authenticationService,
+            performanceMonitor = performanceMonitor,
             ioDispatcher = testDispatcher
         )
     }

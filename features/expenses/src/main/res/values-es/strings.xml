@@ -102,6 +102,7 @@
     <string name="payment_status_scheduled">Programado</string>
     <string name="payment_status_cancelled">Cancelado</string>
     <string name="payment_status_refundable">Pagado (Reembolsable)</string>
+    <string name="expense_detail_on_hold">Retenido</string>
 
     <!-- Add Expense Form - New Sections -->
     <string name="add_expense_category_title">Categoría</string>
@@ -127,11 +128,10 @@
     <!-- Validation Errors - New -->
     <string name="expense_error_due_date_required">Selecciona una fecha de vencimiento para el pago programado</string>
 
-    <!-- Scheduled Payment Badge -->
-    <string name="expense_scheduled_due_on">Vence el %1$s</string>
-    <string name="expense_scheduled_due_today">Vence hoy</string>
-    <string name="expense_scheduled_due_tomorrow">Vence mañana</string>
-    <string name="expense_scheduled_paid">Pagado</string>
+    <!-- Payment Status Badge -->
+    <string name="expense_relative_today">Hoy</string>
+    <string name="expense_relative_tomorrow">Mañana</string>
+    <string name="expense_relative_yesterday">Ayer</string>
     <string name="expense_status_cancelled_refunded">Cancelado - Reembolsado</string>
     <string name="expense_refundable_until">Reembolsable hasta %1$s</string>
 

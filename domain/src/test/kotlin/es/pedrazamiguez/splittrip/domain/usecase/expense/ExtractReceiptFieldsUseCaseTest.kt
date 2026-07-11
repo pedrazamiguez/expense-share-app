@@ -5,16 +5,19 @@ import es.pedrazamiguez.splittrip.domain.model.ExtractionConfidence
 import es.pedrazamiguez.splittrip.domain.model.ExtractionSource
 import es.pedrazamiguez.splittrip.domain.model.RawReceiptText
 import es.pedrazamiguez.splittrip.domain.model.ReceiptAttachment
+import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptOcrService
 import es.pedrazamiguez.splittrip.domain.usecase.expense.impl.ExtractReceiptFieldsUseCaseImpl
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -25,7 +28,10 @@ class ExtractReceiptFieldsUseCaseTest {
 
     private lateinit var ocrService: ReceiptOcrService
     private lateinit var extractionService: ReceiptExtractionService
+    private lateinit var appConfigService: AppConfigService
     private lateinit var useCase: ExtractReceiptFieldsUseCase
+
+    private val maxFutureDaysFlow = MutableStateFlow(30)
 
     private val attachment = ReceiptAttachment(
         localUri = "file:///path/to/receipt.webp",
@@ -57,7 +63,9 @@ class ExtractReceiptFieldsUseCaseTest {
     fun setUp() {
         ocrService = mockk()
         extractionService = mockk()
-        useCase = ExtractReceiptFieldsUseCaseImpl(ocrService, extractionService)
+        appConfigService = mockk()
+        every { appConfigService.extractedDateMaxFutureDays } returns maxFutureDaysFlow
+        useCase = ExtractReceiptFieldsUseCaseImpl(ocrService, extractionService, appConfigService)
     }
 
     @Test
@@ -72,6 +80,30 @@ class ExtractReceiptFieldsUseCaseTest {
 
         coVerify(exactly = 1) { ocrService.recogniseText(attachment) }
         coVerify(exactly = 1) { extractionService.extract(rawText) }
+    }
+
+    @Test
+    fun `invoke sanitizes future dates exceeding threshold`() = runTest {
+        val today = LocalDate.now()
+        val testCases = listOf(
+            today.minusDays(5) to today.minusDays(5),
+            today to today,
+            today.plusDays(15) to today.plusDays(15),
+            today.plusDays(30) to today.plusDays(30),
+            today.plusDays(31) to today,
+            today.plusDays(90) to today
+        )
+
+        testCases.forEach { (inputDate, expectedDate) ->
+            val receipt = extractedReceipt.copy(date = inputDate)
+            coEvery { ocrService.recogniseText(attachment) } returns Result.success(rawText)
+            coEvery { extractionService.extract(rawText) } returns Result.success(receipt)
+
+            val result = useCase(attachment)
+
+            assertTrue(result.isSuccess)
+            assertEquals(expectedDate, result.getOrNull()?.date, "Failed for input date: $inputDate")
+        }
     }
 
     @Test

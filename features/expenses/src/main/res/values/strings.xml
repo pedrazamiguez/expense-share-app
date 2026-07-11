@@ -101,6 +101,7 @@
     <string name="payment_status_scheduled">Scheduled</string>
     <string name="payment_status_cancelled">Cancelled</string>
     <string name="payment_status_refundable">Paid (Refundable)</string>
+    <string name="expense_detail_on_hold">On hold</string>
 
     <!-- Add Expense Form - New Sections -->
     <string name="add_expense_category_title">Category</string>
@@ -126,11 +127,10 @@
     <!-- Validation Errors - New -->
     <string name="expense_error_due_date_required">Please select a due date for the scheduled payment</string>
 
-    <!-- Scheduled Payment Badge -->
-    <string name="expense_scheduled_due_on">Due on %1$s</string>
-    <string name="expense_scheduled_due_today">Due today</string>
-    <string name="expense_scheduled_due_tomorrow">Due tomorrow</string>
-    <string name="expense_scheduled_paid">Paid</string>
+    <!-- Payment Status Badge -->
+    <string name="expense_relative_today">Today</string>
+    <string name="expense_relative_tomorrow">Tomorrow</string>
+    <string name="expense_relative_yesterday">Yesterday</string>
     <string name="expense_status_cancelled_refunded">Cancelled - Refunded</string>
     <string name="expense_refundable_until">Refundable until %1$s</string>
 

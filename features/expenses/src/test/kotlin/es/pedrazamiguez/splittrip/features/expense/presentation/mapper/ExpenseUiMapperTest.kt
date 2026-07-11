@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
@@ -24,7 +25,6 @@ import java.time.LocalDateTime
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -47,19 +47,14 @@ class ExpenseUiMapperTest {
 
         every { localeProvider.getCurrentLocale() } returns Locale.US
 
-        // Stub paid_by pattern — vararg overload packs trailing args into an Array
         every { resourceProvider.getString(R.string.paid_by, *anyVararg()) } answers {
             val varargs = it.invocation.args[1] as Array<*>
             "Paid by ${varargs[0]}"
         }
-
-        // Stub expense_paid_by_member pattern (out-of-pocket badge)
         every { resourceProvider.getString(R.string.expense_paid_by_member, *anyVararg()) } answers {
             val varargs = it.invocation.args[1] as Array<*>
             "Paid by ${varargs[0]}"
         }
-
-        // Stub scope-aware badge strings
         every { resourceProvider.getString(R.string.expense_paid_by_me) } returns "Paid by me"
         every { resourceProvider.getString(R.string.expense_paid_for_scope, *anyVararg()) } answers {
             val varargs = it.invocation.args[1] as Array<*>
@@ -71,41 +66,23 @@ class ExpenseUiMapperTest {
         }
         every { resourceProvider.getString(R.string.expense_scope_everyone) } returns "everyone"
 
-        // Stub all payment method string resources
         PaymentMethod.entries.forEach { method ->
             every { resourceProvider.getString(method.toStringRes()) } returns method.name
         }
-
-        // Stub all expense category string resources
         ExpenseCategory.entries.forEach { category ->
             every { resourceProvider.getString(category.toStringRes()) } returns category.name
         }
-
-        // Stub all payment status string resources
         PaymentStatus.entries.forEach { status ->
             every { resourceProvider.getString(status.toStringRes()) } returns status.name
         }
 
-        // Stub scheduled badge strings
-        every { resourceProvider.getString(R.string.expense_scheduled_due_today) } returns "Due today"
-        every { resourceProvider.getString(R.string.expense_scheduled_due_tomorrow) } returns "Due tomorrow"
-        every { resourceProvider.getString(R.string.expense_scheduled_paid) } returns "Paid"
-        every { resourceProvider.getString(R.string.expense_scheduled_due_on, *anyVararg()) } answers {
-            val varargs = it.invocation.args[1] as Array<*>
-            "Due on ${varargs[0]}"
-        }
-        every { resourceProvider.getString(R.string.expense_status_cancelled_refunded) } returns "Cancelled - Refunded"
-        every { resourceProvider.getString(R.string.expense_refundable_until, *anyVararg()) } answers {
-            val varargs = it.invocation.args[1] as Array<*>
-            "Refundable until ${varargs[0]}"
-        }
+        stubScheduledBadgeStrings()
 
-        // Stub UserUiMapper dependencies
         every { resourceProvider.getString(DesignSystemR.string.self_identification_nominative) } returns "You"
         every { resourceProvider.getString(DesignSystemR.string.user_pending_fallback) } returns "Pending member"
 
         val formattingHelper = FormattingHelper(localeProvider)
-        val scheduledBadgeUiMapper = ScheduledBadgeUiMapper(
+        val paymentStatusBadgeUiMapper = PaymentStatusBadgeUiMapper(
             formattingHelper = formattingHelper,
             resourceProvider = resourceProvider
         )
@@ -114,7 +91,7 @@ class ExpenseUiMapperTest {
         mapper = ExpenseUiMapper(
             localeProvider = localeProvider,
             resourceProvider = resourceProvider,
-            scheduledBadgeUiMapper = scheduledBadgeUiMapper,
+            paymentStatusBadgeUiMapper = paymentStatusBadgeUiMapper,
             userUiMapper = userUiMapper
         )
     }
@@ -561,8 +538,8 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertNull(result.scheduledBadgeText)
-            assertFalse(result.isScheduledPastDue)
+            assertNull(result.badgeText)
+            assertFalse(result.isBadgeUrgent)
         }
 
         @Test
@@ -575,12 +552,12 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertNull(result.scheduledBadgeText)
-            assertFalse(result.isScheduledPastDue)
+            assertNull(result.badgeText)
+            assertFalse(result.isBadgeUrgent)
         }
 
         @Test
-        fun `scheduled expense with future dueDate shows due on date`() {
+        fun `scheduled expense with future dueDate shows formatted date`() {
             val futureDueDate = LocalDateTime.now().plusDays(10)
             val expense = Expense(
                 id = "e3",
@@ -590,9 +567,8 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertNotNull(result.scheduledBadgeText)
-            assertTrue(result.scheduledBadgeText!!.startsWith("Due on"))
-            assertFalse(result.isScheduledPastDue)
+            assertEquals(futureDueDate.formatShortDate(Locale.US), result.badgeText)
+            assertFalse(result.isBadgeUrgent)
         }
 
         @Test
@@ -606,13 +582,12 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertEquals("Paid", result.scheduledBadgeText)
-            assertTrue(result.isScheduledPastDue)
+            assertEquals(pastDueDate.formatShortDate(Locale.US), result.badgeText)
+            assertTrue(result.isBadgeUrgent)
         }
 
         @Test
-        fun `scheduled expense due today shows due today`() {
-            // Use a time today but not midnight to ensure toLocalDate() is today
+        fun `scheduled expense due today shows Today`() {
             val todayDueDate = LocalDateTime.now().withHour(12).withMinute(0)
             val expense = Expense(
                 id = "e5",
@@ -622,12 +597,12 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertEquals("Due today", result.scheduledBadgeText)
-            assertTrue(result.isScheduledPastDue)
+            assertEquals("Today", result.badgeText)
+            assertFalse(result.isBadgeUrgent)
         }
 
         @Test
-        fun `scheduled expense due tomorrow shows due tomorrow`() {
+        fun `scheduled expense due tomorrow shows Tomorrow`() {
             val tomorrowDueDate = LocalDateTime.now().plusDays(1).withHour(12).withMinute(0)
             val expense = Expense(
                 id = "e6",
@@ -637,8 +612,24 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertEquals("Due tomorrow", result.scheduledBadgeText)
-            assertFalse(result.isScheduledPastDue)
+            assertEquals("Tomorrow", result.badgeText)
+            assertFalse(result.isBadgeUrgent)
+        }
+
+        @Test
+        fun `refundable expense with dueDate shows formatted date`() {
+            val futureDueDate = LocalDateTime.now().plusDays(10)
+            val expense = Expense(
+                id = "e7",
+                paymentStatus = PaymentStatus.REFUNDABLE,
+                dueDate = futureDueDate
+            )
+
+            val result = mapper.map(expense)
+
+            assertEquals(futureDueDate.formatShortDate(Locale.US), result.badgeText)
+            assertFalse(result.isBadgeUrgent)
+            assertTrue(result.isRefundable)
         }
     }
 
@@ -1459,5 +1450,12 @@ class ExpenseUiMapperTest {
             assertTrue(result.creatorDisplay is MemberDisplay.Former)
             assertEquals("user-3", result.creatorDisplay.userId)
         }
+    }
+
+    private fun stubScheduledBadgeStrings() {
+        every { resourceProvider.getString(R.string.expense_relative_today) } returns "Today"
+        every { resourceProvider.getString(R.string.expense_relative_tomorrow) } returns "Tomorrow"
+        every { resourceProvider.getString(R.string.expense_relative_yesterday) } returns "Paid"
+        every { resourceProvider.getString(R.string.expense_status_cancelled_refunded) } returns "Cancelled - Refunded"
     }
 }

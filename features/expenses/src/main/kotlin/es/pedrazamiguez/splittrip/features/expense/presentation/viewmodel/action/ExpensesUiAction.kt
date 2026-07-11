@@ -8,4 +8,5 @@ sealed interface ExpensesUiAction {
     data class ShowDeleteError(val message: UiText) : ExpensesUiAction
     data class ShowCancelSuccess(val message: UiText) : ExpensesUiAction
     data class ShowCancelError(val message: UiText) : ExpensesUiAction
+    data object ScrollToTop : ExpensesUiAction
 }

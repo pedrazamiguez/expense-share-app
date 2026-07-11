@@ -36,13 +36,11 @@ fun PaymentStatusStep(
             )
         }
 
-        AnimatedVisibility(visible = !uiState.showDueDateSection) {
-            ExpenseDateSection(
-                formattedExpenseDate = uiState.formattedExpenseDate,
-                isExpenseDateValid = uiState.isExpenseDateValid,
-                expenseDateMillis = uiState.expenseDateMillis,
-                onDateSelected = { onEvent(AddExpenseUiEvent.ExpenseDateSelected(it)) }
-            )
-        }
+        ExpenseDateSection(
+            formattedExpenseDate = uiState.formattedExpenseDate,
+            isExpenseDateValid = uiState.isExpenseDateValid,
+            expenseDateMillis = uiState.expenseDateMillis,
+            onDateSelected = { onEvent(AddExpenseUiEvent.ExpenseDateSelected(it)) }
+        )
     }
 }

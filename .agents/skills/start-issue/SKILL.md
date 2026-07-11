@@ -7,19 +7,13 @@ tools:
   - githubRepo
   - terminalLastCommand
 arguments:
-  - name: issue_url
-    description: The URL of the GitHub issue to start working on.
-    required: true
   - name: issue_number
     description: The number of the GitHub issue to start working on.
-    required: false
----
-# Start Issue
+    required: true
+---# Start Issue
 
 Start working on this issue:
-- Issue URL: $ISSUE_URL
 - Issue Number: $ISSUE_NUMBER
-
 ---
 
 ## Step 0 — Branch validation
@@ -29,7 +23,6 @@ Before writing any code or performing checks, verify your local Git state:
 2. If starting work on a new issue, ensure a branch has been created from `develop` following the branch naming convention.
 3. If this is a hotfix, ensure the branch has been created from `main`.
 4. Pull the latest changes from the remote repository to guarantee your branch is fully up-to-date with `develop` or `main`.
-
 ---
 
 ## Step 1 — Load issue context
@@ -40,7 +33,6 @@ Before writing any code or performing checks, verify your local Git state:
    > - Sync / offline patterns → `wiki/offline-first-architecture.md`
    > - UI components → `wiki/core-services-catalog.md` §A, `wiki/horizon-narrative-design-language.md`
    > - Domain services → `wiki/core-services-catalog.md` §B–§G (relevant entry only)
-
 ---
 
 ## Step 2 — Find the Posted Implementation Plan
@@ -51,7 +43,6 @@ Retrieve all comments on the GitHub issue using the `github-mcp-server`.
 3. If an implementation plan is found, read it thoroughly. This plan is your single source of truth for the implementation.
 4. If you discover that the plan does not align well with the current code, **do not attempt to fix or replan it yourself**. Stop immediately and suggest that the user run the `sp-replan-issue` skill to update the plan.
 5. **Validate that the retrieved plan is a complete technical specification.** It must explicitly specify exact target file paths (using `[NEW]`, `[MODIFY]`, or `[DELETE]` tags), precise class names/signatures/types, database schema updates if any, validation rules, and specific test cases (test class and test case names). **If the plan lacks these essential specification details, halt immediately.** Do not start implementation; inform the user and suggest running `sp-replan-issue` to flesh out the technical specification before proceeding.
-
 ---
 
 ## Step 3 — File-size guard (600-line hard limit, enforced by Konsist)
@@ -71,7 +62,6 @@ wc -l <path/to/file.kt>
 ```
 
 If the result exceeds 600 lines, refactor immediately — do not move on.
-
 ---
 
 ## Step 4 — Implement the Plan
@@ -87,7 +77,6 @@ Implement the technical solution by sticking strictly to the posted implementati
 - REQUIREMENT: Production source files ≤ 600 lines.
 - REQUIREMENT: Formatting in UiMappers only. Never in ViewModels or Domain Services.
 - REQUIREMENT: Comment the *why*, not the *what*. No redundant comments.
-
 ---
 
 ## Step 5 — Local verification gate (run BEFORE declaring done)
@@ -99,7 +88,6 @@ make check   # Konsist architecture rules + all unit tests + debug compilation �
 ```
 
 If any check fails, fix it before finishing. Do not leave the user to discover failures in CI.
-
 ---
 
 ## Step 6 — Post walkthrough as an issue comment

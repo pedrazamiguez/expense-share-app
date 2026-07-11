@@ -1,6 +1,11 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Receipt
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReceiptRefund
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
@@ -25,7 +30,6 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.model.CashTranch
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseDetailUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitDetailUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SubunitSplitGroupUiModel
-import java.math.BigDecimal
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
@@ -34,7 +38,7 @@ class ExpenseDetailUiMapper(
     private val resourceProvider: ResourceProvider,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val addOnCalculationService: AddOnCalculationService,
-    private val scheduledBadgeUiMapper: ScheduledBadgeUiMapper,
+    private val paymentStatusBadgeUiMapper: PaymentStatusBadgeUiMapper,
     private val userUiMapper: UserUiMapper
 ) {
 
@@ -69,7 +73,22 @@ class ExpenseDetailUiMapper(
             val youLabel = resourceProvider.getString(R.string.you_label)
             val (soloSplits, splitGroups) = resolveSplits()
             val isForeign = expense.sourceCurrency != expense.groupCurrency
-            val (scheduledBadgeText, isScheduledPastDue) = scheduledBadgeUiMapper.buildBadge(expense)
+            val badgeData = paymentStatusBadgeUiMapper.buildBadge(expense)
+            val badgeIcon = badgeData?.let {
+                when (expense.paymentStatus) {
+                    PaymentStatus.SCHEDULED -> if (it.isPassed) {
+                        TablerIcons.Outline.CircleCheck
+                    } else {
+                        TablerIcons.Outline.Calendar
+                    }
+                    PaymentStatus.REFUNDABLE -> if (it.isPassed) {
+                        TablerIcons.Outline.Receipt
+                    } else {
+                        TablerIcons.Outline.ReceiptRefund
+                    }
+                    else -> null
+                }
+            }
 
             val effectivePayerId = expense.payerId ?: expense.createdBy.takeIf { it.isNotBlank() }
             val payerDisplay = resolvePayerDisplay(effectivePayerId, youLabel)
@@ -92,7 +111,11 @@ class ExpenseDetailUiMapper(
                 isForeignCurrency = isForeign,
                 paymentMethodText = resourceProvider.getString(expense.paymentMethod.toStringRes()),
                 paymentMethodIcon = expense.paymentMethod.toIconVector(),
-                paymentStatusText = resourceProvider.getString(expense.paymentStatus.toStringRes()),
+                paymentStatusText = when (expense.paymentStatus) {
+                    PaymentStatus.SCHEDULED -> resourceProvider.getString(R.string.payment_status_pending)
+                    PaymentStatus.REFUNDABLE -> resourceProvider.getString(R.string.expense_detail_on_hold)
+                    else -> resourceProvider.getString(expense.paymentStatus.toStringRes())
+                },
                 paymentStatusIcon = expense.paymentStatus.toIconVector(),
                 expenseScopeLabel = buildExpenseScopeLabel(expense.payerType, resourceProvider),
                 paidByText = getPaidByText(
@@ -105,11 +128,14 @@ class ExpenseDetailUiMapper(
                 ),
                 payerDisplay = payerDisplay,
                 creatorDisplay = creatorDisplay,
-                dateText = resolveDateText(expense, formattingHelper),
+                dateText = formattingHelper.formatShortDate(expense.createdAt),
+                secondaryDateText = resolveSecondaryDateText(expense, formattingHelper),
+                secondaryDateIcon = resolveSecondaryDateIcon(expense),
                 vendorText = expense.vendor?.takeIf { it.isNotBlank() },
                 notesText = expense.notes?.takeIf { it.isNotBlank() },
-                scheduledBadgeText = scheduledBadgeText,
-                isScheduledPastDue = isScheduledPastDue,
+                badgeText = null,
+                badgeIcon = badgeIcon,
+                isBadgeUrgent = badgeData?.isPassed == true,
                 isOutOfPocket = expense.payerType == PayerType.USER,
                 fundingSourceText = buildFundingSourceText(
                     expense,
@@ -147,7 +173,7 @@ class ExpenseDetailUiMapper(
                 createdAtText = formattingHelper.formatShortDate(expense.createdAt),
                 syncStatus = expense.syncStatus,
                 isCancelled = expense.paymentStatus == PaymentStatus.CANCELLED,
-                isRefundable = expense.paymentStatus == PaymentStatus.REFUNDABLE
+                isRefundable = expense.paymentStatus == PaymentStatus.REFUNDABLE && badgeData?.isPassed != true
             )
         }
 
@@ -450,144 +476,3 @@ private fun getCreatedByText(
     val paidByName = resolveDisplayName(expense.createdBy, memberProfiles, currentUserId, youLabel, userUiMapper)
     return resolveCreatedByText(expense.createdBy, currentUserId, paidByName, resourceProvider)
 }
-
-private fun buildOriginalEnteredTotal(baseGroupAmount: Long, addOns: List<AddOn>): Long {
-    val includedNonDiscountTotal = addOns
-        .filter { it.mode == AddOnMode.INCLUDED && it.type != AddOnType.DISCOUNT }
-        .sumOf { it.groupAmountCents }
-    return (baseGroupAmount + includedNonDiscountTotal).coerceAtLeast(0L)
-}
-
-private fun resolveDisplayName(
-    userId: String,
-    memberProfiles: Map<String, User>,
-    currentUserId: String?,
-    youLabel: String,
-    userUiMapper: UserUiMapper
-): String {
-    val user = memberProfiles[userId]
-    return userUiMapper.mapToDisplayName(
-        user = user,
-        fallbackUserId = userId,
-        currentUserId = currentUserId,
-        youLabel = youLabel
-    )
-}
-
-private fun resolvePaidByText(
-    createdBy: String,
-    currentUserId: String?,
-    paidByName: String,
-    resourceProvider: ResourceProvider
-): String {
-    return if (createdBy == currentUserId) {
-        resourceProvider.getString(R.string.paid_by_you)
-    } else {
-        resourceProvider.getString(R.string.paid_by, paidByName)
-    }
-}
-
-private fun resolveEffectiveTotal(
-    groupAmount: Long,
-    addOns: List<AddOn>,
-    addOnCalculationService: AddOnCalculationService
-): Long? {
-    return if (addOns.isNotEmpty()) {
-        addOnCalculationService.calculateEffectiveGroupAmount(groupAmount, addOns)
-    } else {
-        null
-    }
-}
-
-private fun resolveDateText(expense: Expense, formattingHelper: FormattingHelper): String {
-    return if (expense.paymentStatus == PaymentStatus.SCHEDULED && expense.dueDate != null) {
-        formattingHelper.formatShortDate(expense.dueDate)
-    } else {
-        formattingHelper.formatShortDate(expense.createdAt)
-    }
-}
-
-private fun resolveCreatedByText(
-    createdBy: String,
-    currentUserId: String?,
-    paidByName: String,
-    resourceProvider: ResourceProvider
-): String {
-    return if (createdBy == currentUserId) {
-        resourceProvider.getString(R.string.expense_detail_created_by_you)
-    } else {
-        resourceProvider.getString(R.string.expense_detail_created_by, paidByName)
-    }
-}
-
-private fun buildAddOnLabel(addOn: AddOn, resourceProvider: ResourceProvider): String {
-    val typeName = resourceProvider.getString(addOn.type.toStringRes())
-    return if (!addOn.description.isNullOrBlank()) {
-        "${addOn.description} ($typeName)"
-    } else {
-        typeName
-    }
-}
-
-private fun buildTrancheRate(
-    withdrawal: CashWithdrawal?,
-    groupCurrency: String,
-    formattingHelper: FormattingHelper,
-    resourceProvider: ResourceProvider
-): String? {
-    if (withdrawal == null) return null
-    if (withdrawal.currency == groupCurrency) return null
-    if (withdrawal.exchangeRate.compareTo(BigDecimal.ZERO) == 0) return null
-    return resourceProvider.getString(
-        R.string.expense_detail_exchange_rate_full,
-        withdrawal.currency,
-        formattingHelper.formatRateForDisplay(withdrawal.exchangeRate.toPlainString()),
-        groupCurrency
-    )
-}
-
-private fun resolveTrancheScopeText(
-    withdrawal: CashWithdrawal?,
-    subunitNameLookup: Map<String, String>,
-    resourceProvider: ResourceProvider
-): String? {
-    if (withdrawal == null) return null
-    return when (withdrawal.withdrawalScope) {
-        PayerType.GROUP -> resourceProvider.getString(R.string.expense_detail_tranche_scope_group)
-        PayerType.USER -> resourceProvider.getString(R.string.expense_detail_tranche_scope_personal)
-        PayerType.SUBUNIT -> {
-            val name = withdrawal.subunitId?.let { subunitNameLookup[it] }
-            if (!name.isNullOrBlank()) {
-                resourceProvider.getString(R.string.expense_detail_tranche_scope_subunit, name)
-            } else {
-                null
-            }
-        }
-    }
-}
-
-private fun buildFundingSourceText(
-    expense: Expense,
-    currentUserId: String?,
-    memberProfiles: Map<String, User>,
-    resourceProvider: ResourceProvider,
-    userUiMapper: UserUiMapper
-): String? {
-    val payerId = expense.payerId ?: expense.createdBy.takeIf { it.isNotBlank() }
-    if (expense.payerType != PayerType.USER || payerId == null) return null
-    return if (currentUserId != null && payerId == currentUserId) {
-        resourceProvider.getString(R.string.expense_paid_by_me)
-    } else {
-        resourceProvider.getString(
-            R.string.expense_paid_by_member,
-            resolveDisplayName(payerId, memberProfiles, currentUserId = null, youLabel = "", userUiMapper)
-        )
-    }
-}
-
-private fun buildExpenseScopeLabel(payerType: PayerType, resourceProvider: ResourceProvider): String =
-    when (payerType) {
-        PayerType.GROUP -> resourceProvider.getString(R.string.expense_scope_group)
-        PayerType.SUBUNIT -> resourceProvider.getString(R.string.expense_scope_subunit)
-        PayerType.USER -> resourceProvider.getString(R.string.expense_scope_personal)
-    }

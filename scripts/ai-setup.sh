@@ -209,53 +209,40 @@ print('  Gemini MCP config updated')
 
 # ─── Step 8: Merge MCP configs into opencode.jsonc ──────────────────────────
 merge_opencode_config() {
-  log_info "Merging MCP entry into ${OPENCODE_CONFIG}..."
+  log_info "Merging MCP entry, rules, and skills into ${OPENCODE_CONFIG}..."
   python3 -c "
 import os, re, json
 
 path = os.path.expanduser('${OPENCODE_CONFIG}')
 cbm_bin = os.path.expanduser('${CBM_BIN}')
+project_root = os.path.expanduser('${PROJECT_ROOT}')
 
 if not os.path.exists(path):
     print('  Config file not found — skipping')
     exit(0)
 
 with open(path) as f:
-    raw = f.read()
+    try:
+        config = json.load(f)
+    except json.JSONDecodeError:
+        print('  Warning: Failed to parse opencode.jsonc. If it contains comments, please merge manually to avoid losing them.')
+        exit(0)
 
-if 'codebase-memory-mcp' in raw:
-    print('  codebase-memory-mcp already in opencode.jsonc')
-    exit(0)
+# Merge MCP
+servers = config.setdefault('mcp', {})
+if 'codebase-memory-mcp' not in servers:
+    servers['codebase-memory-mcp'] = {
+        'type': 'local',
+        'command': [cbm_bin],
+        'enabled': True
+    }
+    print('  Added codebase-memory-mcp to opencode.jsonc')
 
-# Find the mcp block boundaries via regex
-m = re.search(r'\"mcp\"\s*:\s*\{', raw)
-if not m:
-    print('  Could not find mcp block in opencode.jsonc')
-    exit(1)
 
-depth = 1
-pos = m.end()  # right after the opening '{'
-while depth > 0 and pos < len(raw):
-    if raw[pos] == '{':
-        depth += 1
-    elif raw[pos] == '}':
-        depth -= 1
-    pos += 1
-mcp_close = pos - 1
 
-# Build the entry with same indentation as existing entries
-entry_indent = '        '
-entry = ',\n' + entry_indent + '\"codebase-memory-mcp\": {\n'
-entry += entry_indent + '    \"type\": \"local\",\n'
-entry += entry_indent + '    \"command\": [\"' + cbm_bin + '\"],\n'
-entry += entry_indent + '    \"enabled\": true\n'
-entry += entry_indent + '}'
-
-new_raw = raw[:mcp_close] + entry + raw[mcp_close:]
-
+# Write back (Note: this drops comments, but opencode.jsonc is usually managed programmatically)
 with open(path, 'w') as f:
-    f.write(new_raw)
-print('  Added codebase-memory-mcp to opencode.jsonc')
+    json.dump(config, f, indent=4)
 "
   log_ok "Opencode config merged"
 }

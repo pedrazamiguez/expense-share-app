@@ -25,6 +25,9 @@ class FirebaseAppConfigRepository(
     private val _maxMembersPerGroup = MutableStateFlow(DEFAULT_MAX_MEMBERS_PER_GROUP)
     override val maxMembersPerGroup: StateFlow<Int> = _maxMembersPerGroup.asStateFlow()
 
+    private val _extractedDateMaxFutureDays = MutableStateFlow(DEFAULT_EXTRACTED_DATE_MAX_FUTURE_DAYS)
+    override val extractedDateMaxFutureDays: StateFlow<Int> = _extractedDateMaxFutureDays.asStateFlow()
+
     init {
         remoteConfig.setDefaultsAsync(R.xml.remote_config_defaults)
         updateFlowsFromConfig()
@@ -69,11 +72,15 @@ class FirebaseAppConfigRepository(
         _balanceComputationDebounceMs.value = if (debounce > 0) debounce else DEFAULT_BALANCE_DEBOUNCE_MS
         val maxMembers = remoteConfig.getLong("max_members_per_group").toInt()
         _maxMembersPerGroup.value = if (maxMembers > 0) maxMembers else DEFAULT_MAX_MEMBERS_PER_GROUP
+        val maxFutureDays = remoteConfig.getLong("extracted_date_max_future_days").toInt()
+        _extractedDateMaxFutureDays.value =
+            if (maxFutureDays > 0) maxFutureDays else DEFAULT_EXTRACTED_DATE_MAX_FUTURE_DAYS
     }
 
     companion object {
         private const val DEFAULT_CURRENCY = "EUR"
         private const val DEFAULT_BALANCE_DEBOUNCE_MS = 300L
         private const val DEFAULT_MAX_MEMBERS_PER_GROUP = 20
+        private const val DEFAULT_EXTRACTED_DATE_MAX_FUTURE_DAYS = 30
     }
 }

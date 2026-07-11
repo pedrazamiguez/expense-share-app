@@ -11,6 +11,7 @@ private object DefaultAppConfigService : AppConfigService {
     override val defaultCurrencyCode: StateFlow<String> = MutableStateFlow("EUR")
     override val balanceComputationDebounceMs: StateFlow<Long> = MutableStateFlow(300L)
     override val maxMembersPerGroup: StateFlow<Int> = MutableStateFlow(20)
+    override val extractedDateMaxFutureDays: StateFlow<Int> = MutableStateFlow(30)
 }
 
 /**

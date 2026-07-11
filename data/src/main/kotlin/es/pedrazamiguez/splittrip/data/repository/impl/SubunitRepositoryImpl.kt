@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.data.sync.KeyedSubscriptionTracker
 import es.pedrazamiguez.splittrip.data.sync.subscribeAndReconcile
 import es.pedrazamiguez.splittrip.data.sync.syncCreateToCloud
@@ -22,6 +23,7 @@ class SubunitRepositoryImpl(
     private val cloudSubunitDataSource: CloudSubunitDataSource,
     private val localSubunitDataSource: LocalSubunitDataSource,
     private val authenticationService: AuthenticationService,
+    private val performanceMonitor: PerformanceMonitor,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : SubunitRepository {
 
@@ -52,7 +54,8 @@ class SubunitRepositoryImpl(
             getCurrentSyncStatus = { id ->
                 localSubunitDataSource.getSubunitById(id)?.syncStatus ?: SyncStatus.PENDING_SYNC
             },
-            entityLabel = ENTITY_LABEL
+            entityLabel = ENTITY_LABEL,
+            performanceMonitor = performanceMonitor
         )
 
         return subunitId
@@ -77,7 +80,8 @@ class SubunitRepositoryImpl(
             getCurrentSyncStatus = { id ->
                 localSubunitDataSource.getSubunitById(id)?.syncStatus ?: SyncStatus.PENDING_SYNC
             },
-            entityLabel = "$ENTITY_LABEL update"
+            entityLabel = "$ENTITY_LABEL update",
+            performanceMonitor = performanceMonitor
         )
     }
 
@@ -118,7 +122,8 @@ class SubunitRepositoryImpl(
                             localSubunitDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
                         },
                         entityLabel = ENTITY_LABEL,
-                        logContext = "for group $groupId"
+                        logContext = "for group $groupId",
+                        performanceMonitor = performanceMonitor
                     )
                 }
             }

@@ -40,5 +40,6 @@ data class GroupPocketBalance(
     val cashEquivalents: Map<String, Long> = emptyMap(),
     val totalCashEquivalent: Long = 0,
     val scheduledHoldAmount: Long = 0,
+    val refundableHoldAmount: Long = 0,
     val totalExtras: Long = 0
 )

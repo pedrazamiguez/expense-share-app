@@ -20,6 +20,7 @@ fun NavGraphBuilder.expensesGraph() {
         val navController = LocalTabNavController.current
         AddExpenseFeature(
             onAddExpenseSuccess = {
+                navController.previousBackStackEntry?.savedStateHandle?.set("expenseAdded", true)
                 navController.popBackStack()
             }
         )

@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.data.sync.KeyedSubscriptionTracker
 import es.pedrazamiguez.splittrip.data.sync.subscribeAndReconcile
 import es.pedrazamiguez.splittrip.data.sync.syncCreateToCloud
@@ -20,6 +21,7 @@ class SettlementRepositoryImpl(
     private val cloudSettlementDataSource: CloudSettlementDataSource,
     private val localSettlementDataSource: LocalSettlementDataSource,
     private val authenticationService: AuthenticationService,
+    private val performanceMonitor: PerformanceMonitor,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : SettlementRepository {
 
@@ -48,7 +50,8 @@ class SettlementRepositoryImpl(
                             localSettlementDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
                         },
                         entityLabel = ENTITY_LABEL,
-                        logContext = "for group $groupId"
+                        logContext = "for group $groupId",
+                        performanceMonitor = performanceMonitor
                     )
                 }
             }
@@ -90,7 +93,8 @@ class SettlementRepositoryImpl(
             getCurrentSyncStatus = { id ->
                 localSettlementDataSource.getSyncStatus(id) ?: SyncStatus.PENDING_SYNC
             },
-            entityLabel = ENTITY_LABEL
+            entityLabel = ENTITY_LABEL,
+            performanceMonitor = performanceMonitor
         )
     }
 
@@ -110,7 +114,8 @@ class SettlementRepositoryImpl(
             getCurrentSyncStatus = { id ->
                 localSettlementDataSource.getSyncStatus(id) ?: SyncStatus.PENDING_SYNC
             },
-            entityLabel = "$ENTITY_LABEL update"
+            entityLabel = "$ENTITY_LABEL update",
+            performanceMonitor = performanceMonitor
         )
     }
 

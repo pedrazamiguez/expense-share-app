@@ -1,5 +1,8 @@
 # AGENTS.md — SplitTrip
 
+> [!IMPORTANT]
+> **Source of Truth:** This file is the single source of truth for architectural constraints and agent behaviors. Rules are broken out into `.agents/rules/`.
+
 ## Project Overview
 
 Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Multi-module Clean Architecture, offline-first with Room + Firestore, Koin DI. See `.github/copilot-instructions.md` for the full technical manifesto.
@@ -33,25 +36,15 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 
 ## Architecture Constraints
 
-- **ViewModels NEVER depend on Repositories.** Only inject UseCases, Mappers, and Domain Services.
-- **ViewModels NEVER inject** `Context`, `LocaleProvider`, or other ViewModels.
-- **Feature vs Screen pattern:** `*Feature` (orchestrator composable) holds ViewModel, collects flows, consumes `LocalTopPillController`/`LocalTabNavController`. `*Screen` is stateless — takes `UiState` + event lambdas only. See `features/profile/src/main/kotlin/.../ProfileFeature.kt` and `ProfileScreen.kt`.
-- **MVI triad per screen:** `UiState` (data class, `ImmutableList`), `UiEvent` (sealed interface), `UiAction` (side-effects via `Channel`/`SharedFlow`). Never put one-shot events in `UiState`.
-- **Hot flows:** Use `stateIn(scope, SharingStarted.WhileSubscribed(stopTimeoutMillis = AppConstants.FLOW_RETENTION_TIME, replayExpirationMillis = AppConstants.FLOW_REPLAY_EXPIRATION), initial)`. The constants live in `core/common/.../AppConstants.kt` (5000ms / 0ms). Never hardcode. The `FLOW_REPLAY_EXPIRATION = 0` resets the replay cache to `initialValue` after the upstream stops, preventing stale-state flashes on tab re-entry.
-- **UiText pattern:** ViewModels emit `UiText.StringResource(R.string.x)` — resolved to String in Feature via `asString(context)`.
-- **Formatting belongs in Mappers,** not ViewModels **and not Domain Services**. Mappers receive `LocaleProvider`. See `GroupUiMapperImpl`, `ProfileUiMapperImpl`. Domain Services must NEVER contain `formatShareForInput()`, `formatAmountForDisplay()`, or any human-readable formatting method.
-- **Decimal precision:** ALL decimal math in Domain Services, Repositories, and Use Cases MUST use `BigDecimal` with explicit `RoundingMode` and `scale` — NEVER `Double` or `Float`. All domain model fields that represent decimal values (e.g., `Subunit.memberShares`, exchange rates) use `BigDecimal`. Boundary serialization at the Firestore document layer uses `String` (via `toPlainString()` / safe `toBigDecimalOrNull()`) to avoid IEEE 754 floating-point precision loss that `Double` would introduce. See `SplitPreviewService` as reference.
-- **Handler delegation:** When a ViewModel's `onEvent()` handles >5 event categories or exceeds ~200 lines, extract logic into plain **Event Handler** classes (NOT ViewModels) that receive `MutableStateFlow<UiState>`, `MutableSharedFlow<UiAction>`, and `CoroutineScope` via `bind()`. See `AddExpenseEventHandler`, `ConfigEventHandler`, `SplitEventHandler` in `:features:expenses`.
-- **Delegate sub-pattern:** When an Event Handler exceeds ~600 lines, extract cohesive logic sections into **Delegate** classes (`*Delegate` suffix, NOT `*EventHandler`). Delegates don't implement handler interfaces or participate in `bind()`. Two patterns: lambda-based state access (async operations) or stateless/pure (calculations). See `AddOnExchangeRateDelegate`, `IntraSubunitSplitDelegate` in `:features:expenses`.
-- **File size limit:** Production source files must NOT exceed **600 lines**. Enforced by a Konsist architecture test in CI. Test files are exempt.
-- **Bottom padding:** All tab screens (hosted via `ScreenUiProvider`) MUST read `LocalBottomPadding.current` and apply it as bottom content padding to lists, FABs, and bottom-anchored buttons. Never hardcode `padding(bottom = 80.dp)`. See `ExpensesScreen`, `GroupsScreen`, `BalancesScreen`.
-- **Compose resource access:** ALWAYS use Compose-native APIs (e.g., `stringResource(...)`, `painterResource(...)`) rather than querying resources via `LocalContext.current` (which is not configuration-aware). For non-Composable contexts (like callbacks, click handlers, or `LaunchedEffect` lambdas), resolve the resource strings in the Composable scope first and pass the resolved strings into the block.
-- **Global UI orchestrators:** Global controllers and notifications (e.g., `LocalTopPillController`, `TopPillNotification`) must be declared exactly once at the root nav host level (`AppNavHost`). Feature screens and tab screens must never define, instantiate, or render nested instances of these controllers or notifications.
-- **Enum centralization:** Domain enums (e.g., `AppLanguage`, `Currency`) must be the single source of truth for parsing codes, fallback defaults, and validation. Never duplicate string-matching logic (e.g., `if (code == "es" || code == "en")`) or locale fallback checks in ViewModels or presentation layers; delegate directly to the enum's helper functions.
-- **Accessibility (a11y) for decorative icons:** Purely decorative images or icons (like checkmarks indicating selection in a row where the row itself already conveys status) must have `contentDescription = null` to avoid screen reader noise. Interactive icons or status icons that convey non-redundant information must use localized string resources.
-- **Unused/dead ViewModel code:** Do not retain unused methods, inputs, or dependencies in ViewModels. If a sub-feature or delegated EventHandler takes over a write-flow, delete the duplicate methods and dependencies from the parent ViewModel.
-- **Single-Composable-Per-File:** Every production Kotlin file under feature `presentation` packages that contains a `@Composable` function must define **exactly one** top-level `@Composable` function. The name of the Composable function must match the file name (e.g., `GroupItem.kt` contains `fun GroupItem()`). Auxiliary or helper components must be extracted into their own separate files inside the `presentation/component` package/folder with `internal` visibility. Plain UI helper functions must be non-composable (regular Kotlin functions). `MainScreen` is exempt as a root nav host orchestrator.
-
+See the standalone rule files in `.agents/rules/` for detailed constraints:
+- `.agents/rules/viewmodel-rules.md`
+- `.agents/rules/mvi-triad.md`
+- `.agents/rules/formatting-in-mappers.md`
+- `.agents/rules/big-decimal-math.md`
+- `.agents/rules/file-size-limit.md`
+- `.agents/rules/enum-centralization.md`
+- `.agents/rules/single-composable-per-file.md`
+- `.agents/rules/feature-screen-pattern.md`
 
 ## Navigation
 
@@ -63,6 +56,17 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 - Tab screens define TopBar/MainAction via `ScreenUiProvider` implementations (not their own Scaffold).
 
 ## Offline-First Data Flow
+
+### 🛑 The "True Offline" Write Protocol
+
+We use a strictly **"Offline-First"** approach. The UI only observes the Local DB. The Cloud is a replication target, not the source of truth for the UI.
+1. **Local ID Generation:** NEVER let Firestore generate the ID. ALWAYS generate a `UUID` locally.
+2. **Local Metadata Generation:** Generate `createdAt = System.currentTimeMillis()` locally.
+3. **Repository Write Order:** Save to Room (Local) FIRST -> Launch Background Job -> Sync to Cloud (Upsert).
+
+**Critical: Subcollection Cleanup on Deletion**
+Firestore does **NOT** auto-delete subcollections when a parent document is deleted. If a real-time listener watches a subcollection, you **MUST** delete subcollection documents **BEFORE** the parent document.
+
 
 1. **Read:** UI observes Room Flow only. Repository subscribes to Firestore snapshots via `onStart` and reconciles Room using `@Transaction` upsert + selective delete.
 2. **Write:** Save to Room first (instant UI update), then `syncScope.launch { cloudDataSource.upsert(...) }`.
@@ -98,6 +102,16 @@ withdrawalsDomainModule + withdrawalsUiModule → withdrawalsFeatureModules  (no
 - See `features/groups/.../GroupsUiModule.kt` (tab), `features/contributions/.../ContributionsUiModule.kt` (non-tab), and `features/profile/.../ProfileUiModule.kt` as templates.
 
 ## Testing
+
+### Coroutine Testing (CRITICAL - Prevents Flaky Tests)
+
+When testing classes that launch background coroutines (e.g., Repositories with `syncScope.launch {}`), you **MUST** inject the `CoroutineDispatcher` to ensure deterministic test behavior.
+- Always inject `CoroutineDispatcher` into classes that launch background coroutines.
+- Provide a default (`= Dispatchers.IO`) so production code doesn't need to specify it.
+- Use `StandardTestDispatcher()` in tests and pass it to both the class and `runTest()`.
+- Call `runTest(testDispatcher)` - the dispatcher must match what's used in the class.
+- Call `advanceUntilIdle()` before assertions to ensure background work completes.
+
 
 - **Framework:** Unit tests are primarily JUnit 5 + MockK. Some legacy/Robolectric unit tests still use JUnit 4 and run via the JUnit Vintage engine. Android instrumentation tests use `AndroidJUnit4`.
 - **Assertions:** NEVER use Kotlin's `assert()` — it's a no-op on Android. ALWAYS use JUnit `Assert.assertTrue(...)`, `Assert.assertEquals(...)`, etc.
@@ -243,21 +257,12 @@ Before creating any new service, utility, formatter, or UI component, **check th
 
 ## AI Agent Behavior Rules (CRITICAL)
 
-- **Internalize Core Architecture Documents:** Before proposing any action or writing code, you MUST read and internalize all project documentation, including `.github/copilot-instructions.md`, `DESIGN.md`, `AGENTS.md`, and all files in the `wiki/` directory (e.g., `add-ons-architecture.md`, `offline-first-architecture.md`, `horizon-narrative-design-language.md`, `core-services-catalog.md`). Do not rely solely on baseline knowledge.
-- **No Pragmatic Patches:** You will provide clean, production-ready code. Quick hacks, "temporary" patches, or code that compromises modularity and Clean Architecture boundaries are strictly prohibited.
-- **Strict Math:** Precision-sensitive math (e.g., balances, shares, exchange rates, currency amounts) MUST use `BigDecimal` with an explicit scale and rounding mode. Using `Double` or `Float` is strictly prohibited.
-- **Offline-First Protocol:** Save to Room first (instant UI update) and generate UUIDs and timestamps locally, then sync to Firestore in the background using the reusable sync delegates.
-- **The 600-Line Limit:** Production source files must NOT exceed 600 lines. Extract ViewModels event handlers, delegates, or component composables to keep files clean and within this hard limit.
-- **Design System (Horizon Narrative):** Adhere to the "Horizon Narrative" design language. This includes using Outfit/Inter/Jakarta Sans typography, tonal layering, glassmorphism, gradients, no raw 1px borders, and applying `LocalBottomPadding` to all bottom-anchored elements on tab screens.
-- **Establish a Baseline:** Before editing any files, run the full local validation check suite (`make check`) to establish the initial status of the codebase. Resolve any pre-existing violations on files you will touch before making other changes.
-- **File-Size Guards:** Always verify a file's line count using `wc -l` before and after editing it. If editing will push the file near or over 600 lines, extract event handlers, delegates, or components first.
-- **Commenting Policy:** Comment the *why*, never the *what*. Completely avoid/delete redundant comments that merely restate what code does.
-- **Local Verification Gate (MANDATORY):** Before declaring any task, issue, or review comment done, completed, addressed, or accomplished, you MUST run `make check` locally and ensure there are 0 failures. Never leave verification for CI/CD or the user to discover.
-- **GIT OPERATIONS PROHIBITION (CRITICAL):** ABSOLUTELY NEVER run, suggest, propose, or ask for permission to run `git add`, `git commit`, or `git push` commands. Staging, committing, and pushing are strictly under the user's manual control.
-- **NEVER create Pull Requests** under any circumstances.
-- **NEVER merge PRs or close issues** autonomously.
-- **Compliance checklist before generating code:** (1) ViewModels only inject UseCases/Mappers/Services? (2) Formatting only in Mappers? (3) BigDecimal for all decimal math? (4) Handler delegation for >5 events? (5) `LocalBottomPadding` for tab screens? (6) Feature/Screen split correct? (7) MVI triad complete? (8) Hot flows with `AppConstants.FLOW_RETENTION_TIME` and `AppConstants.FLOW_REPLAY_EXPIRATION`? (9) Offline-first Room-first reads? (10) `ImmutableList` in UiState? (11) Local verification suite (`make check`) executed and passing with 0 failures?
-- **Plan-Only Skill Strict Stop:** Whenever a plan-only/planning-focused skill or command (such as `/sp-plan-issue`, `sp-plan-issue`, or any other planning-only tool workflow) explicitly dictates that the task is completed after writing/posting the plan and that no codebase modifications should be performed, this instruction takes absolute precedence over any default Planning Mode instructions (which might otherwise suggest transitioning to the "Execute" phase). The agent MUST NOT write code, create production files, or execute any modifications under those circumstances.
+See the standalone rule files in `.agents/rules/` for behavioral constraints:
+- `.agents/rules/no-git-operations.md`
+- `.agents/rules/no-pragmatic-patches.md`
+- `.agents/rules/make-check-gate.md`
+- `.agents/rules/commenting-policy.md`
+- `.agents/rules/agent-plan-strict-stop.md`
 
 ## Workspace Resolution Protocol
 
