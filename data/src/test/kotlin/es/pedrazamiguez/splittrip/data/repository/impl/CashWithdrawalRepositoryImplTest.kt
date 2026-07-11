@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudCashWithdrawalDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalCashWithdrawalQueryDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalCashWithdrawalWriteDataSource
@@ -38,6 +39,7 @@ class CashWithdrawalRepositoryImplTest {
     private lateinit var localQueryDataSource: LocalCashWithdrawalQueryDataSource
     private lateinit var localWriteDataSource: LocalCashWithdrawalWriteDataSource
     private lateinit var authenticationService: AuthenticationService
+    private lateinit var performanceMonitor: PerformanceMonitor
     private lateinit var testDispatcher: TestDispatcher
     private lateinit var repository: CashWithdrawalRepositoryImpl
 
@@ -62,6 +64,10 @@ class CashWithdrawalRepositoryImplTest {
         localQueryDataSource = mockk(relaxed = true)
         localWriteDataSource = mockk(relaxed = true)
         authenticationService = mockk()
+        performanceMonitor = mockk(relaxed = true) {
+            io.mockk.coEvery { traceAsync<Any?>(any(), any()) } coAnswers { secondArg<suspend () -> Any?>().invoke() }
+            io.mockk.every { trace<Any?>(any(), any()) } answers { secondArg<() -> Any?>().invoke() }
+        }
         every { authenticationService.currentUserId() } returns testUserId
 
         repository = CashWithdrawalRepositoryImpl(
@@ -69,6 +75,7 @@ class CashWithdrawalRepositoryImplTest {
             localQueryDataSource = localQueryDataSource,
             localWriteDataSource = localWriteDataSource,
             authenticationService = authenticationService,
+            performanceMonitor = performanceMonitor,
             ioDispatcher = testDispatcher
         )
     }

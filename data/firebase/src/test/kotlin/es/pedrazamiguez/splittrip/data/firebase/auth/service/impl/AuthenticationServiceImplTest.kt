@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudUserDataSource
 import es.pedrazamiguez.splittrip.domain.exception.AdminRestrictedOperationException
 import es.pedrazamiguez.splittrip.domain.model.User
@@ -29,6 +30,7 @@ class AuthenticationServiceImplTest {
 
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var cloudUserDataSource: CloudUserDataSource
+    private lateinit var performanceMonitor: PerformanceMonitor
     private lateinit var service: AuthenticationServiceImpl
 
     private val testIdToken = "google-id-token"
@@ -40,13 +42,18 @@ class AuthenticationServiceImplTest {
     fun setUp() {
         firebaseAuth = mockk(relaxed = true)
         cloudUserDataSource = mockk(relaxed = true)
+        performanceMonitor = mockk(relaxed = true) {
+            every { trace<Any?>(any(), any()) } answers { secondArg<() -> Any?>().invoke() }
+            coEvery { traceAsync<Any?>(any(), any()) } coAnswers { secondArg<suspend () -> Any?>().invoke() }
+        }
 
         mockkStatic(GoogleAuthProvider::class)
         mockkStatic(EmailAuthProvider::class)
 
         service = AuthenticationServiceImpl(
             firebaseAuth = firebaseAuth,
-            cloudUserDataSource = cloudUserDataSource
+            cloudUserDataSource = cloudUserDataSource,
+            performanceMonitor = performanceMonitor
         )
     }
 

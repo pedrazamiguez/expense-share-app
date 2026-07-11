@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.data.di
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.data.repository.impl.UserRepositoryImpl
 import es.pedrazamiguez.splittrip.data.service.FeatureGateServiceImpl
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
@@ -17,7 +18,8 @@ val authenticationDataModule = module {
             cloudUserDataSource = get<CloudUserDataSource>(),
             localUserDataSource = get<LocalUserDataSource>(),
             cloudStorageDataSource = get<CloudStorageDataSource>(),
-            authenticationService = get<AuthenticationService>()
+            authenticationService = get<AuthenticationService>(),
+            performanceMonitor = get<PerformanceMonitor>()
         )
     }
 

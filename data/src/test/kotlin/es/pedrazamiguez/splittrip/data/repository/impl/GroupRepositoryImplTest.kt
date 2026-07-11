@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.data.worker.GroupDeletionRetryScheduler
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
@@ -41,6 +42,7 @@ class GroupRepositoryImplTest {
     private lateinit var groupDeletionRetryScheduler: GroupDeletionRetryScheduler
     private lateinit var groupImageStorageService: GroupImageStorageService
     private lateinit var cloudStorageDataSource: CloudStorageDataSource
+    private lateinit var performanceMonitor: PerformanceMonitor
     private lateinit var repository: GroupRepositoryImpl
 
     private val testGroupId = "group-123"
@@ -63,6 +65,10 @@ class GroupRepositoryImplTest {
         groupDeletionRetryScheduler = mockk(relaxed = true)
         groupImageStorageService = mockk(relaxed = true)
         cloudStorageDataSource = mockk(relaxed = true)
+        performanceMonitor = mockk(relaxed = true) {
+            io.mockk.coEvery { traceAsync<Any?>(any(), any()) } coAnswers { secondArg<suspend () -> Any?>().invoke() }
+            io.mockk.every { trace<Any?>(any(), any()) } answers { secondArg<() -> Any?>().invoke() }
+        }
 
         every { authenticationService.requireUserId() } returns "current-user-id"
 
@@ -73,6 +79,7 @@ class GroupRepositoryImplTest {
             groupDeletionRetryScheduler = groupDeletionRetryScheduler,
             groupImageStorageService = groupImageStorageService,
             cloudStorageDataSource = cloudStorageDataSource,
+            performanceMonitor = performanceMonitor,
             ioDispatcher = testDispatcher
         )
     }

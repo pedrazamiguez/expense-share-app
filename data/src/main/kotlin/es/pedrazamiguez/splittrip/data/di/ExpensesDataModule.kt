@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.di
 
 import com.google.ai.edge.aicore.GenerativeModel
 import com.google.ai.edge.aicore.generationConfig
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.data.repository.impl.AICoreInferenceRepositoryImpl
 import es.pedrazamiguez.splittrip.data.repository.impl.ExpenseRepositoryImpl
 import es.pedrazamiguez.splittrip.data.repository.impl.LiteRtInferenceRepositoryImpl
@@ -32,6 +33,7 @@ val expensesDataModule = module {
             authenticationService = get<AuthenticationService>(),
             cloudStorageDataSource = get<CloudStorageDataSource>(),
             receiptStorageService = get<ReceiptStorageService>(),
+            performanceMonitor = get<PerformanceMonitor>(),
             ioDispatcher = Dispatchers.IO
         )
     }

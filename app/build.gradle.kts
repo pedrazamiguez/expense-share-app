@@ -74,6 +74,9 @@ android {
     buildTypes {
         getByName("debug") {
             buildConfigField("Boolean", "USE_DEBUG_APP_CHECK", "true")
+            configure<com.google.firebase.perf.plugin.FirebasePerfExtension> {
+                setInstrumentationEnabled(false)
+            }
         }
         getByName("release") {
             isMinifyEnabled = true

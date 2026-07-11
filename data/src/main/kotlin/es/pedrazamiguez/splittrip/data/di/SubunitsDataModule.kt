@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.data.di
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.data.repository.impl.SubunitRepositoryImpl
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudSubunitDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalSubunitDataSource
@@ -14,6 +15,7 @@ val subunitsDataModule = module {
             cloudSubunitDataSource = get<CloudSubunitDataSource>(),
             localSubunitDataSource = get<LocalSubunitDataSource>(),
             authenticationService = get<AuthenticationService>(),
+            performanceMonitor = get<PerformanceMonitor>(),
             ioDispatcher = Dispatchers.IO
         )
     }
