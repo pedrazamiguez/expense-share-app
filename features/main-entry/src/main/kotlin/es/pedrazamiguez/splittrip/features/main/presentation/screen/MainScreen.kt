@@ -3,13 +3,9 @@ package es.pedrazamiguez.splittrip.features.main.presentation.screen
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -28,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -156,14 +151,6 @@ fun MainScreen(
         telemetryTracker.trackScreenView(currentRoute, null)
     }
 
-    // ── Tab-switch detection ─────────────────────────────────────────────
-    // Distinguish tab switches (instant) from within-tab navigation (animated).
-    // SideEffect updates previousSelectedRoute AFTER composition, so during the
-    // composition where selectedRoute changes, isTabSwitch is correctly true.
-    var previousSelectedRoute by remember { mutableStateOf(selectedRoute) }
-    val isTabSwitch = selectedRoute != previousSelectedRoute
-    SideEffect { previousSelectedRoute = selectedRoute }
-
     BackHandler {
         // Intentionally left blank to disable back navigation on main screen
     }
@@ -194,8 +181,7 @@ fun MainScreen(
                 topBar = {
                     AnimatedTopBar(
                         currentRoute = currentRoute,
-                        screenUiProviders = screenUiProviders,
-                        isTabSwitch = isTabSwitch
+                        screenUiProviders = screenUiProviders
                     )
                 },
                 bottomBar = {
@@ -253,7 +239,7 @@ fun MainScreen(
 
 /**
  * Animated top bar wrapper that crossfades between top bar states during
- * within-tab navigation, while snapping instantly on tab switches.
+ * navigation, including tab switches.
  *
  * When the target screen has no top bar, renders a transparent [Spacer] with
  * [statusBarsPadding] so the Scaffold always has a measured top bar slot.
@@ -262,20 +248,14 @@ fun MainScreen(
 @Composable
 private fun AnimatedTopBar(
     currentRoute: String,
-    screenUiProviders: List<ScreenUiProvider>,
-    isTabSwitch: Boolean
+    screenUiProviders: List<ScreenUiProvider>
 ) {
     AnimatedContent(
         targetState = currentRoute,
         transitionSpec = {
-            if (isTabSwitch) {
-                EnterTransition.None togetherWith ExitTransition.None using
-                    SizeTransform(clip = false) { _, _ -> snap() }
-            } else {
-                NavTransitionDefaults.topBarEnterTransition togetherWith
-                    NavTransitionDefaults.topBarExitTransition using
-                    NavTransitionDefaults.topBarSizeTransform
-            }
+            NavTransitionDefaults.topBarEnterTransition togetherWith
+                NavTransitionDefaults.topBarExitTransition using
+                NavTransitionDefaults.topBarSizeTransform
         },
         label = "TopBarTransition"
     ) { route ->
