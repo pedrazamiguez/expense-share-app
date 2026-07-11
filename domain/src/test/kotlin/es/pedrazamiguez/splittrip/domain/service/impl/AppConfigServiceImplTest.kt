@@ -16,9 +16,11 @@ class AppConfigServiceImplTest {
         val defaultCurrencyFlow = MutableStateFlow("EUR")
         val debounceFlow = MutableStateFlow(300L)
         val maxMembersFlow = MutableStateFlow(20)
+        val extractedDateMaxFutureDaysFlow = MutableStateFlow(30)
         every { repository.defaultCurrencyCode } returns defaultCurrencyFlow
         every { repository.balanceComputationDebounceMs } returns debounceFlow
         every { repository.maxMembersPerGroup } returns maxMembersFlow
+        every { repository.extractedDateMaxFutureDays } returns extractedDateMaxFutureDaysFlow
 
         // When
         val service = AppConfigServiceImpl(repository)
@@ -27,8 +29,10 @@ class AppConfigServiceImplTest {
         assertEquals(defaultCurrencyFlow, service.defaultCurrencyCode)
         assertEquals(debounceFlow, service.balanceComputationDebounceMs)
         assertEquals(maxMembersFlow, service.maxMembersPerGroup)
+        assertEquals(extractedDateMaxFutureDaysFlow, service.extractedDateMaxFutureDays)
         assertEquals("EUR", service.defaultCurrencyCode.value)
         assertEquals(300L, service.balanceComputationDebounceMs.value)
         assertEquals(20, service.maxMembersPerGroup.value)
+        assertEquals(30, service.extractedDateMaxFutureDays.value)
     }
 }

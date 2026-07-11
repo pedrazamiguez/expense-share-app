@@ -2,13 +2,16 @@ package es.pedrazamiguez.splittrip.domain.usecase.expense.impl
 
 import es.pedrazamiguez.splittrip.domain.model.ExtractedReceipt
 import es.pedrazamiguez.splittrip.domain.model.ReceiptAttachment
+import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptOcrService
 import es.pedrazamiguez.splittrip.domain.usecase.expense.ExtractReceiptFieldsUseCase
+import java.time.LocalDate
 
 class ExtractReceiptFieldsUseCaseImpl(
     private val ocrService: ReceiptOcrService,
-    private val extractionService: ReceiptExtractionService
+    private val extractionService: ReceiptExtractionService,
+    private val appConfigService: AppConfigService
 ) : ExtractReceiptFieldsUseCase {
 
     /**
@@ -20,7 +23,15 @@ class ExtractReceiptFieldsUseCaseImpl(
     override suspend operator fun invoke(attachment: ReceiptAttachment): Result<ExtractedReceipt> {
         return ocrService.recogniseText(attachment).fold(
             onSuccess = { rawText ->
-                extractionService.extract(rawText)
+                extractionService.extract(rawText).map { result ->
+                    val maxFutureDays = appConfigService.extractedDateMaxFutureDays.value.toLong()
+                    val thresholdDate = LocalDate.now().plusDays(maxFutureDays)
+                    if (result.date != null && result.date.isAfter(thresholdDate)) {
+                        result.copy(date = LocalDate.now())
+                    } else {
+                        result
+                    }
+                }
             },
             onFailure = { error ->
                 Result.failure(error)

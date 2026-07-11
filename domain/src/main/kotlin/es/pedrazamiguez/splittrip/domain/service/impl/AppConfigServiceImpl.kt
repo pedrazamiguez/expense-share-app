@@ -10,4 +10,5 @@ class AppConfigServiceImpl(
     override val defaultCurrencyCode: StateFlow<String> = appConfigRepository.defaultCurrencyCode
     override val balanceComputationDebounceMs: StateFlow<Long> = appConfigRepository.balanceComputationDebounceMs
     override val maxMembersPerGroup: StateFlow<Int> = appConfigRepository.maxMembersPerGroup
+    override val extractedDateMaxFutureDays: StateFlow<Int> = appConfigRepository.extractedDateMaxFutureDays
 }
