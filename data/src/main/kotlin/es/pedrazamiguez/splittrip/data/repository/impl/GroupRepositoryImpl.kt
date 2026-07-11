@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
+import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
 import es.pedrazamiguez.splittrip.data.sync.KeyedSubscriptionTracker
 import es.pedrazamiguez.splittrip.data.sync.subscribeAndReconcile
 import es.pedrazamiguez.splittrip.data.sync.syncCreateToCloud
@@ -40,6 +42,7 @@ class GroupRepositoryImpl(
     private val groupDeletionRetryScheduler: GroupDeletionRetryScheduler,
     private val groupImageStorageService: GroupImageStorageService,
     private val cloudStorageDataSource: CloudStorageDataSource,
+    private val performanceMonitor: PerformanceMonitor,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : GroupRepository {
 
@@ -75,7 +78,8 @@ class GroupRepositoryImpl(
                         localGroupDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
                     },
                     entityLabel = "group",
-                    logContext = ""
+                    logContext = "",
+                    performanceMonitor = performanceMonitor
                 )
             }
         }
@@ -131,32 +135,34 @@ class GroupRepositoryImpl(
      * - Error: write rejected by Firestore (permissions, etc.) → SYNC_FAILED
      */
     override suspend fun createGroup(group: Group): String {
-        val groupId = UUID.randomUUID().toString()
-        val currentTimestamp = LocalDateTime.now()
-        val currentUserId = authenticationService.requireUserId()
+        return performanceMonitor.traceAsync(PerformanceTraces.GROUP_CREATE) {
+            val groupId = UUID.randomUUID().toString()
+            val currentTimestamp = LocalDateTime.now()
+            val currentUserId = authenticationService.requireUserId()
 
-        val finalLocalImagePath = commitTempImage(groupId, group.mainImagePath)
-        val membersWithCreator = ensureCreatorInMembers(currentUserId, group.members)
+            val finalLocalImagePath = commitTempImage(groupId, group.mainImagePath)
+            val membersWithCreator = ensureCreatorInMembers(currentUserId, group.members)
 
-        val createdGroup = group.copy(
-            id = groupId,
-            members = membersWithCreator,
-            mainImagePath = finalLocalImagePath,
-            createdAt = group.createdAt ?: currentTimestamp,
-            lastUpdatedAt = currentTimestamp,
-            syncStatus = SyncStatus.PENDING_SYNC,
-            createdBy = currentUserId
-        )
+            val createdGroup = group.copy(
+                id = groupId,
+                members = membersWithCreator,
+                mainImagePath = finalLocalImagePath,
+                createdAt = group.createdAt ?: currentTimestamp,
+                lastUpdatedAt = currentTimestamp,
+                syncStatus = SyncStatus.PENDING_SYNC,
+                createdBy = currentUserId
+            )
 
-        // Save to local FIRST - UI updates instantly
-        localGroupDataSource.saveGroup(createdGroup)
+            // Save to local FIRST - UI updates instantly
+            localGroupDataSource.saveGroup(createdGroup)
 
-        // Sync to cloud in background with two-phase verification
-        syncScope.launch {
-            syncCreatedGroupToCloud(groupId, createdGroup, finalLocalImagePath)
+            // Sync to cloud in background with two-phase verification
+            syncScope.launch {
+                syncCreatedGroupToCloud(groupId, createdGroup, finalLocalImagePath)
+            }
+
+            groupId
         }
-
-        return groupId
     }
 
     private suspend fun commitTempImage(groupId: String, tempPath: String?): String? {
@@ -373,7 +379,8 @@ class GroupRepositoryImpl(
             getCurrentSyncStatus = { id ->
                 localGroupDataSource.getGroupById(id)?.syncStatus ?: SyncStatus.PENDING_SYNC
             },
-            entityLabel = "group update"
+            entityLabel = "group update",
+            performanceMonitor = performanceMonitor
         )
     }
 

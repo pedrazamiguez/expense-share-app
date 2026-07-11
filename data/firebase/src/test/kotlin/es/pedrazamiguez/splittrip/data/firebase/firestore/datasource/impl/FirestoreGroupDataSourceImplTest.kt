@@ -7,6 +7,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.WriteBatch
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupMemberDocument
 import es.pedrazamiguez.splittrip.domain.model.Group
@@ -28,6 +29,7 @@ class FirestoreGroupDataSourceImplTest {
 
     private lateinit var firestore: FirebaseFirestore
     private lateinit var authenticationService: AuthenticationService
+    private lateinit var performanceMonitor: PerformanceMonitor
     private lateinit var dataSource: FirestoreGroupDataSourceImpl
 
     private val testUserId = "1vjerwDcOqdPUzWSR39tFgZIUvx1"
@@ -37,12 +39,14 @@ class FirestoreGroupDataSourceImplTest {
     fun setUp() {
         firestore = mockk(relaxed = true)
         authenticationService = mockk(relaxed = true)
+        performanceMonitor = mockk(relaxed = true)
 
         every { authenticationService.requireUserId() } returns testUserId
 
         dataSource = FirestoreGroupDataSourceImpl(
             firestore = firestore,
-            authenticationService = authenticationService
+            authenticationService = authenticationService,
+            performanceMonitor = performanceMonitor
         )
     }
 

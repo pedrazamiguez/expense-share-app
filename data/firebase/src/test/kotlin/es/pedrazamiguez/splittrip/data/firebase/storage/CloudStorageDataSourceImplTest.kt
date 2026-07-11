@@ -5,6 +5,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.UploadTask
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.every
@@ -24,6 +25,7 @@ class CloudStorageDataSourceImplTest {
     private lateinit var storage: FirebaseStorage
     private lateinit var rootRef: StorageReference
     private lateinit var childRef: StorageReference
+    private lateinit var performanceMonitor: PerformanceMonitor
     private lateinit var dataSource: CloudStorageDataSourceImpl
 
     @BeforeEach
@@ -40,10 +42,16 @@ class CloudStorageDataSourceImplTest {
         every { Uri.fromFile(any()) } returns mockUri
         every { mockUri.path } returns "/path/to/file.pdf"
 
-        // Mock tasks await extension function
         mockkStatic("kotlinx.coroutines.tasks.TasksKt")
 
-        dataSource = CloudStorageDataSourceImpl(storage)
+        performanceMonitor = mockk(relaxed = true)
+        io.mockk.coEvery { performanceMonitor.traceAsync<Any?>(any(), any()) } coAnswers
+            { secondArg<suspend () -> Any?>().invoke() }
+
+        dataSource = CloudStorageDataSourceImpl(
+            storage = storage,
+            performanceMonitor = performanceMonitor
+        )
     }
 
     @AfterEach

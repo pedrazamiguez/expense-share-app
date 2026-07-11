@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudUserDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalUserDataSource
@@ -38,6 +39,7 @@ class UserRepositoryImplTest {
     private lateinit var cloudStorageDataSource: CloudStorageDataSource
     private lateinit var profileImageStorageService: ProfileImageStorageService
     private lateinit var authenticationService: AuthenticationService
+    private lateinit var performanceMonitor: PerformanceMonitor
     private lateinit var repository: UserRepositoryImpl
 
     private val testUser = User(
@@ -57,6 +59,10 @@ class UserRepositoryImplTest {
         cloudStorageDataSource = mockk(relaxed = true)
         profileImageStorageService = mockk(relaxed = true)
         authenticationService = mockk()
+        performanceMonitor = mockk(relaxed = true) {
+            io.mockk.coEvery { traceAsync<Any?>(any(), any()) } coAnswers { secondArg<suspend () -> Any?>().invoke() }
+            io.mockk.every { trace<Any?>(any(), any()) } answers { secondArg<() -> Any?>().invoke() }
+        }
         every { authenticationService.getCurrentUserCreationTimestamp() } returns null
 
         repository = UserRepositoryImpl(
@@ -64,6 +70,7 @@ class UserRepositoryImplTest {
             localUserDataSource = localUserDataSource,
             cloudStorageDataSource = cloudStorageDataSource,
             authenticationService = authenticationService,
+            performanceMonitor = performanceMonitor,
             ioDispatcher = testDispatcher
         )
     }

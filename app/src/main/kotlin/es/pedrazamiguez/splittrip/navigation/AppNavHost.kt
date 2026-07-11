@@ -37,6 +37,8 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUi
 import es.pedrazamiguez.splittrip.core.designsystem.transition.NavTransitionDefaults
 import es.pedrazamiguez.splittrip.core.logging.LogTag
 import es.pedrazamiguez.splittrip.core.logging.TelemetryTracker
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
+import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
 import es.pedrazamiguez.splittrip.domain.repository.UserPreferenceRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.currency.WarmCurrencyCacheUseCase
@@ -63,6 +65,7 @@ import timber.log.Timber
 fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController = rememberNavController()) {
     val koin = getKoin()
     val telemetryTracker = remember(koin) { koin.get<TelemetryTracker>() }
+    val performanceMonitor = remember(koin) { koin.get<PerformanceMonitor>() }
     val navigationProviders = remember(koin) { koin.getAll<NavigationProvider>() }
     val screenUiProviders = remember(koin) { koin.getAll<ScreenUiProvider>() }
     val isOnboardingCompleteUseCase = remember(koin) { koin.get<IsOnboardingCompleteUseCase>() }
@@ -157,8 +160,10 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
                 arguments?.keySet() ?: emptySet<String>()
             )
             destination.route?.let { route ->
-                if (route != Routes.MAIN) {
-                    telemetryTracker.trackScreenView(route, null)
+                performanceMonitor.trace(PerformanceTraces.NAVIGATION_TRANSITION) {
+                    if (route != Routes.MAIN) {
+                        telemetryTracker.trackScreenView(route, null)
+                    }
                 }
             }
         }

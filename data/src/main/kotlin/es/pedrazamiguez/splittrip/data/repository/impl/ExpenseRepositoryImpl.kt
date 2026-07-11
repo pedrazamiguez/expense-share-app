@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
+import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalExpenseDataSource
@@ -28,6 +30,7 @@ class ExpenseRepositoryImpl(
     private val authenticationService: AuthenticationService,
     private val cloudStorageDataSource: CloudStorageDataSource,
     private val receiptStorageService: ReceiptStorageService,
+    private val performanceMonitor: PerformanceMonitor,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ExpenseRepository {
 
@@ -48,28 +51,30 @@ class ExpenseRepositoryImpl(
     private val receiptUploadJobs = ConcurrentHashMap<String, Job>()
 
     override suspend fun addExpense(groupId: String, expense: Expense) {
-        val expenseWithMetadata = buildExpenseWithMetadata(groupId, expense)
+        performanceMonitor.traceAsync(PerformanceTraces.EXPENSE_ADD) {
+            val expenseWithMetadata = buildExpenseWithMetadata(groupId, expense)
 
-        // Save to local first - UI updates instantly via Flow
-        localExpenseDataSource.saveExpense(expenseWithMetadata)
+            // Save to local first - UI updates instantly via Flow
+            localExpenseDataSource.saveExpense(expenseWithMetadata)
 
-        // Sync to cloud in background
-        syncScope.launch {
-            try {
-                cloudExpenseDataSource.addExpense(groupId, expenseWithMetadata)
-                localExpenseDataSource.updateSyncStatus(expenseWithMetadata.id, SyncStatus.SYNCED)
-                Timber.d("Expense synced to cloud: ${expenseWithMetadata.id}")
-                scheduleReceiptUpload(expenseWithMetadata)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                // Only downgrade to SYNC_FAILED if the snapshot listener has not already
-                // confirmed the entity as SYNCED (guards against the ACK-loss race condition).
-                val currentStatus = localExpenseDataSource.getExpenseById(expenseWithMetadata.id)?.syncStatus
-                if (currentStatus == SyncStatus.PENDING_SYNC) {
-                    localExpenseDataSource.updateSyncStatus(expenseWithMetadata.id, SyncStatus.SYNC_FAILED)
+            // Sync to cloud in background
+            syncScope.launch {
+                try {
+                    cloudExpenseDataSource.addExpense(groupId, expenseWithMetadata)
+                    localExpenseDataSource.updateSyncStatus(expenseWithMetadata.id, SyncStatus.SYNCED)
+                    Timber.d("Expense synced to cloud: ${expenseWithMetadata.id}")
+                    scheduleReceiptUpload(expenseWithMetadata)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    // Only downgrade to SYNC_FAILED if the snapshot listener has not already
+                    // confirmed the entity as SYNCED (guards against the ACK-loss race condition).
+                    val currentStatus = localExpenseDataSource.getExpenseById(expenseWithMetadata.id)?.syncStatus
+                    if (currentStatus == SyncStatus.PENDING_SYNC) {
+                        localExpenseDataSource.updateSyncStatus(expenseWithMetadata.id, SyncStatus.SYNC_FAILED)
+                    }
+                    Timber.w(e, "Failed to sync expense to cloud")
                 }
-                Timber.w(e, "Failed to sync expense to cloud")
             }
         }
     }
@@ -93,39 +98,41 @@ class ExpenseRepositoryImpl(
         expense: Expense,
         expectedRemainingAmounts: Map<String, Long>
     ): Boolean {
-        val expenseWithMetadata = buildExpenseWithMetadata(groupId, expense)
+        return performanceMonitor.traceAsync(PerformanceTraces.EXPENSE_ADD_CASH) {
+            val expenseWithMetadata = buildExpenseWithMetadata(groupId, expense)
 
-        // Room-first (offline-first principle)
-        localExpenseDataSource.saveExpense(expenseWithMetadata)
+            // Room-first (offline-first principle)
+            localExpenseDataSource.saveExpense(expenseWithMetadata)
 
-        // Synchronous Firestore transaction — conflict detection
-        try {
-            cloudExpenseDataSource.addExpenseWithCashPreconditions(
-                groupId,
-                expenseWithMetadata,
-                expectedRemainingAmounts
-            )
-            localExpenseDataSource.updateSyncStatus(expenseWithMetadata.id, SyncStatus.SYNCED)
-            Timber.d("Cash expense committed via Firestore transaction: ${expenseWithMetadata.id}")
-            scheduleReceiptUpload(expenseWithMetadata)
-            return true
-        } catch (e: CashConflictException) {
-            // Concurrent modification detected — rollback local write and surface to caller
-            localExpenseDataSource.deleteExpense(expenseWithMetadata.id)
-            throw e
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // Offline or network error — keep the Room write so the user can proceed
-            // offline-first; mark as SYNC_FAILED.
-            // Return false so the caller does NOT deduct withdrawals in Room+cloud independently
-            // (which would break cloud atomicity: withdrawals deducted without expense committed).
-            val currentStatus = localExpenseDataSource.getExpenseById(expenseWithMetadata.id)?.syncStatus
-            if (currentStatus == SyncStatus.PENDING_SYNC) {
-                localExpenseDataSource.updateSyncStatus(expenseWithMetadata.id, SyncStatus.SYNC_FAILED)
+            // Synchronous Firestore transaction — conflict detection
+            try {
+                cloudExpenseDataSource.addExpenseWithCashPreconditions(
+                    groupId,
+                    expenseWithMetadata,
+                    expectedRemainingAmounts
+                )
+                localExpenseDataSource.updateSyncStatus(expenseWithMetadata.id, SyncStatus.SYNCED)
+                Timber.d("Cash expense committed via Firestore transaction: ${expenseWithMetadata.id}")
+                scheduleReceiptUpload(expenseWithMetadata)
+                true
+            } catch (e: CashConflictException) {
+                // Concurrent modification detected — rollback local write and surface to caller
+                localExpenseDataSource.deleteExpense(expenseWithMetadata.id)
+                throw e
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Offline or network error — keep the Room write so the user can proceed
+                // offline-first; mark as SYNC_FAILED.
+                // Return false so the caller does NOT deduct withdrawals in Room+cloud independently
+                // (which would break cloud atomicity: withdrawals deducted without expense committed).
+                val currentStatus = localExpenseDataSource.getExpenseById(expenseWithMetadata.id)?.syncStatus
+                if (currentStatus == SyncStatus.PENDING_SYNC) {
+                    localExpenseDataSource.updateSyncStatus(expenseWithMetadata.id, SyncStatus.SYNC_FAILED)
+                }
+                Timber.w(e, "Firestore transaction failed for cash expense, keeping local state for offline retry")
+                false
             }
-            Timber.w(e, "Firestore transaction failed for cash expense, keeping local state for offline retry")
-            return false
         }
     }
 

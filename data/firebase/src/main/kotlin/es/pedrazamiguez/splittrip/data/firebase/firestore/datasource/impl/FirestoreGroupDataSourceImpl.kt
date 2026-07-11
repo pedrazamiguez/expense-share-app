@@ -8,6 +8,8 @@ import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.MetadataChanges
 import com.google.firebase.firestore.Source
 import com.google.firebase.firestore.Transaction
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
+import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.CashWithdrawalDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.ContributionDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.ExpenseDocument
@@ -37,67 +39,70 @@ private const val RETRY_DELAY_MS = 500L
 class FirestoreGroupDataSourceImpl(
     private val firestore: FirebaseFirestore,
     private val authenticationService: AuthenticationService,
+    private val performanceMonitor: PerformanceMonitor,
     private val groupLoader: FirestoreGroupLoader = FirestoreGroupLoader(firestore)
 ) : CloudGroupDataSource {
 
     override suspend fun createGroup(group: Group): String {
-        val userId = authenticationService.requireUserId()
-        val groupId = group.id
+        return performanceMonitor.traceAsync(PerformanceTraces.GROUP_CREATE) {
+            val userId = authenticationService.requireUserId()
+            val groupId = group.id
 
-        val groupsCollection = firestore.collection(GroupDocument.COLLECTION_PATH)
-        val groupDocRef = groupsCollection.document(groupId)
+            val groupsCollection = firestore.collection(GroupDocument.COLLECTION_PATH)
+            val groupDocRef = groupsCollection.document(groupId)
 
-        // Ensure the creator is included in denormalized memberIds
-        val groupWithCreator = if (userId !in group.members) {
-            group.copy(members = group.members + userId)
-        } else {
-            group
-        }
-
-        val groupDocument = groupWithCreator.toDocument(
-            groupId,
-            userId
-        )
-        val adminMemberDocument = toAdminMemberDocument(
-            groupDocRef,
-            userId
-        )
-
-        val batch = firestore
-            .batch()
-            .apply {
-                set(
-                    groupDocRef,
-                    groupDocument
-                )
-                // Creator as ADMIN member
-                set(
-                    firestore
-                        .collection(GroupMemberDocument.collectionPath(groupId))
-                        .document(userId),
-                    adminMemberDocument
-                )
-                // Additional members (non-creator) as MEMBER role
-                groupWithCreator.members
-                    .filter { it != userId }
-                    .forEach { memberId ->
-                        val memberDocRef = firestore
-                            .collection(GroupMemberDocument.collectionPath(groupId))
-                            .document(memberId)
-                        val memberDocument = toRegularMemberDocument(
-                            groupDocRef,
-                            memberId,
-                            addedBy = userId
-                        )
-                        set(memberDocRef, memberDocument)
-                    }
+            // Ensure the creator is included in denormalized memberIds
+            val groupWithCreator = if (userId !in group.members) {
+                group.copy(members = group.members + userId)
+            } else {
+                group
             }
 
-        batch
-            .commit()
-            .await()
+            val groupDocument = groupWithCreator.toDocument(
+                groupId,
+                userId
+            )
+            val adminMemberDocument = toAdminMemberDocument(
+                groupDocRef,
+                userId
+            )
 
-        return groupId
+            val batch = firestore
+                .batch()
+                .apply {
+                    set(
+                        groupDocRef,
+                        groupDocument
+                    )
+                    // Creator as ADMIN member
+                    set(
+                        firestore
+                            .collection(GroupMemberDocument.collectionPath(groupId))
+                            .document(userId),
+                        adminMemberDocument
+                    )
+                    // Additional members (non-creator) as MEMBER role
+                    groupWithCreator.members
+                        .filter { it != userId }
+                        .forEach { memberId ->
+                            val memberDocRef = firestore
+                                .collection(GroupMemberDocument.collectionPath(groupId))
+                                .document(memberId)
+                            val memberDocument = toRegularMemberDocument(
+                                groupDocRef,
+                                memberId,
+                                addedBy = userId
+                            )
+                            set(memberDocRef, memberDocument)
+                        }
+                }
+
+            batch
+                .commit()
+                .await()
+
+            groupId
+        }
     }
 
     override suspend fun getGroupById(groupId: String): Group? {
@@ -130,20 +135,22 @@ class FirestoreGroupDataSourceImpl(
     }
 
     override suspend fun updateGroup(group: Group) {
-        val groupId = group.id
-        val groupDocRef = firestore.collection(GroupDocument.COLLECTION_PATH).document(groupId)
+        performanceMonitor.traceAsync(PerformanceTraces.GROUP_UPDATE) {
+            val groupId = group.id
+            val groupDocRef = firestore.collection(GroupDocument.COLLECTION_PATH).document(groupId)
 
-        val updates = mapOf(
-            "name" to group.name,
-            "description" to group.description,
-            "currency" to group.currency,
-            "extraCurrencies" to group.extraCurrencies,
-            "mainImagePath" to (group.mainImagePath ?: ""),
-            "lastUpdatedAt" to group.lastUpdatedAt.toTimestampUtc(),
-            "status" to group.status.name
-        )
+            val updates = mapOf(
+                "name" to group.name,
+                "description" to group.description,
+                "currency" to group.currency,
+                "extraCurrencies" to group.extraCurrencies,
+                "mainImagePath" to (group.mainImagePath ?: ""),
+                "lastUpdatedAt" to group.lastUpdatedAt.toTimestampUtc(),
+                "status" to group.status.name
+            )
 
-        groupDocRef.update(updates).await()
+            groupDocRef.update(updates).await()
+        }
     }
 
     override suspend fun deleteGroup(groupId: String) {

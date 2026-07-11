@@ -9,6 +9,8 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.UserProfileChangeRequest
 import es.pedrazamiguez.splittrip.core.common.extensions.toLocalDateTimeUtc
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
+import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudUserDataSource
 import es.pedrazamiguez.splittrip.domain.enums.AuthProviderType
 import es.pedrazamiguez.splittrip.domain.exception.AdminRestrictedOperationException
@@ -28,7 +30,8 @@ import kotlinx.coroutines.withContext
 @Suppress("TooManyFunctions")
 class AuthenticationServiceImpl(
     private val firebaseAuth: FirebaseAuth,
-    private val cloudUserDataSource: CloudUserDataSource
+    private val cloudUserDataSource: CloudUserDataSource,
+    private val performanceMonitor: PerformanceMonitor
 ) : AuthenticationService {
 
     companion object {
@@ -51,43 +54,47 @@ class AuthenticationServiceImpl(
     }
 
     override suspend fun signIn(email: String, password: String): Result<String> = runCatching {
-        firebaseAuth
-            .signInWithEmailAndPassword(
-                email,
-                password
-            )
-            .await().user?.uid ?: ""
+        performanceMonitor.traceAsync(PerformanceTraces.AUTH_SIGN_IN_EMAIL) {
+            firebaseAuth
+                .signInWithEmailAndPassword(
+                    email,
+                    password
+                )
+                .await().user?.uid ?: ""
+        }
     }
 
     override suspend fun signUp(email: String, displayName: String, password: String): Result<String> = runCatching {
-        try {
-            val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-            val firebaseUser = authResult.user ?: error("Sign-up succeeded but Firebase user is null")
+        performanceMonitor.traceAsync(PerformanceTraces.AUTH_SIGN_UP) {
+            try {
+                val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
+                val firebaseUser = authResult.user ?: error("Sign-up succeeded but Firebase user is null")
 
-            // Update Firebase Auth profile with display name
-            val profileUpdates = UserProfileChangeRequest.Builder()
-                .setDisplayName(displayName)
-                .build()
-            firebaseUser.updateProfile(profileUpdates).await()
+                // Update Firebase Auth profile with display name
+                val profileUpdates = UserProfileChangeRequest.Builder()
+                    .setDisplayName(displayName)
+                    .build()
+                firebaseUser.updateProfile(profileUpdates).await()
 
-            // Populate domain User object
-            val user = User(
-                userId = firebaseUser.uid,
-                email = email.trim().lowercase(),
-                displayName = displayName,
-                profileImagePath = null,
-                createdAt = firebaseUser.metadata?.creationTimestamp?.toLocalDateTimeUtc()
-                    ?: LocalDateTime.now(ZoneOffset.UTC)
-            )
+                // Populate domain User object
+                val user = User(
+                    userId = firebaseUser.uid,
+                    email = email.trim().lowercase(),
+                    displayName = displayName,
+                    profileImagePath = null,
+                    createdAt = firebaseUser.metadata?.creationTimestamp?.toLocalDateTimeUtc()
+                        ?: LocalDateTime.now(ZoneOffset.UTC)
+                )
 
-            // Persist user document to Firestore in a NonCancellable block to ensure it completes even if the coroutine is cancelled
-            withContext(NonCancellable) {
-                cloudUserDataSource.saveUser(user)
+                // Persist user document to Firestore in a NonCancellable block to ensure it completes even if the coroutine is cancelled
+                withContext(NonCancellable) {
+                    cloudUserDataSource.saveUser(user)
+                }
+
+                firebaseUser.uid
+            } catch (e: FirebaseAuthUserCollisionException) {
+                throw EmailCollisionException(email, e)
             }
-
-            firebaseUser.uid
-        } catch (e: FirebaseAuthUserCollisionException) {
-            throw EmailCollisionException(email, e)
         }
     }
 
@@ -96,35 +103,37 @@ class AuthenticationServiceImpl(
     }
 
     override suspend fun signInWithGoogle(idToken: String): Result<User> = runCatching {
-        try {
-            val credential = GoogleAuthProvider.getCredential(idToken, null)
-            val firebaseUser = firebaseAuth.signInWithCredential(credential).await().user
-                ?: error("Google sign-in succeeded but Firebase user is null")
-            val user = User(
-                userId = firebaseUser.uid,
-                email = firebaseUser.email ?: "",
-                displayName = firebaseUser.displayName,
-                profileImagePath = firebaseUser.photoUrl?.toString(),
-                createdAt = firebaseUser.metadata?.creationTimestamp?.toLocalDateTimeUtc()
-            )
+        performanceMonitor.traceAsync(PerformanceTraces.AUTH_SIGN_IN_GOOGLE) {
+            try {
+                val credential = GoogleAuthProvider.getCredential(idToken, null)
+                val firebaseUser = firebaseAuth.signInWithCredential(credential).await().user
+                    ?: error("Google sign-in succeeded but Firebase user is null")
+                val user = User(
+                    userId = firebaseUser.uid,
+                    email = firebaseUser.email ?: "",
+                    displayName = firebaseUser.displayName,
+                    profileImagePath = firebaseUser.photoUrl?.toString(),
+                    createdAt = firebaseUser.metadata?.creationTimestamp?.toLocalDateTimeUtc()
+                )
 
-            // Persist user document before returning.
-            // This MUST happen here (not in the UseCase) because Firebase Auth's
-            // AuthStateListener fires immediately after signInWithCredential completes,
-            // which triggers navigation away from Login and cancels the ViewModel's
-            // coroutine scope — any work after this call in the UseCase may never execute.
-            // NonCancellable ensures the write survives scope cancellation.
-            withContext(NonCancellable) {
-                cloudUserDataSource.saveUser(user)
-            }
+                // Persist user document before returning.
+                // This MUST happen here (not in the UseCase) because Firebase Auth's
+                // AuthStateListener fires immediately after signInWithCredential completes,
+                // which triggers navigation away from Login and cancels the ViewModel's
+                // coroutine scope — any work after this call in the UseCase may never execute.
+                // NonCancellable ensures the write survives scope cancellation.
+                withContext(NonCancellable) {
+                    cloudUserDataSource.saveUser(user)
+                }
 
-            user
-        } catch (e: FirebaseAuthUserCollisionException) {
-            val email = e.email ?: extractEmailFromIdToken(idToken)
-            if (email.isNullOrEmpty()) {
-                throw e
+                user
+            } catch (e: FirebaseAuthUserCollisionException) {
+                val email = e.email ?: extractEmailFromIdToken(idToken)
+                if (email.isNullOrEmpty()) {
+                    throw e
+                }
+                throw GoogleCollisionWithEmailPasswordException(email, idToken, e)
             }
-            throw GoogleCollisionWithEmailPasswordException(email, idToken, e)
         }
     }
 

@@ -3,6 +3,8 @@ package es.pedrazamiguez.splittrip.data.firebase.storage
 import android.net.Uri
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
+import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
 import java.io.File
 import kotlinx.coroutines.CancellationException
@@ -17,7 +19,8 @@ import timber.log.Timber
  * rather than creating a new one, which prevents orphaned objects on retry.
  */
 internal class CloudStorageDataSourceImpl(
-    private val storage: FirebaseStorage
+    private val storage: FirebaseStorage,
+    private val performanceMonitor: PerformanceMonitor
 ) : CloudStorageDataSource {
 
     override suspend fun uploadReceipt(
@@ -108,23 +111,25 @@ internal class CloudStorageDataSourceImpl(
         localPath: String,
         mimeType: String
     ): String {
-        val resolvedPath = if (localPath.startsWith(FILE_SCHEME_PREFIX)) {
-            Uri.parse(localPath).path
-                ?: error("Could not resolve filesystem path from URI: $localPath")
-        } else {
-            localPath
+        return performanceMonitor.traceAsync(PerformanceTraces.IMAGE_UPLOAD) {
+            val resolvedPath = if (localPath.startsWith(FILE_SCHEME_PREFIX)) {
+                Uri.parse(localPath).path
+                    ?: error("Could not resolve filesystem path from URI: $localPath")
+            } else {
+                localPath
+            }
+            val file = File(resolvedPath)
+            val ref = storage.reference.child("$GROUPS_PREFIX/$groupId/group_cover.webp")
+
+            val metadata = StorageMetadata.Builder()
+                .setContentType(mimeType)
+                .build()
+
+            ref.putFile(Uri.fromFile(file), metadata).await()
+            val downloadUrl = ref.downloadUrl.await().toString()
+            Timber.d("Group image uploaded for group $groupId → $downloadUrl")
+            downloadUrl
         }
-        val file = File(resolvedPath)
-        val ref = storage.reference.child("$GROUPS_PREFIX/$groupId/group_cover.webp")
-
-        val metadata = StorageMetadata.Builder()
-            .setContentType(mimeType)
-            .build()
-
-        ref.putFile(Uri.fromFile(file), metadata).await()
-        val downloadUrl = ref.downloadUrl.await().toString()
-        Timber.d("Group image uploaded for group $groupId → $downloadUrl")
-        return downloadUrl
     }
 
     override suspend fun deleteGroupImage(groupId: String) {

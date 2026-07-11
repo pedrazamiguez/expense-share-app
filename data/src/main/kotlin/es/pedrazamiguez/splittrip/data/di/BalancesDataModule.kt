@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.data.di
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.data.repository.impl.CashWithdrawalRepositoryImpl
 import es.pedrazamiguez.splittrip.data.repository.impl.ContributionRepositoryImpl
 import es.pedrazamiguez.splittrip.data.repository.impl.SettlementRepositoryImpl
@@ -22,7 +23,8 @@ val balancesDataModule = module {
         ContributionRepositoryImpl(
             cloudContributionDataSource = get<CloudContributionDataSource>(),
             localContributionDataSource = get<LocalContributionDataSource>(),
-            authenticationService = get<AuthenticationService>()
+            authenticationService = get<AuthenticationService>(),
+            performanceMonitor = get<PerformanceMonitor>()
         )
     }
 
@@ -32,6 +34,7 @@ val balancesDataModule = module {
             localQueryDataSource = get<LocalCashWithdrawalQueryDataSource>(),
             localWriteDataSource = get<LocalCashWithdrawalWriteDataSource>(),
             authenticationService = get<AuthenticationService>(),
+            performanceMonitor = get<PerformanceMonitor>(),
             ioDispatcher = Dispatchers.IO
         )
     }
@@ -41,6 +44,7 @@ val balancesDataModule = module {
             cloudSettlementDataSource = get<CloudSettlementDataSource>(),
             localSettlementDataSource = get<LocalSettlementDataSource>(),
             authenticationService = get<AuthenticationService>(),
+            performanceMonitor = get<PerformanceMonitor>(),
             ioDispatcher = Dispatchers.IO
         )
     }

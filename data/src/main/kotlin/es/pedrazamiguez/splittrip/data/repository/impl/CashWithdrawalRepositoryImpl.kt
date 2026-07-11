@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
+import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
 import es.pedrazamiguez.splittrip.data.sync.KeyedSubscriptionTracker
 import es.pedrazamiguez.splittrip.data.sync.subscribeAndReconcile
 import es.pedrazamiguez.splittrip.data.sync.syncCreateToCloud
@@ -27,6 +29,7 @@ class CashWithdrawalRepositoryImpl(
     private val localQueryDataSource: LocalCashWithdrawalQueryDataSource,
     private val localWriteDataSource: LocalCashWithdrawalWriteDataSource,
     private val authenticationService: AuthenticationService,
+    private val performanceMonitor: PerformanceMonitor,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : CashWithdrawalRepository {
 
@@ -34,37 +37,40 @@ class CashWithdrawalRepositoryImpl(
     private val subscriptionTracker = KeyedSubscriptionTracker()
 
     override suspend fun addWithdrawal(groupId: String, withdrawal: CashWithdrawal) {
-        val withdrawalId = withdrawal.id.ifBlank { UUID.randomUUID().toString() }
-        val currentUserId = authenticationService.currentUserId() ?: ""
-        val currentTimestamp = LocalDateTime.now()
+        performanceMonitor.traceAsync(PerformanceTraces.WITHDRAWAL_ADD) {
+            val withdrawalId = withdrawal.id.ifBlank { UUID.randomUUID().toString() }
+            val currentUserId = authenticationService.currentUserId() ?: ""
+            val currentTimestamp = LocalDateTime.now()
 
-        val withdrawalWithMetadata = withdrawal.copy(
-            id = withdrawalId,
-            groupId = groupId,
-            withdrawnBy = withdrawal.withdrawnBy.ifBlank { currentUserId },
-            createdBy = currentUserId,
-            remainingAmount = withdrawal.remainingAmount.takeIf { it > 0 }
-                ?: withdrawal.amountWithdrawn,
-            createdAt = withdrawal.createdAt ?: currentTimestamp,
-            lastUpdatedAt = currentTimestamp,
-            syncStatus = SyncStatus.PENDING_SYNC
-        )
+            val withdrawalWithMetadata = withdrawal.copy(
+                id = withdrawalId,
+                groupId = groupId,
+                withdrawnBy = withdrawal.withdrawnBy.ifBlank { currentUserId },
+                createdBy = currentUserId,
+                remainingAmount = withdrawal.remainingAmount.takeIf { it > 0 }
+                    ?: withdrawal.amountWithdrawn,
+                createdAt = withdrawal.createdAt ?: currentTimestamp,
+                lastUpdatedAt = currentTimestamp,
+                syncStatus = SyncStatus.PENDING_SYNC
+            )
 
-        localWriteDataSource.saveWithdrawal(withdrawalWithMetadata)
+            localWriteDataSource.saveWithdrawal(withdrawalWithMetadata)
 
-        syncCreateToCloud(
-            scope = syncScope,
-            entityId = withdrawalWithMetadata.id,
-            cloudWrite = {
-                cloudCashWithdrawalDataSource.addWithdrawal(groupId, withdrawalWithMetadata)
-            },
-            updateSyncStatus = localWriteDataSource::updateSyncStatus,
-            getCurrentSyncStatus = { id ->
-                localQueryDataSource.getWithdrawalById(id)?.syncStatus
-                    ?: SyncStatus.PENDING_SYNC
-            },
-            entityLabel = ENTITY_LABEL
-        )
+            syncCreateToCloud(
+                scope = syncScope,
+                entityId = withdrawalWithMetadata.id,
+                cloudWrite = {
+                    cloudCashWithdrawalDataSource.addWithdrawal(groupId, withdrawalWithMetadata)
+                },
+                updateSyncStatus = localWriteDataSource::updateSyncStatus,
+                getCurrentSyncStatus = { id ->
+                    localQueryDataSource.getWithdrawalById(id)?.syncStatus
+                        ?: SyncStatus.PENDING_SYNC
+                },
+                entityLabel = ENTITY_LABEL,
+                performanceMonitor = performanceMonitor
+            )
+        }
     }
 
     /**
@@ -99,7 +105,8 @@ class CashWithdrawalRepositoryImpl(
                             localWriteDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
                         },
                         entityLabel = ENTITY_LABEL,
-                        logContext = "for group $groupId"
+                        logContext = "for group $groupId",
+                        performanceMonitor = performanceMonitor
                     )
                 }
             }

@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
@@ -44,6 +45,7 @@ class ExpenseRepositoryImplTest {
     private lateinit var cloudStorageDataSource:
         es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
     private lateinit var receiptStorageService: ReceiptStorageService
+    private lateinit var performanceMonitor: PerformanceMonitor
     private lateinit var testDispatcher: TestDispatcher
     private lateinit var repository: ExpenseRepositoryImpl
 
@@ -86,6 +88,10 @@ class ExpenseRepositoryImplTest {
         authenticationService = mockk()
         cloudStorageDataSource = mockk(relaxed = true)
         receiptStorageService = mockk(relaxed = true)
+        performanceMonitor = mockk(relaxed = true) {
+            io.mockk.coEvery { traceAsync<Any?>(any(), any()) } coAnswers { secondArg<suspend () -> Any?>().invoke() }
+            io.mockk.every { trace<Any?>(any(), any()) } answers { secondArg<() -> Any?>().invoke() }
+        }
         every { authenticationService.currentUserId() } returns testUserId
         repository = ExpenseRepositoryImpl(
             cloudExpenseDataSource,
@@ -93,6 +99,7 @@ class ExpenseRepositoryImplTest {
             authenticationService,
             cloudStorageDataSource,
             receiptStorageService,
+            performanceMonitor,
             testDispatcher
         )
     }
@@ -630,6 +637,7 @@ class ExpenseRepositoryImplTest {
                 authenticationService,
                 cloudStorageDataSource,
                 receiptStorageService,
+                performanceMonitor,
                 testDispatcher
             )
 

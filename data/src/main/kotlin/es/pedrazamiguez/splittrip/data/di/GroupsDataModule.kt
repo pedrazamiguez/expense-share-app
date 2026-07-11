@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.data.di
 
 import androidx.work.WorkManager
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.data.repository.impl.GroupRepositoryImpl
 import es.pedrazamiguez.splittrip.data.worker.GroupDeletionRetryScheduler
 import es.pedrazamiguez.splittrip.data.worker.GroupDeletionRetrySchedulerImpl
@@ -28,7 +29,8 @@ val groupsDataModule = module {
             authenticationService = get<AuthenticationService>(),
             groupDeletionRetryScheduler = get<GroupDeletionRetryScheduler>(),
             groupImageStorageService = get<GroupImageStorageService>(),
-            cloudStorageDataSource = get<CloudStorageDataSource>()
+            cloudStorageDataSource = get<CloudStorageDataSource>(),
+            performanceMonitor = get<PerformanceMonitor>()
         )
     }
 }

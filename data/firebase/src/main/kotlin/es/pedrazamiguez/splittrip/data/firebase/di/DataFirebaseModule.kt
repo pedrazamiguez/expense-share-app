@@ -9,6 +9,7 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.storage.FirebaseStorage
 import es.pedrazamiguez.splittrip.core.common.provider.AppMetadataProvider
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.data.firebase.auth.service.impl.AuthenticationServiceImpl
 import es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl.FirestoreCashWithdrawalDataSourceImpl
 import es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl.FirestoreContributionDataSourceImpl
@@ -62,7 +63,8 @@ val dataFirebaseModule = module {
     single<AuthenticationService> {
         AuthenticationServiceImpl(
             firebaseAuth = get<FirebaseAuth>(),
-            cloudUserDataSource = get<CloudUserDataSource>()
+            cloudUserDataSource = get<CloudUserDataSource>(),
+            performanceMonitor = get<PerformanceMonitor>()
         )
     }
 
@@ -71,7 +73,8 @@ val dataFirebaseModule = module {
     single<CloudGroupDataSource> {
         FirestoreGroupDataSourceImpl(
             firestore = get<FirebaseFirestore>(),
-            authenticationService = get<AuthenticationService>()
+            authenticationService = get<AuthenticationService>(),
+            performanceMonitor = get<PerformanceMonitor>()
         )
     }
 
@@ -140,6 +143,9 @@ val dataFirebaseModule = module {
     }
 
     single<CloudStorageDataSource> {
-        CloudStorageDataSourceImpl(storage = get<FirebaseStorage>())
+        CloudStorageDataSourceImpl(
+            storage = get<FirebaseStorage>(),
+            performanceMonitor = get<PerformanceMonitor>()
+        )
     }
 }

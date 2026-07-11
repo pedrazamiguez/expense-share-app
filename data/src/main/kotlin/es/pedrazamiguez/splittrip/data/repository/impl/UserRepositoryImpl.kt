@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.data.sync.syncCreateToCloud
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudUserDataSource
@@ -24,6 +25,7 @@ class UserRepositoryImpl(
     private val localUserDataSource: LocalUserDataSource,
     private val cloudStorageDataSource: CloudStorageDataSource,
     private val authenticationService: AuthenticationService,
+    private val performanceMonitor: PerformanceMonitor,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : UserRepository {
 
@@ -180,7 +182,8 @@ class UserRepositoryImpl(
             getCurrentSyncStatus = { id ->
                 localUserDataSource.getUsersByIds(listOf(id)).firstOrNull()?.syncStatus ?: SyncStatus.PENDING_SYNC
             },
-            entityLabel = "user profile"
+            entityLabel = "user profile",
+            performanceMonitor = performanceMonitor
         )
     }
 

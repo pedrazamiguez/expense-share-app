@@ -1,6 +1,8 @@
 package es.pedrazamiguez.splittrip.data.sync
 
 import es.pedrazamiguez.splittrip.core.logging.LogTag
+import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
+import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -38,14 +40,17 @@ internal suspend fun <T> subscribeAndReconcile(
     verifyOnServer: suspend (String) -> Boolean,
     markSynced: suspend (String) -> Unit,
     entityLabel: String,
-    logContext: String
+    logContext: String,
+    performanceMonitor: PerformanceMonitor
 ) {
     try {
         cloudFlow.collect { remoteItems ->
             try {
-                Timber.tag(LogTag.SYNC).v("Real-time sync: %d %ss %s", remoteItems.size, entityLabel, logContext)
-                reconcileLocal(remoteItems)
-                confirmPendingSync(getPendingIds, verifyOnServer, markSynced, entityLabel)
+                performanceMonitor.traceAsync(PerformanceTraces.SYNC_SUBSCRIBE_AND_RECONCILE) {
+                    Timber.tag(LogTag.SYNC).v("Real-time sync: %d %ss %s", remoteItems.size, entityLabel, logContext)
+                    reconcileLocal(remoteItems)
+                    confirmPendingSync(getPendingIds, verifyOnServer, markSynced, entityLabel)
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -128,11 +133,14 @@ internal fun syncCreateToCloud(
     cloudWrite: suspend () -> Unit,
     updateSyncStatus: suspend (String, SyncStatus) -> Unit,
     getCurrentSyncStatus: (suspend (String) -> SyncStatus)? = null,
-    entityLabel: String
+    entityLabel: String,
+    performanceMonitor: PerformanceMonitor
 ) {
     scope.launch {
         try {
-            cloudWrite()
+            performanceMonitor.traceAsync(PerformanceTraces.SYNC_CREATE_TO_CLOUD) {
+                cloudWrite()
+            }
             updateSyncStatus(entityId, SyncStatus.SYNCED)
             Timber.tag(LogTag.SYNC).d(
                 "%s synced to cloud: %s",
