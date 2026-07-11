@@ -794,6 +794,27 @@ class ExpensesViewModelTest {
             coVerify(exactly = 0) { updateExpenseUseCase(any(), any(), any(), any(), any(), any()) }
             collectJob.cancel()
         }
+
+        @Test
+        fun `onEvent ExpenseAdded emits ScrollToTop action`() = runTest(testDispatcher) {
+            // Given
+            viewModel = createViewModel()
+            val actions = mutableListOf<ExpensesUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            // When
+            viewModel.onEvent(ExpensesUiEvent.ExpenseAdded)
+            advanceUntilIdle()
+
+            // Then
+            assertTrue(
+                actions.any { it is ExpensesUiAction.ScrollToTop },
+                "Expected ScrollToTop action"
+            )
+            actionsJob.cancel()
+        }
     }
 
     private fun createViewModel() = ExpensesViewModel(

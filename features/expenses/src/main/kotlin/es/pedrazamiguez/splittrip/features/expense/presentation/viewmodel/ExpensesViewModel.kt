@@ -169,6 +169,9 @@ class ExpensesViewModel(
 
             is ExpensesUiEvent.DeleteExpense -> handleDeleteExpense(event.expenseId)
             is ExpensesUiEvent.CancelExpense -> handleCancelExpense(event.expenseId)
+            ExpensesUiEvent.ExpenseAdded -> {
+                viewModelScope.launch { _actions.emit(ExpensesUiAction.ScrollToTop) }
+            }
         }
     }
 

@@ -20,6 +20,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
+@Suppress("LongMethod")
 @Composable
 fun ExpensesFeature(
     expensesViewModel: ExpensesViewModel = koinViewModel<ExpensesViewModel>(),
@@ -61,6 +62,17 @@ fun ExpensesFeature(
                 is ExpensesUiAction.ShowCancelError -> {
                     pillController.showPill(message = action.message.asString(context))
                 }
+                is ExpensesUiAction.ScrollToTop -> Unit // Handled by ExpensesScreen
+            }
+        }
+    }
+
+    val currentBackStackEntry = navController.currentBackStackEntry
+    LaunchedEffect(currentBackStackEntry) {
+        currentBackStackEntry?.savedStateHandle?.getStateFlow("expenseAdded", false)?.collectLatest { added ->
+            if (added) {
+                expensesViewModel.onEvent(ExpensesUiEvent.ExpenseAdded)
+                currentBackStackEntry.savedStateHandle.remove<Boolean>("expenseAdded")
             }
         }
     }
@@ -77,6 +89,7 @@ fun ExpensesFeature(
 
     ExpensesScreen(
         uiState = effectiveUiState,
+        actions = expensesViewModel.actions,
         onExpenseClicked = { expenseId ->
             navController.navigate(Routes.expenseDetailRoute(expenseId))
         },
