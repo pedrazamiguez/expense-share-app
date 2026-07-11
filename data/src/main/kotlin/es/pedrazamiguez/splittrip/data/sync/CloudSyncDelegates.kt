@@ -33,6 +33,7 @@ import timber.log.Timber
  * @param logContext Additional context appended to log messages
  *   (e.g., "for group abc-123").
  */
+@Suppress("LongParameterList")
 internal suspend fun <T> subscribeAndReconcile(
     cloudFlow: Flow<List<T>>,
     reconcileLocal: suspend (List<T>) -> Unit,

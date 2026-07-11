@@ -42,7 +42,10 @@ class AuthenticationServiceImplTest {
     fun setUp() {
         firebaseAuth = mockk(relaxed = true)
         cloudUserDataSource = mockk(relaxed = true)
-        performanceMonitor = mockk(relaxed = true)
+        performanceMonitor = mockk(relaxed = true) {
+            every { trace<Any?>(any(), any()) } answers { secondArg<() -> Any?>().invoke() }
+            coEvery { traceAsync<Any?>(any(), any()) } coAnswers { secondArg<suspend () -> Any?>().invoke() }
+        }
 
         mockkStatic(GoogleAuthProvider::class)
         mockkStatic(EmailAuthProvider::class)

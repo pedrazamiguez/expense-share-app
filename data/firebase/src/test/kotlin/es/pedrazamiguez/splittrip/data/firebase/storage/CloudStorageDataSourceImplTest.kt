@@ -44,7 +44,10 @@ class CloudStorageDataSourceImplTest {
 
         mockkStatic("kotlinx.coroutines.tasks.TasksKt")
 
-        performanceMonitor = mockk(relaxed = true)
+        performanceMonitor = mockk(relaxed = true) {
+            every { trace<Any?>(any(), any()) } answers { secondArg<() -> Any?>().invoke() }
+            coEvery { traceAsync<Any?>(any(), any()) } coAnswers { secondArg<suspend () -> Any?>().invoke() }
+        }
         io.mockk.coEvery { performanceMonitor.traceAsync<Any?>(any(), any()) } coAnswers
             { secondArg<suspend () -> Any?>().invoke() }
 

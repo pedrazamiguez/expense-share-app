@@ -12,6 +12,7 @@ import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupMemberDocument
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -39,7 +40,10 @@ class FirestoreGroupDataSourceImplTest {
     fun setUp() {
         firestore = mockk(relaxed = true)
         authenticationService = mockk(relaxed = true)
-        performanceMonitor = mockk(relaxed = true)
+        performanceMonitor = mockk(relaxed = true) {
+            every { trace<Any?>(any(), any()) } answers { secondArg<() -> Any?>().invoke() }
+            coEvery { traceAsync<Any?>(any(), any()) } coAnswers { secondArg<suspend () -> Any?>().invoke() }
+        }
 
         every { authenticationService.requireUserId() } returns testUserId
 
