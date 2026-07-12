@@ -76,7 +76,7 @@ fun ArithmeticOperatorBar(
                 horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small),
                 modifier = Modifier.padding(start = MaterialTheme.spacing.Small)
             ) {
-                val containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                val containerColor = MaterialTheme.colorScheme.surface
                 val contentColor = MaterialTheme.colorScheme.onSurface
                 OperatorButton(icon = TablerIcons.Outline.MathPlus, onClick = {
                     state.onOperatorClick("+")
