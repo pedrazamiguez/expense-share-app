@@ -17,6 +17,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatForDisplay
 import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionCalculatorService
 import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionResult
 
@@ -66,7 +67,7 @@ fun ArithmeticTextField(
         if (res is ExpressionResult.Success &&
             expressionBuffer.any { it in listOf('+', '−', '-', '×', '*', '÷', '/') }
         ) {
-            val formatted = res.value.stripTrailingZeros().toPlainString()
+            val formatted = res.value.stripTrailingZeros().formatForDisplay(maxDecimalPlaces = 6)
             onValueChange(formatted)
             expressionBuffer = formatted
         } else {

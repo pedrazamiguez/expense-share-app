@@ -455,3 +455,34 @@ val TablerIcons.Outline.Backspace: ImageVector
     ).build().also { _Backspace = it }
 
 private var _Backspace: ImageVector? = null
+
+val TablerIcons.Outline.ArrowBigLeftLines: ImageVector
+    get() = _ArrowBigLeftLines ?: ImageVector.Builder(
+        name = "Outline.ArrowBigLeftLines",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).addPath(
+        pathData = addPathNodes(
+            "M12 15v3.586a1 1 0 0 1 -1.707 .707l-6.586 -6.586a1 1 0 0 1 0 -1.414l6.586 -6.586a1 1 0 0 1 1.707 .707v3.586h3v6h-3"
+        ),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 2f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round
+    ).addPath(
+        pathData = addPathNodes("M21 15v-6"),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 2f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round
+    ).addPath(
+        pathData = addPathNodes("M18 15v-6"),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 2f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round
+    ).build().also { _ArrowBigLeftLines = it }
+
+private var _ArrowBigLeftLines: ImageVector? = null
