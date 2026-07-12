@@ -25,9 +25,11 @@ import es.pedrazamiguez.splittrip.core.designsystem.R
 import es.pedrazamiguez.splittrip.core.designsystem.extension.asString
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.InlineWarningBanner
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.ArithmeticTextField
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.rememberAutoFocusRequester
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.CardSectionLabelText
+import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionEvaluator
+import org.koin.compose.koinInject
 
 private const val EXCHANGE_RATE_FIELD_WEIGHT = 0.6f
 private const val GROUP_AMOUNT_FIELD_WEIGHT = 0.4f
@@ -127,9 +129,11 @@ private fun ConversionCardInputRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
     ) {
-        StyledOutlinedTextField(
+        val evaluator = koinInject<ExpressionEvaluator>()
+        ArithmeticTextField(
             value = state.exchangeRateValue,
             onValueChange = onExchangeRateChanged,
+            evaluator = evaluator,
             label = state.exchangeRateLabel,
             modifier = Modifier.weight(EXCHANGE_RATE_FIELD_WEIGHT),
             readOnly = state.isExchangeRateLocked,
@@ -138,9 +142,10 @@ private fun ConversionCardInputRow(
             focusRequester = focusRequester,
             moveCursorToEndOnFocus = moveCursorToEndOnFocus
         )
-        StyledOutlinedTextField(
+        ArithmeticTextField(
             value = state.groupAmountValue,
             onValueChange = onGroupAmountChanged,
+            evaluator = evaluator,
             label = state.groupAmountLabel,
             modifier = Modifier.weight(GROUP_AMOUNT_FIELD_WEIGHT),
             readOnly = state.isExchangeRateLocked,
