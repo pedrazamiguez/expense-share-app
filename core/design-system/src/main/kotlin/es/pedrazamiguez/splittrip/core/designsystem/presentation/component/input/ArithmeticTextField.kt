@@ -1,0 +1,151 @@
+package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input
+
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatForDisplay
+import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionCalculatorService
+import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionResult
+
+@Suppress("LongMethod", "LongParameterList", "CognitiveComplexMethod")
+@Composable
+fun ArithmeticTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    evaluator: ExpressionCalculatorService,
+    modifier: Modifier = Modifier,
+    label: String? = null,
+    placeholder: String? = null,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    prefix: @Composable (() -> Unit)? = null,
+    suffix: @Composable (() -> Unit)? = null,
+    supportingText: String? = null,
+    isError: Boolean = false,
+    enabled: Boolean = true,
+    readOnly: Boolean = false,
+    singleLine: Boolean = true,
+    maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
+    minLines: Int = 1,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    imeAction: ImeAction = ImeAction.Default,
+    capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    onClick: (() -> Unit)? = null,
+    focusRequester: FocusRequester? = null,
+    moveCursorToEndOnFocus: Boolean = false,
+    focusable: Boolean = true,
+    shape: Shape = OutlinedTextFieldDefaults.shape,
+    colors: TextFieldColors = softFieldColors()
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    var expressionBuffer by remember { mutableStateOf(value) }
+    var evaluationResult by remember { mutableStateOf<ExpressionResult?>(null) }
+    val keyboardState = LocalArithmeticKeyboardState.current
+
+    LaunchedEffect(expressionBuffer) {
+        evaluationResult = evaluator.evaluate(expressionBuffer)
+    }
+
+    val commitResult = {
+        val res = evaluationResult
+        if (res is ExpressionResult.Success &&
+            expressionBuffer.any { it in listOf('+', '−', '-', '×', '*', '÷', '/') }
+        ) {
+            val formatted = res.value.stripTrailingZeros().formatForDisplay(maxDecimalPlaces = 6)
+            onValueChange(formatted)
+            expressionBuffer = formatted
+        } else {
+            onValueChange(expressionBuffer)
+        }
+    }
+
+    LaunchedEffect(isFocused, expressionBuffer, evaluationResult) {
+        if (isFocused) {
+            keyboardState.value = ArithmeticKeyboardState(
+                isVisible = true,
+                expressionBuffer = expressionBuffer,
+                evaluationResult = evaluationResult,
+                onClear = { expressionBuffer = "" },
+                onOperatorClick = { op ->
+                    expressionBuffer += op
+                },
+                onCommit = commitResult
+            )
+        } else {
+            // Delay hide to allow other fields to take focus smoothly?
+            // Simple hide is enough
+            keyboardState.value = keyboardState.value.copy(isVisible = false)
+        }
+    }
+
+    val wrappedKeyboardActions = KeyboardActions(
+        onDone = {
+            commitResult()
+            keyboardActions.onDone?.invoke(this)
+        },
+        onGo = keyboardActions.onGo,
+        onNext = keyboardActions.onNext,
+        onPrevious = keyboardActions.onPrevious,
+        onSearch = keyboardActions.onSearch,
+        onSend = keyboardActions.onSend
+    )
+
+    StyledOutlinedTextField(
+        value = if (isFocused) expressionBuffer else value,
+        onValueChange = {
+            if (isFocused) {
+                expressionBuffer = it
+            } else {
+                onValueChange(it)
+            }
+        },
+        modifier = modifier.onFocusChanged {
+            if (it.isFocused && !isFocused) {
+                expressionBuffer = value
+            } else if (!it.isFocused && isFocused) {
+                commitResult()
+            }
+            isFocused = it.isFocused
+        },
+        label = label,
+        placeholder = placeholder,
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon,
+        prefix = prefix,
+        suffix = suffix,
+        supportingText = supportingText,
+        isError = isError,
+        enabled = enabled,
+        readOnly = readOnly,
+        singleLine = singleLine,
+        maxLines = maxLines,
+        minLines = minLines,
+        visualTransformation = visualTransformation,
+        keyboardType = keyboardType,
+        imeAction = imeAction,
+        capitalization = capitalization,
+        keyboardActions = wrappedKeyboardActions,
+        onClick = onClick,
+        focusRequester = focusRequester,
+        moveCursorToEndOnFocus = moveCursorToEndOnFocus,
+        focusable = focusable,
+        shape = shape,
+        colors = colors
+    )
+}
