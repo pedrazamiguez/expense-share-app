@@ -17,7 +17,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.ArithmeticTextField
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.rememberAutoFocusRequester
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.CardSectionLabelText
-import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionEvaluator
+import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionCalculatorService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -68,7 +68,7 @@ fun AmountCurrencyCard(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
         ) {
-            val evaluator = koinInject<ExpressionEvaluator>()
+            val evaluator = koinInject<ExpressionCalculatorService>()
             ArithmeticTextField(
                 value = state.amount,
                 onValueChange = onAmountChanged,

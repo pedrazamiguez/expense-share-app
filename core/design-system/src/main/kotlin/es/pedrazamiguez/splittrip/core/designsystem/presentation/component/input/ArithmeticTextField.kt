@@ -17,7 +17,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
-import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionEvaluator
+import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionCalculatorService
 import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionResult
 
 @Suppress("LongMethod", "LongParameterList", "CognitiveComplexMethod")
@@ -25,7 +25,7 @@ import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionResult
 fun ArithmeticTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    evaluator: ExpressionEvaluator,
+    evaluator: ExpressionCalculatorService,
     modifier: Modifier = Modifier,
     label: String? = null,
     placeholder: String? = null,

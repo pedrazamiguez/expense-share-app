@@ -1,7 +1,7 @@
 package es.pedrazamiguez.splittrip.domain.service.calculator.impl
 
 import es.pedrazamiguez.splittrip.domain.converter.CurrencyConverter
-import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionEvaluator
+import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionCalculatorService
 import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionResult
 import java.math.BigDecimal
 import java.math.MathContext
@@ -16,7 +16,7 @@ import java.math.RoundingMode
     "ThrowsCount",
     "UseRequire"
 )
-class ExpressionEvaluatorImpl : ExpressionEvaluator {
+class ExpressionCalculatorServiceImpl : ExpressionCalculatorService {
 
     override fun evaluate(expression: String): ExpressionResult {
         if (expression.isBlank()) return ExpressionResult.Failure.Empty

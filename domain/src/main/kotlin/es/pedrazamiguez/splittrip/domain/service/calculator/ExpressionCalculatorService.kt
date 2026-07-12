@@ -2,7 +2,7 @@ package es.pedrazamiguez.splittrip.domain.service.calculator
 
 import java.math.BigDecimal
 
-interface ExpressionEvaluator {
+interface ExpressionCalculatorService {
     fun evaluate(expression: String): ExpressionResult
 }
 

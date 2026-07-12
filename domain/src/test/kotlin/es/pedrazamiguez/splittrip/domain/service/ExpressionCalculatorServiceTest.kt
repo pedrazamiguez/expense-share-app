@@ -1,20 +1,20 @@
 package es.pedrazamiguez.splittrip.domain.service
 
 import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionResult
-import es.pedrazamiguez.splittrip.domain.service.calculator.impl.ExpressionEvaluatorImpl
+import es.pedrazamiguez.splittrip.domain.service.calculator.impl.ExpressionCalculatorServiceImpl
 import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-class ExpressionEvaluatorTest {
+class ExpressionCalculatorServiceTest {
 
-    private lateinit var evaluator: ExpressionEvaluatorImpl
+    private lateinit var evaluator: ExpressionCalculatorServiceImpl
 
     @BeforeEach
     fun setUp() {
-        evaluator = ExpressionEvaluatorImpl()
+        evaluator = ExpressionCalculatorServiceImpl()
     }
 
     @Test

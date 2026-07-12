@@ -28,7 +28,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.ArithmeticTextField
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.rememberAutoFocusRequester
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.CardSectionLabelText
-import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionEvaluator
+import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionCalculatorService
 import org.koin.compose.koinInject
 
 private const val EXCHANGE_RATE_FIELD_WEIGHT = 0.6f
@@ -129,7 +129,7 @@ private fun ConversionCardInputRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
     ) {
-        val evaluator = koinInject<ExpressionEvaluator>()
+        val evaluator = koinInject<ExpressionCalculatorService>()
         ArithmeticTextField(
             value = state.exchangeRateValue,
             onValueChange = onExchangeRateChanged,
