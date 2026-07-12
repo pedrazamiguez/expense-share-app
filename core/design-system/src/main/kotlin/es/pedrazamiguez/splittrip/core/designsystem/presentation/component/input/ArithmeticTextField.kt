@@ -63,7 +63,9 @@ fun ArithmeticTextField(
 
     val commitResult = {
         val res = evaluationResult
-        if (res is ExpressionResult.Success && expressionBuffer.any { it in listOf('+', '−', '×', '÷') }) {
+        if (res is ExpressionResult.Success &&
+            expressionBuffer.any { it in listOf('+', '−', '-', '×', '*', '÷', '/') }
+        ) {
             val formatted = res.value.stripTrailingZeros().toPlainString()
             onValueChange(formatted)
             expressionBuffer = formatted

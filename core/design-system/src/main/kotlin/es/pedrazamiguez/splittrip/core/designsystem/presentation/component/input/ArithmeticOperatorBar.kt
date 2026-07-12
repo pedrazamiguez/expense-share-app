@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionResult
 
 @Composable
@@ -30,13 +31,16 @@ fun ArithmeticOperatorBar(
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(
+                horizontal = MaterialTheme.spacing.Default,
+                vertical = MaterialTheme.spacing.Small
+            ),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         val resultText = when (val res = state.evaluationResult) {
             is ExpressionResult.Success -> {
-                if (state.expressionBuffer.any { it in listOf('+', '−', '×', '÷') }) {
+                if (state.expressionBuffer.any { it in listOf('+', '−', '-', '×', '*', '÷', '/') }) {
                     "= ${res.value.stripTrailingZeros().toPlainString()}"
                 } else {
                     ""
@@ -59,7 +63,10 @@ fun ArithmeticOperatorBar(
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(start = 8.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small),
+            modifier = Modifier.padding(start = MaterialTheme.spacing.Small)
+        ) {
             OperatorButton(text = "÷", onClick = { state.onOperatorClick("÷") })
             OperatorButton(text = "×", onClick = { state.onOperatorClick("×") })
             OperatorButton(text = "−", onClick = { state.onOperatorClick("−") })
