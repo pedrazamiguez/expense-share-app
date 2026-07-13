@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.withdrawal.presentation.component.st
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.currency.CurrencyConversionCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.currency.CurrencyConversionCardState
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepLayout
@@ -35,6 +36,8 @@ fun ExchangeRateStep(
                 isExchangeRateError = uiState.isExchangeRateError,
                 autoFocus = true
             ),
+            groupAmountDecimalPlaces = uiState.groupCurrency?.decimalDigits ?: UiConstants.DEFAULT_MAX_DECIMAL_PLACES,
+            groupAmountMinDecimalPlaces = uiState.groupCurrency?.decimalDigits ?: 0,
             onExchangeRateChanged = { onEvent(AddCashWithdrawalUiEvent.ExchangeRateChanged(it)) },
             onGroupAmountChanged = { onEvent(AddCashWithdrawalUiEvent.DeductedAmountChanged(it)) },
             onDone = onImeNext

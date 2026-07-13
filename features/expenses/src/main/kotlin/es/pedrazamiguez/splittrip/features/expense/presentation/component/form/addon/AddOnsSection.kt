@@ -108,7 +108,8 @@ fun AddOnsSection(
                         onEvent = { event -> onEvent(event) },
                         onRemove = {
                             onEvent(AddExpenseUiEvent.AddOnRemoved(addOn.id))
-                        }
+                        },
+                        groupCurrency = uiState.groupCurrency
                     )
                 }
             }

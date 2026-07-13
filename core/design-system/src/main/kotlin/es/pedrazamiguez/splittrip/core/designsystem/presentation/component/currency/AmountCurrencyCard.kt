@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.ArithmeticTextField
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.rememberAutoFocusRequester
@@ -73,6 +74,8 @@ fun AmountCurrencyCard(
                 value = state.amount,
                 onValueChange = onAmountChanged,
                 evaluator = evaluator,
+                maxDecimalPlaces = state.selectedCurrency?.decimalDigits ?: UiConstants.DEFAULT_MAX_DECIMAL_PLACES,
+                minDecimalPlaces = state.selectedCurrency?.decimalDigits ?: 0,
                 label = state.amountLabel,
                 modifier = Modifier.weight(AMOUNT_FIELD_WEIGHT),
                 keyboardType = KeyboardType.Decimal,

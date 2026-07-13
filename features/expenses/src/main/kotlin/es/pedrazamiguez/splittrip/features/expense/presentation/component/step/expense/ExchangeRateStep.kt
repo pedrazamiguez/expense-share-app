@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.currency.CurrencyConversionCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.currency.CurrencyConversionCardState
@@ -49,6 +50,8 @@ fun ExchangeRateStep(
                 isExchangeRateError = uiState.isExchangeRateError,
                 autoFocus = true
             ),
+            groupAmountDecimalPlaces = uiState.groupCurrency?.decimalDigits ?: UiConstants.DEFAULT_MAX_DECIMAL_PLACES,
+            groupAmountMinDecimalPlaces = uiState.groupCurrency?.decimalDigits ?: 0,
             onExchangeRateChanged = { onEvent(AddExpenseUiEvent.ExchangeRateChanged(it)) },
             onGroupAmountChanged = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) },
             onDone = onImeNext

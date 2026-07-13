@@ -27,8 +27,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.MathDivide
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.MathMinus
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.MathMultiply
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.MathPlus
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatForDisplay
-import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionResult
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatArithmeticPreview
 
 @Suppress("LongMethod")
 @Composable
@@ -51,19 +50,12 @@ fun ArithmeticOperatorBar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val resultText = when (val res = state.evaluationResult) {
-                is ExpressionResult.Success -> {
-                    val hasOperator = state.expressionBuffer.any {
-                        it in listOf('+', '−', '-', '×', '*', '÷', '/')
-                    }
-                    if (hasOperator) {
-                        "= ${res.value.stripTrailingZeros().formatForDisplay(maxDecimalPlaces = 6)}"
-                    } else {
-                        ""
-                    }
-                }
-                else -> ""
-            }
+            val resultText = formatArithmeticPreview(
+                expressionBuffer = state.expressionBuffer,
+                evaluationResult = state.evaluationResult,
+                maxDecimalPlaces = state.maxDecimalPlaces,
+                minDecimalPlaces = state.minDecimalPlaces
+            )
 
             Text(
                 text = resultText,

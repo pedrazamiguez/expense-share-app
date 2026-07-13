@@ -4,6 +4,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,6 +18,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
+import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatForDisplay
 import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionCalculatorService
 import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionResult
@@ -28,6 +30,8 @@ fun ArithmeticTextField(
     onValueChange: (String) -> Unit,
     evaluator: ExpressionCalculatorService,
     modifier: Modifier = Modifier,
+    maxDecimalPlaces: Int = UiConstants.DEFAULT_MAX_DECIMAL_PLACES,
+    minDecimalPlaces: Int = 0,
     label: String? = null,
     placeholder: String? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
@@ -53,6 +57,7 @@ fun ArithmeticTextField(
     shape: Shape = OutlinedTextFieldDefaults.shape,
     colors: TextFieldColors = softFieldColors()
 ) {
+    val fieldId = remember { Any() }
     var isFocused by remember { mutableStateOf(false) }
     var expressionBuffer by remember { mutableStateOf(value) }
     var evaluationResult by remember { mutableStateOf<ExpressionResult?>(null) }
@@ -64,10 +69,11 @@ fun ArithmeticTextField(
 
     val commitResult = {
         val res = evaluationResult
-        if (res is ExpressionResult.Success &&
-            expressionBuffer.any { it in listOf('+', '−', '-', '×', '*', '÷', '/') }
-        ) {
-            val formatted = res.value.stripTrailingZeros().formatForDisplay(maxDecimalPlaces = 6)
+        if (res is ExpressionResult.Success) {
+            val formatted = res.value.stripTrailingZeros().formatForDisplay(
+                maxDecimalPlaces = maxDecimalPlaces,
+                minDecimalPlaces = minDecimalPlaces
+            )
             onValueChange(formatted)
             expressionBuffer = formatted
         } else {
@@ -81,6 +87,9 @@ fun ArithmeticTextField(
                 isVisible = true,
                 expressionBuffer = expressionBuffer,
                 evaluationResult = evaluationResult,
+                maxDecimalPlaces = maxDecimalPlaces,
+                minDecimalPlaces = minDecimalPlaces,
+                owner = fieldId,
                 onClear = { expressionBuffer = "" },
                 onOperatorClick = { op ->
                     expressionBuffer += op
@@ -90,7 +99,17 @@ fun ArithmeticTextField(
         } else {
             // Delay hide to allow other fields to take focus smoothly?
             // Simple hide is enough
-            keyboardState.value = keyboardState.value.copy(isVisible = false)
+            if (keyboardState.value.owner == fieldId) {
+                keyboardState.value = keyboardState.value.copy(isVisible = false)
+            }
+        }
+    }
+
+    DisposableEffect(fieldId) {
+        onDispose {
+            if (keyboardState.value.owner == fieldId) {
+                keyboardState.value = keyboardState.value.copy(isVisible = false)
+            }
         }
     }
 

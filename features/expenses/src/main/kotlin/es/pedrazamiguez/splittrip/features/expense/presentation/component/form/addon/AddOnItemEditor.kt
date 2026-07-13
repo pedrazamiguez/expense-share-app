@@ -34,6 +34,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.filled.CaretDownFilled
@@ -63,6 +64,7 @@ fun AddOnItemEditor(
     showCurrencySelector: Boolean,
     onEvent: (AddExpenseUiEvent) -> Unit,
     onRemove: () -> Unit,
+    groupCurrency: CurrencyUiModel? = null,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -186,6 +188,8 @@ fun AddOnItemEditor(
                     isInsufficientCash = addOn.isInsufficientCash,
                     isGroupAmountError = false
                 ),
+                groupAmountDecimalPlaces = groupCurrency?.decimalDigits ?: UiConstants.DEFAULT_MAX_DECIMAL_PLACES,
+                groupAmountMinDecimalPlaces = groupCurrency?.decimalDigits ?: 0,
                 onExchangeRateChanged = { rate ->
                     onEvent(AddExpenseUiEvent.AddOnExchangeRateChanged(addOn.id, rate))
                 },

@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter
 
+import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionResult
 import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -65,4 +66,32 @@ private fun buildNumberPattern(maxDecimalPlaces: Int, minDecimalPlaces: Int = 0)
     "#,##0.$decimalPart"
 } else {
     "#,##0"
+}
+
+/**
+ * Formats the live preview text shown in the arithmetic operator bar.
+ *
+ * Returns a formatted string (e.g., "= 170,20") if there is a successful evaluation result
+ * and the expression contains operators. Otherwise returns an empty string.
+ */
+fun formatArithmeticPreview(
+    expressionBuffer: String,
+    evaluationResult: ExpressionResult?,
+    maxDecimalPlaces: Int,
+    minDecimalPlaces: Int = 0,
+    locale: Locale = Locale.getDefault()
+): String {
+    if (evaluationResult !is ExpressionResult.Success) return ""
+
+    val hasOperator = expressionBuffer.any {
+        it in listOf('+', '−', '-', '×', '*', '÷', '/')
+    }
+    if (!hasOperator) return ""
+
+    val formattedValue = evaluationResult.value.stripTrailingZeros().formatForDisplay(
+        locale = locale,
+        maxDecimalPlaces = maxDecimalPlaces,
+        minDecimalPlaces = minDecimalPlaces
+    )
+    return "= $formattedValue"
 }

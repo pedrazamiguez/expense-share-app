@@ -22,6 +22,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.R
+import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.extension.asString
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.InlineWarningBanner
@@ -48,6 +49,7 @@ private const val GROUP_AMOUNT_FIELD_WEIGHT = 0.4f
  * @param onGroupAmountChanged  Called when the user edits the group-amount field.
  * @param onDone              Optional callback invoked when the keyboard Done action
  *                            fires on the last field. Triggered after clearing focus.
+ * @param groupAmountDecimalPlaces Number of decimal places to format the group amount to.
  * @param modifier            Outer modifier applied to the root [Column].
  */
 @Composable
@@ -56,6 +58,8 @@ fun CurrencyConversionCard(
     onExchangeRateChanged: (String) -> Unit,
     onGroupAmountChanged: (String) -> Unit,
     onDone: (() -> Unit)? = null,
+    groupAmountDecimalPlaces: Int = UiConstants.DEFAULT_MAX_DECIMAL_PLACES,
+    groupAmountMinDecimalPlaces: Int = 0,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -75,6 +79,8 @@ fun CurrencyConversionCard(
                 focusManager.clearFocus()
                 onDone?.invoke()
             },
+            groupAmountDecimalPlaces = groupAmountDecimalPlaces,
+            groupAmountMinDecimalPlaces = groupAmountMinDecimalPlaces,
             focusRequester = if (state.autoFocus) focusRequester else null,
             moveCursorToEndOnFocus = state.autoFocus
         )
@@ -122,6 +128,8 @@ private fun ConversionCardInputRow(
     onExchangeRateChanged: (String) -> Unit,
     onGroupAmountChanged: (String) -> Unit,
     onDone: () -> Unit,
+    groupAmountDecimalPlaces: Int,
+    groupAmountMinDecimalPlaces: Int,
     focusRequester: FocusRequester? = null,
     moveCursorToEndOnFocus: Boolean = false
 ) {
@@ -146,6 +154,8 @@ private fun ConversionCardInputRow(
             value = state.groupAmountValue,
             onValueChange = onGroupAmountChanged,
             evaluator = evaluator,
+            maxDecimalPlaces = groupAmountDecimalPlaces,
+            minDecimalPlaces = groupAmountMinDecimalPlaces,
             label = state.groupAmountLabel,
             modifier = Modifier.weight(GROUP_AMOUNT_FIELD_WEIGHT),
             readOnly = state.isExchangeRateLocked,
