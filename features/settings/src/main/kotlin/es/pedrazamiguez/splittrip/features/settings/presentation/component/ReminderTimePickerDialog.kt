@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import java.time.LocalTime
+import java.time.format.DateTimeParseException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,7 +26,7 @@ fun ReminderTimePickerDialog(
             } else {
                 LocalTime.now()
             }
-        } catch (e: Exception) {
+        } catch (ignored: DateTimeParseException) {
             LocalTime.now()
         }
     }
