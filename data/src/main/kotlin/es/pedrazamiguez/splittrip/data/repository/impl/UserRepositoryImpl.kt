@@ -128,7 +128,6 @@ class UserRepositoryImpl(
         localAvatarUri: String?
     ): Result<Unit> {
         return runCatching {
-            // 1. Save locally first.
             val existingUser = localUserDataSource.getUsersByIds(listOf(userId)).firstOrNull()
                 ?: error("Local user profile not found for ID: $userId")
             val updatedUser = existingUser.copy(
@@ -139,7 +138,6 @@ class UserRepositoryImpl(
             )
             localUserDataSource.saveUsers(listOf(updatedUser))
 
-            // 2. Trigger background sync.
             triggerBackgroundSync(userId, displayName, bio, localAvatarUri)
         }
     }
@@ -199,5 +197,29 @@ class UserRepositoryImpl(
     override suspend fun deletePendingUser(userId: String): Result<Unit> = runCatching {
         localUserDataSource.deleteUser(userId)
         cloudUserDataSource.deleteUser(userId)
+    }
+
+    override suspend fun updateUserReminderPreferences(
+        userId: String,
+        timezone: String?,
+        preferredReminderTime: String?
+    ): Result<Unit> {
+        return runCatching {
+            localUserDataSource.updateUserReminderPreferences(userId, timezone, preferredReminderTime)
+
+            syncCreateToCloud(
+                scope = syncScope,
+                entityId = userId,
+                cloudWrite = {
+                    cloudUserDataSource.updateUserReminderPreferences(userId, timezone, preferredReminderTime)
+                },
+                updateSyncStatus = localUserDataSource::updateSyncStatus,
+                getCurrentSyncStatus = { id ->
+                    localUserDataSource.getUsersByIds(listOf(id)).firstOrNull()?.syncStatus ?: SyncStatus.PENDING_SYNC
+                },
+                entityLabel = "user reminder preferences",
+                performanceMonitor = performanceMonitor
+            )
+        }
     }
 }

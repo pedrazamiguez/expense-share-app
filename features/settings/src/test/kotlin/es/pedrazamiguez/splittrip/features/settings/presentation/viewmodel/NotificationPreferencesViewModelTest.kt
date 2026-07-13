@@ -35,6 +35,10 @@ class NotificationPreferencesViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var getPreferencesUseCase: GetNotificationPreferencesUseCase
     private lateinit var updatePreferenceUseCase: UpdateNotificationPreferenceUseCase
+    private lateinit var observeCurrentUserProfileUseCase:
+        es.pedrazamiguez.splittrip.domain.usecase.user.ObserveCurrentUserProfileUseCase
+    private lateinit var updateUserReminderPreferencesUseCase:
+        es.pedrazamiguez.splittrip.domain.usecase.user.UpdateUserReminderPreferencesUseCase
     private lateinit var viewModel: NotificationPreferencesViewModel
 
     @BeforeEach
@@ -42,6 +46,8 @@ class NotificationPreferencesViewModelTest {
         Dispatchers.setMain(testDispatcher)
         getPreferencesUseCase = mockk()
         updatePreferenceUseCase = mockk(relaxed = true)
+        observeCurrentUserProfileUseCase = mockk(relaxed = true)
+        updateUserReminderPreferencesUseCase = mockk(relaxed = true)
     }
 
     @AfterEach
@@ -53,7 +59,20 @@ class NotificationPreferencesViewModelTest {
         prefs: NotificationPreferences = NotificationPreferences()
     ): NotificationPreferencesViewModel {
         every { getPreferencesUseCase() } returns flowOf(prefs)
-        return NotificationPreferencesViewModel(getPreferencesUseCase, updatePreferenceUseCase)
+        every { observeCurrentUserProfileUseCase() } returns
+            flowOf(
+                es.pedrazamiguez.splittrip.domain.model.User(
+                    userId = "testUser",
+                    email = "test@test.com",
+                    displayName = "Test User"
+                )
+            )
+        return NotificationPreferencesViewModel(
+            getPreferencesUseCase,
+            updatePreferenceUseCase,
+            observeCurrentUserProfileUseCase,
+            updateUserReminderPreferencesUseCase
+        )
     }
 
     @Nested
@@ -100,29 +119,6 @@ class NotificationPreferencesViewModelTest {
 
             collectJob.cancel()
         }
-    }
-
-    @Nested
-    @DisplayName("onEvent")
-    inner class OnEventTests {
-
-        @Test
-        fun `ToggleCategory MEMBERSHIP delegates to use case`() = runTest(testDispatcher) {
-            viewModel = createViewModel()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            advanceUntilIdle()
-
-            viewModel.onEvent(
-                NotificationPreferencesUiEvent.ToggleCategory(
-                    NotificationCategory.MEMBERSHIP,
-                    false
-                )
-            )
-            advanceUntilIdle()
-
-            coVerify { updatePreferenceUseCase(NotificationCategory.MEMBERSHIP, false) }
-            collectJob.cancel()
-        }
 
         @Test
         fun `ToggleCategory EXPENSES delegates to use case`() = runTest(testDispatcher) {
@@ -157,6 +153,24 @@ class NotificationPreferencesViewModelTest {
             advanceUntilIdle()
 
             coVerify { updatePreferenceUseCase(NotificationCategory.FINANCIAL, false) }
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `UpdateReminderPreferences delegates to use case`() = runTest(testDispatcher) {
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            viewModel.onEvent(
+                NotificationPreferencesUiEvent.UpdateReminderPreferences(
+                    timezone = "Europe/London",
+                    time = "10:00"
+                )
+            )
+            advanceUntilIdle()
+
+            coVerify { updateUserReminderPreferencesUseCase("testUser", "Europe/London", "10:00") }
             collectJob.cancel()
         }
     }

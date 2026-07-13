@@ -92,7 +92,9 @@ class FirestoreUserDataSourceImpl(private val firestore: FirebaseFirestore) : Cl
                             profileImagePath = userDoc.profileImagePath,
                             bio = userDoc.bio,
                             createdAt = userDoc.createdAt.toLocalDateTimeUtc(),
-                            isPending = userDoc.isPending
+                            isPending = userDoc.isPending,
+                            timezone = userDoc.timezone,
+                            preferredReminderTime = userDoc.preferredReminderTime
                         )
                     }
                 }
@@ -127,7 +129,9 @@ class FirestoreUserDataSourceImpl(private val firestore: FirebaseFirestore) : Cl
                             profileImagePath = userDoc.profileImagePath,
                             bio = userDoc.bio,
                             createdAt = userDoc.createdAt.toLocalDateTimeUtc(),
-                            isPending = userDoc.isPending
+                            isPending = userDoc.isPending,
+                            timezone = userDoc.timezone,
+                            preferredReminderTime = userDoc.preferredReminderTime
                         )
                     }
                 }
@@ -144,6 +148,21 @@ class FirestoreUserDataSourceImpl(private val firestore: FirebaseFirestore) : Cl
             "displayName" to displayName,
             "bio" to bio,
             "profileImagePath" to avatarUrl,
+            "lastUpdatedBy" to userId,
+            "lastUpdatedAt" to Timestamp(Date())
+        )
+        docRef.update(updates).await()
+    }
+
+    override suspend fun updateUserReminderPreferences(
+        userId: String,
+        timezone: String?,
+        preferredReminderTime: String?
+    ) {
+        val docRef = firestore.collection(UserDocument.COLLECTION_PATH).document(userId)
+        val updates = mutableMapOf<String, Any?>(
+            "timezone" to timezone,
+            "preferredReminderTime" to preferredReminderTime,
             "lastUpdatedBy" to userId,
             "lastUpdatedAt" to Timestamp(Date())
         )

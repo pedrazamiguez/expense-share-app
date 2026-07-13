@@ -44,4 +44,10 @@
     <string name="notification_settlement_request_body">%1$s solicitó una liquidación de %2$s</string>
     <string name="notification_settlement_confirmed_body">%1$s confirmó haber recibido %2$s de tu parte</string>
     <string name="notification_settlement_disputed_body">%1$s disputó una liquidación de %2$s</string>
+    
+    <!-- Reminders -->
+    <string name="notification_scheduled_reminder_title">Próximo gasto programado</string>
+    <string name="notification_scheduled_reminder_body">Tienes un gasto programado que vence mañana.</string>
+    <string name="notification_refundable_reminder_title">Recordatorio de gasto reembolsable</string>
+    <string name="notification_refundable_reminder_body">No olvides tu gasto reembolsable que vence mañana.</string>
 </resources>

@@ -6,9 +6,12 @@ data class NotificationPreferencesUiState(
     val membershipEnabled: Boolean = true,
     val expensesEnabled: Boolean = true,
     val financialEnabled: Boolean = true,
+    val timezone: String? = null,
+    val preferredReminderTime: String? = null,
     val isLoading: Boolean = true
 )
 
 sealed interface NotificationPreferencesUiEvent {
     data class ToggleCategory(val category: NotificationCategory, val enabled: Boolean) : NotificationPreferencesUiEvent
+    data class UpdateReminderPreferences(val timezone: String?, val time: String?) : NotificationPreferencesUiEvent
 }

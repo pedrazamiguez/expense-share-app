@@ -44,4 +44,10 @@
     <string name="notification_settlement_request_body">%1$s requested a settlement of %2$s</string>
     <string name="notification_settlement_confirmed_body">%1$s confirmed receiving %2$s from you</string>
     <string name="notification_settlement_disputed_body">%1$s disputed a settlement of %2$s</string>
+    
+    <!-- Reminders -->
+    <string name="notification_scheduled_reminder_title">Upcoming Scheduled Expense</string>
+    <string name="notification_scheduled_reminder_body">You have a scheduled expense due tomorrow.</string>
+    <string name="notification_refundable_reminder_title">Refundable Expense Reminder</string>
+    <string name="notification_refundable_reminder_body">Don\'t forget about your refundable expense due tomorrow.</string>
 </resources>

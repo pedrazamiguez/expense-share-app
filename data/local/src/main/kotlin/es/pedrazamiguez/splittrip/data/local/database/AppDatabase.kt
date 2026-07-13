@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.data.local.database
 
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
@@ -42,8 +43,11 @@ import es.pedrazamiguez.splittrip.data.local.entity.UserEntity
         SubunitEntity::class,
         SettlementRecordEntity::class
     ],
-    version = 33,
-    exportSchema = true
+    version = 34,
+    exportSchema = true,
+    autoMigrations = [
+        AutoMigration(from = 33, to = 34)
+    ]
 )
 @TypeConverters(
     BigDecimalConverter::class,

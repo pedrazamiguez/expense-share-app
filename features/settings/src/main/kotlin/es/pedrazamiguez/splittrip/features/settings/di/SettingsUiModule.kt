@@ -24,6 +24,8 @@ import es.pedrazamiguez.splittrip.domain.usecase.setting.SetAppLanguageUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetAppThemeUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetUserDefaultCurrencyUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetCurrentUserProfileUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.ObserveCurrentUserProfileUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.UpdateUserReminderPreferencesUseCase
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.AccountStatusUiMapper
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.impl.AccountStatusUiMapperImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.AccountStatusScreenUiProviderImpl
@@ -89,7 +91,9 @@ val settingsUiModule = module {
     viewModel {
         NotificationPreferencesViewModel(
             getNotificationPreferencesUseCase = get<GetNotificationPreferencesUseCase>(),
-            updateNotificationPreferenceUseCase = get<UpdateNotificationPreferenceUseCase>()
+            updateNotificationPreferenceUseCase = get<UpdateNotificationPreferenceUseCase>(),
+            observeCurrentUserProfileUseCase = get<ObserveCurrentUserProfileUseCase>(),
+            updateUserReminderPreferencesUseCase = get<UpdateUserReminderPreferencesUseCase>()
         )
     }
 
