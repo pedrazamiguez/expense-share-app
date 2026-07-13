@@ -77,6 +77,10 @@
     <string name="notification_prefs_expenses_description">Expenses added, updated, or deleted</string>
     <string name="notification_prefs_financial_title">Financial Activity</string>
     <string name="notification_prefs_financial_description">Cash withdrawals and contributions</string>
+    <string name="notification_prefs_reminder_title">Reminder Preferences</string>
+    <string name="notification_prefs_select_timezone">Select Timezone</string>
+    <string name="notification_prefs_timezone">Timezone</string>
+    <string name="notification_prefs_reminder_time">Reminder Time (HH:MM)</string>
 
     <!-- Developer Services Playground -->
     <string name="developer_services_selected_attachment">Selected Attachment</string>
