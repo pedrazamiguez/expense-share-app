@@ -222,6 +222,41 @@ class NotificationPreferencesViewModelTest {
             coVerify { updateUserReminderPreferencesUseCase("testUser", "Europe/London", "10:30") }
             collectJob.cancel()
         }
+
+        @Test
+        fun `automatically saves device timezone on load if user timezone is null`() = runTest(testDispatcher) {
+            val userWithoutTimezone = es.pedrazamiguez.splittrip.domain.model.User(
+                userId = "testUser",
+                email = "test@test.com",
+                displayName = "Test User",
+                timezone = null,
+                preferredReminderTime = "09:00"
+            )
+            viewModel = createViewModel(user = userWithoutTimezone)
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            val expectedTimezone = java.time.ZoneId.systemDefault().id
+            coVerify { updateUserReminderPreferencesUseCase("testUser", expectedTimezone, "09:00") }
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `does not overwrite timezone on load if user timezone is already saved`() = runTest(testDispatcher) {
+            val userWithTimezone = es.pedrazamiguez.splittrip.domain.model.User(
+                userId = "testUser",
+                email = "test@test.com",
+                displayName = "Test User",
+                timezone = "America/New_York",
+                preferredReminderTime = "09:00"
+            )
+            viewModel = createViewModel(user = userWithTimezone)
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { updateUserReminderPreferencesUseCase(any(), any(), any()) }
+            collectJob.cancel()
+        }
     }
 
     @Nested

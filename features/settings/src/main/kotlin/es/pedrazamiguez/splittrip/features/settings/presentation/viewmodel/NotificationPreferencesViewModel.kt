@@ -10,6 +10,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.user.UpdateUserReminderPreferen
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.NotificationPreferencesUiMapper
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.NotificationPreferencesUiEvent
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.NotificationPreferencesUiState
+import java.time.ZoneId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +27,27 @@ class NotificationPreferencesViewModel(
     private val updateUserReminderPreferencesUseCase: UpdateUserReminderPreferencesUseCase,
     private val notificationPreferencesUiMapper: NotificationPreferencesUiMapper
 ) : ViewModel() {
+
+    init {
+        viewModelScope.launch {
+            observeCurrentUserProfileUseCase().collect { profile ->
+                if (profile != null && profile.timezone == null) {
+                    try {
+                        val deviceTimezone = ZoneId.systemDefault().id
+                        updateUserReminderPreferencesUseCase(
+                            userId = profile.userId,
+                            timezone = deviceTimezone,
+                            preferredReminderTime = profile.preferredReminderTime
+                        )
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to auto-save default device timezone")
+                    }
+                }
+            }
+        }
+    }
 
     val uiState: StateFlow<NotificationPreferencesUiState> = combine(
         getNotificationPreferencesUseCase(),

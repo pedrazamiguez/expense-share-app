@@ -64,6 +64,7 @@ fun NotificationPreferencesScreen(
             preferredReminderTime = uiState.preferredReminderTime,
             onTimeConfirm = { hour, minute ->
                 onEvent(NotificationPreferencesUiEvent.UpdateReminderTime(hour, minute))
+                showTimePicker = false
             },
             onDismiss = { showTimePicker = false }
         )
