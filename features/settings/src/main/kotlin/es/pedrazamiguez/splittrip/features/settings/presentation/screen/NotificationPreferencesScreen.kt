@@ -54,6 +54,7 @@ fun NotificationPreferencesScreen(
             timezones = timezones,
             onTimezoneSelected = { zone ->
                 onEvent(NotificationPreferencesUiEvent.UpdateTimezone(zone))
+                showTimezoneSheet = false
             },
             onDismiss = { showTimezoneSheet = false }
         )
