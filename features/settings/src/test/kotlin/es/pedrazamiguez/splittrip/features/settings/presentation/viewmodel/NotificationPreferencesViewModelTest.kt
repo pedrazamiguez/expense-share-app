@@ -4,7 +4,9 @@ import es.pedrazamiguez.splittrip.domain.enums.NotificationCategory
 import es.pedrazamiguez.splittrip.domain.model.NotificationPreferences
 import es.pedrazamiguez.splittrip.domain.usecase.notification.GetNotificationPreferencesUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.notification.UpdateNotificationPreferenceUseCase
+import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.NotificationPreferencesUiMapper
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.NotificationPreferencesUiEvent
+import es.pedrazamiguez.splittrip.features.settings.presentation.model.NotificationPreferencesUiState
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -39,6 +41,7 @@ class NotificationPreferencesViewModelTest {
         es.pedrazamiguez.splittrip.domain.usecase.user.ObserveCurrentUserProfileUseCase
     private lateinit var updateUserReminderPreferencesUseCase:
         es.pedrazamiguez.splittrip.domain.usecase.user.UpdateUserReminderPreferencesUseCase
+    private lateinit var uiMapper: NotificationPreferencesUiMapper
     private lateinit var viewModel: NotificationPreferencesViewModel
 
     @BeforeEach
@@ -48,6 +51,7 @@ class NotificationPreferencesViewModelTest {
         updatePreferenceUseCase = mockk(relaxed = true)
         observeCurrentUserProfileUseCase = mockk(relaxed = true)
         updateUserReminderPreferencesUseCase = mockk(relaxed = true)
+        uiMapper = mockk()
     }
 
     @AfterEach
@@ -56,22 +60,38 @@ class NotificationPreferencesViewModelTest {
     }
 
     private fun createViewModel(
-        prefs: NotificationPreferences = NotificationPreferences()
+        prefs: NotificationPreferences = NotificationPreferences(),
+        user: es.pedrazamiguez.splittrip.domain.model.User = es.pedrazamiguez.splittrip.domain.model.User(
+            userId = "testUser",
+            email = "test@test.com",
+            displayName = "Test User"
+        )
     ): NotificationPreferencesViewModel {
         every { getPreferencesUseCase() } returns flowOf(prefs)
-        every { observeCurrentUserProfileUseCase() } returns
-            flowOf(
-                es.pedrazamiguez.splittrip.domain.model.User(
-                    userId = "testUser",
-                    email = "test@test.com",
-                    displayName = "Test User"
-                )
+        every { observeCurrentUserProfileUseCase() } returns flowOf(user)
+        every { uiMapper.toUiState(any(), any()) } answers {
+            val p = firstArg<NotificationPreferences>()
+            val u = secondArg<es.pedrazamiguez.splittrip.domain.model.User?>()
+            NotificationPreferencesUiState(
+                membershipEnabled = p.membershipEnabled,
+                expensesEnabled = p.expensesEnabled,
+                financialEnabled = p.financialEnabled,
+                timezone = u?.timezone,
+                preferredReminderTime = u?.preferredReminderTime,
+                isLoading = false
             )
+        }
+        every { uiMapper.formatTime(any(), any()) } answers {
+            val hour = firstArg<Int>()
+            val minute = secondArg<Int>()
+            String.format(java.util.Locale.ROOT, "%02d:%02d", hour, minute)
+        }
         return NotificationPreferencesViewModel(
             getPreferencesUseCase,
             updatePreferenceUseCase,
             observeCurrentUserProfileUseCase,
-            updateUserReminderPreferencesUseCase
+            updateUserReminderPreferencesUseCase,
+            uiMapper
         )
     }
 
@@ -157,20 +177,49 @@ class NotificationPreferencesViewModelTest {
         }
 
         @Test
-        fun `UpdateReminderPreferences delegates to use case`() = runTest(testDispatcher) {
-            viewModel = createViewModel()
+        fun `UpdateTimezone delegates to use case`() = runTest(testDispatcher) {
+            val user = es.pedrazamiguez.splittrip.domain.model.User(
+                userId = "testUser",
+                email = "test@test.com",
+                displayName = "Test User",
+                preferredReminderTime = "10:00"
+            )
+            viewModel = createViewModel(user = user)
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
 
             viewModel.onEvent(
-                NotificationPreferencesUiEvent.UpdateReminderPreferences(
-                    timezone = "Europe/London",
-                    time = "10:00"
+                NotificationPreferencesUiEvent.UpdateTimezone(
+                    timezone = "Europe/London"
                 )
             )
             advanceUntilIdle()
 
             coVerify { updateUserReminderPreferencesUseCase("testUser", "Europe/London", "10:00") }
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `UpdateReminderTime delegates to use case`() = runTest(testDispatcher) {
+            val user = es.pedrazamiguez.splittrip.domain.model.User(
+                userId = "testUser",
+                email = "test@test.com",
+                displayName = "Test User",
+                timezone = "Europe/London"
+            )
+            viewModel = createViewModel(user = user)
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            viewModel.onEvent(
+                NotificationPreferencesUiEvent.UpdateReminderTime(
+                    hour = 10,
+                    minute = 30
+                )
+            )
+            advanceUntilIdle()
+
+            coVerify { updateUserReminderPreferencesUseCase("testUser", "Europe/London", "10:30") }
             collectJob.cancel()
         }
     }

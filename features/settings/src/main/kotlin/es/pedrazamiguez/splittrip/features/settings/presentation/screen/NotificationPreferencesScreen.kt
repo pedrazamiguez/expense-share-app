@@ -1,25 +1,12 @@
 package es.pedrazamiguez.splittrip.features.settings.presentation.screen
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,15 +25,14 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.
 import es.pedrazamiguez.splittrip.domain.enums.NotificationCategory
 import es.pedrazamiguez.splittrip.features.settings.R
 import es.pedrazamiguez.splittrip.features.settings.presentation.component.NotificationCategoryItem
+import es.pedrazamiguez.splittrip.features.settings.presentation.component.ReminderTimePickerDialog
+import es.pedrazamiguez.splittrip.features.settings.presentation.component.TimezoneSelectionBottomSheet
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.NotificationPreferencesUiEvent
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.NotificationPreferencesUiState
-import java.time.LocalTime
 import java.time.ZoneId
-import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Suppress("LongMethod") // Compose UI builder DSL
 @Composable
 fun NotificationPreferencesScreen(
@@ -64,90 +50,22 @@ fun NotificationPreferencesScreen(
     }
 
     if (showTimezoneSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showTimezoneSheet = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ) {
-            var searchQuery by remember { mutableStateOf("") }
-            val filteredZones = remember(searchQuery, timezones) {
-                if (searchQuery.isBlank()) {
-                    timezones
-                } else {
-                    timezones.filter {
-                        it.contains(searchQuery, ignoreCase = true)
-                    }
-                }
-            }
-            Column(modifier = Modifier.fillMaxSize()) {
-                StyledOutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    label = stringResource(R.string.notification_prefs_select_timezone),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = MaterialTheme.spacing.Default, vertical = MaterialTheme.spacing.Small)
-                )
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(filteredZones, key = { it }) { zone ->
-                        ListItem(
-                            headlineContent = { Text(zone) },
-                            modifier = Modifier.clickable {
-                                onEvent(
-                                    NotificationPreferencesUiEvent.UpdateReminderPreferences(
-                                        zone,
-                                        uiState.preferredReminderTime
-                                    )
-                                )
-                                showTimezoneSheet = false
-                            }
-                        )
-                    }
-                }
-            }
-        }
+        TimezoneSelectionBottomSheet(
+            timezones = timezones,
+            onTimezoneSelected = { zone ->
+                onEvent(NotificationPreferencesUiEvent.UpdateTimezone(zone))
+            },
+            onDismiss = { showTimezoneSheet = false }
+        )
     }
 
     if (showTimePicker) {
-        val initialTime = remember(uiState.preferredReminderTime) {
-            try {
-                if (!uiState.preferredReminderTime.isNullOrBlank()) {
-                    LocalTime.parse(uiState.preferredReminderTime)
-                } else {
-                    LocalTime.now()
-                }
-            } catch (e: Exception) {
-                LocalTime.now()
-            }
-        }
-        val timePickerState = rememberTimePickerState(
-            initialHour = initialTime.hour,
-            initialMinute = initialTime.minute,
-            is24Hour = true
-        )
-        AlertDialog(
-            onDismissRequest = { showTimePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    val timeString = String.format(
-                        Locale.ROOT,
-                        "%02d:%02d",
-                        timePickerState.hour,
-                        timePickerState.minute
-                    )
-                    onEvent(NotificationPreferencesUiEvent.UpdateReminderPreferences(uiState.timezone, timeString))
-                    showTimePicker = false
-                }) {
-                    Text(stringResource(android.R.string.ok))
-                }
+        ReminderTimePickerDialog(
+            preferredReminderTime = uiState.preferredReminderTime,
+            onTimeConfirm = { hour, minute ->
+                onEvent(NotificationPreferencesUiEvent.UpdateReminderTime(hour, minute))
             },
-            dismissButton = {
-                TextButton(onClick = { showTimePicker = false }) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
-            text = {
-                TimePicker(state = timePickerState)
-            }
+            onDismiss = { showTimePicker = false }
         )
     }
 

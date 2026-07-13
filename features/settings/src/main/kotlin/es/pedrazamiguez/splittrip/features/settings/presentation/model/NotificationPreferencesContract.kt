@@ -13,5 +13,6 @@ data class NotificationPreferencesUiState(
 
 sealed interface NotificationPreferencesUiEvent {
     data class ToggleCategory(val category: NotificationCategory, val enabled: Boolean) : NotificationPreferencesUiEvent
-    data class UpdateReminderPreferences(val timezone: String?, val time: String?) : NotificationPreferencesUiEvent
+    data class UpdateTimezone(val timezone: String?) : NotificationPreferencesUiEvent
+    data class UpdateReminderTime(val hour: Int, val minute: Int) : NotificationPreferencesUiEvent
 }

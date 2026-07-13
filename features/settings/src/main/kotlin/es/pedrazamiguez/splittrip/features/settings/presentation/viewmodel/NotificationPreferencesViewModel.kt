@@ -7,6 +7,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.notification.GetNotificationPre
 import es.pedrazamiguez.splittrip.domain.usecase.notification.UpdateNotificationPreferenceUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.ObserveCurrentUserProfileUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.UpdateUserReminderPreferencesUseCase
+import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.NotificationPreferencesUiMapper
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.NotificationPreferencesUiEvent
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.NotificationPreferencesUiState
 import kotlinx.coroutines.CancellationException
@@ -22,21 +23,15 @@ class NotificationPreferencesViewModel(
     private val getNotificationPreferencesUseCase: GetNotificationPreferencesUseCase,
     private val updateNotificationPreferenceUseCase: UpdateNotificationPreferenceUseCase,
     private val observeCurrentUserProfileUseCase: ObserveCurrentUserProfileUseCase,
-    private val updateUserReminderPreferencesUseCase: UpdateUserReminderPreferencesUseCase
+    private val updateUserReminderPreferencesUseCase: UpdateUserReminderPreferencesUseCase,
+    private val notificationPreferencesUiMapper: NotificationPreferencesUiMapper
 ) : ViewModel() {
 
     val uiState: StateFlow<NotificationPreferencesUiState> = combine(
         getNotificationPreferencesUseCase(),
         observeCurrentUserProfileUseCase()
     ) { prefs, profile ->
-        NotificationPreferencesUiState(
-            membershipEnabled = prefs.membershipEnabled,
-            expensesEnabled = prefs.expensesEnabled,
-            financialEnabled = prefs.financialEnabled,
-            timezone = profile?.timezone,
-            preferredReminderTime = profile?.preferredReminderTime,
-            isLoading = false
-        )
+        notificationPreferencesUiMapper.toUiState(prefs, profile)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(
@@ -49,7 +44,8 @@ class NotificationPreferencesViewModel(
     fun onEvent(event: NotificationPreferencesUiEvent) {
         when (event) {
             is NotificationPreferencesUiEvent.ToggleCategory -> handleToggleCategory(event)
-            is NotificationPreferencesUiEvent.UpdateReminderPreferences -> handleUpdateReminderPreferences(event)
+            is NotificationPreferencesUiEvent.UpdateTimezone -> handleUpdateTimezone(event)
+            is NotificationPreferencesUiEvent.UpdateReminderTime -> handleUpdateReminderTime(event)
         }
     }
 
@@ -65,17 +61,41 @@ class NotificationPreferencesViewModel(
         }
     }
 
-    private fun handleUpdateReminderPreferences(event: NotificationPreferencesUiEvent.UpdateReminderPreferences) {
+    private fun handleUpdateTimezone(event: NotificationPreferencesUiEvent.UpdateTimezone) {
         viewModelScope.launch {
             try {
                 val profile = observeCurrentUserProfileUseCase().firstOrNull()
                 if (profile != null) {
-                    updateUserReminderPreferencesUseCase(profile.userId, event.timezone, event.time)
+                    updateUserReminderPreferencesUseCase(
+                        userId = profile.userId,
+                        timezone = event.timezone,
+                        preferredReminderTime = profile.preferredReminderTime
+                    )
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to update reminder preferences")
+                Timber.e(e, "Failed to update timezone preference")
+            }
+        }
+    }
+
+    private fun handleUpdateReminderTime(event: NotificationPreferencesUiEvent.UpdateReminderTime) {
+        viewModelScope.launch {
+            try {
+                val profile = observeCurrentUserProfileUseCase().firstOrNull()
+                if (profile != null) {
+                    val formattedTime = notificationPreferencesUiMapper.formatTime(event.hour, event.minute)
+                    updateUserReminderPreferencesUseCase(
+                        userId = profile.userId,
+                        timezone = profile.timezone,
+                        preferredReminderTime = formattedTime
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to update reminder time preference")
             }
         }
     }
