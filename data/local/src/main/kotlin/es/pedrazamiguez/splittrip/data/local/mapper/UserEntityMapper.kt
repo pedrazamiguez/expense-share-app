@@ -14,7 +14,9 @@ fun UserEntity.toDomain(): User = User(
     bio = bio,
     syncStatus = SyncStatus.fromStringOrDefault(syncStatus),
     createdAt = createdAtMillis?.toLocalDateTimeUtc(),
-    isPending = isPending
+    isPending = isPending,
+    timezone = timezone,
+    preferredReminderTime = preferredReminderTime
 )
 
 fun User.toEntity(): UserEntity = UserEntity(
@@ -26,7 +28,9 @@ fun User.toEntity(): UserEntity = UserEntity(
     lastUpdatedAtMillis = System.currentTimeMillis(),
     bio = bio,
     syncStatus = syncStatus.name,
-    isPending = isPending
+    isPending = isPending,
+    timezone = timezone,
+    preferredReminderTime = preferredReminderTime
 )
 
 fun List<UserEntity>.toDomain(): List<User> = map { it.toDomain() }

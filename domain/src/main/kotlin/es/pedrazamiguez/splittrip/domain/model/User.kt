@@ -12,7 +12,9 @@ data class User(
     val bio: String? = null,
     val syncStatus: SyncStatus = SyncStatus.SYNCED,
     val createdAt: LocalDateTime? = null,
-    val isPending: Boolean = false
+    val isPending: Boolean = false,
+    val timezone: String? = null,
+    val preferredReminderTime: String? = null
 ) {
     companion object {
         fun normalizeEmail(email: String): String {

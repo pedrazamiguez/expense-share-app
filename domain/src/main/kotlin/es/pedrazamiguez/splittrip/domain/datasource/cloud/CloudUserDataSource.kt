@@ -15,5 +15,6 @@ interface CloudUserDataSource {
      */
     suspend fun searchUsersByEmail(email: String, excludeUserId: String? = null): List<User>
     suspend fun updateUserProfile(userId: String, displayName: String?, bio: String?, avatarUrl: String?)
+    suspend fun updateUserReminderPreferences(userId: String, timezone: String?, preferredReminderTime: String?)
     suspend fun deleteUser(userId: String)
 }

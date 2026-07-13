@@ -76,6 +76,10 @@
     <string name="notification_prefs_expenses_description">Gastos añadidos, actualizados o eliminados</string>
     <string name="notification_prefs_financial_title">Actividad financiera</string>
     <string name="notification_prefs_financial_description">Retiradas de efectivo y aportaciones</string>
+    <string name="notification_prefs_reminder_title">Preferencias de recordatorios</string>
+    <string name="notification_prefs_select_timezone">Seleccionar zona horaria</string>
+    <string name="notification_prefs_timezone">Zona horaria</string>
+    <string name="notification_prefs_reminder_time">Hora del recordatorio (HH:MM)</string>
 
     <!-- Developer Services Playground -->
     <string name="developer_services_selected_attachment">Adjunto Seleccionado</string>

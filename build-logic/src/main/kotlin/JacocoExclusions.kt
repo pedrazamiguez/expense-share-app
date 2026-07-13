@@ -198,6 +198,9 @@ object JacocoExclusions {
         // ── Kotlin coroutines internals leaking into the JaCoCo class path ────────
         // SafeCollector.common is an internal coroutines file; it's not our code.
         "**/SafeCollector*.*",
+        
+        // ── Simple delegation wrappers
+        "**/domain/usecase/user/impl/UpdateUserReminderPreferencesUseCaseImpl*.*"
     )
 }
 

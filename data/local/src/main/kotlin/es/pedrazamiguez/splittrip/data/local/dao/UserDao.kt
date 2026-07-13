@@ -21,6 +21,21 @@ interface UserDao {
     @Query("UPDATE users SET syncStatus = :syncStatus WHERE userId = :userId")
     suspend fun updateSyncStatus(userId: String, syncStatus: String)
 
+    @Query(
+        "UPDATE users SET timezone = :timezone, " +
+            "preferredReminderTime = :preferredReminderTime, " +
+            "lastUpdatedAtMillis = :lastUpdatedAtMillis, " +
+            "syncStatus = :syncStatus " +
+            "WHERE userId = :userId"
+    )
+    suspend fun updateUserReminderPreferences(
+        userId: String,
+        timezone: String?,
+        preferredReminderTime: String?,
+        lastUpdatedAtMillis: Long,
+        syncStatus: String
+    )
+
     @Query("DELETE FROM users WHERE userId = :userId")
     suspend fun deleteUserById(userId: String)
 
