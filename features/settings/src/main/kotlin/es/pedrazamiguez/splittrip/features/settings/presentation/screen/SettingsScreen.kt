@@ -27,7 +27,11 @@ fun SettingsScreen(
     currentThemeCode: String = AppTheme.SYSTEM.code,
     onThemeClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
-    onDeveloperServicesTestClick: () -> Unit = {}
+    onDeveloperServicesTestClick: () -> Unit = {},
+    onBugReportClick: () -> Unit = {},
+    onFaqClick: () -> Unit = {},
+    onPrivacyPolicyClick: () -> Unit = {},
+    onOpenSourceClick: () -> Unit = {}
 ) {
     val preferencesParams = SettingsPreferencesParams(
         onNotificationsClick = onNotificationsClick,
@@ -39,7 +43,11 @@ fun SettingsScreen(
         onLanguageClick = onLanguageClick,
         currentThemeCode = currentThemeCode,
         onThemeClick = onThemeClick,
-        onAccountStatusClick = onAccountStatusClick
+        onAccountStatusClick = onAccountStatusClick,
+        onBugReportClick = onBugReportClick,
+        onFaqClick = onFaqClick,
+        onPrivacyPolicyClick = onPrivacyPolicyClick,
+        onOpenSourceClick = onOpenSourceClick
     )
 
     val sections = buildSettingsSections(

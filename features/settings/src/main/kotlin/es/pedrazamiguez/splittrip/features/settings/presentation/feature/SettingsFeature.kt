@@ -111,6 +111,40 @@ fun SettingsFeature(
             onLogoutClick = { showLogoutDialog = true },
             onDeveloperServicesTestClick = {
                 navController.navigate(Routes.SETTINGS_DEVELOPER_SERVICES)
+            },
+            onBugReportClick = {
+                val packageInfo = try {
+                    context.packageManager.getPackageInfo(context.packageName, 0)
+                } catch (ignoredException: Exception) {
+                    null
+                }
+                val versionName = packageInfo?.versionName ?: "Unknown"
+                val emailBody = """
+                    
+                    
+                    -----------------------------------
+                    System Info (Do not modify):
+                    App Version: $versionName
+                    OS Version: Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})
+                    Device: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}
+                """.trimIndent()
+
+                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                    data = Uri.parse("mailto:")
+                    putExtra(Intent.EXTRA_EMAIL, arrayOf("support@splittrip.com"))
+                    putExtra(Intent.EXTRA_SUBJECT, "SplitTrip Bug Report")
+                    putExtra(Intent.EXTRA_TEXT, emailBody)
+                }
+                context.startActivity(Intent.createChooser(intent, "Send email..."))
+            },
+            onFaqClick = {
+                navController.navigate(Routes.SETTINGS_FAQ)
+            },
+            onPrivacyPolicyClick = {
+                navController.navigate(Routes.SETTINGS_PRIVACY_POLICY)
+            },
+            onOpenSourceClick = {
+                navController.navigate(Routes.SETTINGS_OPEN_SOURCE)
             }
         )
     }

@@ -6,8 +6,11 @@ import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.AccountStatusFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.DefaultCurrencyFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.DeveloperServicesFeature
+import es.pedrazamiguez.splittrip.features.settings.presentation.feature.FaqFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.LanguageFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.NotificationPreferencesFeature
+import es.pedrazamiguez.splittrip.features.settings.presentation.feature.OpenSourceFeature
+import es.pedrazamiguez.splittrip.features.settings.presentation.feature.PrivacyPolicyFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.SettingsFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.ThemeFeature
 
@@ -32,5 +35,14 @@ fun NavGraphBuilder.settingsGraph() {
     }
     composable(Routes.SETTINGS_DEVELOPER_SERVICES) {
         DeveloperServicesFeature()
+    }
+    composable(Routes.SETTINGS_FAQ) {
+        FaqFeature()
+    }
+    composable(Routes.SETTINGS_PRIVACY_POLICY) {
+        PrivacyPolicyFeature()
+    }
+    composable(Routes.SETTINGS_OPEN_SOURCE) {
+        OpenSourceFeature()
     }
 }

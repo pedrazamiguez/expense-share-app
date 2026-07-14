@@ -33,8 +33,11 @@ import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.impl.Not
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.AccountStatusScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.DefaultCurrencyScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.DeveloperServicesScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.FaqScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.LanguageScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.NotificationPreferencesScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.OpenSourceScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.PrivacyPolicyScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.SettingsScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.ThemeScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.AccountStatusViewModel
@@ -154,4 +157,7 @@ val settingsUiModule = module {
     single { DeveloperServicesScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { ThemeScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { AccountStatusScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { FaqScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { PrivacyPolicyScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { OpenSourceScreenUiProviderImpl() } bind ScreenUiProvider::class
 }
