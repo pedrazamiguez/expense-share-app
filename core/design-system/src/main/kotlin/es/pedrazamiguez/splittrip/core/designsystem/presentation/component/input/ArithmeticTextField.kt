@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -62,6 +63,8 @@ fun ArithmeticTextField(
     var expressionBuffer by remember { mutableStateOf(value) }
     var evaluationResult by remember { mutableStateOf<ExpressionResult?>(null) }
     val keyboardState = LocalArithmeticKeyboardState.current
+    val context = LocalContext.current
+    val locale = remember(context) { context.resources.configuration.locales[0] }
 
     LaunchedEffect(expressionBuffer) {
         evaluationResult = evaluator.evaluate(expressionBuffer)
@@ -71,6 +74,7 @@ fun ArithmeticTextField(
         val res = evaluationResult
         if (res is ExpressionResult.Success) {
             val formatted = res.value.stripTrailingZeros().formatForDisplay(
+                locale = locale,
                 maxDecimalPlaces = maxDecimalPlaces,
                 minDecimalPlaces = minDecimalPlaces
             )

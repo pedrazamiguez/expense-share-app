@@ -15,10 +15,10 @@ import java.util.Locale
  */
 private val UNICODE_SPACE_REGEX = Regex("[\\p{Zs}]")
 
-fun Expense.formatAmount(locale: Locale = Locale.getDefault()): String =
+fun Expense.formatAmount(locale: Locale): String =
     formatCurrencyAmount(amount = groupAmount, currencyCode = groupCurrency, locale = locale)
 
-fun Expense.formatSourceAmount(locale: Locale = Locale.getDefault()): String =
+fun Expense.formatSourceAmount(locale: Locale): String =
     formatCurrencyAmount(amount = sourceAmount, currencyCode = sourceCurrency, locale = locale)
 
 fun formatCurrencyAmount(
