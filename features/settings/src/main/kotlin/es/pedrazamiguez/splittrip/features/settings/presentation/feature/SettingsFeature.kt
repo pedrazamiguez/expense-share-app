@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
+import es.pedrazamiguez.splittrip.core.common.provider.SupportEmailProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.permission.checkNotificationPermission
@@ -28,6 +29,7 @@ import es.pedrazamiguez.splittrip.features.settings.R
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.SettingsScreen
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @Suppress("LongMethod", "CognitiveComplexMethod")
 @Composable
@@ -38,6 +40,7 @@ fun SettingsFeature(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val pillController = LocalTopPillController.current
+    val supportEmailProvider = koinInject<SupportEmailProvider>()
 
     val currentCurrency by settingsViewModel.currentCurrency.collectAsStateWithLifecycle()
     val hasPermission by settingsViewModel.hasNotificationPermission.collectAsStateWithLifecycle()
@@ -113,27 +116,12 @@ fun SettingsFeature(
                 navController.navigate(Routes.SETTINGS_DEVELOPER_SERVICES)
             },
             onBugReportClick = {
-                val packageInfo = try {
-                    context.packageManager.getPackageInfo(context.packageName, 0)
-                } catch (ignoredException: Exception) {
-                    null
-                }
-                val versionName = packageInfo?.versionName ?: "Unknown"
-                val emailBody = """
-                    
-                    
-                    -----------------------------------
-                    System Info (Do not modify):
-                    App Version: $versionName
-                    OS Version: Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})
-                    Device: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}
-                """.trimIndent()
-
+                val supportEmail = supportEmailProvider.buildBugReportEmail()
                 val intent = Intent(Intent.ACTION_SENDTO).apply {
                     data = Uri.parse("mailto:")
-                    putExtra(Intent.EXTRA_EMAIL, arrayOf("support@splittrip.com"))
-                    putExtra(Intent.EXTRA_SUBJECT, "SplitTrip Bug Report")
-                    putExtra(Intent.EXTRA_TEXT, emailBody)
+                    putExtra(Intent.EXTRA_EMAIL, arrayOf(supportEmail.recipient))
+                    putExtra(Intent.EXTRA_SUBJECT, supportEmail.subject)
+                    putExtra(Intent.EXTRA_TEXT, supportEmail.body)
                 }
                 context.startActivity(Intent.createChooser(intent, "Send email..."))
             },

@@ -48,6 +48,9 @@ class AppMetadataProviderImpl(private val context: Context) : AppMetadataProvide
     override val androidVersion: String
         get() = Build.VERSION.SDK_INT.toString()
 
+    override val androidReleaseVersion: String
+        get() = Build.VERSION.RELEASE
+
     private fun getPackageInfo() = try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.packageManager.getPackageInfo(

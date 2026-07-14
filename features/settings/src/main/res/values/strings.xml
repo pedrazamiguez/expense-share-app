@@ -224,4 +224,22 @@
     <string name="open_source_libraries_header">We leverage these open-source packages to build a premium, fast, and offline-first experience:</string>
     <string name="open_source_lib_license">License: %1$s</string>
     <string name="open_source_view_source">View Codebase</string>
+
+    <!-- Open Source Libraries -->
+    <string name="open_source_lib_koin_name">Koin</string>
+    <string name="open_source_lib_koin_desc">Pragmatic lightweight dependency injection framework for Kotlin</string>
+    <string name="open_source_lib_room_name">Room</string>
+    <string name="open_source_lib_room_desc">Android Jetpack SQLite object mapping library</string>
+    <string name="open_source_lib_firebase_name">Firebase</string>
+    <string name="open_source_lib_firebase_desc">Google Cloud platform for authentication and syncing</string>
+    <string name="open_source_lib_haze_name">Haze</string>
+    <string name="open_source_lib_haze_desc">GPU-based real-time blur and glassmorphism effects for Jetpack Compose</string>
+    <string name="open_source_lib_timber_name">Timber</string>
+    <string name="open_source_lib_timber_desc">Extensible utility class for logging with automatic tag generation</string>
+    <string name="open_source_lib_retrofit_name">Retrofit</string>
+    <string name="open_source_lib_retrofit_desc">Type-safe REST client for Android and Java by Square</string>
+    <string name="open_source_lib_coil_name">Coil</string>
+    <string name="open_source_lib_coil_desc">Kotlin Coroutine-backed image loading library for Android</string>
+    <string name="open_source_lib_gson_name">Gson</string>
+    <string name="open_source_lib_gson_desc">Java library to convert Java Objects into JSON and vice versa</string>
 </resources>

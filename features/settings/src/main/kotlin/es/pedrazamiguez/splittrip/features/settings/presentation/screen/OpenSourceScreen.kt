@@ -19,59 +19,61 @@ import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.features.settings.R
 
 private data class OssLibrary(
-    val name: String,
-    val description: String,
+    val nameRes: Int,
+    val descriptionRes: Int,
     val license: String,
     val url: String
 )
 
+private const val LICENSE_APACHE_2_0 = "Apache 2.0"
+
 private val libraries = listOf(
     OssLibrary(
-        "Koin",
-        "Pragmatic lightweight dependency injection framework for Kotlin",
-        "Apache 2.0",
+        R.string.open_source_lib_koin_name,
+        R.string.open_source_lib_koin_desc,
+        LICENSE_APACHE_2_0,
         "https://github.com/InsertKoinIO/koin"
     ),
     OssLibrary(
-        "Room",
-        "Android Jetpack SQLite object mapping library",
-        "Apache 2.0",
+        R.string.open_source_lib_room_name,
+        R.string.open_source_lib_room_desc,
+        LICENSE_APACHE_2_0,
         "https://developer.android.com/training/data-storage/room"
     ),
     OssLibrary(
-        "Firebase",
-        "Google Cloud platform for authentication and syncing",
-        "Apache 2.0",
+        R.string.open_source_lib_firebase_name,
+        R.string.open_source_lib_firebase_desc,
+        LICENSE_APACHE_2_0,
         "https://github.com/firebase/firebase-android-sdk"
     ),
     OssLibrary(
-        "Haze",
-        "GPU-based real-time blur and glassmorphism effects for Jetpack Compose",
-        "Apache 2.0",
+        R.string.open_source_lib_haze_name,
+        R.string.open_source_lib_haze_desc,
+        LICENSE_APACHE_2_0,
         "https://github.com/chrisbanes/haze"
     ),
     OssLibrary(
-        "Timber",
-        "Extensible utility class for logging with automatic tag generation",
-        "Apache 2.0",
+        R.string.open_source_lib_timber_name,
+        R.string.open_source_lib_timber_desc,
+        LICENSE_APACHE_2_0,
         "https://github.com/JakeWharton/timber"
     ),
     OssLibrary(
-        "Retrofit",
-        "Type-safe REST client for Android and Java by Square",
-        "Apache 2.0",
+        R.string.open_source_lib_retrofit_name,
+        R.string.open_source_lib_retrofit_desc,
+        LICENSE_APACHE_2_0,
         "https://github.com/square/retrofit"
     ),
     OssLibrary(
-        "Coil",
-        "Kotlin Coroutine-backed image loading library for Android",
-        "Apache 2.0",
+        R.string.open_source_lib_coil_name,
+        R.string.open_source_lib_coil_desc,
+        LICENSE_APACHE_2_0,
         "https://github.com/coil-kt/coil"
     ),
     OssLibrary(
-        "Gson",
-        "Java library to convert Java Objects into JSON and vice versa",
-        "Apache 2.0",
+        R.string.open_source_lib_gson_name,
+        R.string.open_source_lib_gson_desc,
+        LICENSE_APACHE_2_0,
         "https://github.com/google/gson"
     )
 )
@@ -95,14 +97,14 @@ fun OpenSourceScreen(onLibraryUrlClick: (String) -> Unit) {
             ListItem(
                 headlineContent = {
                     Text(
-                        text = library.name,
+                        text = stringResource(library.nameRes),
                         fontWeight = FontWeight.SemiBold
                     )
                 },
                 supportingContent = {
                     Column {
                         Text(
-                            text = library.description,
+                            text = stringResource(library.descriptionRes),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

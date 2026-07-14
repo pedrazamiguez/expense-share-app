@@ -190,4 +190,20 @@
     <string name="open_source_libraries_header">Utiliçamô êttô paquetê de código abierto pa creâh una êpperiençia premium, rápida y çin conêççión:</string>
     <string name="open_source_lib_license">Liçençia: %1$s</string>
     <string name="open_source_view_source">Bêh código fuente</string>
+    <string name="open_source_lib_koin_name">Koin</string>
+    <string name="open_source_lib_koin_desc">Framework prâmmático y lihero de inyêççión de dependençiâ pa Kôl-lin</string>
+    <string name="open_source_lib_room_name">Room</string>
+    <string name="open_source_lib_room_desc">Librería de mapeo de ôhhetô SQLite de Androîh Hêppack</string>
+    <string name="open_source_lib_firebase_name">Firebaçe</string>
+    <string name="open_source_lib_firebase_desc">Plataforma de Google Cloûh pa autenticaçión y çincroniçaçión</string>
+    <string name="open_source_lib_haze_name">Açe</string>
+    <string name="open_source_lib_haze_desc">Efêttô de deçenfoque y glassmorpîmm en tiempo reâh baçáô en GPU pa Hêppack Compoçe</string>
+    <string name="open_source_lib_timber_name">Timbêh</string>
+    <string name="open_source_lib_timber_desc">Claçe de utilidá êttençible pa rehîttro de logs con heneraçión automática de etiquetâ</string>
+    <string name="open_source_lib_retrofit_name">Retrofîh</string>
+    <string name="open_source_lib_retrofit_desc">Cliente RÊTT çeguro pa Androîh y Haba de Square</string>
+    <string name="open_source_lib_coil_name">Coîh</string>
+    <string name="open_source_lib_coil_desc">Librería de carga de imáhenê pa Androîh baçá en corrutinâ de Kôl-lin</string>
+    <string name="open_source_lib_gson_name">Gçon</string>
+    <string name="open_source_lib_gson_desc">Librería Haba pa combertîh ôhhetô Haba en JÇON y biçe berça</string>
 </resources>
