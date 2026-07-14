@@ -5,6 +5,7 @@ import es.pedrazamiguez.splittrip.MainActivity
 import es.pedrazamiguez.splittrip.core.common.provider.AppMetadataProvider
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.common.provider.SupportEmailAddressProvider
 import es.pedrazamiguez.splittrip.core.designsystem.provider.IntentProvider
 import es.pedrazamiguez.splittrip.core.logging.LogContext
 import es.pedrazamiguez.splittrip.core.logging.impl.LogContextImpl
@@ -14,6 +15,7 @@ import es.pedrazamiguez.splittrip.provider.impl.AppMetadataProviderImpl
 import es.pedrazamiguez.splittrip.provider.impl.IntentProviderImpl
 import es.pedrazamiguez.splittrip.provider.impl.LocaleProviderImpl
 import es.pedrazamiguez.splittrip.provider.impl.ResourceProviderImpl
+import es.pedrazamiguez.splittrip.provider.impl.SupportEmailAddressProviderImpl
 import java.util.UUID
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +33,9 @@ val appModule = module {
     }
     single<LocaleProvider> { LocaleProviderImpl(context = androidContext()) }
     single<ResourceProvider> { ResourceProviderImpl(context = androidContext()) }
+    single<SupportEmailAddressProvider> {
+        SupportEmailAddressProviderImpl(appConfigService = get())
+    }
     single<LogContext> {
         val authService = get<AuthenticationService>()
         val userPreferences = get<UserPreferences>()

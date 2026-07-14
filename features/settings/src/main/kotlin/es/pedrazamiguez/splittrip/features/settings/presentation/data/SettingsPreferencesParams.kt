@@ -12,5 +12,9 @@ data class SettingsPreferencesParams(
     val onLanguageClick: () -> Unit,
     val currentThemeCode: String,
     val onThemeClick: () -> Unit,
-    val onAccountStatusClick: () -> Unit
+    val onAccountStatusClick: () -> Unit,
+    val onBugReportClick: () -> Unit,
+    val onFaqClick: () -> Unit,
+    val onPrivacyPolicyClick: () -> Unit,
+    val onOpenSourceClick: () -> Unit
 )

@@ -7,6 +7,7 @@ interface AppConfigRepository {
     val balanceComputationDebounceMs: StateFlow<Long>
     val maxMembersPerGroup: StateFlow<Int>
     val extractedDateMaxFutureDays: StateFlow<Int>
+    val supportEmailAddress: StateFlow<String>
 
     suspend fun fetchConfiguration(): Boolean
 }

@@ -11,4 +11,5 @@ class AppConfigServiceImpl(
     override val balanceComputationDebounceMs: StateFlow<Long> = appConfigRepository.balanceComputationDebounceMs
     override val maxMembersPerGroup: StateFlow<Int> = appConfigRepository.maxMembersPerGroup
     override val extractedDateMaxFutureDays: StateFlow<Int> = appConfigRepository.extractedDateMaxFutureDays
+    override val supportEmailAddress: StateFlow<String> = appConfigRepository.supportEmailAddress
 }

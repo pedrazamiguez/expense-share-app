@@ -44,8 +44,8 @@ fun buildSettingsSections(
     accountSection(preferencesParams),
     preferencesSection(preferencesParams),
     developerSection(onServicesTestClick = onServicesTestClick),
-    supportSection(),
-    aboutSection()
+    supportSection(preferencesParams),
+    aboutSection(preferencesParams)
 )
 
 private fun accountSection(params: SettingsPreferencesParams) = SettingsSectionModel(
@@ -146,13 +146,14 @@ private fun developerSection(onServicesTestClick: () -> Unit) = SettingsSectionM
     )
 )
 
-private fun supportSection() = SettingsSectionModel(
+private fun supportSection(params: SettingsPreferencesParams) = SettingsSectionModel(
     titleRes = R.string.settings_section_support,
     items = listOf(
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.Bug,
             titleRes = R.string.settings_support_bug_title,
-            descriptionRes = R.string.settings_support_bug_description
+            descriptionRes = R.string.settings_support_bug_description,
+            onClick = params.onBugReportClick
         ),
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.Bulb,
@@ -162,7 +163,8 @@ private fun supportSection() = SettingsSectionModel(
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.HelpCircle,
             titleRes = R.string.settings_support_faq_title,
-            descriptionRes = R.string.settings_support_faq_description
+            descriptionRes = R.string.settings_support_faq_description,
+            onClick = params.onFaqClick
         ),
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.Headset,
@@ -172,7 +174,7 @@ private fun supportSection() = SettingsSectionModel(
     )
 )
 
-private fun aboutSection() = SettingsSectionModel(
+private fun aboutSection(params: SettingsPreferencesParams) = SettingsSectionModel(
     titleRes = R.string.settings_section_about,
     items = listOf(
         SettingsItemModel.Custom { AppVersionFeature() },
@@ -180,12 +182,14 @@ private fun aboutSection() = SettingsSectionModel(
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.ShieldLock,
             titleRes = R.string.settings_about_privacy_title,
-            descriptionRes = R.string.settings_about_privacy_description
+            descriptionRes = R.string.settings_about_privacy_description,
+            onClick = params.onPrivacyPolicyClick
         ),
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.Book,
             titleRes = R.string.settings_about_libraries_title,
-            descriptionRes = R.string.settings_about_libraries_description
+            descriptionRes = R.string.settings_about_libraries_description,
+            onClick = params.onOpenSourceClick
         ),
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.UserPin,

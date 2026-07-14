@@ -6,4 +6,5 @@ interface AppMetadataProvider {
     val isEmulator: Boolean
     val deviceModel: String
     val androidVersion: String
+    val androidReleaseVersion: String
 }

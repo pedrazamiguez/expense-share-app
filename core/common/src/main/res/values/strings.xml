@@ -1,0 +1,8 @@
+<resources>
+    <!-- Support Email -->
+    <string name="support_email_subject">SplitTrip Bug Report</string>
+    <string name="support_email_system_info_header">System Info (Do not modify):</string>
+    <string name="support_email_app_version">App Version: %1$s</string>
+    <string name="support_email_os_version">OS Version: Android %1$s (API %2$s)</string>
+    <string name="support_email_device">Device: %1$s</string>
+</resources>
