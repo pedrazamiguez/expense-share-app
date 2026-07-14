@@ -4,11 +4,13 @@ import es.pedrazamiguez.splittrip.core.common.R
 import es.pedrazamiguez.splittrip.core.common.provider.AppMetadataProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.common.provider.SupportEmail
+import es.pedrazamiguez.splittrip.core.common.provider.SupportEmailAddressProvider
 import es.pedrazamiguez.splittrip.core.common.provider.SupportEmailProvider
 
 class SupportEmailProviderImpl(
     private val appMetadataProvider: AppMetadataProvider,
-    private val resourceProvider: ResourceProvider
+    private val resourceProvider: ResourceProvider,
+    private val supportEmailAddressProvider: SupportEmailAddressProvider
 ) : SupportEmailProvider {
 
     override fun buildBugReportEmail(): SupportEmail {
@@ -38,7 +40,7 @@ class SupportEmailProviderImpl(
         """.trimIndent()
 
         return SupportEmail(
-            recipient = "support@splittrip.com",
+            recipient = supportEmailAddressProvider.getSupportEmailAddress(),
             subject = resourceProvider.getString(R.string.support_email_subject),
             body = emailBody
         )

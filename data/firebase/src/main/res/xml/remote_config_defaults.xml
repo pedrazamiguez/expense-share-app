@@ -16,4 +16,8 @@
         <key>extracted_date_max_future_days</key>
         <value>30</value>
     </entry>
+    <entry>
+        <key>support_email_address</key>
+        <value>support@splittrip.com</value>
+    </entry>
 </defaultsMap>

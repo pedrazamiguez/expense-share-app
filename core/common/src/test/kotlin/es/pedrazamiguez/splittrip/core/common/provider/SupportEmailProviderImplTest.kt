@@ -29,13 +29,20 @@ class SupportEmailProviderImplTest {
         every { resourceProvider.getString(R.string.support_email_device, "Google Pixel 8") } returns
             "Device: Google Pixel 8"
 
-        val provider = SupportEmailProviderImpl(appMetadataProvider, resourceProvider)
+        val supportEmailAddressProvider = mockk<SupportEmailAddressProvider>()
+        every { supportEmailAddressProvider.getSupportEmailAddress() } returns "test-support@splittrip.com"
+
+        val provider = SupportEmailProviderImpl(
+            appMetadataProvider = appMetadataProvider,
+            resourceProvider = resourceProvider,
+            supportEmailAddressProvider = supportEmailAddressProvider
+        )
 
         // Act
         val email = provider.buildBugReportEmail()
 
         // Assert
-        assertEquals("support@splittrip.com", email.recipient)
+        assertEquals("test-support@splittrip.com", email.recipient)
         assertEquals("SplitTrip Bug Report", email.subject)
 
         // Verify body content format

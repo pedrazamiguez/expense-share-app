@@ -28,6 +28,9 @@ class FirebaseAppConfigRepository(
     private val _extractedDateMaxFutureDays = MutableStateFlow(DEFAULT_EXTRACTED_DATE_MAX_FUTURE_DAYS)
     override val extractedDateMaxFutureDays: StateFlow<Int> = _extractedDateMaxFutureDays.asStateFlow()
 
+    private val _supportEmailAddress = MutableStateFlow(DEFAULT_SUPPORT_EMAIL)
+    override val supportEmailAddress: StateFlow<String> = _supportEmailAddress.asStateFlow()
+
     init {
         remoteConfig.setDefaultsAsync(R.xml.remote_config_defaults)
         updateFlowsFromConfig()
@@ -75,6 +78,8 @@ class FirebaseAppConfigRepository(
         val maxFutureDays = remoteConfig.getLong("extracted_date_max_future_days").toInt()
         _extractedDateMaxFutureDays.value =
             if (maxFutureDays > 0) maxFutureDays else DEFAULT_EXTRACTED_DATE_MAX_FUTURE_DAYS
+        _supportEmailAddress.value =
+            remoteConfig.getString("support_email_address").takeIf { it.isNotBlank() } ?: DEFAULT_SUPPORT_EMAIL
     }
 
     companion object {
@@ -82,5 +87,6 @@ class FirebaseAppConfigRepository(
         private const val DEFAULT_BALANCE_DEBOUNCE_MS = 300L
         private const val DEFAULT_MAX_MEMBERS_PER_GROUP = 20
         private const val DEFAULT_EXTRACTED_DATE_MAX_FUTURE_DAYS = 30
+        private const val DEFAULT_SUPPORT_EMAIL = "support@splittrip.com"
     }
 }
