@@ -27,6 +27,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.MathDivide
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.MathMinus
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.MathMultiply
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.MathPlus
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.rememberLocale
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatArithmeticPreview
 
 @Suppress("LongMethod")
@@ -36,6 +37,8 @@ fun ArithmeticOperatorBar(
     modifier: Modifier = Modifier
 ) {
     if (!state.isVisible) return
+
+    val locale = rememberLocale()
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -54,7 +57,8 @@ fun ArithmeticOperatorBar(
                 expressionBuffer = state.expressionBuffer,
                 evaluationResult = state.evaluationResult,
                 maxDecimalPlaces = state.maxDecimalPlaces,
-                minDecimalPlaces = state.minDecimalPlaces
+                minDecimalPlaces = state.minDecimalPlaces,
+                locale = locale
             )
 
             Text(

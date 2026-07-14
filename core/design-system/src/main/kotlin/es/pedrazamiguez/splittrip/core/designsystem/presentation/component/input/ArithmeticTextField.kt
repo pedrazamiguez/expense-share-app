@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.rememberLocale
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatForDisplay
 import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionCalculatorService
 import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionResult
@@ -62,6 +63,7 @@ fun ArithmeticTextField(
     var expressionBuffer by remember { mutableStateOf(value) }
     var evaluationResult by remember { mutableStateOf<ExpressionResult?>(null) }
     val keyboardState = LocalArithmeticKeyboardState.current
+    val locale = rememberLocale()
 
     LaunchedEffect(expressionBuffer) {
         evaluationResult = evaluator.evaluate(expressionBuffer)
@@ -71,6 +73,7 @@ fun ArithmeticTextField(
         val res = evaluationResult
         if (res is ExpressionResult.Success) {
             val formatted = res.value.stripTrailingZeros().formatForDisplay(
+                locale = locale,
                 maxDecimalPlaces = maxDecimalPlaces,
                 minDecimalPlaces = minDecimalPlaces
             )

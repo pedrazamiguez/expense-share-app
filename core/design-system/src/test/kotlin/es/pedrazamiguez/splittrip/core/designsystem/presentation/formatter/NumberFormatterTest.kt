@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter
 
+import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionResult
 import java.math.BigDecimal
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -665,6 +666,87 @@ class NumberFormatterTest {
 
             // Then
             assertEquals("1,000", result) // Rounded up
+        }
+    }
+
+    @Nested
+    @DisplayName("formatArithmeticPreview")
+    inner class FormatArithmeticPreview {
+
+        @Test
+        fun `returns empty string when evaluation result is not Success`() {
+            // Given
+            val expressionBuffer = "10+5"
+            val evaluationResult = ExpressionResult.Failure.Malformed
+            val locale = Locale.US
+
+            // When
+            val result = formatArithmeticPreview(
+                expressionBuffer = expressionBuffer,
+                evaluationResult = evaluationResult,
+                maxDecimalPlaces = 2,
+                locale = locale
+            )
+
+            // Then
+            assertEquals("", result)
+        }
+
+        @Test
+        fun `returns empty string when expression buffer has no operators`() {
+            // Given
+            val expressionBuffer = "105"
+            val evaluationResult = ExpressionResult.Success(BigDecimal("105"))
+            val locale = Locale.US
+
+            // When
+            val result = formatArithmeticPreview(
+                expressionBuffer = expressionBuffer,
+                evaluationResult = evaluationResult,
+                maxDecimalPlaces = 2,
+                locale = locale
+            )
+
+            // Then
+            assertEquals("", result)
+        }
+
+        @Test
+        fun `returns formatted value with correct locale and scale when expression has operators`() {
+            // Given
+            val expressionBuffer = "10+5"
+            val evaluationResult = ExpressionResult.Success(BigDecimal("15.123"))
+            val locale = Locale.US
+
+            // When
+            val result = formatArithmeticPreview(
+                expressionBuffer = expressionBuffer,
+                evaluationResult = evaluationResult,
+                maxDecimalPlaces = 2,
+                locale = locale
+            )
+
+            // Then
+            assertEquals("= 15.12", result)
+        }
+
+        @Test
+        fun `formats with Spanish locale`() {
+            // Given
+            val expressionBuffer = "10+5"
+            val evaluationResult = ExpressionResult.Success(BigDecimal("15.123"))
+            val locale = Locale("es", "ES")
+
+            // When
+            val result = formatArithmeticPreview(
+                expressionBuffer = expressionBuffer,
+                evaluationResult = evaluationResult,
+                maxDecimalPlaces = 2,
+                locale = locale
+            )
+
+            // Then
+            assertEquals("= 15,12", result)
         }
     }
 }
