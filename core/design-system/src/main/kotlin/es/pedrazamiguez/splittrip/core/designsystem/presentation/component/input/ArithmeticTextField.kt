@@ -14,12 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.rememberLocale
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatForDisplay
 import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionCalculatorService
 import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionResult
@@ -63,8 +63,7 @@ fun ArithmeticTextField(
     var expressionBuffer by remember { mutableStateOf(value) }
     var evaluationResult by remember { mutableStateOf<ExpressionResult?>(null) }
     val keyboardState = LocalArithmeticKeyboardState.current
-    val context = LocalContext.current
-    val locale = remember(context) { context.resources.configuration.locales[0] }
+    val locale = rememberLocale()
 
     LaunchedEffect(expressionBuffer) {
         evaluationResult = evaluator.evaluate(expressionBuffer)
