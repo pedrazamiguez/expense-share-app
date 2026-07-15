@@ -21,6 +21,7 @@ data class Expense(
     // 2. Target (Group Debt)
     val groupAmount: Long = 0,
     val groupCurrency: String = "EUR",
+    val expectedGroupAmount: Long? = null,
 
     // 3. Bridge (Rate)
     val exchangeRate: BigDecimal = BigDecimal.ONE,

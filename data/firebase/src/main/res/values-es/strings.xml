@@ -50,4 +50,6 @@
     <string name="notification_scheduled_reminder_body">Tienes un gasto programado que vence mañana.</string>
     <string name="notification_refundable_reminder_title">Recordatorio de gasto reembolsable</string>
     <string name="notification_refundable_reminder_body">No olvides tu gasto reembolsable que vence mañana.</string>
+    <string name="notification_scheduled_effective_title">Vence gasto programado hoy</string>
+    <string name="notification_scheduled_effective_body">Un gasto programado vence hoy. Por favor, confirma el cargo real final.</string>
 </resources>

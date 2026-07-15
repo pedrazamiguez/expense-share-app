@@ -29,6 +29,7 @@ fun ExpenseEntity.toDomain(): Expense {
         sourceCurrency = sourceCurrency,
         groupAmount = groupAmount,
         groupCurrency = groupCurrency,
+        expectedGroupAmount = expectedGroupAmount,
         exchangeRate = exchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE,
         category = category?.let {
             runCatching { ExpenseCategory.fromString(it) }.getOrDefault(ExpenseCategory.OTHER)
@@ -70,6 +71,7 @@ fun Expense.toEntity(): ExpenseEntity {
         sourceCurrency = sourceCurrency,
         groupAmount = groupAmount,
         groupCurrency = groupCurrency,
+        expectedGroupAmount = expectedGroupAmount,
         exchangeRate = exchangeRate.toPlainString(),
         category = category.name,
         vendor = vendor,

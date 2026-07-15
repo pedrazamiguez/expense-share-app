@@ -11,6 +11,8 @@ import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.ReceiptAttachment
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
+import es.pedrazamiguez.splittrip.domain.service.RemainderDistributionService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.DownloadReceiptUseCase
@@ -66,6 +68,8 @@ class ExpenseDetailViewModelTest {
     private lateinit var authenticationService: AuthenticationService
     private lateinit var expenseDetailUiMapper: ExpenseDetailUiMapper
     private lateinit var observeGroupUseCase: ObserveGroupUseCase
+    private lateinit var exchangeRateCalculationService: ExchangeRateCalculationService
+    private lateinit var remainderDistributionService: RemainderDistributionService
     private lateinit var viewModel: ExpenseDetailViewModel
 
     private val testExpenseId = "expense-123"
@@ -131,6 +135,8 @@ class ExpenseDetailViewModelTest {
         authenticationService = mockk()
         expenseDetailUiMapper = mockk()
         observeGroupUseCase = mockk()
+        exchangeRateCalculationService = mockk()
+        remainderDistributionService = mockk()
 
         every { getCashWithdrawalsFlowUseCase(any()) } returns flowOf(emptyList())
         coEvery { getGroupSubunitsUseCase(any()) } returns emptyList()
@@ -701,6 +707,126 @@ class ExpenseDetailViewModelTest {
         }
     }
 
+    @Nested
+    inner class ConfirmPaymentEvent {
+
+        private val foreignExpense = testExpense.copy(
+            paymentStatus = PaymentStatus.SCHEDULED,
+            sourceCurrency = "GBP",
+            groupCurrency = "EUR",
+            sourceAmount = 1000L,
+            groupAmount = 1200L,
+            splits = listOf(
+                es.pedrazamiguez.splittrip.domain.model.ExpenseSplit(userId = testUserId, amountCents = 1200L)
+            )
+        )
+
+        @Test
+        fun `ConfirmPayment calls updateExpenseUseCase with FINISHED status and rescaled splits`() =
+            runTest(testDispatcher) {
+                // Given
+                every { getExpenseByIdFlowUseCase(testExpenseId) } returns flowOf(foreignExpense)
+                every { exchangeRateCalculationService.calculateImpliedRate(any(), any()) } returns BigDecimal("1.30")
+                every { remainderDistributionService.rescaleAmounts(any(), any(), any(), any()) } returns listOf(1300L)
+                coEvery { updateExpenseUseCase(any(), any(), any(), any()) } returns Result.success(Unit)
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+                viewModel.setExpenseId(testExpenseId)
+                advanceUntilIdle()
+
+                // When
+                viewModel.onEvent(ExpenseDetailUiEvent.ConfirmPayment(actualGroupAmountCents = 1300L))
+                advanceUntilIdle()
+
+                // Then
+                coVerify(exactly = 1) {
+                    updateExpenseUseCase(
+                        groupId = testGroupId,
+                        expense = match {
+                            it.paymentStatus == PaymentStatus.FINISHED &&
+                                it.groupAmount == 1300L
+                        },
+                        pairedContributionScope = PayerType.USER,
+                        pairedSubunitId = null
+                    )
+                }
+
+                collectJob.cancel()
+            }
+
+        @Test
+        fun `ConfirmPayment emits ConfirmPaymentSuccess action on success`() = runTest(testDispatcher) {
+            // Given
+            every { getExpenseByIdFlowUseCase(testExpenseId) } returns flowOf(foreignExpense)
+            every { exchangeRateCalculationService.calculateImpliedRate(any(), any()) } returns BigDecimal("1.30")
+            every { remainderDistributionService.rescaleAmounts(any(), any(), any(), any()) } returns listOf(1300L)
+            coEvery { updateExpenseUseCase(any(), any(), any(), any()) } returns Result.success(Unit)
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setExpenseId(testExpenseId)
+            advanceUntilIdle()
+
+            val actions = mutableListOf<ExpenseDetailUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            // When
+            viewModel.onEvent(ExpenseDetailUiEvent.ConfirmPayment(actualGroupAmountCents = 1300L))
+            advanceUntilIdle()
+
+            // Then
+            assertTrue(
+                actions.any { it is ExpenseDetailUiAction.ConfirmPaymentSuccess },
+                "Expected ConfirmPaymentSuccess action but got: $actions"
+            )
+
+            actionsJob.cancel()
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `ConfirmPayment emits ShowError action when update fails`() = runTest(testDispatcher) {
+            // Given
+            every { getExpenseByIdFlowUseCase(testExpenseId) } returns flowOf(foreignExpense)
+            every { exchangeRateCalculationService.calculateImpliedRate(any(), any()) } returns BigDecimal("1.30")
+            every { remainderDistributionService.rescaleAmounts(any(), any(), any(), any()) } returns listOf(1300L)
+            coEvery { updateExpenseUseCase(any(), any(), any(), any()) } returns
+                Result.failure(RuntimeException("Update failed"))
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setExpenseId(testExpenseId)
+            advanceUntilIdle()
+
+            val actions = mutableListOf<ExpenseDetailUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            // When
+            viewModel.onEvent(ExpenseDetailUiEvent.ConfirmPayment(actualGroupAmountCents = 1300L))
+            advanceUntilIdle()
+
+            // Then
+            assertTrue(
+                actions.any { it is ExpenseDetailUiAction.ShowError },
+                "Expected ShowError action but got: $actions"
+            )
+
+            actionsJob.cancel()
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `ConfirmPayment does nothing when expense is not yet loaded`() = runTest(testDispatcher) {
+            // Given — no setExpenseId, so uiState.expense is null
+
+            // When
+            viewModel.onEvent(ExpenseDetailUiEvent.ConfirmPayment(actualGroupAmountCents = 1300L))
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 0) { updateExpenseUseCase(any(), any(), any(), any()) }
+        }
+    }
+
     private fun createViewModel() = ExpenseDetailViewModel(
         getExpenseByIdFlowUseCase = getExpenseByIdFlowUseCase,
         getMemberProfilesUseCase = getMemberProfilesUseCase,
@@ -711,6 +837,8 @@ class ExpenseDetailViewModelTest {
         updateExpenseUseCase = updateExpenseUseCase,
         authenticationService = authenticationService,
         expenseDetailUiMapper = expenseDetailUiMapper,
-        observeGroupUseCase = observeGroupUseCase
+        observeGroupUseCase = observeGroupUseCase,
+        exchangeRateCalculationService = exchangeRateCalculationService,
+        remainderDistributionService = remainderDistributionService
     )
 }

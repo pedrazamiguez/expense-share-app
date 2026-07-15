@@ -281,4 +281,12 @@
     <string name="expense_error_date_future">La fexa y ora der gâtto no pueden çêh futurâ</string>
     <string name="edit_expense_title">Editâh gâtto</string>
     <string name="edit_expense_submit_button">Guardâh cambiô</string>
+    <string name="expense_payment_confirmed_successfully">Pago confirmao con éççito</string>
+    <string name="expense_error_confirm_payment_failed">No çe pudo confirmâh er pago. Por fabôh, berifica el importe.</string>
+    <string name="confirm_payment">Confirmâh pago</string>
+    <string name="confirm_payment_amount_title">Confirmâh pago reâh</string>
+    <string name="confirm_payment_original_amount_label">Importe orihinâh: %1$s</string>
+    <string name="confirm_payment_expected_charge_label">Cargo êttimao en grupo: %1$s</string>
+    <string name="confirm_payment_actual_amount_field_label">Cargo reâh en %1$s</string>
+    <string name="expense_detail_expected_with_shift">Êttimao: %1$s (dêbbiaçión: %2$s)</string>
 </resources>

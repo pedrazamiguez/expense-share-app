@@ -19,6 +19,7 @@ data class ExpenseDocument(
     val rateSource: String? = null,
     val rateTimestamp: Timestamp? = null,
     val groupAmountCents: Long? = null,
+    val expectedGroupAmountCents: Long? = null,
     val addOns: List<AddOnDocument> = emptyList(),
     val paymentMethod: String = "DEBIT_CARD",
     val paymentStatus: String = "FINISHED",

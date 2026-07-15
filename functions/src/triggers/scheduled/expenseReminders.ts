@@ -57,15 +57,25 @@ export const expenseReminders = functions.scheduler.onSchedule(
         // We run hourly, so we just check if the hour matches
         if (userNow.getHours() === prefHour) {
             
-            // Check if the due date is exactly "tomorrow" in the user's timezone
             const userDueDate = toZonedTime(dueDate, timezone);
             const userTomorrow = addDays(userNow, 1);
-            
-            if (
-                userDueDate.getFullYear() === userTomorrow.getFullYear() &&
+
+            const isToday = userDueDate.getFullYear() === userNow.getFullYear() &&
+                userDueDate.getMonth() === userNow.getMonth() &&
+                userDueDate.getDate() === userNow.getDate();
+
+            const isTomorrow = userDueDate.getFullYear() === userTomorrow.getFullYear() &&
                 userDueDate.getMonth() === userTomorrow.getMonth() &&
-                userDueDate.getDate() === userTomorrow.getDate()
-            ) {
+                userDueDate.getDate() === userTomorrow.getDate();
+
+            let type: string | null = null;
+            if (isToday && paymentStatus === "SCHEDULED") {
+                type = "EXPENSE_SCHEDULED_EFFECTIVE";
+            } else if (isTomorrow) {
+                type = paymentStatus === "SCHEDULED" ? "EXPENSE_SCHEDULED_REMINDER" : "EXPENSE_REFUNDABLE_REMINDER";
+            }
+
+            if (type) {
                 // Fetch FCM tokens (assuming they might be stored in users/fcmTokens collection)
                 const tokensSnapshot = await db
                   .collection("users")
@@ -74,26 +84,24 @@ export const expenseReminders = functions.scheduler.onSchedule(
                   .get();
 
                 const tokens = tokensSnapshot.docs.map((t) => t.id);
-                if (tokens.length === 0) continue;
-                
-                const type = paymentStatus === "SCHEDULED" ? "EXPENSE_SCHEDULED_REMINDER" : "EXPENSE_REFUNDABLE_REMINDER";
+                if (tokens.length > 0) {
+                    const payload = {
+                        data: {
+                            type,
+                            expenseId,
+                            groupId
+                        },
+                        tokens: tokens
+                    };
 
-                const payload = {
-                    data: {
-                        type,
-                        expenseId,
-                        groupId
-                    },
-                    tokens: tokens
-                };
-
-                try {
-                  const response = await messaging.sendEachForMulticast(payload);
-                  if (response.failureCount > 0) {
-                      console.warn(`Failed to send ${response.failureCount} reminders for user ${memberId}`);
-                  }
-                } catch (e) {
-                  console.error(`Error sending reminder to user ${memberId}`, e);
+                    try {
+                      const response = await messaging.sendEachForMulticast(payload);
+                      if (response.failureCount > 0) {
+                          console.warn(`Failed to send ${response.failureCount} notifications for user ${memberId}`);
+                      }
+                    } catch (e) {
+                      console.error(`Error sending notification to user ${memberId}`, e);
+                    }
                 }
             }
         }

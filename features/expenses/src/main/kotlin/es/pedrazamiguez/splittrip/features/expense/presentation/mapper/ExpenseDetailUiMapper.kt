@@ -30,6 +30,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.model.CashTranch
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseDetailUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitDetailUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SubunitSplitGroupUiModel
+import kotlin.math.abs
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
@@ -68,7 +69,7 @@ class ExpenseDetailUiMapper(
         val subunitNameLookup: Map<String, String>,
         val groupMemberIds: List<String>
     ) {
-        @Suppress("LongMethod")
+        @Suppress("LongMethod", "CyclomaticComplexMethod", "CognitiveComplexMethod")
         fun build(): ExpenseDetailUiModel {
             val youLabel = resourceProvider.getString(R.string.you_label)
             val (soloSplits, splitGroups) = resolveSplits()
@@ -94,6 +95,10 @@ class ExpenseDetailUiMapper(
             val payerDisplay = resolvePayerDisplay(effectivePayerId, youLabel)
             val creatorDisplay = resolveCreatorDisplay(youLabel)
 
+            val isScheduled = expense.paymentStatus == PaymentStatus.SCHEDULED
+            val (formattedExpectedGroupAmount, formattedGroupAmountDifference) =
+                buildScheduledShiftInfo()
+
             return ExpenseDetailUiModel(
                 id = expense.id,
                 groupId = expense.groupId,
@@ -109,6 +114,9 @@ class ExpenseDetailUiMapper(
                 sourceCurrency = expense.sourceCurrency,
                 formattedExchangeRate = resolveExchangeRateFormatted(expense, formattingHelper, isForeign),
                 isForeignCurrency = isForeign,
+                isScheduled = isScheduled,
+                formattedExpectedGroupAmount = formattedExpectedGroupAmount,
+                formattedGroupAmountDifference = formattedGroupAmountDifference,
                 paymentMethodText = resourceProvider.getString(expense.paymentMethod.toStringRes()),
                 paymentMethodIcon = expense.paymentMethod.toIconVector(),
                 paymentStatusText = when (expense.paymentStatus) {
@@ -175,6 +183,31 @@ class ExpenseDetailUiMapper(
                 isCancelled = expense.paymentStatus == PaymentStatus.CANCELLED,
                 isRefundable = expense.paymentStatus == PaymentStatus.REFUNDABLE && badgeData?.isPassed != true
             )
+        }
+
+        /**
+         * Calculates formatted expected amount and difference string for expenses
+         * where the actual charge shifted from the originally expected group amount.
+         * Returns (formattedExpectedGroupAmount, formattedGroupAmountDifference),
+         * both null when no shift occurred.
+         */
+        private fun buildScheduledShiftInfo(): Pair<String?, String?> {
+            val hasShift = expense.paymentStatus == PaymentStatus.FINISHED &&
+                expense.expectedGroupAmount != null &&
+                expense.expectedGroupAmount != expense.groupAmount
+            if (!hasShift) return null to null
+
+            val formattedExpected = formattingHelper.formatCentsWithCurrency(
+                expense.expectedGroupAmount!!,
+                expense.groupCurrency
+            )
+            val shift = expense.groupAmount - expense.expectedGroupAmount!!
+            val formattedShiftValue = formattingHelper.formatCentsWithCurrency(
+                abs(shift),
+                expense.groupCurrency
+            )
+            val formattedDifference = if (shift >= 0) "+$formattedShiftValue" else "-$formattedShiftValue"
+            return formattedExpected to formattedDifference
         }
 
         private fun resolvePayerDisplay(effectivePayerId: String?, youLabel: String): MemberDisplay {
