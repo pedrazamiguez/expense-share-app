@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import java.math.BigDecimal
 import java.time.LocalDateTime
+import java.util.Currency
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -80,6 +81,21 @@ class FormattingHelper(
             maxDecimalPlaces = decimalDigits,
             minDecimalPlaces = decimalDigits
         )
+    }
+
+    /**
+     * Formats cents to a plain decimal string for input fields, resolving the decimal
+     * digits automatically based on the given currency code.
+     *
+     * @param cents        The amount in the smallest currency unit.
+     * @param currencyCode ISO 4217 currency code.
+     * @return Locale-formatted plain number string.
+     */
+    fun formatCentsValueForCurrency(cents: Long, currencyCode: String): String {
+        val decimalDigits = runCatching {
+            Currency.getInstance(currencyCode).defaultFractionDigits
+        }.getOrElse { 2 }
+        return formatCentsValue(cents, decimalDigits)
     }
 
     /**

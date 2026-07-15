@@ -30,6 +30,7 @@ data class ExpenseDetailUiModel(
     val isScheduled: Boolean = false,
     val formattedExpectedGroupAmount: String? = null,
     val formattedGroupAmountDifference: String? = null,
+    val formattedConfirmPaymentPlaceholder: String = "",
 
     // Metadata
     val paymentMethodText: String = "",

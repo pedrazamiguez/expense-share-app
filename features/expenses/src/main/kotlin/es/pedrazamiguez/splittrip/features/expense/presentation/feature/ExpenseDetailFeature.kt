@@ -69,16 +69,14 @@ fun ExpenseDetailFeature(
 
     if (showConfirmBottomSheet && expense != null) {
         ConfirmPaymentBottomSheet(
+            expense = expense,
             onConfirm = { actualAmount ->
                 expenseDetailViewModel.onEvent(ExpenseDetailUiEvent.ConfirmPayment(actualAmount))
                 showConfirmBottomSheet = false
             },
             onDismiss = {
                 showConfirmBottomSheet = false
-            },
-            formattedSourceAmount = expense.formattedSourceAmount ?: expense.formattedGroupAmount,
-            formattedExpectedGroupAmount = expense.formattedExpectedGroupAmount ?: expense.formattedGroupAmount,
-            groupCurrency = expense.groupCurrency
+            }
         )
     }
 }

@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 34,
-    "identityHash": "ffc878f445edf08e7faa9289a50177e0",
+    "version": 35,
+    "identityHash": "de8a3e21ea618221db2974f114e0b0fb",
     "entities": [
       {
         "tableName": "currencies",
@@ -159,7 +159,7 @@
       },
       {
         "tableName": "expenses",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `groupId` TEXT NOT NULL, `title` TEXT NOT NULL, `sourceAmount` INTEGER NOT NULL, `sourceCurrency` TEXT NOT NULL, `groupAmount` INTEGER NOT NULL, `groupCurrency` TEXT NOT NULL, `exchangeRate` TEXT NOT NULL, `category` TEXT, `vendor` TEXT, `notes` TEXT, `paymentMethod` TEXT NOT NULL, `paymentStatus` TEXT, `dueDateMillis` INTEGER, `receiptLocalUri` TEXT, `receiptMimeType` TEXT, `receiptCapturedAtMillis` INTEGER, `receiptRemoteUrl` TEXT, `createdBy` TEXT NOT NULL, `payerType` TEXT NOT NULL, `payerId` TEXT, `splitType` TEXT NOT NULL, `createdAtMillis` INTEGER, `lastUpdatedAtMillis` INTEGER, `cashTranchesJson` TEXT, `addOnsJson` TEXT, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`groupId`) REFERENCES `groups`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `groupId` TEXT NOT NULL, `title` TEXT NOT NULL, `sourceAmount` INTEGER NOT NULL, `sourceCurrency` TEXT NOT NULL, `groupAmount` INTEGER NOT NULL, `groupCurrency` TEXT NOT NULL, `expectedGroupAmount` INTEGER, `exchangeRate` TEXT NOT NULL, `category` TEXT, `vendor` TEXT, `notes` TEXT, `paymentMethod` TEXT NOT NULL, `paymentStatus` TEXT, `dueDateMillis` INTEGER, `receiptLocalUri` TEXT, `receiptMimeType` TEXT, `receiptCapturedAtMillis` INTEGER, `receiptRemoteUrl` TEXT, `createdBy` TEXT NOT NULL, `payerType` TEXT NOT NULL, `payerId` TEXT, `splitType` TEXT NOT NULL, `createdAtMillis` INTEGER, `lastUpdatedAtMillis` INTEGER, `cashTranchesJson` TEXT, `addOnsJson` TEXT, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`groupId`) REFERENCES `groups`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -202,6 +202,11 @@
             "columnName": "groupCurrency",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "expectedGroupAmount",
+            "columnName": "expectedGroupAmount",
+            "affinity": "INTEGER"
           },
           {
             "fieldPath": "exchangeRate",
@@ -1040,7 +1045,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ffc878f445edf08e7faa9289a50177e0')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'de8a3e21ea618221db2974f114e0b0fb')"
     ]
   }
 }
