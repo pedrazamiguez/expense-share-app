@@ -43,10 +43,11 @@ import es.pedrazamiguez.splittrip.data.local.entity.UserEntity
         SubunitEntity::class,
         SettlementRecordEntity::class
     ],
-    version = 34,
+    version = 35,
     exportSchema = true,
     autoMigrations = [
-        AutoMigration(from = 33, to = 34)
+        AutoMigration(from = 33, to = 34),
+        AutoMigration(from = 34, to = 35)
     ]
 )
 @TypeConverters(

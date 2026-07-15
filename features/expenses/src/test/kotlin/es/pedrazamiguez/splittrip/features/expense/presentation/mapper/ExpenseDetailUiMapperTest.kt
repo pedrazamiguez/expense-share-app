@@ -1381,4 +1381,76 @@ class ExpenseDetailUiMapperTest {
             assertTrue(result.splits[1].memberDisplay is MemberDisplay.Former)
         }
     }
+
+    @Nested
+    inner class ScheduledPaymentMapping {
+
+        @Test
+        fun `isScheduled is true when payment status is scheduled`() {
+            val expense = baseExpense.copy(paymentStatus = PaymentStatus.SCHEDULED)
+            val result = mapper.map(expense, memberProfiles, currentUserId)
+            assertTrue(result.isScheduled)
+        }
+
+        @Test
+        fun `isScheduled is false when payment status is finished`() {
+            val expense = baseExpense.copy(paymentStatus = PaymentStatus.FINISHED)
+            val result = mapper.map(expense, memberProfiles, currentUserId)
+            assertFalse(result.isScheduled)
+        }
+
+        @Test
+        fun `maps expectedGroupAmount and groupAmount difference when finished and shift exists`() {
+            every { localeProvider.getCurrentLocale() } returns Locale.US
+            val expense = baseExpense.copy(
+                paymentStatus = PaymentStatus.FINISHED,
+                expectedGroupAmount = 1000L,
+                groupAmount = 1200L,
+                groupCurrency = "EUR"
+            )
+            val result = mapper.map(expense, memberProfiles, currentUserId)
+            assertEquals("€10.00", result.formattedExpectedGroupAmount)
+            assertEquals("+€2.00", result.formattedGroupAmountDifference)
+        }
+
+        @Test
+        fun `maps expectedGroupAmount and negative groupAmount difference when finished and shift exists`() {
+            every { localeProvider.getCurrentLocale() } returns Locale.US
+            val expense = baseExpense.copy(
+                paymentStatus = PaymentStatus.FINISHED,
+                expectedGroupAmount = 1000L,
+                groupAmount = 800L,
+                groupCurrency = "EUR"
+            )
+            val result = mapper.map(expense, memberProfiles, currentUserId)
+            assertEquals("€10.00", result.formattedExpectedGroupAmount)
+            assertEquals("-€2.00", result.formattedGroupAmountDifference)
+        }
+
+        @Test
+        fun `does not map expectedGroupAmount or difference when finished and no shift exists`() {
+            val expense = baseExpense.copy(
+                paymentStatus = PaymentStatus.FINISHED,
+                expectedGroupAmount = 1000L,
+                groupAmount = 1000L,
+                groupCurrency = "EUR"
+            )
+            val result = mapper.map(expense, memberProfiles, currentUserId)
+            assertNull(result.formattedExpectedGroupAmount)
+            assertNull(result.formattedGroupAmountDifference)
+        }
+
+        @Test
+        fun `does not map expectedGroupAmount or difference when scheduled`() {
+            val expense = baseExpense.copy(
+                paymentStatus = PaymentStatus.SCHEDULED,
+                expectedGroupAmount = 1000L,
+                groupAmount = 1200L,
+                groupCurrency = "EUR"
+            )
+            val result = mapper.map(expense, memberProfiles, currentUserId)
+            assertNull(result.formattedExpectedGroupAmount)
+            assertNull(result.formattedGroupAmountDifference)
+        }
+    }
 }
