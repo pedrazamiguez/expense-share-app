@@ -735,7 +735,7 @@ class NumberFormatterTest {
             // Given
             val expressionBuffer = "10+5"
             val evaluationResult = ExpressionResult.Success(BigDecimal("15.123"))
-            val locale = Locale("es", "ES")
+            val locale = Locale.forLanguageTag("es-ES")
 
             // When
             val result = formatArithmeticPreview(

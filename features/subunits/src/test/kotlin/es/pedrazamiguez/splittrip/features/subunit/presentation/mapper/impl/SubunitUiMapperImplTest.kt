@@ -154,7 +154,7 @@ class SubunitUiMapperImplTest {
     @Nested
     inner class ToSubunitUiModelWithEsLocale {
 
-        private val esLocale = Locale("es", "ES")
+        private val esLocale = Locale.forLanguageTag("es-ES")
 
         private fun createEsMapper(): SubunitUiMapperImpl {
             val esLocaleProvider = mockk<LocaleProvider> {

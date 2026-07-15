@@ -95,12 +95,6 @@ fun OpenSourceScreen(onLibraryUrlClick: (String) -> Unit) {
 
         items(libraries) { library ->
             ListItem(
-                headlineContent = {
-                    Text(
-                        text = stringResource(library.nameRes),
-                        fontWeight = FontWeight.SemiBold
-                    )
-                },
                 supportingContent = {
                     Column {
                         Text(
@@ -127,7 +121,12 @@ fun OpenSourceScreen(onLibraryUrlClick: (String) -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onLibraryUrlClick(library.url) }
-            )
+            ) {
+                Text(
+                    text = stringResource(library.nameRes),
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }

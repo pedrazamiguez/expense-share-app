@@ -16,7 +16,6 @@ internal fun NotificationCategoryItem(
 ) {
     ListItem(
         leadingContent = icon,
-        headlineContent = { Text(title) },
         supportingContent = {
             SecondaryBodyText(text = description, maxLines = Int.MAX_VALUE)
         },
@@ -26,5 +25,7 @@ internal fun NotificationCategoryItem(
                 onCheckedChange = onCheckedChange
             )
         }
-    )
+    ) {
+        Text(title)
+    }
 }

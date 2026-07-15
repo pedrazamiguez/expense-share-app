@@ -6,6 +6,7 @@ import kotlinx.coroutines.tasks.await
 
 class FirebaseDeviceRepositoryImpl(private val firebaseMessaging: FirebaseMessaging) : DeviceRepository {
 
+    @Suppress("DEPRECATION")
     override suspend fun getDeviceToken(): Result<String> = runCatching {
         firebaseMessaging.token.await()
     }
