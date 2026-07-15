@@ -98,7 +98,7 @@ class ExpenseDetailUiMapper(
             val isScheduled = expense.paymentStatus == PaymentStatus.SCHEDULED
             val (formattedExpectedGroupAmount, formattedGroupAmountDifference) =
                 buildScheduledShiftInfo()
-            val placeholder = formattingHelper.formatCentsValueForCurrency(0L, expense.groupCurrency)
+            val placeholder = formattingHelper.formatCentsWithCurrency(0L, expense.groupCurrency)
 
             return ExpenseDetailUiModel(
                 id = expense.id,
