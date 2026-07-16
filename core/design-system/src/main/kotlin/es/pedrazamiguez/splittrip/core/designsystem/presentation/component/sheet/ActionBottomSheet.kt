@@ -123,12 +123,6 @@ fun ActionBottomSheet(
                 }
 
                 ListItem(
-                    headlineContent = {
-                        Text(
-                            text = action.text,
-                            color = contentColor
-                        )
-                    },
                     leadingContent = {
                         Icon(
                             imageVector = action.icon,
@@ -143,7 +137,12 @@ fun ActionBottomSheet(
                     modifier = Modifier.clickable(enabled = action.enabled) {
                         action.onClick()
                     }
-                )
+                ) {
+                    Text(
+                        text = action.text,
+                        color = contentColor
+                    )
+                }
             }
         }
     }

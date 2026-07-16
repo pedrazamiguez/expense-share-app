@@ -49,6 +49,7 @@ class SplitTripMessagingService :
         private const val PREFERENCES_TIMEOUT_MS = 2000L
     }
 
+    @Deprecated("Deprecated in parent class")
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Timber.i("FCM onNewToken called — token=%s…", token.take(10))

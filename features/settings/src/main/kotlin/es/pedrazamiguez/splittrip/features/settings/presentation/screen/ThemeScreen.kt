@@ -28,7 +28,6 @@ fun ThemeScreen(
             val displayName = stringResource(id = theme.getDisplayNameRes())
 
             ListItem(
-                headlineContent = { Text(text = displayName) },
                 supportingContent = { Text(text = theme.englishName) },
                 trailingContent = {
                     if (isSelected) {
@@ -41,7 +40,9 @@ fun ThemeScreen(
                 modifier = Modifier.clickable {
                     onThemeSelected(theme.code)
                 }
-            )
+            ) {
+                Text(text = displayName)
+            }
         }
     }
 }
