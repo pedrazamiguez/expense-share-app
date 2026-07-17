@@ -410,6 +410,7 @@ class GroupRepositoryImpl(
         val currentUserId = authenticationService.requireUserId()
         val group = localGroupDataSource.getGroupById(groupId) ?: return
 
+        val leaveEventId = UUID.randomUUID().toString()
         val updatedMembers = group.members - currentUserId
         val updatedGroup = group.copy(
             members = updatedMembers,
@@ -417,16 +418,25 @@ class GroupRepositoryImpl(
             syncStatus = SyncStatus.PENDING_SYNC
         )
 
+        // Room write first — UI reflects the change instantly.
         localGroupDataSource.saveGroup(updatedGroup)
 
+        // Background: subcollection cleanup first, then group membership removal.
         syncScope.launch {
             try {
+                // 1. Remove user from all subunit memberIds BEFORE group-level removal.
+                //    Prevents snapshot listeners from seeing stale subunit membership.
+                cloudGroupDataSource.removeUserFromSubunits(groupId, currentUserId)
+
+                // 2. Remove from group document + delete member document (existing batch).
                 cloudGroupDataSource.leaveGroup(groupId, currentUserId)
+
                 localGroupDataSource.updateSyncStatus(groupId, SyncStatus.SYNCED)
+                Timber.d("Leave group synced for $groupId, leaveEventId=$leaveEventId")
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to sync leave group $groupId to cloud")
+                Timber.e(e, "Failed to sync leave group $groupId to cloud (leaveEventId=$leaveEventId)")
                 localGroupDataSource.updateSyncStatus(groupId, SyncStatus.SYNC_FAILED)
             }
         }

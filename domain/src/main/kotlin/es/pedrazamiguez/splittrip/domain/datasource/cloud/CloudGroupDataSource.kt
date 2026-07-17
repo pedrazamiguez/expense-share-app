@@ -84,6 +84,18 @@ interface CloudGroupDataSource {
     suspend fun leaveGroup(groupId: String, userId: String)
 
     /**
+     * Removes [userId] from the `memberIds` field of every subunit document
+     * in the group's subunits subcollection.
+     *
+     * Must be called BEFORE [leaveGroup] to prevent active snapshot listeners
+     * from seeing stale subunit membership after the user is removed from the group.
+     *
+     * @param groupId The ID of the group.
+     * @param userId The ID of the departing member to remove from all subunits.
+     */
+    suspend fun removeUserFromSubunits(groupId: String, userId: String)
+
+    /**
      * Adds new members to a group in Firestore.
      *
      * Uses a WriteBatch to atomically:

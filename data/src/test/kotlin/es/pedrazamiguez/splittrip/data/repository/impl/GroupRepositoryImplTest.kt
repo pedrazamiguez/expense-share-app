@@ -12,6 +12,7 @@ import es.pedrazamiguez.splittrip.domain.service.GroupImageStorageService
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -1088,6 +1089,155 @@ class GroupRepositoryImplTest {
             // Then — getGroupFlow should be called twice (once per collect,
             // with old subscription cancelled before new one starts)
             coVerify(exactly = 2) { cloudGroupDataSource.getGroupFlow(testGroupId) }
+        }
+    }
+
+    @Nested
+    inner class LeaveGroup {
+
+        @Test
+        fun `saves updated group to Room with PENDING_SYNC before cloud sync`() = runTest(testDispatcher) {
+            // Given
+            val currentUserId = "current-user-id"
+            val initialGroup = testGroup.copy(members = listOf(currentUserId, "user-2", "user-3"))
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns initialGroup
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+
+            // When
+            repository.leaveGroup(testGroupId)
+
+            // Then
+            coVerify(exactly = 1) {
+                localGroupDataSource.saveGroup(
+                    match {
+                        it.syncStatus == SyncStatus.PENDING_SYNC &&
+                            !it.members.contains(currentUserId)
+                    }
+                )
+            }
+        }
+
+        @Test
+        fun `removes current user from members before syncing to cloud`() = runTest(testDispatcher) {
+            // Given
+            val currentUserId = "current-user-id"
+            val initialGroup = testGroup.copy(members = listOf(currentUserId, "user-2", "user-3"))
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns initialGroup
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+
+            // When
+            repository.leaveGroup(testGroupId)
+
+            // Then
+            coVerify {
+                localGroupDataSource.saveGroup(
+                    match {
+                        !it.members.contains(currentUserId)
+                    }
+                )
+            }
+        }
+
+        @Test
+        fun `calls removeUserFromSubunits BEFORE leaveGroup on cloud`() = runTest(testDispatcher) {
+            // Given
+            val currentUserId = "current-user-id"
+            val initialGroup = testGroup.copy(members = listOf(currentUserId, "user-2", "user-3"))
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns initialGroup
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.removeUserFromSubunits(any(), any()) } just Runs
+            coEvery { cloudGroupDataSource.leaveGroup(any(), any()) } just Runs
+
+            // When
+            repository.leaveGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Then
+            coVerifyOrder {
+                cloudGroupDataSource.removeUserFromSubunits(testGroupId, currentUserId)
+                cloudGroupDataSource.leaveGroup(testGroupId, currentUserId)
+            }
+        }
+
+        @Test
+        fun `updates sync status to SYNCED after successful cloud sync`() = runTest(testDispatcher) {
+            // Given
+            val currentUserId = "current-user-id"
+            val initialGroup = testGroup.copy(members = listOf(currentUserId, "user-2", "user-3"))
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns initialGroup
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.removeUserFromSubunits(any(), any()) } just Runs
+            coEvery { cloudGroupDataSource.leaveGroup(any(), any()) } just Runs
+            coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.leaveGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 1) {
+                localGroupDataSource.updateSyncStatus(testGroupId, SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `updates sync status to SYNC_FAILED when removeUserFromSubunits throws`() = runTest(testDispatcher) {
+            // Given
+            val currentUserId = "current-user-id"
+            val initialGroup = testGroup.copy(members = listOf(currentUserId, "user-2", "user-3"))
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns initialGroup
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.removeUserFromSubunits(any(), any()) } throws
+                RuntimeException("Network error")
+            coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.leaveGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 1) {
+                localGroupDataSource.updateSyncStatus(testGroupId, SyncStatus.SYNC_FAILED)
+            }
+            coVerify(exactly = 0) {
+                cloudGroupDataSource.leaveGroup(any(), any())
+            }
+        }
+
+        @Test
+        fun `updates sync status to SYNC_FAILED when leaveGroup cloud call throws`() = runTest(testDispatcher) {
+            // Given
+            val currentUserId = "current-user-id"
+            val initialGroup = testGroup.copy(members = listOf(currentUserId, "user-2", "user-3"))
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns initialGroup
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.removeUserFromSubunits(any(), any()) } just Runs
+            coEvery { cloudGroupDataSource.leaveGroup(any(), any()) } throws RuntimeException("Network error")
+            coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.leaveGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 1) {
+                localGroupDataSource.updateSyncStatus(testGroupId, SyncStatus.SYNC_FAILED)
+            }
+        }
+
+        @Test
+        fun `returns early without Room write when group not found locally`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns null
+
+            // When
+            repository.leaveGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 0) { localGroupDataSource.saveGroup(any()) }
+            coVerify(exactly = 0) { cloudGroupDataSource.removeUserFromSubunits(any(), any()) }
+            coVerify(exactly = 0) { cloudGroupDataSource.leaveGroup(any(), any()) }
         }
     }
 }

@@ -4,18 +4,13 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.MetadataChanges
 import com.google.firebase.firestore.Source
-import com.google.firebase.firestore.Transaction
 import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
-import es.pedrazamiguez.splittrip.data.firebase.firestore.document.CashWithdrawalDocument
-import es.pedrazamiguez.splittrip.data.firebase.firestore.document.ContributionDocument
-import es.pedrazamiguez.splittrip.data.firebase.firestore.document.ExpenseDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupMemberDocument
-import es.pedrazamiguez.splittrip.data.firebase.firestore.document.UserDocument
+import es.pedrazamiguez.splittrip.data.firebase.firestore.document.SubunitDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.mapper.toAdminMemberDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.mapper.toDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.mapper.toDomain
@@ -25,15 +20,11 @@ import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
-
-private const val MAX_RETRY_ATTEMPTS = 3
-private const val RETRY_DELAY_MS = 500L
 
 @Suppress("TooManyFunctions")
 class FirestoreGroupDataSourceImpl(
@@ -406,188 +397,34 @@ class FirestoreGroupDataSourceImpl(
     }
 
     override suspend fun reconcileUnregisteredUser(pendingUserId: String, activeUserId: String) {
-        retryOnPermissionDenied("reconcileUnregisteredUser") {
-            executeReconcileUnregisteredUser(pendingUserId, activeUserId)
-        }
+        FirestoreGroupReconciler(firestore).reconcileUnregisteredUser(pendingUserId, activeUserId)
     }
 
-    private suspend fun executeReconcileUnregisteredUser(pendingUserId: String, activeUserId: String) {
-        val userRef = firestore.collection(UserDocument.COLLECTION_PATH).document(activeUserId)
-
-        val matchingGroupsSnapshot = firestore.collection(GroupDocument.COLLECTION_PATH)
-            .whereArrayContains("memberIds", pendingUserId)
-            .get()
-            .await()
-
-        for (groupDoc in matchingGroupsSnapshot.documents) {
-            val groupId = groupDoc.id
-            reconcileGroupData(groupId, groupDoc.reference, pendingUserId, activeUserId, userRef)
-        }
-
-        // Delete users/$pendingUserId document
-        firestore.collection(UserDocument.COLLECTION_PATH).document(pendingUserId).delete().await()
-    }
-
-    private suspend fun reconcileGroupData(
-        groupId: String,
-        groupDocRef: DocumentReference,
-        pendingUserId: String,
-        activeUserId: String,
-        userRef: DocumentReference
-    ) {
-        val memberDocRef = firestore.collection(GroupDocument.COLLECTION_PATH)
+    override suspend fun removeUserFromSubunits(groupId: String, userId: String) {
+        val subunitsCollection = firestore
+            .collection(GroupDocument.COLLECTION_PATH)
             .document(groupId)
-            .collection(GroupMemberDocument.SUBCOLLECTION_PATH)
-            .document(pendingUserId)
+            .collection(SubunitDocument.COLLECTION_PATH)
 
-        val activeMemberDocRef = firestore.collection(GroupDocument.COLLECTION_PATH)
-            .document(groupId)
-            .collection(GroupMemberDocument.SUBCOLLECTION_PATH)
-            .document(activeUserId)
+        val snapshot = subunitsCollection.get().await()
+        val affectedDocs = snapshot.documents.filter { doc ->
+            val memberIds = doc.get("memberIds") as? List<*>
+            memberIds?.contains(userId) == true
+        }
 
-        val expensesQuery = firestore.collection(GroupDocument.COLLECTION_PATH)
-            .document(groupId)
-            .collection(ExpenseDocument.COLLECTION_PATH)
-            .get()
-            .await()
+        if (affectedDocs.isEmpty()) return
 
-        val contributionsQuery = firestore.collection(GroupDocument.COLLECTION_PATH)
-            .document(groupId)
-            .collection(ContributionDocument.COLLECTION_PATH)
-            .get()
-            .await()
-
-        val withdrawalsQuery = firestore.collection(GroupDocument.COLLECTION_PATH)
-            .document(groupId)
-            .collection(CashWithdrawalDocument.COLLECTION_PATH)
-            .get()
-            .await()
-
-        firestore.runTransaction { transaction ->
-            // --- ALL READS FIRST ---
-            val freshGroupDoc = transaction.get(groupDocRef)
-            val pendingMemberSnap = transaction.get(memberDocRef)
-            val freshExpenseSnaps = expensesQuery.documents.map { transaction.get(it.reference) }
-            val freshContributionSnaps = contributionsQuery.documents.map { transaction.get(it.reference) }
-            val freshWithdrawalSnaps = withdrawalsQuery.documents.map { transaction.get(it.reference) }
-
-            // --- ALL WRITES AFTER ---
-            updateGroupMembersInTransaction(transaction, groupDocRef, freshGroupDoc, pendingUserId, activeUserId)
-
-            migrateMemberDocumentInTransaction(
-                transaction,
-                memberDocRef,
-                activeMemberDocRef,
-                pendingMemberSnap,
-                activeUserId,
-                userRef
-            )
-
-            updateExpensesInTransaction(transaction, freshExpenseSnaps, pendingUserId, activeUserId, userRef)
-
-            updateContributionsInTransaction(transaction, freshContributionSnaps, pendingUserId, activeUserId, userRef)
-
-            updateWithdrawalsInTransaction(transaction, freshWithdrawalSnaps, pendingUserId, activeUserId, userRef)
-        }.await()
-    }
-
-    private fun updateGroupMembersInTransaction(
-        transaction: Transaction,
-        groupDocRef: DocumentReference,
-        freshGroupDoc: DocumentSnapshot,
-        pendingUserId: String,
-        activeUserId: String
-    ) {
-        val memberIds = freshGroupDoc.get("memberIds") as? List<*> ?: emptyList<Any>()
-        val updatedMemberIds = memberIds.map { if (it == pendingUserId) activeUserId else it }
-        transaction.update(groupDocRef, "memberIds", updatedMemberIds)
-    }
-
-    private fun migrateMemberDocumentInTransaction(
-        transaction: Transaction,
-        memberDocRef: DocumentReference,
-        activeMemberDocRef: DocumentReference,
-        pendingMemberSnap: DocumentSnapshot,
-        activeUserId: String,
-        userRef: DocumentReference
-    ) {
-        if (pendingMemberSnap.exists()) {
-            val memberDoc = pendingMemberSnap.toObject(GroupMemberDocument::class.java)
-            if (memberDoc != null) {
-                val activeMemberDoc = memberDoc.copy(
-                    memberId = activeUserId,
-                    userId = activeUserId,
-                    userRef = userRef
-                )
-                transaction.set(activeMemberDocRef, activeMemberDoc)
-                transaction.delete(memberDocRef)
-            }
+        // Firestore WriteBatch limit is 500 ops; chunk for safety.
+        affectedDocs.chunked(BATCH_SIZE).forEach { chunk ->
+            firestore.batch().apply {
+                chunk.forEach { doc ->
+                    update(doc.reference, "memberIds", FieldValue.arrayRemove(userId))
+                }
+            }.commit().await()
         }
     }
 
-    private fun updateExpensesInTransaction(
-        transaction: Transaction,
-        expenseSnaps: List<DocumentSnapshot>,
-        pendingUserId: String,
-        activeUserId: String,
-        userRef: DocumentReference
-    ) {
-        for (freshExpSnap in expenseSnaps) {
-            val expense = freshExpSnap.toObject(ExpenseDocument::class.java) ?: continue
-            val updatedExpense = expense.getUpdatedIfNeedsUpdate(pendingUserId, activeUserId, userRef)
-            if (updatedExpense != null) {
-                transaction.set(freshExpSnap.reference, updatedExpense)
-            }
-        }
-    }
-
-    private fun updateContributionsInTransaction(
-        transaction: Transaction,
-        contributionSnaps: List<DocumentSnapshot>,
-        pendingUserId: String,
-        activeUserId: String,
-        userRef: DocumentReference
-    ) {
-        for (freshContrSnap in contributionSnaps) {
-            val contribution = freshContrSnap.toObject(ContributionDocument::class.java) ?: continue
-            val updatedContribution = contribution.getUpdatedIfNeedsUpdate(pendingUserId, activeUserId, userRef)
-            if (updatedContribution != null) {
-                transaction.set(freshContrSnap.reference, updatedContribution)
-            }
-        }
-    }
-
-    private fun updateWithdrawalsInTransaction(
-        transaction: Transaction,
-        withdrawalSnaps: List<DocumentSnapshot>,
-        pendingUserId: String,
-        activeUserId: String,
-        userRef: DocumentReference
-    ) {
-        for (freshWithdSnap in withdrawalSnaps) {
-            val withdrawal = freshWithdSnap.toObject(CashWithdrawalDocument::class.java) ?: continue
-            val updatedWithdrawal = withdrawal.getUpdatedIfNeedsUpdate(pendingUserId, activeUserId, userRef)
-            if (updatedWithdrawal != null) {
-                transaction.set(freshWithdSnap.reference, updatedWithdrawal)
-            }
-        }
-    }
-}
-
-private suspend inline fun <T> retryOnPermissionDenied(
-    methodName: String,
-    crossinline block: suspend () -> T
-): T {
-    var attempt = 0
-    while (true) {
-        try {
-            return block()
-        } catch (e: FirebaseFirestoreException) {
-            if (e.code != FirebaseFirestoreException.Code.PERMISSION_DENIED || ++attempt >= MAX_RETRY_ATTEMPTS) {
-                throw e
-            }
-            Timber.w("$methodName PERMISSION_DENIED. Retrying (attempt $attempt/$MAX_RETRY_ATTEMPTS)")
-            delay(RETRY_DELAY_MS)
-        }
+    private companion object {
+        const val BATCH_SIZE = 400 // safe margin below Firestore 500-op batch limit
     }
 }
