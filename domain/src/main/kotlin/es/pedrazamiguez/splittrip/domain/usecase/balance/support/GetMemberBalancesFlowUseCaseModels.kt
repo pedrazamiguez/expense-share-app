@@ -35,10 +35,13 @@ internal data class RemainingResult(
 internal data class ExpenseResult(
     val cashSpentMap: Map<String, Long>,
     val nonCashSpentMap: Map<String, Long>,
+    val refundableSpentMap: Map<String, Long>,
     /** userId → sourceCurrency → native amountCents */
     val cashSpentByCurrency: Map<String, Map<String, Long>>,
     val nonCashSpentByCurrency: Map<String, Map<String, Long>>,
+    val refundableSpentByCurrency: Map<String, Map<String, Long>>,
     /** userId → sourceCurrency → exact group-currency equivalent */
     val cashEquivByCurrency: Map<String, Map<String, Long>>,
-    val nonCashEquivByCurrency: Map<String, Map<String, Long>>
+    val nonCashEquivByCurrency: Map<String, Map<String, Long>>,
+    val refundableEquivByCurrency: Map<String, Map<String, Long>>
 )

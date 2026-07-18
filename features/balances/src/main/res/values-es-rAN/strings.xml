@@ -26,6 +26,7 @@
     <string name="balances_member_spent_breakdown">Dêggloçe de gâttô</string>
     <string name="balances_member_cash_expenses">Efêttibo</string>
     <string name="balances_member_non_cash_expenses">Tarheta/Otro</string>
+    <string name="balances_member_refundable_expenses">Retenío</string>
     <string name="balances_member_no_expenses">Çin gâttô rehîttráô</string>
     <string name="balances_member_no_cash">Çin efêttibo retirao</string>
     <string name="balances_member_negative_cash_hint">Gâtto en efêttibo êççede el efêttibo retirao</string>

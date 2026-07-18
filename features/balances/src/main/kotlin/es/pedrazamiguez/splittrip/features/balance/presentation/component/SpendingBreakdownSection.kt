@@ -45,7 +45,10 @@ internal fun SpendingBreakdownSection(
             )
         }
 
-        if (memberBalance.cashSpentByCurrency.isEmpty() && memberBalance.nonCashSpentByCurrency.isEmpty()) {
+        if (memberBalance.cashSpentByCurrency.isEmpty() &&
+            memberBalance.nonCashSpentByCurrency.isEmpty() &&
+            memberBalance.refundableSpentByCurrency.isEmpty()
+        ) {
             EmptyHintText(text = stringResource(R.string.balances_member_no_expenses))
         } else {
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.ExtraSmall))
@@ -62,6 +65,14 @@ internal fun SpendingBreakdownSection(
                     value = memberBalance.formattedNonCashSpent
                 )
                 CurrencyBreakdownRows(items = memberBalance.nonCashSpentByCurrency)
+            }
+            val formattedRefundable = memberBalance.formattedRefundableSpent
+            if (formattedRefundable != null && memberBalance.refundableSpentByCurrency.isNotEmpty()) {
+                DetailRow(
+                    label = stringResource(R.string.balances_member_refundable_expenses),
+                    value = formattedRefundable
+                )
+                CurrencyBreakdownRows(items = memberBalance.refundableSpentByCurrency)
             }
         }
     }

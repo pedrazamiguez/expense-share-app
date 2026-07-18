@@ -28,6 +28,7 @@
     <string name="balances_member_spent_breakdown">Spending breakdown</string>
     <string name="balances_member_cash_expenses">Cash</string>
     <string name="balances_member_non_cash_expenses">Card/Other</string>
+    <string name="balances_member_refundable_expenses">On hold</string>
     <string name="balances_member_no_expenses">No expenses recorded</string>
     <string name="balances_member_no_cash">No cash withdrawn</string>
     <string name="balances_member_negative_cash_hint">Cash spent exceeds withdrawn cash</string>
