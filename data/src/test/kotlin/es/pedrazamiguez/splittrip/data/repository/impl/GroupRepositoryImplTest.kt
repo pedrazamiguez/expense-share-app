@@ -561,6 +561,39 @@ class GroupRepositoryImplTest {
     }
 
     @Nested
+    inner class GetGroupByIdLocal {
+
+        @Test
+        fun `returns group from local data source and does not call cloud`() = runTest(testDispatcher) {
+            // Given
+            val localGroup = testGroup.copy(name = "Local Only Group")
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns localGroup
+
+            // When
+            val result = repository.getGroupByIdLocal(testGroupId)
+
+            // Then
+            assertEquals(localGroup, result)
+            coVerify(exactly = 1) { localGroupDataSource.getGroupById(testGroupId) }
+            coVerify(exactly = 0) { cloudGroupDataSource.getGroupById(any()) }
+        }
+
+        @Test
+        fun `returns null when group does not exist locally and does not call cloud`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns null
+
+            // When
+            val result = repository.getGroupByIdLocal(testGroupId)
+
+            // Then
+            assertEquals(null, result)
+            coVerify(exactly = 1) { localGroupDataSource.getGroupById(testGroupId) }
+            coVerify(exactly = 0) { cloudGroupDataSource.getGroupById(any()) }
+        }
+    }
+
+    @Nested
     inner class CreateGroup {
 
         @Test

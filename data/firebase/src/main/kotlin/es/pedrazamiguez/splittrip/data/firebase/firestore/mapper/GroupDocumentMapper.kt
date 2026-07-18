@@ -18,7 +18,8 @@ fun Group.toDocument(groupId: String, userId: String) = GroupDocument(
     createdBy = createdBy.ifBlank { userId },
     createdAt = createdAt?.toTimestampUtc(),
     lastUpdatedAt = lastUpdatedAt?.toTimestampUtc(),
-    status = status.name
+    status = status.name,
+    lastArchiveEventId = lastArchiveEventId
 )
 
 fun GroupDocument.toDomain(): Group? {
@@ -35,7 +36,8 @@ fun GroupDocument.toDomain(): Group? {
         createdAt = createdAt?.toLocalDateTimeUtc(),
         lastUpdatedAt = lastUpdatedAt?.toLocalDateTimeUtc(),
         status = GroupStatus.fromStringOrDefault(status),
-        createdBy = createdBy
+        createdBy = createdBy,
+        lastArchiveEventId = lastArchiveEventId
     )
 }
 

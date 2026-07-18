@@ -16,5 +16,6 @@ data class Group(
     val lastUpdatedAt: LocalDateTime? = null,
     val syncStatus: SyncStatus = SyncStatus.SYNCED,
     val status: GroupStatus = GroupStatus.ACTIVE,
-    val createdBy: String = ""
+    val createdBy: String = "",
+    val lastArchiveEventId: String? = null
 )

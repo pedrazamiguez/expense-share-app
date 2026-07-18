@@ -26,7 +26,8 @@ class GroupEntityMapperTest {
         memberIds = listOf("charlie", "alice", "bob"),
         mainImagePath = "images/paris.jpg",
         createdAtMillis = testTimestampMillis,
-        lastUpdatedAtMillis = testTimestampMillis
+        lastUpdatedAtMillis = testTimestampMillis,
+        lastArchiveEventId = "archive-evt-123"
     )
 
     @Nested
@@ -42,6 +43,7 @@ class GroupEntityMapperTest {
             assertEquals("EUR", group.currency)
             assertEquals(listOf("USD", "GBP"), group.extraCurrencies)
             assertEquals("images/paris.jpg", group.mainImagePath)
+            assertEquals("archive-evt-123", group.lastArchiveEventId)
         }
 
         @Test
@@ -88,6 +90,12 @@ class GroupEntityMapperTest {
             val entity = fullEntity.copy(syncStatus = "SYNC_FAILED")
             assertEquals(SyncStatus.SYNC_FAILED, entity.toDomain().syncStatus)
         }
+
+        @Test
+        fun `null lastArchiveEventId maps to null`() {
+            val entity = fullEntity.copy(lastArchiveEventId = null)
+            assertNull(entity.toDomain().lastArchiveEventId)
+        }
     }
 
     @Nested
@@ -102,7 +110,8 @@ class GroupEntityMapperTest {
             members = listOf("alice", "bob"),
             mainImagePath = null,
             createdAt = testTimestamp,
-            lastUpdatedAt = testTimestamp
+            lastUpdatedAt = testTimestamp,
+            lastArchiveEventId = "archive-evt-123"
         )
 
         @Test
@@ -113,6 +122,7 @@ class GroupEntityMapperTest {
             assertEquals("Trip to Paris", entity.name)
             assertEquals("Summer 2026", entity.description)
             assertEquals("EUR", entity.currencyCode)
+            assertEquals("archive-evt-123", entity.lastArchiveEventId)
         }
 
         @Test
@@ -142,6 +152,12 @@ class GroupEntityMapperTest {
             val entity = group.toEntity()
             assertNull(entity.createdAtMillis)
             assertNull(entity.lastUpdatedAtMillis)
+        }
+
+        @Test
+        fun `null lastArchiveEventId maps to null in entity`() {
+            val group = fullGroup.copy(lastArchiveEventId = null)
+            assertNull(group.toEntity().lastArchiveEventId)
         }
     }
 
