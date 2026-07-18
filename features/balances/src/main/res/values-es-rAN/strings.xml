@@ -9,6 +9,7 @@
     <string name="balances_all_settled">¡Tó cuadrao! Nadie debe ná</string>
     <string name="balances_remaining">Rêttante</string>
     <string name="balances_available">Dîpponible</string>
+    <string name="balances_scheduled">Programao</string>
     <string name="balances_on_hold">Retenío</string>
     <string name="balances_total_contributed">Totâh aportao</string>
     <string name="balances_total_spent">Totâh gâttao</string>

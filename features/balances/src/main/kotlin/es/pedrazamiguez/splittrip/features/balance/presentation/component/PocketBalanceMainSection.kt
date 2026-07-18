@@ -53,7 +53,10 @@ internal fun PocketBalanceMainSection(
             color = MaterialTheme.colorScheme.onSurface,
             onAnimationComplete = onBalanceAnimationComplete
         )
-        if (balance.formattedAvailableBalance != null || balance.formattedRefundableHoldAmount != null) {
+        if (balance.formattedAvailableBalance != null ||
+            balance.formattedScheduledHoldAmount != null ||
+            balance.formattedRefundableHoldAmount != null
+        ) {
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.Small))
             SecondaryBalancesRow(balance)
         }

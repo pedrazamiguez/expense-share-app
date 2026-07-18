@@ -632,6 +632,37 @@ class BalancesUiMapperMemberBalancesTest {
             // Available = 470000 - 5000 = 465000 → 4,650.00
             assertTrue(result.formattedAvailableBalance!!.contains("4,650.00"))
         }
+
+        @Test
+        fun `formattedScheduledHoldAmount is null when zero`() {
+            val balance = GroupPocketBalance(
+                totalContributions = 500000L,
+                totalExpenses = 10000L,
+                virtualBalance = 470000L,
+                currency = "EUR",
+                scheduledHoldAmount = 0L
+            )
+
+            val result = mapper.mapBalance(balance, "Group")
+
+            assertNull(result.formattedScheduledHoldAmount)
+        }
+
+        @Test
+        fun `formattedScheduledHoldAmount is present when scheduled holds exist`() {
+            val balance = GroupPocketBalance(
+                totalContributions = 500000L,
+                totalExpenses = 10000L,
+                virtualBalance = 470000L,
+                currency = "EUR",
+                scheduledHoldAmount = 5000L
+            )
+
+            val result = mapper.mapBalance(balance, "Group")
+
+            assertNotNull(result.formattedScheduledHoldAmount)
+            assertTrue(result.formattedScheduledHoldAmount!!.contains("50.00"))
+        }
     }
 
     @Nested

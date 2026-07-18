@@ -51,20 +51,7 @@ class BalancesUiMapper(
 
     fun mapBalance(balance: GroupPocketBalance, groupName: String): GroupPocketBalanceUiModel {
         val locale = localeProvider.getCurrentLocale()
-        val cashBalanceUiModels = balance.cashBalances.entries
-            .sortedBy { (currency, _) -> currency }
-            .map { (currency, amountCents) ->
-                val equivalent = balance.cashEquivalents[currency]
-                CashBalanceUiModel(
-                    currency = currency,
-                    formattedAmount = formatCurrencyAmount(amountCents, currency, locale),
-                    formattedEquivalent = if (currency != balance.currency && equivalent != null && equivalent > 0) {
-                        formatCurrencyAmount(equivalent, balance.currency, locale)
-                    } else {
-                        ""
-                    }
-                )
-            }.toImmutableList()
+        val cashBalanceUiModels = mapCashBalances(balance, locale)
 
         return GroupPocketBalanceUiModel(
             groupName = groupName,
@@ -79,8 +66,13 @@ class BalancesUiMapper(
                 ""
             },
             formattedAvailableBalance = if (balance.scheduledHoldAmount > 0 || balance.refundableHoldAmount > 0) {
-                val available = balance.virtualBalance - balance.scheduledHoldAmount - balance.refundableHoldAmount
+                val available = balance.virtualBalance - balance.scheduledHoldAmount
                 formatCurrencyAmount(available, balance.currency, locale)
+            } else {
+                null
+            },
+            formattedScheduledHoldAmount = if (balance.scheduledHoldAmount > 0) {
+                formatCurrencyAmount(balance.scheduledHoldAmount, balance.currency, locale)
             } else {
                 null
             },
@@ -580,3 +572,21 @@ private fun mapCurrencyBreakdowns(
         )
     }.toImmutableList()
 }
+
+private fun mapCashBalances(
+    balance: GroupPocketBalance,
+    locale: Locale
+): ImmutableList<CashBalanceUiModel> = balance.cashBalances.entries
+    .sortedBy { (currency, _) -> currency }
+    .map { (currency, amountCents) ->
+        val equivalent = balance.cashEquivalents[currency]
+        CashBalanceUiModel(
+            currency = currency,
+            formattedAmount = formatCurrencyAmount(amountCents, currency, locale),
+            formattedEquivalent = if (currency != balance.currency && equivalent != null && equivalent > 0) {
+                formatCurrencyAmount(equivalent, balance.currency, locale)
+            } else {
+                ""
+            }
+        )
+    }.toImmutableList()
