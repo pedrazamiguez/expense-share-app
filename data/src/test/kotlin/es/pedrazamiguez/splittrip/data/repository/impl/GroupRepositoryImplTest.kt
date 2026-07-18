@@ -1096,17 +1096,29 @@ class GroupRepositoryImplTest {
     inner class LeaveGroup {
 
         @Test
-        fun `saves updated group to Room with PENDING_SYNC before cloud sync`() = runTest(testDispatcher) {
+        fun `saves updated group and membership removal event to Room with PENDING_SYNC before cloud sync`() = runTest(
+            testDispatcher
+        ) {
             // Given
             val currentUserId = "current-user-id"
             val initialGroup = testGroup.copy(members = listOf(currentUserId, "user-2", "user-3"))
             coEvery { localGroupDataSource.getGroupById(testGroupId) } returns initialGroup
+            coEvery { localGroupDataSource.saveMembershipRemovalEvent(any()) } just Runs
             coEvery { localGroupDataSource.saveGroup(any()) } just Runs
 
             // When
             repository.leaveGroup(testGroupId)
 
             // Then
+            coVerify(exactly = 1) {
+                localGroupDataSource.saveMembershipRemovalEvent(
+                    match {
+                        it.groupId == testGroupId &&
+                            it.userId == currentUserId &&
+                            it.syncStatus == SyncStatus.PENDING_SYNC
+                    }
+                )
+            }
             coVerify(exactly = 1) {
                 localGroupDataSource.saveGroup(
                     match {
@@ -1123,6 +1135,7 @@ class GroupRepositoryImplTest {
             val currentUserId = "current-user-id"
             val initialGroup = testGroup.copy(members = listOf(currentUserId, "user-2", "user-3"))
             coEvery { localGroupDataSource.getGroupById(testGroupId) } returns initialGroup
+            coEvery { localGroupDataSource.saveMembershipRemovalEvent(any()) } just Runs
             coEvery { localGroupDataSource.saveGroup(any()) } just Runs
 
             // When
@@ -1139,14 +1152,20 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `calls removeUserFromSubunits BEFORE leaveGroup on cloud`() = runTest(testDispatcher) {
+        fun `calls uploadMembershipRemovalEvent, removeUserFromSubunits, and leaveGroup in order on cloud`() = runTest(
+            testDispatcher
+        ) {
             // Given
             val currentUserId = "current-user-id"
             val initialGroup = testGroup.copy(members = listOf(currentUserId, "user-2", "user-3"))
             coEvery { localGroupDataSource.getGroupById(testGroupId) } returns initialGroup
+            coEvery { localGroupDataSource.saveMembershipRemovalEvent(any()) } just Runs
             coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.uploadMembershipRemovalEvent(any(), any()) } just Runs
             coEvery { cloudGroupDataSource.removeUserFromSubunits(any(), any()) } just Runs
             coEvery { cloudGroupDataSource.leaveGroup(any(), any()) } just Runs
+            coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+            coEvery { localGroupDataSource.updateMembershipRemovalEventSyncStatus(any(), any()) } just Runs
 
             // When
             repository.leaveGroup(testGroupId)
@@ -1154,6 +1173,7 @@ class GroupRepositoryImplTest {
 
             // Then
             coVerifyOrder {
+                cloudGroupDataSource.uploadMembershipRemovalEvent(testGroupId, any())
                 cloudGroupDataSource.removeUserFromSubunits(testGroupId, currentUserId)
                 cloudGroupDataSource.leaveGroup(testGroupId, currentUserId)
             }
@@ -1165,10 +1185,13 @@ class GroupRepositoryImplTest {
             val currentUserId = "current-user-id"
             val initialGroup = testGroup.copy(members = listOf(currentUserId, "user-2", "user-3"))
             coEvery { localGroupDataSource.getGroupById(testGroupId) } returns initialGroup
+            coEvery { localGroupDataSource.saveMembershipRemovalEvent(any()) } just Runs
             coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.uploadMembershipRemovalEvent(any(), any()) } just Runs
             coEvery { cloudGroupDataSource.removeUserFromSubunits(any(), any()) } just Runs
             coEvery { cloudGroupDataSource.leaveGroup(any(), any()) } just Runs
             coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+            coEvery { localGroupDataSource.updateMembershipRemovalEventSyncStatus(any(), any()) } just Runs
 
             // When
             repository.leaveGroup(testGroupId)
@@ -1178,18 +1201,23 @@ class GroupRepositoryImplTest {
             coVerify(exactly = 1) {
                 localGroupDataSource.updateSyncStatus(testGroupId, SyncStatus.SYNCED)
             }
+            coVerify(exactly = 1) {
+                localGroupDataSource.updateMembershipRemovalEventSyncStatus(any(), SyncStatus.SYNCED)
+            }
         }
 
         @Test
-        fun `updates sync status to SYNC_FAILED when removeUserFromSubunits throws`() = runTest(testDispatcher) {
+        fun `updates sync status to SYNC_FAILED when uploadMembershipRemovalEvent throws`() = runTest(testDispatcher) {
             // Given
             val currentUserId = "current-user-id"
             val initialGroup = testGroup.copy(members = listOf(currentUserId, "user-2", "user-3"))
             coEvery { localGroupDataSource.getGroupById(testGroupId) } returns initialGroup
+            coEvery { localGroupDataSource.saveMembershipRemovalEvent(any()) } just Runs
             coEvery { localGroupDataSource.saveGroup(any()) } just Runs
-            coEvery { cloudGroupDataSource.removeUserFromSubunits(any(), any()) } throws
+            coEvery { cloudGroupDataSource.uploadMembershipRemovalEvent(any(), any()) } throws
                 RuntimeException("Network error")
             coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+            coEvery { localGroupDataSource.updateMembershipRemovalEventSyncStatus(any(), any()) } just Runs
 
             // When
             repository.leaveGroup(testGroupId)
@@ -1198,6 +1226,40 @@ class GroupRepositoryImplTest {
             // Then
             coVerify(exactly = 1) {
                 localGroupDataSource.updateSyncStatus(testGroupId, SyncStatus.SYNC_FAILED)
+            }
+            coVerify(exactly = 1) {
+                localGroupDataSource.updateMembershipRemovalEventSyncStatus(any(), SyncStatus.SYNC_FAILED)
+            }
+            coVerify(exactly = 0) {
+                cloudGroupDataSource.removeUserFromSubunits(any(), any())
+                cloudGroupDataSource.leaveGroup(any(), any())
+            }
+        }
+
+        @Test
+        fun `updates sync status to SYNC_FAILED when removeUserFromSubunits throws`() = runTest(testDispatcher) {
+            // Given
+            val currentUserId = "current-user-id"
+            val initialGroup = testGroup.copy(members = listOf(currentUserId, "user-2", "user-3"))
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns initialGroup
+            coEvery { localGroupDataSource.saveMembershipRemovalEvent(any()) } just Runs
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.uploadMembershipRemovalEvent(any(), any()) } just Runs
+            coEvery { cloudGroupDataSource.removeUserFromSubunits(any(), any()) } throws
+                RuntimeException("Network error")
+            coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+            coEvery { localGroupDataSource.updateMembershipRemovalEventSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.leaveGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 1) {
+                localGroupDataSource.updateSyncStatus(testGroupId, SyncStatus.SYNC_FAILED)
+            }
+            coVerify(exactly = 1) {
+                localGroupDataSource.updateMembershipRemovalEventSyncStatus(any(), SyncStatus.SYNC_FAILED)
             }
             coVerify(exactly = 0) {
                 cloudGroupDataSource.leaveGroup(any(), any())
@@ -1210,10 +1272,13 @@ class GroupRepositoryImplTest {
             val currentUserId = "current-user-id"
             val initialGroup = testGroup.copy(members = listOf(currentUserId, "user-2", "user-3"))
             coEvery { localGroupDataSource.getGroupById(testGroupId) } returns initialGroup
+            coEvery { localGroupDataSource.saveMembershipRemovalEvent(any()) } just Runs
             coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.uploadMembershipRemovalEvent(any(), any()) } just Runs
             coEvery { cloudGroupDataSource.removeUserFromSubunits(any(), any()) } just Runs
             coEvery { cloudGroupDataSource.leaveGroup(any(), any()) } throws RuntimeException("Network error")
             coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+            coEvery { localGroupDataSource.updateMembershipRemovalEventSyncStatus(any(), any()) } just Runs
 
             // When
             repository.leaveGroup(testGroupId)
@@ -1222,6 +1287,9 @@ class GroupRepositoryImplTest {
             // Then
             coVerify(exactly = 1) {
                 localGroupDataSource.updateSyncStatus(testGroupId, SyncStatus.SYNC_FAILED)
+            }
+            coVerify(exactly = 1) {
+                localGroupDataSource.updateMembershipRemovalEventSyncStatus(any(), SyncStatus.SYNC_FAILED)
             }
         }
 
@@ -1235,7 +1303,9 @@ class GroupRepositoryImplTest {
             advanceUntilIdle()
 
             // Then
+            coVerify(exactly = 0) { localGroupDataSource.saveMembershipRemovalEvent(any()) }
             coVerify(exactly = 0) { localGroupDataSource.saveGroup(any()) }
+            coVerify(exactly = 0) { cloudGroupDataSource.uploadMembershipRemovalEvent(any(), any()) }
             coVerify(exactly = 0) { cloudGroupDataSource.removeUserFromSubunits(any(), any()) }
             coVerify(exactly = 0) { cloudGroupDataSource.leaveGroup(any(), any()) }
         }

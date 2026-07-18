@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
  * This is part of the Offline-First architecture where Room serves
  * as the Single Source of Truth for the UI.
  */
+@Suppress("TooManyFunctions")
 interface LocalGroupDataSource {
 
     /**
@@ -71,4 +72,26 @@ interface LocalGroupDataSource {
      * Replaces pending user IDs with active user IDs in local group members lists.
      */
     suspend fun reconcileUnregisteredUser(pendingUserId: String, activeUserId: String)
+
+    /**
+     * Saves a membership removal event to local storage.
+     */
+    suspend fun saveMembershipRemovalEvent(event: es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent)
+
+    /**
+     * Observes all unprocessed membership removal events for a given group.
+     */
+    fun getUnprocessedMembershipRemovalEventsFlow(
+        groupId: String
+    ): Flow<List<es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent>>
+
+    /**
+     * Updates the sync status of a membership removal event.
+     */
+    suspend fun updateMembershipRemovalEventSyncStatus(eventId: String, syncStatus: SyncStatus)
+
+    /**
+     * Marks a membership removal event as processed locally.
+     */
+    suspend fun markMembershipRemovalEventProcessed(eventId: String)
 }

@@ -10,6 +10,7 @@ import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupMemberDocument
+import es.pedrazamiguez.splittrip.data.firebase.firestore.document.MembershipRemovalEventDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.SubunitDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.mapper.toAdminMemberDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.mapper.toDocument
@@ -422,6 +423,20 @@ class FirestoreGroupDataSourceImpl(
                 }
             }.commit().await()
         }
+    }
+
+    override suspend fun uploadMembershipRemovalEvent(
+        groupId: String,
+        event: es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent
+    ) {
+        val document = event.toDocument(event.id, groupId)
+        firestore
+            .collection(GroupDocument.COLLECTION_PATH)
+            .document(groupId)
+            .collection(MembershipRemovalEventDocument.COLLECTION_PATH)
+            .document(event.id)
+            .set(document)
+            .await()
     }
 
     private companion object {

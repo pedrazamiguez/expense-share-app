@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.domain.datasource.cloud
 import es.pedrazamiguez.splittrip.domain.model.Group
 import kotlinx.coroutines.flow.Flow
 
+@Suppress("TooManyFunctions")
 interface CloudGroupDataSource {
     suspend fun createGroup(group: Group): String
     suspend fun getGroupById(groupId: String): Group?
@@ -121,4 +122,16 @@ interface CloudGroupDataSource {
      * @param userId The ID of the user to remove.
      */
     suspend fun removeMember(groupId: String, userId: String)
+
+    /**
+     * Uploads a membership removal event to Firestore.
+     * Stored at `groups/{groupId}/membership_removal_events/{eventId}`.
+     *
+     * @param groupId The ID of the group.
+     * @param event The membership removal event to upload.
+     */
+    suspend fun uploadMembershipRemovalEvent(
+        groupId: String,
+        event: es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent
+    )
 }

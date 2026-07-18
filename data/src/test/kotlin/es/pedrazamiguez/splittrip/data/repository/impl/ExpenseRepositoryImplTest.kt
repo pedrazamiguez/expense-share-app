@@ -3,11 +3,14 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalExpenseDataSource
+import es.pedrazamiguez.splittrip.domain.datasource.local.LocalGroupDataSource
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptStorageService
+import es.pedrazamiguez.splittrip.domain.service.RemainderDistributionService
+import es.pedrazamiguez.splittrip.domain.service.impl.RemainderDistributionServiceImpl
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -46,6 +49,8 @@ class ExpenseRepositoryImplTest {
         es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
     private lateinit var receiptStorageService: ReceiptStorageService
     private lateinit var performanceMonitor: PerformanceMonitor
+    private lateinit var localGroupDataSource: LocalGroupDataSource
+    private lateinit var remainderDistributionService: RemainderDistributionService
     private lateinit var testDispatcher: TestDispatcher
     private lateinit var repository: ExpenseRepositoryImpl
 
@@ -88,6 +93,8 @@ class ExpenseRepositoryImplTest {
         authenticationService = mockk()
         cloudStorageDataSource = mockk(relaxed = true)
         receiptStorageService = mockk(relaxed = true)
+        localGroupDataSource = mockk(relaxed = true)
+        remainderDistributionService = RemainderDistributionServiceImpl()
         performanceMonitor = mockk(relaxed = true) {
             io.mockk.coEvery { traceAsync<Any?>(any(), any()) } coAnswers { secondArg<suspend () -> Any?>().invoke() }
             io.mockk.every { trace<Any?>(any(), any()) } answers { secondArg<() -> Any?>().invoke() }
@@ -100,6 +107,8 @@ class ExpenseRepositoryImplTest {
             cloudStorageDataSource,
             receiptStorageService,
             performanceMonitor,
+            localGroupDataSource,
+            remainderDistributionService,
             testDispatcher
         )
     }
@@ -638,6 +647,8 @@ class ExpenseRepositoryImplTest {
                 cloudStorageDataSource,
                 receiptStorageService,
                 performanceMonitor,
+                localGroupDataSource,
+                remainderDistributionService,
                 testDispatcher
             )
 
@@ -996,6 +1007,89 @@ class ExpenseRepositoryImplTest {
             coVerify(exactly = 1) {
                 cloudExpenseDataSource.addExpense(testGroupId, any())
             }
+        }
+    }
+
+    @Nested
+    inner class ReactiveReSplits {
+
+        @Test
+        fun `re-splits active expenses when membership removal event is emitted`() = runTest(testDispatcher) {
+            // Given
+            val leftUserId = "user-left"
+            val remainingUser1 = "user-1"
+            val remainingUser2 = "user-2"
+
+            val event = es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent(
+                id = "event-id-1",
+                groupId = testGroupId,
+                userId = leftUserId,
+                createdAt = LocalDateTime.now(),
+                processed = false,
+                syncStatus = SyncStatus.SYNCED
+            )
+
+            // Emit the event via Flow mock
+            val eventFlow = kotlinx.coroutines.flow.MutableStateFlow(listOf(event))
+            every { localGroupDataSource.getUnprocessedMembershipRemovalEventsFlow(testGroupId) } returns eventFlow
+
+            // Mock expense list flow
+            val initialSplits = listOf(
+                es.pedrazamiguez.splittrip.domain.model.ExpenseSplit(userId = leftUserId, amountCents = 1500L),
+                es.pedrazamiguez.splittrip.domain.model.ExpenseSplit(userId = remainingUser1, amountCents = 1500L),
+                es.pedrazamiguez.splittrip.domain.model.ExpenseSplit(userId = remainingUser2, amountCents = 2000L)
+            )
+            val activeExpense = testExpense.copy(
+                id = "expense-to-resplit",
+                sourceAmount = 5000L,
+                splits = initialSplits
+            )
+
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(listOf(activeExpense))
+            coEvery { localExpenseDataSource.saveExpense(any()) } just Runs
+            coEvery { cloudExpenseDataSource.addExpense(testGroupId, any()) } just Runs
+            coEvery { localExpenseDataSource.updateSyncStatus(any(), any()) } just Runs
+            coEvery { localGroupDataSource.markMembershipRemovalEventProcessed(any()) } just Runs
+
+            // Mock other sync loops to avoid unrelated work
+            every { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(emptyList())
+            coEvery { localExpenseDataSource.replaceExpensesForGroup(testGroupId, any()) } just Runs
+            coEvery { localExpenseDataSource.getPendingSyncExpenseIds(testGroupId) } returns emptyList()
+            coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns emptyList()
+
+            // When - starting the flow collection triggers the onStart block where observation runs
+            repository.getGroupExpensesFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then
+            // Verify left user split is zeroed out and remaining splits rescaled:
+            // original remaining sum = 3500. debt to distribute = 1500. new total = 5000.
+            // proportional scale: remainingUser1: 1500 * 5000 / 3500 = 2142 (+1 remainder = 2143)
+            // proportional scale: remainingUser2: 2000 * 5000 / 3500 = 2857
+            coVerify(exactly = 1) {
+                localExpenseDataSource.saveExpense(
+                    match { expense ->
+                        expense.id == "expense-to-resplit" &&
+                            expense.splits.find { it.userId == leftUserId }?.amountCents == 0L &&
+                            expense.splits.find { it.userId == leftUserId }?.isExcluded == true &&
+                            expense.splits.find { it.userId == remainingUser1 }?.amountCents == 2143L &&
+                            expense.splits.find { it.userId == remainingUser2 }?.amountCents == 2857L &&
+                            expense.syncStatus == SyncStatus.PENDING_SYNC
+                    }
+                )
+            }
+
+            coVerify(exactly = 1) {
+                cloudExpenseDataSource.addExpense(testGroupId, match { it.id == "expense-to-resplit" })
+            }
+
+            coVerify(exactly = 1) {
+                localGroupDataSource.markMembershipRemovalEventProcessed("event-id-1")
+            }
+
+            // Clean up the event flow to avoid infinite collect looping
+            eventFlow.value = emptyList()
+            advanceUntilIdle()
         }
     }
 }
