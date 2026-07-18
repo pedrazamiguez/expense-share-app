@@ -19,6 +19,7 @@ import es.pedrazamiguez.splittrip.data.firebase.firestore.mapper.toRegularMember
 import es.pedrazamiguez.splittrip.data.firebase.firestore.mapper.toTimestampUtc
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -427,7 +428,7 @@ class FirestoreGroupDataSourceImpl(
 
     override suspend fun uploadMembershipRemovalEvent(
         groupId: String,
-        event: es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent
+        event: MembershipRemovalEvent
     ) {
         val document = event.toDocument(event.id, groupId)
         firestore

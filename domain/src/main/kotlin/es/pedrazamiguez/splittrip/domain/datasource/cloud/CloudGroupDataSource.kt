@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.domain.datasource.cloud
 
 import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent
 import kotlinx.coroutines.flow.Flow
 
 @Suppress("TooManyFunctions")
@@ -132,6 +133,6 @@ interface CloudGroupDataSource {
      */
     suspend fun uploadMembershipRemovalEvent(
         groupId: String,
-        event: es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent
+        event: MembershipRemovalEvent
     )
 }

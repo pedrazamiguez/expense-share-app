@@ -6,13 +6,17 @@ import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalGroupDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SplitType
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.exception.CashConflictException
 import es.pedrazamiguez.splittrip.domain.model.Expense
+import es.pedrazamiguez.splittrip.domain.model.ExpenseSplit
+import es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptStorageService
 import es.pedrazamiguez.splittrip.domain.service.RemainderDistributionService
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -418,7 +422,7 @@ class ExpenseRepositoryImpl(
 
     private suspend fun processMembershipRemoval(
         groupId: String,
-        event: es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent
+        event: MembershipRemovalEvent
     ) {
         val expenses = localExpenseDataSource.getExpensesByGroupIdFlow(groupId).first()
 
@@ -438,7 +442,7 @@ class ExpenseRepositoryImpl(
     private suspend fun performReSplitForExpense(
         groupId: String,
         expense: Expense,
-        departedSplit: es.pedrazamiguez.splittrip.domain.model.ExpenseSplit,
+        departedSplit: ExpenseSplit,
         leftUserId: String
     ) {
         val debtToRedistribute = departedSplit.amountCents
@@ -475,10 +479,10 @@ class ExpenseRepositoryImpl(
         expense: Expense,
         newAmounts: List<Long>,
         newTotalCents: Long
-    ): List<java.math.BigDecimal>? {
-        return if (expense.splitType == es.pedrazamiguez.splittrip.domain.enums.SplitType.PERCENT) {
+    ): List<BigDecimal>? {
+        return if (expense.splitType == SplitType.PERCENT) {
             remainderDistributionService.distributePercentages(
-                remainingPercentage = java.math.BigDecimal("100.00"),
+                remainingPercentage = BigDecimal("100.00"),
                 amounts = newAmounts,
                 totalCents = newTotalCents
             )
@@ -489,18 +493,18 @@ class ExpenseRepositoryImpl(
 
     private fun buildUpdatedSplits(
         expense: Expense,
-        departedSplit: es.pedrazamiguez.splittrip.domain.model.ExpenseSplit,
-        remainingSplits: List<es.pedrazamiguez.splittrip.domain.model.ExpenseSplit>,
+        departedSplit: ExpenseSplit,
+        remainingSplits: List<ExpenseSplit>,
         newAmounts: List<Long>,
-        newPercentages: List<java.math.BigDecimal>?
-    ): List<es.pedrazamiguez.splittrip.domain.model.ExpenseSplit> {
-        val updatedSplits = mutableListOf<es.pedrazamiguez.splittrip.domain.model.ExpenseSplit>()
+        newPercentages: List<BigDecimal>?
+    ): List<ExpenseSplit> {
+        val updatedSplits = mutableListOf<ExpenseSplit>()
 
         updatedSplits.add(
             departedSplit.copy(
                 amountCents = 0L,
-                percentage = if (expense.splitType == es.pedrazamiguez.splittrip.domain.enums.SplitType.PERCENT) {
-                    java.math.BigDecimal.ZERO
+                percentage = if (expense.splitType == SplitType.PERCENT) {
+                    BigDecimal.ZERO
                 } else {
                     null
                 },

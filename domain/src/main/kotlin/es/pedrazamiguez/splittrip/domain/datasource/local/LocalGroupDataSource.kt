@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.domain.datasource.local
 
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -76,14 +77,14 @@ interface LocalGroupDataSource {
     /**
      * Saves a membership removal event to local storage.
      */
-    suspend fun saveMembershipRemovalEvent(event: es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent)
+    suspend fun saveMembershipRemovalEvent(event: MembershipRemovalEvent)
 
     /**
      * Observes all unprocessed membership removal events for a given group.
      */
     fun getUnprocessedMembershipRemovalEventsFlow(
         groupId: String
-    ): Flow<List<es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent>>
+    ): Flow<List<MembershipRemovalEvent>>
 
     /**
      * Updates the sync status of a membership removal event.
