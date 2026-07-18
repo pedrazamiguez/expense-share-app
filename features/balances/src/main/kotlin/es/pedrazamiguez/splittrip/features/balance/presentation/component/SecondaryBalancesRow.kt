@@ -11,23 +11,38 @@ import es.pedrazamiguez.splittrip.features.balance.presentation.model.GroupPocke
 
 @Composable
 internal fun SecondaryBalancesRow(balance: GroupPocketBalanceUiModel) {
+    val showAvailable = balance.formattedAvailableBalance != null
+    val showScheduled = balance.formattedScheduledHoldAmount != null
+    val showRefundable = balance.formattedRefundableHoldAmount != null
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
     ) {
-        if (balance.formattedAvailableBalance != null) {
+        val useWeight = listOf(showAvailable, showScheduled, showRefundable).count { it } > 1
+        val modifier = if (useWeight) Modifier.weight(1f) else Modifier
+
+        if (showAvailable) {
             SecondaryBalanceColumn(
                 label = stringResource(R.string.balances_available),
-                amount = balance.formattedAvailableBalance,
-                modifier = if (balance.formattedRefundableHoldAmount != null) Modifier.weight(1f) else Modifier
+                amount = balance.formattedAvailableBalance!!,
+                modifier = modifier
             )
         }
 
-        if (balance.formattedRefundableHoldAmount != null) {
+        if (showScheduled) {
+            SecondaryBalanceColumn(
+                label = stringResource(R.string.balances_scheduled),
+                amount = balance.formattedScheduledHoldAmount!!,
+                modifier = modifier
+            )
+        }
+
+        if (showRefundable) {
             SecondaryBalanceColumn(
                 label = stringResource(R.string.balances_on_hold),
-                amount = balance.formattedRefundableHoldAmount,
-                modifier = if (balance.formattedAvailableBalance != null) Modifier.weight(1f) else Modifier
+                amount = balance.formattedRefundableHoldAmount!!,
+                modifier = modifier
             )
         }
     }
