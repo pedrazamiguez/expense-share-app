@@ -17,10 +17,12 @@ class AppConfigServiceImplTest {
         val debounceFlow = MutableStateFlow(300L)
         val maxMembersFlow = MutableStateFlow(20)
         val extractedDateMaxFutureDaysFlow = MutableStateFlow(30)
+        val supportEmailAddressFlow = MutableStateFlow("support@splittrip.com")
         every { repository.defaultCurrencyCode } returns defaultCurrencyFlow
         every { repository.balanceComputationDebounceMs } returns debounceFlow
         every { repository.maxMembersPerGroup } returns maxMembersFlow
         every { repository.extractedDateMaxFutureDays } returns extractedDateMaxFutureDaysFlow
+        every { repository.supportEmailAddress } returns supportEmailAddressFlow
 
         // When
         val service = AppConfigServiceImpl(repository)
@@ -30,9 +32,11 @@ class AppConfigServiceImplTest {
         assertEquals(debounceFlow, service.balanceComputationDebounceMs)
         assertEquals(maxMembersFlow, service.maxMembersPerGroup)
         assertEquals(extractedDateMaxFutureDaysFlow, service.extractedDateMaxFutureDays)
+        assertEquals(supportEmailAddressFlow, service.supportEmailAddress)
         assertEquals("EUR", service.defaultCurrencyCode.value)
         assertEquals(300L, service.balanceComputationDebounceMs.value)
         assertEquals(20, service.maxMembersPerGroup.value)
         assertEquals(30, service.extractedDateMaxFutureDays.value)
+        assertEquals("support@splittrip.com", service.supportEmailAddress.value)
     }
 }

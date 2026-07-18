@@ -58,6 +58,7 @@ data class AddExpenseUiState(
      */
     val displayExchangeRate: String = "1.0",
     val calculatedGroupAmount: String = "", // "Cost in EUR"
+    val expectedGroupAmount: Long? = null,
     val showExchangeRateSection: Boolean = false,
     /**
      * True when the exchange rate is determined by ATM withdrawal rates (CASH payment)

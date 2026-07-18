@@ -9,6 +9,7 @@ import es.pedrazamiguez.splittrip.data.di.settingsDataModule
 import es.pedrazamiguez.splittrip.data.di.subunitsDataModule
 import es.pedrazamiguez.splittrip.di.domain.authenticationDomainModule
 import es.pedrazamiguez.splittrip.di.domain.balancesDomainModule
+import es.pedrazamiguez.splittrip.di.domain.calculatorsDomainModule
 import es.pedrazamiguez.splittrip.di.domain.contributionsDomainModule
 import es.pedrazamiguez.splittrip.di.domain.currenciesDomainModule
 import es.pedrazamiguez.splittrip.di.domain.expensesDomainModule
@@ -55,7 +56,8 @@ val activityLoggingFeatureModules = module {
 val contributionsFeatureModules = module {
     includes(
         contributionsDomainModule,
-        contributionsUiModule
+        contributionsUiModule,
+        calculatorsDomainModule
     )
 }
 
@@ -67,7 +69,8 @@ val expensesFeatureModules = module {
     includes(
         expensesDomainModule,
         expensesDataModule,
-        expensesUiModule
+        expensesUiModule,
+        calculatorsDomainModule
     )
 }
 
@@ -106,7 +109,8 @@ val settingsFeatureModules = module {
 val withdrawalsFeatureModules = module {
     includes(
         withdrawalsDomainModule,
-        withdrawalsUiModule
+        withdrawalsUiModule,
+        calculatorsDomainModule
     )
 }
 

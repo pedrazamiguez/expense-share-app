@@ -1,11 +1,13 @@
 package es.pedrazamiguez.splittrip.data.local.datasource.impl
 
 import es.pedrazamiguez.splittrip.data.local.dao.GroupDao
+import es.pedrazamiguez.splittrip.data.local.dao.MembershipRemovalEventDao
 import es.pedrazamiguez.splittrip.data.local.mapper.toDomain
 import es.pedrazamiguez.splittrip.data.local.mapper.toEntity
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalGroupDataSource
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -13,7 +15,11 @@ import kotlinx.coroutines.flow.map
  * Implementation of LocalGroupDataSource using Room.
  * This serves as the Single Source of Truth for Group data in the UI.
  */
-class LocalGroupDataSourceImpl(private val groupDao: GroupDao) : LocalGroupDataSource {
+@Suppress("TooManyFunctions")
+class LocalGroupDataSourceImpl(
+    private val groupDao: GroupDao,
+    private val membershipRemovalEventDao: MembershipRemovalEventDao
+) : LocalGroupDataSource {
 
     override fun getGroupsFlow(): Flow<List<Group>> = groupDao.getAllGroupsFlow().map { entities ->
         entities.toDomain()
@@ -62,5 +68,22 @@ class LocalGroupDataSourceImpl(private val groupDao: GroupDao) : LocalGroupDataS
         if (updatedGroups.isNotEmpty()) {
             groupDao.insertGroups(updatedGroups)
         }
+    }
+
+    override suspend fun saveMembershipRemovalEvent(event: MembershipRemovalEvent) {
+        membershipRemovalEventDao.insertEvent(event.toEntity())
+    }
+
+    override fun getUnprocessedMembershipRemovalEventsFlow(groupId: String): Flow<List<MembershipRemovalEvent>> =
+        membershipRemovalEventDao.getUnprocessedEventsFlow(groupId).map { entities ->
+            entities.toDomain()
+        }
+
+    override suspend fun updateMembershipRemovalEventSyncStatus(eventId: String, syncStatus: SyncStatus) {
+        membershipRemovalEventDao.updateSyncStatus(eventId, syncStatus.name)
+    }
+
+    override suspend fun markMembershipRemovalEventProcessed(eventId: String) {
+        membershipRemovalEventDao.markProcessed(eventId)
     }
 }

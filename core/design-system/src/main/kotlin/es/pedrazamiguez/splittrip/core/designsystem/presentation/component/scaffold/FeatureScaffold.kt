@@ -1,10 +1,12 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.scaffold
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
@@ -29,7 +31,9 @@ fun FeatureScaffold(currentRoute: String, modifier: Modifier = Modifier, content
     ) { innerPadding ->
 
         Box(
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
         ) {
             content()
         }

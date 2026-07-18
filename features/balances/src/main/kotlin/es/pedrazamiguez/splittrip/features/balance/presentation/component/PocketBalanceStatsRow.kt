@@ -31,12 +31,12 @@ internal fun PocketBalanceStatsRow(
             Column {
                 Text(
                     text = stringResource(R.string.balances_total_contributed),
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
                 Text(
                     text = balance.formattedTotalContributed,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -44,12 +44,12 @@ internal fun PocketBalanceStatsRow(
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = stringResource(R.string.balances_total_spent),
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
                 Text(
                     text = balance.formattedTotalSpent,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.error
                 )

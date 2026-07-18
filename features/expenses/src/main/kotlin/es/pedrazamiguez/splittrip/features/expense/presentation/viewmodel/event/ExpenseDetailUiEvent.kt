@@ -9,4 +9,7 @@ sealed interface ExpenseDetailUiEvent {
 
     /** User confirmed the cancel reservation dialog in the TopBar. */
     data object CancelConfirmed : ExpenseDetailUiEvent
+
+    /** User confirmed the actual payment amount for a scheduled foreign expense. */
+    data class ConfirmPayment(val actualGroupAmountCents: Long) : ExpenseDetailUiEvent
 }

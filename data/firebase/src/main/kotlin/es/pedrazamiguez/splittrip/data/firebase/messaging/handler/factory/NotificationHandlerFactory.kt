@@ -10,6 +10,9 @@ import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.ExpenseDe
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.ExpenseUpdatedHandler
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.MemberAddedHandler
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.MemberRemovedHandler
+import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.RefundableExpenseReminderHandler
+import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.ScheduledExpenseEffectiveHandler
+import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.ScheduledExpenseReminderHandler
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.SettlementRequestHandler
 import es.pedrazamiguez.splittrip.domain.enums.NotificationType
 import es.pedrazamiguez.splittrip.domain.handler.NotificationHandler
@@ -25,6 +28,15 @@ class NotificationHandlerFactory(private val context: Context, private val local
         NotificationType.CASH_WITHDRAWAL -> CashWithdrawalHandler(context, localeProvider)
         NotificationType.CONTRIBUTION_ADDED -> ContributionAddedHandler(context, localeProvider)
         NotificationType.SETTLEMENT_REQUEST -> SettlementRequestHandler(context, localeProvider)
+        NotificationType.EXPENSE_SCHEDULED_REMINDER -> ScheduledExpenseReminderHandler(
+            context
+        )
+        NotificationType.EXPENSE_SCHEDULED_EFFECTIVE -> ScheduledExpenseEffectiveHandler(
+            context
+        )
+        NotificationType.EXPENSE_REFUNDABLE_REMINDER -> RefundableExpenseReminderHandler(
+            context
+        )
         else -> DefaultHandler(context)
     }
 }

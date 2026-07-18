@@ -90,7 +90,7 @@ fun GroupDetailScreen(
                 )
             }
 
-            if (uiState.showDeleteConfirmation && group != null) {
+            if (uiState.showDeleteConfirmation) {
                 DestructiveConfirmationDialog(
                     title = stringResource(R.string.group_delete_title),
                     text = stringResource(R.string.group_delete_warning, group.name),
@@ -99,7 +99,7 @@ fun GroupDetailScreen(
                 )
             }
 
-            if (uiState.leaveWizardState.showSheet && group != null) {
+            if (uiState.leaveWizardState.showSheet) {
                 GroupLeaveWizardSheet(
                     groupName = group.name,
                     leaveWizardState = uiState.leaveWizardState,

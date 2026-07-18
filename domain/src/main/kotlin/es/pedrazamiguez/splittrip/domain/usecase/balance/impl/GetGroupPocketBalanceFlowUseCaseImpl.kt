@@ -41,8 +41,8 @@ class GetGroupPocketBalanceFlowUseCaseImpl(
                 expense.dueDate?.toLocalDate()?.isAfter(today) == true
         }
 
-        // Separate refundable expenses
-        val (refundable, effectiveExpenses) = nonScheduled.partition { expense ->
+        // Filter refundable expenses to calculate refundable hold amount
+        val refundable = nonScheduled.filter { expense ->
             expense.paymentStatus == PaymentStatus.REFUNDABLE
         }
 
@@ -64,7 +64,7 @@ class GetGroupPocketBalanceFlowUseCaseImpl(
         // repeated calculateEffectiveGroupAmount() calls across aggregates.
         data class ExpenseAmounts(val base: Long, val effective: Long, val isCash: Boolean, val allExtras: Long)
 
-        val expenseAmounts = effectiveExpenses.map { expense ->
+        val expenseAmounts = nonScheduled.map { expense ->
             ExpenseAmounts(
                 base = expense.groupAmount,
                 effective = addOnCalculationService.calculateEffectiveGroupAmount(

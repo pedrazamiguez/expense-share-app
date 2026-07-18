@@ -87,7 +87,7 @@ class AddExpenseUiMapper(
 
     // Sequential field-by-field parsing of UiState → domain model;
     // each field requires its own null-coalescing and conversion logic
-    @Suppress("CyclomaticComplexMethod", "LongMethod")
+    @Suppress("CyclomaticComplexMethod", "CognitiveComplexMethod", "LongMethod")
     fun mapToDomain(state: AddExpenseUiState, groupId: String): Result<Expense> = try {
         val sourceCurrencyCode = state.selectedCurrency?.code
         val groupCurrencyCode = state.groupCurrency?.code
@@ -153,6 +153,12 @@ class AddExpenseUiMapper(
             LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneOffset.UTC)
         }
 
+        val expectedGroupAmount = if (paymentStatus == PaymentStatus.SCHEDULED) {
+            state.expectedGroupAmount ?: groupAmount
+        } else {
+            null
+        }
+
         val expense = Expense(
             groupId = groupId,
             title = state.expenseTitle.trim(),
@@ -160,6 +166,7 @@ class AddExpenseUiMapper(
             sourceCurrency = sourceCurrencyCode ?: "EUR",
             groupAmount = groupAmount,
             groupCurrency = groupCurrencyCode ?: "EUR",
+            expectedGroupAmount = expectedGroupAmount,
             exchangeRate = internalRate,
             addOns = addOns,
             category = category,
@@ -264,6 +271,7 @@ class AddExpenseUiMapper(
             selectedPaymentStatus = selectedPaymentStatus,
             displayExchangeRate = displayRate,
             calculatedGroupAmount = calculatedGroupAmountString,
+            expectedGroupAmount = expense.expectedGroupAmount,
             showExchangeRateSection = isForeign,
             isExchangeRateLocked = expense.paymentMethod == PaymentMethod.CASH && isForeign,
             dueDateMillis = dueDateMillis,

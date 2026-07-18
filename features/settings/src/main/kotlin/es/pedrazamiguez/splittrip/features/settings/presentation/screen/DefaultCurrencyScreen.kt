@@ -28,7 +28,6 @@ fun DefaultCurrencyScreen(
             val currencyName = stringResource(id = currency.getNameRes())
 
             ListItem(
-                headlineContent = { Text(text = "$currencyName (${currency.symbol})") },
                 supportingContent = { Text(text = currency.name) },
                 trailingContent = {
                     if (isSelected) {
@@ -41,7 +40,9 @@ fun DefaultCurrencyScreen(
                 modifier = Modifier.clickable {
                     onCurrencySelected(currency.name)
                 }
-            )
+            ) {
+                Text(text = "$currencyName (${currency.symbol})")
+            }
         }
     }
 }

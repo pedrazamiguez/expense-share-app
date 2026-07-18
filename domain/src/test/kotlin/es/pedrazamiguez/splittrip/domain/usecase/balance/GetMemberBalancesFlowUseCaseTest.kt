@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.domain.usecase.balance
 
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
+import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.enums.SplitType
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.Contribution
@@ -979,6 +980,64 @@ class GetMemberBalancesFlowUseCaseTest {
             val result = compute(withdrawals = listOf(withdrawal))
             val balanceMap = result.associateBy { it.userId }
             assertEquals(0L, balanceMap["user-1"]!!.cashInHand)
+        }
+    }
+
+    @Nested
+    @DisplayName("RefundableExpenses")
+    inner class RefundableExpenses {
+
+        @Test
+        fun `refundable expenses populate refundable fields`() {
+            val expenses = listOf(
+                Expense(
+                    id = "exp-ref",
+                    sourceAmount = 10000L,
+                    groupAmount = 10000L,
+                    paymentMethod = PaymentMethod.DEBIT_CARD,
+                    paymentStatus = PaymentStatus.REFUNDABLE,
+                    splits = listOf(
+                        ExpenseSplit(userId = "user-1", amountCents = 10000L)
+                    )
+                )
+            )
+            val result = compute(expenses = expenses)
+            val balanceMap = result.associateBy { it.userId }
+            val balance = balanceMap["user-1"]!!
+
+            assertEquals(10000L, balance.refundableSpent)
+            assertEquals(1, balance.refundableSpentByCurrency.size)
+            assertEquals("EUR", balance.refundableSpentByCurrency[0].currency)
+            assertEquals(10000L, balance.refundableSpentByCurrency[0].amountCents)
+            assertEquals(10000L, balance.nonCashSpent)
+            assertEquals(-10000L, balance.pocketBalance)
+        }
+
+        @Test
+        fun `refundable expenses are included in totalSpent and reduce pocketBalance`() {
+            val contributions = listOf(
+                Contribution(userId = "user-1", amount = 20000L)
+            )
+            val expenses = listOf(
+                Expense(
+                    id = "exp-ref",
+                    sourceAmount = 10000L,
+                    groupAmount = 10000L,
+                    paymentMethod = PaymentMethod.DEBIT_CARD,
+                    paymentStatus = PaymentStatus.REFUNDABLE,
+                    splits = listOf(
+                        ExpenseSplit(userId = "user-1", amountCents = 10000L)
+                    )
+                )
+            )
+            val result = compute(contributions = contributions, expenses = expenses)
+            val balanceMap = result.associateBy { it.userId }
+            val balance = balanceMap["user-1"]!!
+
+            // totalSpent includes refundable non-cash spent: cash (0) + non-cash (10000) = 10000
+            assertEquals(10000L, balance.totalSpent)
+            // pocketBalance is reduced by refundable: 20000 - 0 (withdrawn) - 10000 (nonCashSpent) = 10000
+            assertEquals(10000L, balance.pocketBalance)
         }
     }
 }

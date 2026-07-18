@@ -10,6 +10,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupCurrenc
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupNameUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetSelectedGroupUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SharedViewModel(
     private val getSelectedGroupIdUseCase: GetSelectedGroupIdUseCase,
     private val getSelectedGroupNameUseCase: GetSelectedGroupNameUseCase,

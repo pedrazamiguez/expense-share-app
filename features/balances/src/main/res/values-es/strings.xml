@@ -10,6 +10,7 @@
     <!-- Group Pocket Balance -->
     <string name="balances_remaining">Restante</string>
     <string name="balances_available">Disponible</string>
+    <string name="balances_scheduled">Programado</string>
     <string name="balances_on_hold">Retenido</string>
     <string name="balances_total_contributed">Total aportado</string>
     <string name="balances_total_spent">Total gastado</string>
@@ -29,6 +30,7 @@
     <string name="balances_member_spent_breakdown">Desglose de gastos</string>
     <string name="balances_member_cash_expenses">Efectivo</string>
     <string name="balances_member_non_cash_expenses">Tarjeta/Otro</string>
+    <string name="balances_member_refundable_expenses">Retenido</string>
     <string name="balances_member_no_expenses">Sin gastos registrados</string>
     <string name="balances_member_no_cash">Sin efectivo retirado</string>
     <string name="balances_member_negative_cash_hint">Gasto en efectivo excede el efectivo retirado</string>

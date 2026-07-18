@@ -122,7 +122,7 @@ class SubmitEventHandler(
         ) {
             Timber.w(
                 "submitExpense: due-date required but null — paymentStatus=%s",
-                currentState.selectedPaymentStatus?.id
+                currentState.selectedPaymentStatus.id
             )
             val errorText = UiText.StringResource(R.string.expense_error_due_date_required)
             _uiState.update {
@@ -431,7 +431,7 @@ class SubmitEventHandler(
 
     private fun AddExpenseUiState.clearFutureDateError(): AddExpenseUiState =
         if (error is UiText.StringResource &&
-            (error as UiText.StringResource).resId == R.string.expense_error_date_future
+            error.resId == R.string.expense_error_date_future
         ) {
             copy(error = null)
         } else {

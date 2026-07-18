@@ -24,13 +24,20 @@ import es.pedrazamiguez.splittrip.domain.usecase.setting.SetAppLanguageUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetAppThemeUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetUserDefaultCurrencyUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetCurrentUserProfileUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.ObserveCurrentUserProfileUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.UpdateUserReminderPreferencesUseCase
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.AccountStatusUiMapper
+import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.NotificationPreferencesUiMapper
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.impl.AccountStatusUiMapperImpl
+import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.impl.NotificationPreferencesUiMapperImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.AccountStatusScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.DefaultCurrencyScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.DeveloperServicesScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.FaqScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.LanguageScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.NotificationPreferencesScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.OpenSourceScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.PrivacyPolicyScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.SettingsScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.ThemeScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.AccountStatusViewModel
@@ -87,26 +94,41 @@ val settingsUiModule = module {
     }
 
     viewModel {
+        val getNotificationPreferencesUseCase = get<GetNotificationPreferencesUseCase>()
+        val updateNotificationPreferenceUseCase = get<UpdateNotificationPreferenceUseCase>()
+        val observeCurrentUserProfileUseCase = get<ObserveCurrentUserProfileUseCase>()
+        val updateUserReminderPreferencesUseCase = get<UpdateUserReminderPreferencesUseCase>()
+        val notificationPreferencesUiMapper = get<NotificationPreferencesUiMapper>()
         NotificationPreferencesViewModel(
-            getNotificationPreferencesUseCase = get<GetNotificationPreferencesUseCase>(),
-            updateNotificationPreferenceUseCase = get<UpdateNotificationPreferenceUseCase>()
+            getNotificationPreferencesUseCase = getNotificationPreferencesUseCase,
+            updateNotificationPreferenceUseCase = updateNotificationPreferenceUseCase,
+            observeCurrentUserProfileUseCase = observeCurrentUserProfileUseCase,
+            updateUserReminderPreferencesUseCase = updateUserReminderPreferencesUseCase,
+            notificationPreferencesUiMapper = notificationPreferencesUiMapper
         )
     }
 
     viewModel {
+        val receiptOcrService = get<ReceiptOcrService>()
+        val receiptExtractionService = get<ReceiptExtractionService>()
+        val aiModelResolverService = get<AiModelResolverService>()
         DeveloperServicesViewModel(
-            receiptOcrService = get<ReceiptOcrService>(),
-            receiptExtractionService = get<ReceiptExtractionService>(),
-            aiModelResolver = get<AiModelResolverService>()
+            receiptOcrService = receiptOcrService,
+            receiptExtractionService = receiptExtractionService,
+            aiModelResolver = aiModelResolverService
         )
     }
 
     viewModel {
+        val getAppThemeUseCase = get<GetAppThemeUseCase>()
+        val setAppThemeUseCase = get<SetAppThemeUseCase>()
         ThemeViewModel(
-            getAppThemeUseCase = get<GetAppThemeUseCase>(),
-            setAppThemeUseCase = get<SetAppThemeUseCase>()
+            getAppThemeUseCase = getAppThemeUseCase,
+            setAppThemeUseCase = setAppThemeUseCase
         )
     }
+
+    factory<NotificationPreferencesUiMapper> { NotificationPreferencesUiMapperImpl() }
 
     factory<AccountStatusUiMapper> { AccountStatusUiMapperImpl(localeProvider = get()) }
 
@@ -135,4 +157,7 @@ val settingsUiModule = module {
     single { DeveloperServicesScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { ThemeScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { AccountStatusScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { FaqScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { PrivacyPolicyScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { OpenSourceScreenUiProviderImpl() } bind ScreenUiProvider::class
 }

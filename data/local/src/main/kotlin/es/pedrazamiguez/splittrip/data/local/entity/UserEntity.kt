@@ -14,5 +14,7 @@ data class UserEntity(
     val lastUpdatedAtMillis: Long?,
     val bio: String? = null,
     val syncStatus: String = "SYNCED",
-    val isPending: Boolean = false
+    val isPending: Boolean = false,
+    val timezone: String? = null,
+    val preferredReminderTime: String? = null
 )

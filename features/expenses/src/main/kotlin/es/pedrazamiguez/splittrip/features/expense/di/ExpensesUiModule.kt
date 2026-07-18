@@ -352,7 +352,9 @@ val expensesUiModule = module {
             updateExpenseUseCase = get<UpdateExpenseUseCase>(),
             authenticationService = get<AuthenticationService>(),
             expenseDetailUiMapper = get<ExpenseDetailUiMapper>(),
-            observeGroupUseCase = get<ObserveGroupUseCase>()
+            observeGroupUseCase = get<ObserveGroupUseCase>(),
+            exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
+            remainderDistributionService = get<RemainderDistributionService>()
         )
     }
 }

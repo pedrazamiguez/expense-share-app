@@ -51,20 +51,7 @@ class BalancesUiMapper(
 
     fun mapBalance(balance: GroupPocketBalance, groupName: String): GroupPocketBalanceUiModel {
         val locale = localeProvider.getCurrentLocale()
-        val cashBalanceUiModels = balance.cashBalances.entries
-            .sortedBy { (currency, _) -> currency }
-            .map { (currency, amountCents) ->
-                val equivalent = balance.cashEquivalents[currency]
-                CashBalanceUiModel(
-                    currency = currency,
-                    formattedAmount = formatCurrencyAmount(amountCents, currency, locale),
-                    formattedEquivalent = if (currency != balance.currency && equivalent != null && equivalent > 0) {
-                        formatCurrencyAmount(equivalent, balance.currency, locale)
-                    } else {
-                        ""
-                    }
-                )
-            }.toImmutableList()
+        val cashBalanceUiModels = mapCashBalances(balance, locale)
 
         return GroupPocketBalanceUiModel(
             groupName = groupName,
@@ -79,8 +66,13 @@ class BalancesUiMapper(
                 ""
             },
             formattedAvailableBalance = if (balance.scheduledHoldAmount > 0 || balance.refundableHoldAmount > 0) {
-                val available = balance.virtualBalance - balance.scheduledHoldAmount - balance.refundableHoldAmount
+                val available = balance.virtualBalance - balance.scheduledHoldAmount
                 formatCurrencyAmount(available, balance.currency, locale)
+            } else {
+                null
+            },
+            formattedScheduledHoldAmount = if (balance.scheduledHoldAmount > 0) {
+                formatCurrencyAmount(balance.scheduledHoldAmount, balance.currency, locale)
             } else {
                 null
             },
@@ -372,17 +364,21 @@ class BalancesUiMapper(
             memberProfiles = memberProfiles,
             currentUserId = currentUserId
         )
+        val (cashInHand, cashInHandByCurrency, cashBreakdown) = mapCashInHandAndBreakdown(
+            balance,
+            isNegativeCash,
+            currency,
+            groupCurrency,
+            locale,
+            cashContext
+        )
 
         return MemberBalanceUiModel(
             userId = balance.userId,
             memberDisplay = memberDisplay,
             isCurrentUser = balance.userId == currentUserId,
             formattedContributed = formatCurrencyAmount(balance.contributed, currency, locale),
-            formattedCashInHand = if (isNegativeCash) {
-                EM_DASH
-            } else {
-                formatCurrencyAmount(balance.cashInHand, currency, locale)
-            },
+            formattedCashInHand = cashInHand,
             formattedTotalSpent = formatCurrencyAmount(balance.totalSpent, currency, locale),
             formattedPocketBalance = formatCurrencyAmount(balance.pocketBalance, currency, locale),
             formattedTotalBalance = formatCurrencyAmount(balance.totalBalance, currency, locale),
@@ -390,26 +386,42 @@ class BalancesUiMapper(
             formattedNonCashSpent = formatCurrencyAmount(balance.nonCashSpent, currency, locale),
             isPositiveBalance = balance.totalBalance >= 0,
             hasNegativeCashInHand = isNegativeCash,
-            cashInHandByCurrency = if (isNegativeCash) {
-                persistentListOf()
-            } else {
-                mapCurrencyBreakdowns(balance.cashInHandByCurrency, groupCurrency, locale)
-            },
+            cashInHandByCurrency = cashInHandByCurrency,
             cashSpentByCurrency = mapCurrencyBreakdowns(balance.cashSpentByCurrency, groupCurrency, locale),
             nonCashSpentByCurrency = mapCurrencyBreakdowns(balance.nonCashSpentByCurrency, groupCurrency, locale),
-            cashBreakdown = if (isNegativeCash) {
-                persistentListOf()
+            formattedRefundableSpent = if (balance.refundableSpent > 0L) {
+                formatCurrencyAmount(balance.refundableSpent, currency, locale)
             } else {
-                mapCashBreakdown(
-                    userId = balance.userId,
-                    withdrawals = cashContext.withdrawals,
-                    subunitsMap = cashContext.subunitsMap,
-                    groupMemberIds = cashContext.groupMemberIds,
-                    groupCurrency = groupCurrency,
-                    locale = locale
-                )
+                null
             },
+            refundableSpentByCurrency = mapCurrencyBreakdowns(balance.refundableSpentByCurrency, groupCurrency, locale),
+            cashBreakdown = cashBreakdown,
             formattedTotalFees = formattedTotalFees
+        )
+    }
+
+    private fun mapCashInHandAndBreakdown(
+        balance: MemberBalance,
+        isNegativeCash: Boolean,
+        currency: String,
+        groupCurrency: String,
+        locale: Locale,
+        cashContext: MemberBalanceCashContext
+    ): Triple<String, ImmutableList<CurrencyBreakdownUiModel>, ImmutableList<CashBreakdownUiModel>> {
+        if (isNegativeCash) {
+            return Triple(EM_DASH, persistentListOf(), persistentListOf())
+        }
+        return Triple(
+            formatCurrencyAmount(balance.cashInHand, currency, locale),
+            mapCurrencyBreakdowns(balance.cashInHandByCurrency, groupCurrency, locale),
+            mapCashBreakdown(
+                userId = balance.userId,
+                withdrawals = cashContext.withdrawals,
+                subunitsMap = cashContext.subunitsMap,
+                groupMemberIds = cashContext.groupMemberIds,
+                groupCurrency = groupCurrency,
+                locale = locale
+            )
         )
     }
 
@@ -526,24 +538,6 @@ class BalancesUiMapper(
         return formatCurrencyAmount(totalUserAddOnCents, groupCurrency, locale)
     }
 
-    private fun mapCurrencyBreakdowns(
-        amounts: List<CurrencyAmount>,
-        groupCurrency: String,
-        locale: Locale
-    ): ImmutableList<CurrencyBreakdownUiModel> {
-        return amounts.map { ca ->
-            CurrencyBreakdownUiModel(
-                currency = ca.currency,
-                formattedAmount = formatCurrencyAmount(ca.amountCents, ca.currency, locale),
-                formattedEquivalent = if (ca.currency != groupCurrency && ca.equivalentCents > 0) {
-                    formatCurrencyAmount(ca.equivalentCents, groupCurrency, locale)
-                } else {
-                    ""
-                }
-            )
-        }.toImmutableList()
-    }
-
     private fun resolveCreatedByDisplayName(
         createdBy: String,
         targetUserId: String,
@@ -560,3 +554,39 @@ class BalancesUiMapper(
         )
     }
 }
+
+private fun mapCurrencyBreakdowns(
+    amounts: List<CurrencyAmount>,
+    groupCurrency: String,
+    locale: Locale
+): ImmutableList<CurrencyBreakdownUiModel> {
+    return amounts.map { ca ->
+        CurrencyBreakdownUiModel(
+            currency = ca.currency,
+            formattedAmount = formatCurrencyAmount(ca.amountCents, ca.currency, locale),
+            formattedEquivalent = if (ca.currency != groupCurrency && ca.equivalentCents > 0) {
+                formatCurrencyAmount(ca.equivalentCents, groupCurrency, locale)
+            } else {
+                ""
+            }
+        )
+    }.toImmutableList()
+}
+
+private fun mapCashBalances(
+    balance: GroupPocketBalance,
+    locale: Locale
+): ImmutableList<CashBalanceUiModel> = balance.cashBalances.entries
+    .sortedBy { (currency, _) -> currency }
+    .map { (currency, amountCents) ->
+        val equivalent = balance.cashEquivalents[currency]
+        CashBalanceUiModel(
+            currency = currency,
+            formattedAmount = formatCurrencyAmount(amountCents, currency, locale),
+            formattedEquivalent = if (currency != balance.currency && equivalent != null && equivalent > 0) {
+                formatCurrencyAmount(equivalent, balance.currency, locale)
+            } else {
+                ""
+            }
+        )
+    }.toImmutableList()

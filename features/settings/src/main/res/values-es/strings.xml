@@ -76,6 +76,10 @@
     <string name="notification_prefs_expenses_description">Gastos añadidos, actualizados o eliminados</string>
     <string name="notification_prefs_financial_title">Actividad financiera</string>
     <string name="notification_prefs_financial_description">Retiradas de efectivo y aportaciones</string>
+    <string name="notification_prefs_reminder_title">Preferencias de recordatorios</string>
+    <string name="notification_prefs_select_timezone">Seleccionar zona horaria</string>
+    <string name="notification_prefs_timezone">Zona horaria</string>
+    <string name="notification_prefs_reminder_time">Hora del recordatorio (HH:MM)</string>
 
     <!-- Developer Services Playground -->
     <string name="developer_services_selected_attachment">Adjunto Seleccionado</string>
@@ -190,4 +194,52 @@
     <string name="account_status_link_email_dialog_error_email_empty">El correo no puede estar vacío</string>
     <string name="settings_logout_guest_dialog_title">¿Restablecer sesión de invitado?</string>
     <string name="settings_logout_guest_dialog_text">Cerrar sesión o restablecer borrará de forma permanente todos los viajes, gastos y saldos locales. ¡Asegúrate de vincular tu cuenta antes para guardar tus datos!</string>
+
+    <!-- FAQ Screen -->
+    <string name="faq_title">Preguntas frecuentes</string>
+    <string name="faq_question_1">¿Qué es SplitTrip?</string>
+    <string name="faq_answer_1">SplitTrip es una aplicación moderna para compartir gastos y dividir cuentas de grupo diseñada para hacer que los viajes, cenas y eventos en grupo sean libres de estrés. Calcula saldos, rastrea gastos y concilia deudas sin conexión o en línea.</string>
+    <string name="faq_question_2">¿Cómo funciona el modo sin conexión?</string>
+    <string name="faq_answer_2">SplitTrip está construido sobre una arquitectura que prioriza la base de datos local (offline-first). Cualquier transacción o edición de grupo que realices se guarda instantáneamente en tu base de datos local (Room) y se propaga a la interfaz de usuario de inmediato. Cuando hay una conexión de red disponible, los cambios se sincronizan de forma segura en segundo plano en nuestras bases de datos de Cloud Firestore.</string>
+    <string name="faq_question_3">¿Puedo usar múltiples monedas?</string>
+    <string name="faq_answer_3">¡Sí! SplitTrip admite completamente viajes con múltiples monedas. Puedes establecer una moneda predeterminada para tu perfil, especificar monedas para gastos individuales y ver saldos convertidos automáticamente basados en tipos de cambio en tiempo real.</string>
+    <string name="faq_question_4">¿Mis datos están seguros?</string>
+    <string name="faq_answer_4">Absolutamente. SplitTrip utiliza Firebase Authentication para autenticar a los usuarios de forma segura. Tu información personal, los detalles del viaje y las transacciones financieras están protegidos utilizando cifrado de tránsito estándar de la industria y robustas reglas de seguridad de Firestore.</string>
+    <string name="faq_question_5">¿Cómo vinculo mi cuenta de invitado?</string>
+    <string name="faq_answer_5">Si comenzaste como invitado, puedes ir a Ajustes &gt; Estado de la cuenta y vincular una cuenta de Google o un correo electrónico y contraseña. Esto fusiona tu sesión local de invitado con una cuenta permanente respaldada en la nube para que nunca pierdas tus datos.</string>
+
+    <!-- Privacy Policy Screen -->
+    <string name="privacy_title">Política de privacidad</string>
+    <string name="privacy_section_1_title">1. Información que recopilamos</string>
+    <string name="privacy_section_1_body">Recopilamos información de autenticación cuando te registras (correo electrónico, nombre de perfil, imagen de perfil) y detalles financieros compartidos (viajes, descripciones de gastos, importes y listas de miembros) para facilitar los cálculos de deudas. Las cuentas de invitado almacenan estos datos solo en tu dispositivo.</string>
+    <string name="privacy_section_2_title">2. Cómo utilizamos los datos</string>
+    <string name="privacy_section_2_body">Tus datos se procesan en el dispositivo y se sincronizan con la nube para la colaboración en grupo en tiempo real. No vendemos ni monetizamos tus registros de transacciones, métodos de pago o información personal.</string>
+    <string name="privacy_section_3_title">3. Seguridad de los datos</string>
+    <string name="privacy_section_3_body">Los datos locales están protegidos en bases de datos Room y preferencias de DataStore. La sincronización en la nube está protegida por cifrado en tránsito y reglas estrictas de Firestore, garantizando que solo los miembros de un grupo puedan leerlos o escribirlos.</string>
+    <string name="privacy_section_4_title">4. Tus derechos y eliminación de cuenta</string>
+    <string name="privacy_section_4_body">Conservas todos los derechos sobre tus datos. Puedes eliminar o desvincular tus cuentas en cualquier momento. Las solicitudes de eliminación permanente pueden iniciarse desde la pantalla Estado de la cuenta.</string>
+
+    <!-- Open Source Screen -->
+    <string name="open_source_title">Open Source</string>
+    <string name="open_source_libraries_header">Utilizamos estos paquetes de código abierto para crear una experiencia premium, rápida y sin conexión:</string>
+    <string name="open_source_lib_license">Licencia: %1$s</string>
+    <string name="open_source_view_source">Ver código fuente</string>
+
+    <!-- Open Source Libraries -->
+    <string name="open_source_lib_koin_name">Koin</string>
+    <string name="open_source_lib_koin_desc">Framework pragmático y ligero de inyección de dependencias para Kotlin</string>
+    <string name="open_source_lib_room_name">Room</string>
+    <string name="open_source_lib_room_desc">Librería de mapeo de objetos SQLite de Android Jetpack</string>
+    <string name="open_source_lib_firebase_name">Firebase</string>
+    <string name="open_source_lib_firebase_desc">Plataforma de Google Cloud para autenticación y sincronización</string>
+    <string name="open_source_lib_haze_name">Haze</string>
+    <string name="open_source_lib_haze_desc">Efectos de desenfoque y glassmorphism en tiempo real basados en GPU para Jetpack Compose</string>
+    <string name="open_source_lib_timber_name">Timber</string>
+    <string name="open_source_lib_timber_desc">Clase de utilidad extensible para registro de logs con generación automática de etiquetas</string>
+    <string name="open_source_lib_retrofit_name">Retrofit</string>
+    <string name="open_source_lib_retrofit_desc">Cliente REST seguro para Android y Java de Square</string>
+    <string name="open_source_lib_coil_name">Coil</string>
+    <string name="open_source_lib_coil_desc">Librería de carga de imágenes para Android basada en corrutinas de Kotlin</string>
+    <string name="open_source_lib_gson_name">Gson</string>
+    <string name="open_source_lib_gson_desc">Librería Java para convertir objetos Java en JSON y vice versa</string>
 </resources>

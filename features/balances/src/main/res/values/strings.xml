@@ -9,6 +9,7 @@
     <!-- Group Pocket Balance -->
     <string name="balances_remaining">Remaining</string>
     <string name="balances_available">Available</string>
+    <string name="balances_scheduled">Scheduled</string>
     <string name="balances_on_hold">On hold</string>
     <string name="balances_total_contributed">Total contributed</string>
     <string name="balances_total_spent">Total spent</string>
@@ -28,6 +29,7 @@
     <string name="balances_member_spent_breakdown">Spending breakdown</string>
     <string name="balances_member_cash_expenses">Cash</string>
     <string name="balances_member_non_cash_expenses">Card/Other</string>
+    <string name="balances_member_refundable_expenses">On hold</string>
     <string name="balances_member_no_expenses">No expenses recorded</string>
     <string name="balances_member_no_cash">No cash withdrawn</string>
     <string name="balances_member_negative_cash_hint">Cash spent exceeds withdrawn cash</string>

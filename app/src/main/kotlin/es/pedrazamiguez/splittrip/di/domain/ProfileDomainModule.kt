@@ -12,6 +12,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.user.ObserveCurrentUserProfileU
 import es.pedrazamiguez.splittrip.domain.usecase.user.ReconcileUnregisteredUserUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.SearchUsersByEmailUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.UpdateUserProfileUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.UpdateUserReminderPreferencesUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.impl.CheckPendingReconciliationUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.user.impl.GetCurrentUserProfileUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.user.impl.GetMemberProfilesUseCaseImpl
@@ -19,6 +20,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.user.impl.ObserveCurrentUserPro
 import es.pedrazamiguez.splittrip.domain.usecase.user.impl.ReconcileUnregisteredUserUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.user.impl.SearchUsersByEmailUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.user.impl.UpdateUserProfileUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.user.impl.UpdateUserReminderPreferencesUseCaseImpl
 import org.koin.dsl.module
 
 val profileDomainModule = module {
@@ -60,6 +62,11 @@ val profileDomainModule = module {
     }
     factory<CheckPendingReconciliationUseCase> {
         CheckPendingReconciliationUseCaseImpl(
+            userRepository = get<UserRepository>()
+        )
+    }
+    factory<UpdateUserReminderPreferencesUseCase> {
+        UpdateUserReminderPreferencesUseCaseImpl(
             userRepository = get<UserRepository>()
         )
     }

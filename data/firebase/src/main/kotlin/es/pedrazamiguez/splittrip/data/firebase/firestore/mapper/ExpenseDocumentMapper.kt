@@ -33,6 +33,7 @@ fun Expense.toDocument(expenseId: String, groupId: String, groupDocRef: Document
         currency = sourceCurrency,
         groupCurrency = groupCurrency,
         groupAmountCents = groupAmount,
+        expectedGroupAmountCents = expectedGroupAmount,
         exchangeRate = exchangeRate.toPlainString(),
         operationDate = LocalDateTime
             .now()
@@ -77,6 +78,7 @@ fun ExpenseDocument.toDomain(): Expense {
         sourceCurrency = currency,
         groupAmount = groupAmountCents ?: amountCents,
         groupCurrency = groupCurrency,
+        expectedGroupAmount = expectedGroupAmountCents,
         exchangeRate = exchangeRate?.toBigDecimalOrNull() ?: BigDecimal.ONE,
         addOns = addOns.map { it.toDomainAddOn() },
         paymentMethod = runCatching { PaymentMethod.fromString(paymentMethod) }.getOrDefault(

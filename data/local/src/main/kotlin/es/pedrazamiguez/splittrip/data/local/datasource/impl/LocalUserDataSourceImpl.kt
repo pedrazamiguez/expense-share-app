@@ -21,6 +21,20 @@ class LocalUserDataSourceImpl(private val userDao: UserDao) : LocalUserDataSourc
         userDao.updateSyncStatus(userId, syncStatus.name)
     }
 
+    override suspend fun updateUserReminderPreferences(
+        userId: String,
+        timezone: String?,
+        preferredReminderTime: String?
+    ) {
+        userDao.updateUserReminderPreferences(
+            userId = userId,
+            timezone = timezone,
+            preferredReminderTime = preferredReminderTime,
+            lastUpdatedAtMillis = System.currentTimeMillis(),
+            syncStatus = SyncStatus.PENDING_SYNC.name
+        )
+    }
+
     override fun observeUser(userId: String): Flow<User?> {
         return userDao.observeUserById(userId).map { it?.toDomain() }
     }

@@ -7,6 +7,9 @@ import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AddOnCalculationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.support.ExpenseResult
+import es.pedrazamiguez.splittrip.domain.usecase.balance.support.RemainingResult
+import es.pedrazamiguez.splittrip.domain.usecase.balance.support.WithdrawalResult
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.attributeContributions
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.attributeExpensesByPaymentMethod
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.attributeRemainingByScope
@@ -70,43 +73,69 @@ class GetMemberBalancesFlowUseCaseImpl(
             addAll(withdrawalResult.groupCurrencyMap.keys)
             addAll(expenseResult.cashSpentMap.keys)
             addAll(expenseResult.nonCashSpentMap.keys)
+            addAll(expenseResult.refundableSpentMap.keys)
         }
 
         return allUserIds.map { userId ->
-            val contributed = contributedMap[userId] ?: 0L
-            val withdrawn = withdrawalResult.groupCurrencyMap[userId] ?: 0L
-            val cashSpent = expenseResult.cashSpentMap[userId] ?: 0L
-            val nonCashSpent = expenseResult.nonCashSpentMap[userId] ?: 0L
-
-            MemberBalance(
+            buildMemberBalance(
                 userId = userId,
-                contributed = contributed,
-                withdrawn = withdrawn,
-                cashSpent = cashSpent,
-                nonCashSpent = nonCashSpent,
-                totalSpent = cashSpent + nonCashSpent,
-                pocketBalance = contributed - withdrawn - nonCashSpent,
-                cashInHand = remainingResult.groupCurrencyMap[userId] ?: 0L,
-                cashInHandByCurrency = buildCashInHandByCurrency(
-                    remainingByCurrency = remainingResult.byCurrency[userId] ?: emptyMap(),
-                    groupCurrency = groupCurrency
-                ),
-                cashSpentByCurrency = buildCurrencyAmountList(
-                    byCurrencyMap = expenseResult.cashSpentByCurrency[userId] ?: emptyMap(),
-                    equivByCurrency = expenseResult.cashEquivByCurrency[userId] ?: emptyMap(),
-                    groupCurrency = groupCurrency
-                ),
-                nonCashSpentByCurrency = buildCurrencyAmountList(
-                    byCurrencyMap = expenseResult.nonCashSpentByCurrency[userId] ?: emptyMap(),
-                    equivByCurrency = expenseResult.nonCashEquivByCurrency[userId] ?: emptyMap(),
-                    groupCurrency = groupCurrency
-                ),
-                withdrawnByCurrency = buildWithdrawnByCurrency(
-                    byCurrencyMap = withdrawalResult.byCurrency[userId] ?: emptyMap(),
-                    groupCurrency = groupCurrency
-                )
+                contributedMap = contributedMap,
+                withdrawalResult = withdrawalResult,
+                remainingResult = remainingResult,
+                expenseResult = expenseResult,
+                groupCurrency = groupCurrency
             )
         }
+    }
+
+    private fun buildMemberBalance(
+        userId: String,
+        contributedMap: Map<String, Long>,
+        withdrawalResult: WithdrawalResult,
+        remainingResult: RemainingResult,
+        expenseResult: ExpenseResult,
+        groupCurrency: String
+    ): MemberBalance {
+        val contributed = contributedMap.getOrDefault(userId, 0L)
+        val withdrawn = withdrawalResult.groupCurrencyMap.getOrDefault(userId, 0L)
+        val cashSpent = expenseResult.cashSpentMap.getOrDefault(userId, 0L)
+        val nonCashSpent = expenseResult.nonCashSpentMap.getOrDefault(userId, 0L)
+        val refundableSpent = expenseResult.refundableSpentMap.getOrDefault(userId, 0L)
+
+        return MemberBalance(
+            userId = userId,
+            contributed = contributed,
+            withdrawn = withdrawn,
+            cashSpent = cashSpent,
+            nonCashSpent = nonCashSpent,
+            refundableSpent = refundableSpent,
+            totalSpent = cashSpent + nonCashSpent,
+            pocketBalance = contributed - withdrawn - nonCashSpent,
+            cashInHand = remainingResult.groupCurrencyMap.getOrDefault(userId, 0L),
+            cashInHandByCurrency = buildCashInHandByCurrency(
+                remainingByCurrency = remainingResult.byCurrency.getOrDefault(userId, emptyMap()),
+                groupCurrency = groupCurrency
+            ),
+            cashSpentByCurrency = buildCurrencyAmountList(
+                byCurrencyMap = expenseResult.cashSpentByCurrency.getOrDefault(userId, emptyMap()),
+                equivByCurrency = expenseResult.cashEquivByCurrency.getOrDefault(userId, emptyMap()),
+                groupCurrency = groupCurrency
+            ),
+            nonCashSpentByCurrency = buildCurrencyAmountList(
+                byCurrencyMap = expenseResult.nonCashSpentByCurrency.getOrDefault(userId, emptyMap()),
+                equivByCurrency = expenseResult.nonCashEquivByCurrency.getOrDefault(userId, emptyMap()),
+                groupCurrency = groupCurrency
+            ),
+            refundableSpentByCurrency = buildCurrencyAmountList(
+                byCurrencyMap = expenseResult.refundableSpentByCurrency.getOrDefault(userId, emptyMap()),
+                equivByCurrency = expenseResult.refundableEquivByCurrency.getOrDefault(userId, emptyMap()),
+                groupCurrency = groupCurrency
+            ),
+            withdrawnByCurrency = buildWithdrawnByCurrency(
+                byCurrencyMap = withdrawalResult.byCurrency.getOrDefault(userId, emptyMap()),
+                groupCurrency = groupCurrency
+            )
+        )
     }
 
     companion object {

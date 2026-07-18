@@ -13,6 +13,7 @@ import es.pedrazamiguez.splittrip.data.service.ReceiptExtractionServiceImpl
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalExpenseDataSource
+import es.pedrazamiguez.splittrip.domain.datasource.local.LocalGroupDataSource
 import es.pedrazamiguez.splittrip.domain.repository.AiInferenceRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
 import es.pedrazamiguez.splittrip.domain.service.AiModelResolverService
@@ -20,6 +21,7 @@ import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptOcrService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptStorageService
+import es.pedrazamiguez.splittrip.domain.service.RemainderDistributionService
 import kotlinx.coroutines.Dispatchers
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
@@ -34,6 +36,8 @@ val expensesDataModule = module {
             cloudStorageDataSource = get<CloudStorageDataSource>(),
             receiptStorageService = get<ReceiptStorageService>(),
             performanceMonitor = get<PerformanceMonitor>(),
+            localGroupDataSource = get<LocalGroupDataSource>(),
+            remainderDistributionService = get<RemainderDistributionService>(),
             ioDispatcher = Dispatchers.IO
         )
     }

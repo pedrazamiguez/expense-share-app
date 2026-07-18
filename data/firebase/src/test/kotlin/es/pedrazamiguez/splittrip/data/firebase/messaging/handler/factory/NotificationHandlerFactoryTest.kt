@@ -10,6 +10,8 @@ import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.ExpenseDe
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.ExpenseUpdatedHandler
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.MemberAddedHandler
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.MemberRemovedHandler
+import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.RefundableExpenseReminderHandler
+import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.ScheduledExpenseReminderHandler
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.SettlementRequestHandler
 import es.pedrazamiguez.splittrip.domain.enums.NotificationType
 import io.mockk.mockk
@@ -83,5 +85,15 @@ class NotificationHandlerFactoryTest {
     @Test
     fun `GROUP_DELETED falls through to DefaultHandler`() {
         assertTrue(factory.getHandler(NotificationType.GROUP_DELETED) is DefaultHandler)
+    }
+
+    @Test
+    fun `EXPENSE_SCHEDULED_REMINDER returns ScheduledExpenseReminderHandler`() {
+        assertTrue(factory.getHandler(NotificationType.EXPENSE_SCHEDULED_REMINDER) is ScheduledExpenseReminderHandler)
+    }
+
+    @Test
+    fun `EXPENSE_REFUNDABLE_REMINDER returns RefundableExpenseReminderHandler`() {
+        assertTrue(factory.getHandler(NotificationType.EXPENSE_REFUNDABLE_REMINDER) is RefundableExpenseReminderHandler)
     }
 }

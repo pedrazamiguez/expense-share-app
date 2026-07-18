@@ -39,7 +39,7 @@ internal fun ExtrasStatsSection(
             ) {
                 Text(
                     text = stringResource(R.string.balances_total_extras),
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
                 Spacer(modifier = Modifier.width(MaterialTheme.spacing.ExtraSmall))
@@ -57,7 +57,7 @@ internal fun ExtrasStatsSection(
             }
             Text(
                 text = formattedTotalExtras,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.error
             )

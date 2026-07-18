@@ -263,7 +263,9 @@ class ExpenseDetailUiMapperTest {
 
             val otherSplit = result.splits.find { it.displayName == "Bob" }
             assertNotNull(otherSplit)
-            assertFalse(otherSplit!!.isCurrentUser)
+            if (otherSplit != null) {
+                assertFalse(otherSplit.isCurrentUser)
+            }
         }
 
         @Test
@@ -279,7 +281,9 @@ class ExpenseDetailUiMapperTest {
 
             val excludedSplit = result.splits.find { it.isExcluded }
             assertNotNull(excludedSplit)
-            assertTrue(excludedSplit!!.isExcluded)
+            if (excludedSplit != null) {
+                assertTrue(excludedSplit.isExcluded)
+            }
         }
 
         @Test
@@ -298,8 +302,11 @@ class ExpenseDetailUiMapperTest {
             val result = mapper.map(expense, memberProfiles, currentUserId)
 
             val split = result.splits.first()
-            assertNotNull(split.shareText)
-            assertTrue(split.shareText!!.contains("%"))
+            val shareText = split.shareText
+            assertNotNull(shareText)
+            if (shareText != null) {
+                assertTrue(shareText.contains("%"))
+            }
         }
 
         @Test
@@ -396,10 +403,13 @@ class ExpenseDetailUiMapperTest {
 
             // First split should show both CNY and EUR amounts
             val firstSplit = result.splits.first()
-            assertNotNull(firstSplit.formattedSourceAmount)
-            assertTrue(
-                firstSplit.formattedSourceAmount!!.contains("CNY") || firstSplit.formattedSourceAmount!!.contains("¥")
-            )
+            val formattedSourceAmount = firstSplit.formattedSourceAmount
+            assertNotNull(formattedSourceAmount)
+            if (formattedSourceAmount != null) {
+                assertTrue(
+                    formattedSourceAmount.contains("CNY") || formattedSourceAmount.contains("¥")
+                )
+            }
             assertNotNull(firstSplit.formattedAmount)
             assertTrue(firstSplit.formattedAmount.contains("EUR") || firstSplit.formattedAmount.contains("€"))
         }
@@ -975,10 +985,13 @@ class ExpenseDetailUiMapperTest {
             )
 
             val group = result.splitGroups.first()
-            assertNotNull(group.formattedSourceTotalAmount)
-            assertTrue(
-                group.formattedSourceTotalAmount!!.contains("CNY") || group.formattedSourceTotalAmount!!.contains("¥")
-            )
+            val formattedSourceTotalAmount = group.formattedSourceTotalAmount
+            assertNotNull(formattedSourceTotalAmount)
+            if (formattedSourceTotalAmount != null) {
+                assertTrue(
+                    formattedSourceTotalAmount.contains("CNY") || formattedSourceTotalAmount.contains("¥")
+                )
+            }
             assertNotNull(group.formattedTotalAmount)
             assertTrue(group.formattedTotalAmount.contains("EUR") || group.formattedTotalAmount.contains("€"))
         }
@@ -1176,7 +1189,7 @@ class ExpenseDetailUiMapperTest {
 
         @Test
         fun `add-on formattedRate renders as 1 source equals rate target in ES locale`() {
-            every { localeProvider.getCurrentLocale() } returns Locale("es", "ES")
+            every { localeProvider.getCurrentLocale() } returns Locale.forLanguageTag("es-ES")
             stubRateString()
             val expense = baseExpense.copy(addOns = listOf(foreignFeeAddOn))
 
@@ -1214,7 +1227,7 @@ class ExpenseDetailUiMapperTest {
 
         @Test
         fun `cash tranche formattedRate renders as 1 source equals rate target in ES locale`() {
-            every { localeProvider.getCurrentLocale() } returns Locale("es", "ES")
+            every { localeProvider.getCurrentLocale() } returns Locale.forLanguageTag("es-ES")
             stubRateString()
             val expense = baseExpense.copy(
                 cashTranches = listOf(CashTranche(withdrawalId = "w-gbp", amountConsumed = 500L))
@@ -1379,6 +1392,78 @@ class ExpenseDetailUiMapperTest {
             assertTrue(result.creatorDisplay is MemberDisplay.Former)
             assertTrue(result.splits[0].memberDisplay is MemberDisplay.Former)
             assertTrue(result.splits[1].memberDisplay is MemberDisplay.Former)
+        }
+    }
+
+    @Nested
+    inner class ScheduledPaymentMapping {
+
+        @Test
+        fun `isScheduled is true when payment status is scheduled`() {
+            val expense = baseExpense.copy(paymentStatus = PaymentStatus.SCHEDULED)
+            val result = mapper.map(expense, memberProfiles, currentUserId)
+            assertTrue(result.isScheduled)
+        }
+
+        @Test
+        fun `isScheduled is false when payment status is finished`() {
+            val expense = baseExpense.copy(paymentStatus = PaymentStatus.FINISHED)
+            val result = mapper.map(expense, memberProfiles, currentUserId)
+            assertFalse(result.isScheduled)
+        }
+
+        @Test
+        fun `maps expectedGroupAmount and groupAmount difference when finished and shift exists`() {
+            every { localeProvider.getCurrentLocale() } returns Locale.US
+            val expense = baseExpense.copy(
+                paymentStatus = PaymentStatus.FINISHED,
+                expectedGroupAmount = 1000L,
+                groupAmount = 1200L,
+                groupCurrency = "EUR"
+            )
+            val result = mapper.map(expense, memberProfiles, currentUserId)
+            assertEquals("€10.00", result.formattedExpectedGroupAmount)
+            assertEquals("+€2.00", result.formattedGroupAmountDifference)
+        }
+
+        @Test
+        fun `maps expectedGroupAmount and negative groupAmount difference when finished and shift exists`() {
+            every { localeProvider.getCurrentLocale() } returns Locale.US
+            val expense = baseExpense.copy(
+                paymentStatus = PaymentStatus.FINISHED,
+                expectedGroupAmount = 1000L,
+                groupAmount = 800L,
+                groupCurrency = "EUR"
+            )
+            val result = mapper.map(expense, memberProfiles, currentUserId)
+            assertEquals("€10.00", result.formattedExpectedGroupAmount)
+            assertEquals("-€2.00", result.formattedGroupAmountDifference)
+        }
+
+        @Test
+        fun `does not map expectedGroupAmount or difference when finished and no shift exists`() {
+            val expense = baseExpense.copy(
+                paymentStatus = PaymentStatus.FINISHED,
+                expectedGroupAmount = 1000L,
+                groupAmount = 1000L,
+                groupCurrency = "EUR"
+            )
+            val result = mapper.map(expense, memberProfiles, currentUserId)
+            assertNull(result.formattedExpectedGroupAmount)
+            assertNull(result.formattedGroupAmountDifference)
+        }
+
+        @Test
+        fun `does not map expectedGroupAmount or difference when scheduled`() {
+            val expense = baseExpense.copy(
+                paymentStatus = PaymentStatus.SCHEDULED,
+                expectedGroupAmount = 1000L,
+                groupAmount = 1200L,
+                groupCurrency = "EUR"
+            )
+            val result = mapper.map(expense, memberProfiles, currentUserId)
+            assertNull(result.formattedExpectedGroupAmount)
+            assertNull(result.formattedGroupAmountDifference)
         }
     }
 }

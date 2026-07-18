@@ -27,6 +27,10 @@ data class ExpenseDetailUiModel(
     /** Formatted as "1 X = Y Z"; null when same-currency. */
     val formattedExchangeRate: String? = null,
     val isForeignCurrency: Boolean = false,
+    val isScheduled: Boolean = false,
+    val formattedExpectedGroupAmount: String? = null,
+    val formattedGroupAmountDifference: String? = null,
+    val formattedConfirmPaymentPlaceholder: String = "",
 
     // Metadata
     val paymentMethodText: String = "",

@@ -55,4 +55,13 @@ interface UserRepository {
      * Deletes a pending user profile locally and remotely.
      */
     suspend fun deletePendingUser(userId: String): Result<Unit>
+
+    /**
+     * Updates the user's notification reminder preferences.
+     */
+    suspend fun updateUserReminderPreferences(
+        userId: String,
+        timezone: String?,
+        preferredReminderTime: String?
+    ): Result<Unit>
 }

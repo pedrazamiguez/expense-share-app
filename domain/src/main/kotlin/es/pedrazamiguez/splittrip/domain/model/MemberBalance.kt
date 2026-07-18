@@ -25,6 +25,8 @@ package es.pedrazamiguez.splittrip.domain.model
  * @param nonCashSpent How much this member spent on non-CASH expenses (in cents),
  *                     converted to group currency. Deducted from the virtual pocket.
  * @param totalSpent Total spent across all payment methods: cashSpent + nonCashSpent.
+ * @param refundableSpent How much this member spent on REFUNDABLE (on hold) expenses (in cents),
+ *                        converted to group currency. Deducted from pocket balance / cash in hand.
  * @param pocketBalance The member's virtual pocket share: contributed − withdrawn − nonCashSpent.
  *                      Sums across all members should equal the group pocket virtualBalance.
  *                      Positive = has funds in the pocket, negative = overdrew from the pocket.
@@ -36,6 +38,7 @@ package es.pedrazamiguez.splittrip.domain.model
  *                             Native amounts with group-currency equivalents.
  * @param cashSpentByCurrency Per-currency breakdown of cash expenses.
  * @param nonCashSpentByCurrency Per-currency breakdown of non-cash expenses.
+ * @param refundableSpentByCurrency Per-currency breakdown of refundable expenses.
  * @param withdrawnByCurrency Per-currency breakdown of total cash withdrawn attributed by scope.
  */
 data class MemberBalance(
@@ -44,12 +47,14 @@ data class MemberBalance(
     val withdrawn: Long = 0,
     val cashSpent: Long = 0,
     val nonCashSpent: Long = 0,
-    val totalSpent: Long = 0,
+    val refundableSpent: Long = 0,
+    val totalSpent: Long = cashSpent + nonCashSpent,
     val pocketBalance: Long = 0,
     val cashInHand: Long = 0,
     val cashInHandByCurrency: List<CurrencyAmount> = emptyList(),
     val cashSpentByCurrency: List<CurrencyAmount> = emptyList(),
     val nonCashSpentByCurrency: List<CurrencyAmount> = emptyList(),
+    val refundableSpentByCurrency: List<CurrencyAmount> = emptyList(),
     val withdrawnByCurrency: List<CurrencyAmount> = emptyList()
 ) {
     val totalBalance: Long get() = pocketBalance + cashInHand

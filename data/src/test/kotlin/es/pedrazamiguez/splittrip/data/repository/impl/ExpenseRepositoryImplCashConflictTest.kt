@@ -3,12 +3,15 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalExpenseDataSource
+import es.pedrazamiguez.splittrip.domain.datasource.local.LocalGroupDataSource
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.exception.CashConflictException
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptStorageService
+import es.pedrazamiguez.splittrip.domain.service.RemainderDistributionService
+import es.pedrazamiguez.splittrip.domain.service.impl.RemainderDistributionServiceImpl
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -30,8 +33,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * Tests for [ExpenseRepositoryImpl.addCashExpense] — the optimistic-locking
- * cash expense write path introduced in Phase 2.
+ * Unit tests for [ExpenseRepositoryImpl] cash collision rules and optimistic concurrency control.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExpenseRepositoryImplCashConflictTest {
@@ -43,6 +45,8 @@ class ExpenseRepositoryImplCashConflictTest {
         es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
     private lateinit var receiptStorageService: ReceiptStorageService
     private lateinit var performanceMonitor: PerformanceMonitor
+    private lateinit var localGroupDataSource: LocalGroupDataSource
+    private lateinit var remainderDistributionService: RemainderDistributionService
     private lateinit var testDispatcher: TestDispatcher
     private lateinit var repository: ExpenseRepositoryImpl
 
@@ -74,6 +78,8 @@ class ExpenseRepositoryImplCashConflictTest {
         authenticationService = mockk()
         cloudStorageDataSource = mockk(relaxed = true)
         receiptStorageService = mockk(relaxed = true)
+        localGroupDataSource = mockk(relaxed = true)
+        remainderDistributionService = RemainderDistributionServiceImpl()
         performanceMonitor = mockk(relaxed = true) {
             io.mockk.coEvery { traceAsync<Any?>(any(), any()) } coAnswers { secondArg<suspend () -> Any?>().invoke() }
             io.mockk.every { trace<Any?>(any(), any()) } answers { secondArg<() -> Any?>().invoke() }
@@ -86,6 +92,8 @@ class ExpenseRepositoryImplCashConflictTest {
             cloudStorageDataSource,
             receiptStorageService,
             performanceMonitor,
+            localGroupDataSource,
+            remainderDistributionService,
             testDispatcher
         )
     }

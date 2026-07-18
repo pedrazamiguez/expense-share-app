@@ -6,4 +6,5 @@ sealed interface ExpenseDetailUiAction {
     data class ShowError(val message: UiText) : ExpenseDetailUiAction
     data class DeleteSuccess(val message: UiText) : ExpenseDetailUiAction
     data class CancelSuccess(val message: UiText) : ExpenseDetailUiAction
+    data class ConfirmPaymentSuccess(val message: UiText) : ExpenseDetailUiAction
 }

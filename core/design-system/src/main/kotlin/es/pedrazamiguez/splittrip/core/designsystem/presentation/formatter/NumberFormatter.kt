@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter
 
+import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionResult
 import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -16,7 +17,7 @@ private const val DEFAULT_RATE_DECIMALS = 6
  * @return The formatted string in locale format (e.g., "37,22" for Spanish)
  */
 fun String.formatNumberForDisplay(
-    locale: Locale = Locale.getDefault(),
+    locale: Locale,
     maxDecimalPlaces: Int = DEFAULT_RATE_DECIMALS,
     minDecimalPlaces: Int = 0
 ): String {
@@ -35,7 +36,7 @@ fun String.formatNumberForDisplay(
  * @param locale The locale to use for formatting (default: device locale)
  * @return Locale-formatted string (e.g., "37,22" for Spanish)
  */
-fun String.formatRateForDisplay(locale: Locale = Locale.getDefault()): String =
+fun String.formatRateForDisplay(locale: Locale): String =
     this.formatNumberForDisplay(locale, DEFAULT_RATE_DECIMALS, minDecimalPlaces = 0)
 
 /**
@@ -47,7 +48,7 @@ fun String.formatRateForDisplay(locale: Locale = Locale.getDefault()): String =
  * @return The formatted string in locale format
  */
 fun BigDecimal.formatForDisplay(
-    locale: Locale = Locale.getDefault(),
+    locale: Locale,
     maxDecimalPlaces: Int = 2,
     minDecimalPlaces: Int = 0
 ): String {
@@ -65,4 +66,32 @@ private fun buildNumberPattern(maxDecimalPlaces: Int, minDecimalPlaces: Int = 0)
     "#,##0.$decimalPart"
 } else {
     "#,##0"
+}
+
+/**
+ * Formats the live preview text shown in the arithmetic operator bar.
+ *
+ * Returns a formatted string (e.g., "= 170,20") if there is a successful evaluation result
+ * and the expression contains operators. Otherwise returns an empty string.
+ */
+fun formatArithmeticPreview(
+    expressionBuffer: String,
+    evaluationResult: ExpressionResult?,
+    maxDecimalPlaces: Int,
+    minDecimalPlaces: Int = 0,
+    locale: Locale
+): String {
+    if (evaluationResult !is ExpressionResult.Success) return ""
+
+    val hasOperator = expressionBuffer.any {
+        it in listOf('+', '−', '-', '×', '*', '÷', '/')
+    }
+    if (!hasOperator) return ""
+
+    val formattedValue = evaluationResult.value.stripTrailingZeros().formatForDisplay(
+        locale = locale,
+        maxDecimalPlaces = maxDecimalPlaces,
+        minDecimalPlaces = minDecimalPlaces
+    )
+    return "= $formattedValue"
 }

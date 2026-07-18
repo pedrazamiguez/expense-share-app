@@ -49,4 +49,9 @@ object UiConstants {
      * to the resolved start destination (login, onboarding, or main).
      */
     const val SPLASH_CROSSFADE_DURATION_MS = 400
+
+    /**
+     * Default maximum number of decimal places allowed for calculations/inputs.
+     */
+    const val DEFAULT_MAX_DECIMAL_PLACES = 6
 }

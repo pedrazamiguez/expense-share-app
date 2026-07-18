@@ -39,6 +39,8 @@ data class MemberBalanceUiModel(
     val cashInHandByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf(),
     val cashSpentByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf(),
     val nonCashSpentByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf(),
+    val formattedRefundableSpent: String? = null,
+    val refundableSpentByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf(),
     val cashBreakdown: ImmutableList<CashBreakdownUiModel> = persistentListOf(),
     val formattedTotalFees: String = "",
     val displayName: String = memberDisplay.displayName

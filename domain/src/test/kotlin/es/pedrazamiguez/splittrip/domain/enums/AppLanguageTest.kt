@@ -41,10 +41,10 @@ class AppLanguageTest {
         fun `falls back to system locale for null input`() {
             val originalLocale = Locale.getDefault()
             try {
-                Locale.setDefault(Locale("es"))
+                Locale.setDefault(Locale.forLanguageTag("es"))
                 assertEquals(AppLanguage.ES, AppLanguage.fromCode(null))
 
-                Locale.setDefault(Locale("en"))
+                Locale.setDefault(Locale.forLanguageTag("en"))
                 assertEquals(AppLanguage.EN, AppLanguage.fromCode(null))
 
                 Locale.setDefault(Locale.forLanguageTag("es-x-andaluh"))
@@ -53,7 +53,7 @@ class AppLanguageTest {
                 Locale.setDefault(Locale.forLanguageTag("es-AN"))
                 assertEquals(AppLanguage.ANDALUZ, AppLanguage.fromCode(null))
 
-                Locale.setDefault(Locale("fr"))
+                Locale.setDefault(Locale.forLanguageTag("fr"))
                 assertEquals(AppLanguage.EN, AppLanguage.fromCode(null))
             } finally {
                 Locale.setDefault(originalLocale)

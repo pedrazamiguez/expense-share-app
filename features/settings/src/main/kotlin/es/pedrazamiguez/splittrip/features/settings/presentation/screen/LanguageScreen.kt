@@ -28,7 +28,6 @@ fun LanguageScreen(
             val displayName = stringResource(id = language.getDisplayNameRes())
 
             ListItem(
-                headlineContent = { Text(text = displayName) },
                 supportingContent = { Text(text = language.englishName) },
                 trailingContent = {
                     if (isSelected) {
@@ -41,7 +40,9 @@ fun LanguageScreen(
                 modifier = Modifier.clickable {
                     onLanguageSelected(language.code)
                 }
-            )
+            ) {
+                Text(text = displayName)
+            }
         }
     }
 }

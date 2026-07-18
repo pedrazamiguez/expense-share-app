@@ -13,12 +13,15 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.ArithmeticTextField
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.rememberAutoFocusRequester
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.CardSectionLabelText
+import es.pedrazamiguez.splittrip.domain.service.calculator.ExpressionCalculatorService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 /** Weight ratio for amount input field vs currency dropdown. */
 private const val AMOUNT_FIELD_WEIGHT = 0.5f
@@ -66,9 +69,13 @@ fun AmountCurrencyCard(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
         ) {
-            StyledOutlinedTextField(
+            val evaluator = koinInject<ExpressionCalculatorService>()
+            ArithmeticTextField(
                 value = state.amount,
                 onValueChange = onAmountChanged,
+                evaluator = evaluator,
+                maxDecimalPlaces = state.selectedCurrency?.decimalDigits ?: UiConstants.DEFAULT_MAX_DECIMAL_PLACES,
+                minDecimalPlaces = state.selectedCurrency?.decimalDigits ?: 0,
                 label = state.amountLabel,
                 modifier = Modifier.weight(AMOUNT_FIELD_WEIGHT),
                 keyboardType = KeyboardType.Decimal,

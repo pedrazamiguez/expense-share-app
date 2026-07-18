@@ -171,29 +171,56 @@ internal fun attributeRemainingByScope(
  *
  * **Add-ons are included via [AddOnCalculationService.calculateEffectiveGroupAmount].**
  */
-@Suppress("CognitiveComplexMethod") // Branching is inherent to cash/non-cash + per-currency accumulation
 internal fun attributeExpensesByPaymentMethod(
     expenses: List<Expense>,
     addOnCalculationService: AddOnCalculationService
 ): ExpenseResult {
+    val accumulator = ExpenseAttributionAccumulator(addOnCalculationService)
+    for (expense in expenses) {
+        accumulator.accumulate(expense)
+    }
+    return accumulator.toResult()
+}
+
+private class ExpenseAttributionAccumulator(
+    private val addOnCalculationService: AddOnCalculationService
+) {
     val cashResult = mutableMapOf<String, Long>()
     val nonCashResult = mutableMapOf<String, Long>()
+    val refundableResult = mutableMapOf<String, Long>()
     val cashByCurrency = mutableMapOf<String, MutableMap<String, Long>>()
     val nonCashByCurrency = mutableMapOf<String, MutableMap<String, Long>>()
+    val refundableByCurrency = mutableMapOf<String, MutableMap<String, Long>>()
     val cashEquivByCurrency = mutableMapOf<String, MutableMap<String, Long>>()
     val nonCashEquivByCurrency = mutableMapOf<String, MutableMap<String, Long>>()
+    val refundableEquivByCurrency = mutableMapOf<String, MutableMap<String, Long>>()
 
-    for (expense in expenses) {
-        if (expense.paymentStatus == PaymentStatus.CANCELLED ||
-            expense.paymentStatus == PaymentStatus.REFUNDABLE
-        ) {
-            continue
-        }
+    private data class TargetDestination(
+        val spentMap: MutableMap<String, Long>,
+        val byCurrencyMap: MutableMap<String, MutableMap<String, Long>>,
+        val equivByCurrencyMap: MutableMap<String, MutableMap<String, Long>>
+    )
+
+    private fun resolveDestinations(expense: Expense): List<TargetDestination> {
+        val isRefundable = expense.paymentStatus == PaymentStatus.REFUNDABLE
         val isCash = expense.paymentMethod == PaymentMethod.CASH
-        val targetMap = if (isCash) cashResult else nonCashResult
-        val targetByCurrency = if (isCash) cashByCurrency else nonCashByCurrency
-        val targetEquivByCurrency = if (isCash) cashEquivByCurrency else nonCashEquivByCurrency
+        val destinations = mutableListOf<TargetDestination>()
+        if (isRefundable) {
+            destinations.add(TargetDestination(refundableResult, refundableByCurrency, refundableEquivByCurrency))
+        }
+        if (isCash) {
+            destinations.add(TargetDestination(cashResult, cashByCurrency, cashEquivByCurrency))
+        } else {
+            destinations.add(TargetDestination(nonCashResult, nonCashByCurrency, nonCashEquivByCurrency))
+        }
+        return destinations
+    }
 
+    fun accumulate(expense: Expense) {
+        if (expense.paymentStatus == PaymentStatus.CANCELLED) {
+            return
+        }
+        val destinations = resolveDestinations(expense)
         val effectiveGroupAmount = addOnCalculationService.calculateEffectiveGroupAmount(
             expense.groupAmount,
             expense.addOns
@@ -205,26 +232,31 @@ internal fun attributeExpensesByPaymentMethod(
                     expense.sourceAmount,
                     effectiveGroupAmount
                 )
-                targetMap[split.userId] = (targetMap[split.userId] ?: 0L) + spentInGroupCurrency
+                for (dest in destinations) {
+                    dest.spentMap[split.userId] = (dest.spentMap[split.userId] ?: 0L) + spentInGroupCurrency
 
-                val userCurrencyMap = targetByCurrency.getOrPut(split.userId) { mutableMapOf() }
-                userCurrencyMap[expense.sourceCurrency] =
-                    (userCurrencyMap[expense.sourceCurrency] ?: 0L) + split.amountCents
+                    val userCurrencyMap = dest.byCurrencyMap.getOrPut(split.userId) { mutableMapOf() }
+                    userCurrencyMap[expense.sourceCurrency] =
+                        (userCurrencyMap[expense.sourceCurrency] ?: 0L) + split.amountCents
 
-                val userEquivMap = targetEquivByCurrency.getOrPut(split.userId) { mutableMapOf() }
-                userEquivMap[expense.sourceCurrency] =
-                    (userEquivMap[expense.sourceCurrency] ?: 0L) + spentInGroupCurrency
+                    val userEquivMap = dest.equivByCurrencyMap.getOrPut(split.userId) { mutableMapOf() }
+                    userEquivMap[expense.sourceCurrency] =
+                        (userEquivMap[expense.sourceCurrency] ?: 0L) + spentInGroupCurrency
+                }
             }
         }
     }
 
-    return ExpenseResult(
+    fun toResult() = ExpenseResult(
         cashSpentMap = cashResult,
         nonCashSpentMap = nonCashResult,
+        refundableSpentMap = refundableResult,
         cashSpentByCurrency = cashByCurrency,
         nonCashSpentByCurrency = nonCashByCurrency,
+        refundableSpentByCurrency = refundableByCurrency,
         cashEquivByCurrency = cashEquivByCurrency,
-        nonCashEquivByCurrency = nonCashEquivByCurrency
+        nonCashEquivByCurrency = nonCashEquivByCurrency,
+        refundableEquivByCurrency = refundableEquivByCurrency
     )
 }
 

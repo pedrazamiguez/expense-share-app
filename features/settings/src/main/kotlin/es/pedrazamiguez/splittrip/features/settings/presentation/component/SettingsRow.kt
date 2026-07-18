@@ -49,9 +49,6 @@ fun SettingsRow(
                 )
             }
         },
-        headlineContent = {
-            LargeBodyText(text = item.title)
-        },
         supportingContent = {
             if (descriptionContent != null) {
                 descriptionContent()
@@ -76,5 +73,7 @@ fun SettingsRow(
             .clickable { item.onClick() }
             .fillMaxWidth()
             .padding(horizontal = MaterialTheme.spacing.Small)
-    )
+    ) {
+        LargeBodyText(text = item.title)
+    }
 }

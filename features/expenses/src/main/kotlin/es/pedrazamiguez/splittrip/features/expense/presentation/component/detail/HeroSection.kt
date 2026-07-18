@@ -179,6 +179,18 @@ internal fun HeroSection(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                            if (expense.formattedExpectedGroupAmount != null &&
+                                expense.formattedGroupAmountDifference != null
+                            ) {
+                                CaptionText(
+                                    text = stringResource(
+                                        R.string.expense_detail_expected_with_shift,
+                                        expense.formattedExpectedGroupAmount,
+                                        expense.formattedGroupAmountDifference
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }

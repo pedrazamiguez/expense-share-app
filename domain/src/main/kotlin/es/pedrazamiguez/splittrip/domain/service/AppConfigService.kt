@@ -7,4 +7,5 @@ interface AppConfigService {
     val balanceComputationDebounceMs: StateFlow<Long>
     val maxMembersPerGroup: StateFlow<Int>
     val extractedDateMaxFutureDays: StateFlow<Int>
+    val supportEmailAddress: StateFlow<String>
 }

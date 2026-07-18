@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.domain.datasource.local
 
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -9,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
  * This is part of the Offline-First architecture where Room serves
  * as the Single Source of Truth for the UI.
  */
+@Suppress("TooManyFunctions")
 interface LocalGroupDataSource {
 
     /**
@@ -71,4 +73,26 @@ interface LocalGroupDataSource {
      * Replaces pending user IDs with active user IDs in local group members lists.
      */
     suspend fun reconcileUnregisteredUser(pendingUserId: String, activeUserId: String)
+
+    /**
+     * Saves a membership removal event to local storage.
+     */
+    suspend fun saveMembershipRemovalEvent(event: MembershipRemovalEvent)
+
+    /**
+     * Observes all unprocessed membership removal events for a given group.
+     */
+    fun getUnprocessedMembershipRemovalEventsFlow(
+        groupId: String
+    ): Flow<List<MembershipRemovalEvent>>
+
+    /**
+     * Updates the sync status of a membership removal event.
+     */
+    suspend fun updateMembershipRemovalEventSyncStatus(eventId: String, syncStatus: SyncStatus)
+
+    /**
+     * Marks a membership removal event as processed locally.
+     */
+    suspend fun markMembershipRemovalEventProcessed(eventId: String)
 }

@@ -12,6 +12,8 @@ import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.ReceiptAttachment
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
+import es.pedrazamiguez.splittrip.domain.service.RemainderDistributionService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.DownloadReceiptUseCase
@@ -25,6 +27,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.ExpenseDe
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.ExpenseDetailUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.ExpenseDetailUiEvent
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.ExpenseDetailUiState
+import java.math.BigDecimal
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -65,7 +68,9 @@ class ExpenseDetailViewModel(
     private val updateExpenseUseCase: UpdateExpenseUseCase,
     private val authenticationService: AuthenticationService,
     private val expenseDetailUiMapper: ExpenseDetailUiMapper,
-    private val observeGroupUseCase: ObserveGroupUseCase
+    private val observeGroupUseCase: ObserveGroupUseCase,
+    private val exchangeRateCalculationService: ExchangeRateCalculationService,
+    private val remainderDistributionService: RemainderDistributionService
 ) : ViewModel() {
 
     private val downloadJobs = ConcurrentHashMap<String, Job>()
@@ -208,6 +213,7 @@ class ExpenseDetailViewModel(
             ExpenseDetailUiEvent.DeleteConfirmed -> handleDelete()
             ExpenseDetailUiEvent.RetryReceiptDownload -> handleRetryReceiptDownload()
             ExpenseDetailUiEvent.CancelConfirmed -> handleCancelReservation()
+            is ExpenseDetailUiEvent.ConfirmPayment -> handleConfirmPayment(event.actualGroupAmountCents)
         }
     }
 
@@ -330,5 +336,59 @@ class ExpenseDetailViewModel(
         val hasNoLocal = attachment.localUri.isBlank()
         val hasRemote = !attachment.remoteUrl.isNullOrBlank()
         return isPdf && hasNoLocal && hasRemote
+    }
+
+    private fun handleConfirmPayment(actualGroupAmountCents: Long) {
+        val expenseUi = uiState.value.expense ?: return
+        viewModelScope.launch {
+            try {
+                val domainExpense = getExpenseByIdFlowUseCase(expenseUi.id).first() ?: return@launch
+                val newRate = exchangeRateCalculationService.calculateImpliedRate(
+                    BigDecimal(domainExpense.sourceAmount),
+                    BigDecimal(actualGroupAmountCents)
+                )
+                val originalAmounts = domainExpense.splits.map { it.amountCents }
+                val newAmounts = remainderDistributionService.rescaleAmounts(
+                    originalTotal = domainExpense.groupAmount,
+                    newTotal = actualGroupAmountCents,
+                    amounts = originalAmounts
+                )
+                val updatedSplits = domainExpense.splits.mapIndexed { index, split ->
+                    split.copy(amountCents = newAmounts[index])
+                }
+                val updatedExpense = domainExpense.copy(
+                    groupAmount = actualGroupAmountCents,
+                    exchangeRate = newRate,
+                    paymentStatus = PaymentStatus.FINISHED,
+                    splits = updatedSplits
+                )
+                updateExpenseUseCase(
+                    groupId = domainExpense.groupId,
+                    expense = updatedExpense,
+                    pairedContributionScope = PayerType.USER,
+                    pairedSubunitId = null
+                ).onSuccess {
+                    _actions.send(
+                        ExpenseDetailUiAction.ConfirmPaymentSuccess(
+                            UiText.StringResource(R.string.expense_payment_confirmed_successfully)
+                        )
+                    )
+                }.onFailure { e ->
+                    Timber.e(e, "Failed to confirm payment for scheduled expense: ${expenseUi.id}")
+                    _actions.send(
+                        ExpenseDetailUiAction.ShowError(
+                            UiText.StringResource(R.string.expense_error_confirm_payment_failed)
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error confirming payment for scheduled expense: ${expenseUi.id}")
+                _actions.send(
+                    ExpenseDetailUiAction.ShowError(
+                        UiText.StringResource(R.string.expense_error_confirm_payment_failed)
+                    )
+                )
+            }
+        }
     }
 }
