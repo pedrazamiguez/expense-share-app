@@ -29,7 +29,8 @@ class GroupDocumentMapperTest {
         members = listOf("user-1", "user-2", "user-3"),
         mainImagePath = "/images/japan.jpg",
         createdAt = testTimestamp,
-        lastUpdatedAt = testTimestamp
+        lastUpdatedAt = testTimestamp,
+        lastArchiveEventId = "archive-evt-123"
     )
 
     @Nested
@@ -44,6 +45,7 @@ class GroupDocumentMapperTest {
             assertEquals("Travel expenses", document.description)
             assertEquals("EUR", document.currency)
             assertEquals(testUserId, document.createdBy)
+            assertEquals("archive-evt-123", document.lastArchiveEventId)
         }
 
         @Test
@@ -99,6 +101,13 @@ class GroupDocumentMapperTest {
             assertTrue(document.extraCurrencies.isEmpty())
             assertTrue(document.memberIds.isEmpty())
         }
+
+        @Test
+        fun `null lastArchiveEventId maps to null in document`() {
+            val groupWithoutArchiveEventId = fullGroup.copy(lastArchiveEventId = null)
+            val document = groupWithoutArchiveEventId.toDocument(testGroupId, testUserId)
+            assertNull(document.lastArchiveEventId)
+        }
     }
 
     @Nested
@@ -114,7 +123,8 @@ class GroupDocumentMapperTest {
             mainImagePath = "/images/japan.jpg",
             createdBy = testUserId,
             createdAt = testFirebaseTimestamp,
-            lastUpdatedAt = testFirebaseTimestamp
+            lastUpdatedAt = testFirebaseTimestamp,
+            lastArchiveEventId = "archive-evt-123"
         )
 
         @Test
@@ -126,6 +136,7 @@ class GroupDocumentMapperTest {
             assertEquals("Travel expenses", group.description)
             assertEquals("EUR", group.currency)
             assertEquals("/images/japan.jpg", group.mainImagePath)
+            assertEquals("archive-evt-123", group.lastArchiveEventId)
         }
 
         @Test
@@ -168,6 +179,13 @@ class GroupDocumentMapperTest {
 
             assertTrue(group.extraCurrencies.isEmpty())
             assertTrue(group.members.isEmpty())
+        }
+
+        @Test
+        fun `null lastArchiveEventId maps to null in domain`() {
+            val documentWithoutArchiveEventId = fullDocument.copy(lastArchiveEventId = null)
+            val group = documentWithoutArchiveEventId.toDomain()!!
+            assertNull(group.lastArchiveEventId)
         }
 
         @Test

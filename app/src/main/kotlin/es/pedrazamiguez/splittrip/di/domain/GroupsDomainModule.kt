@@ -100,6 +100,7 @@ val groupsDomainModule = module {
         createLoggingProxy<ArchiveGroupUseCase>(
             ArchiveGroupUseCaseImpl(
                 groupRepository = get<GroupRepository>(),
+                authenticationService = get<AuthenticationService>(),
                 getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>(),
                 areGroupSettlementsResolvedUseCase = get<AreGroupSettlementsResolvedUseCase>()
             ),

@@ -104,6 +104,10 @@ class GroupRepositoryImpl(
         }
     }
 
+    override suspend fun getGroupByIdLocal(groupId: String): Group? {
+        return localGroupDataSource.getGroupById(groupId)
+    }
+
     override fun getGroupByIdFlow(groupId: String): Flow<Group?> {
         return localGroupDataSource.getGroupByIdFlow(groupId)
             .onStart {
