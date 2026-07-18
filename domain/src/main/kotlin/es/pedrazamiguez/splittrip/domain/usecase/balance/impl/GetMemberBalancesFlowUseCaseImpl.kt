@@ -109,7 +109,7 @@ class GetMemberBalancesFlowUseCaseImpl(
             cashSpent = cashSpent,
             nonCashSpent = nonCashSpent,
             refundableSpent = refundableSpent,
-            totalSpent = cashSpent + nonCashSpent + refundableSpent,
+            totalSpent = cashSpent + nonCashSpent,
             pocketBalance = contributed - withdrawn - nonCashSpent,
             cashInHand = remainingResult.groupCurrencyMap.getOrDefault(userId, 0L),
             cashInHandByCurrency = buildCashInHandByCurrency(

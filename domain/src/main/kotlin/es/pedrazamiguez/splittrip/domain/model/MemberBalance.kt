@@ -24,9 +24,9 @@ package es.pedrazamiguez.splittrip.domain.model
  *                  converted to group currency. Funded from physical cash (withdrawals).
  * @param nonCashSpent How much this member spent on non-CASH expenses (in cents),
  *                     converted to group currency. Deducted from the virtual pocket.
- * @param totalSpent Total spent across all payment methods: cashSpent + nonCashSpent + refundableSpent.
+ * @param totalSpent Total spent across all payment methods: cashSpent + nonCashSpent.
  * @param refundableSpent How much this member spent on REFUNDABLE (on hold) expenses (in cents),
- *                        converted to group currency. Excluded from pocket balance deductions.
+ *                        converted to group currency. Deducted from pocket balance / cash in hand.
  * @param pocketBalance The member's virtual pocket share: contributed − withdrawn − nonCashSpent.
  *                      Sums across all members should equal the group pocket virtualBalance.
  *                      Positive = has funds in the pocket, negative = overdrew from the pocket.
@@ -48,7 +48,7 @@ data class MemberBalance(
     val cashSpent: Long = 0,
     val nonCashSpent: Long = 0,
     val refundableSpent: Long = 0,
-    val totalSpent: Long = 0,
+    val totalSpent: Long = cashSpent + nonCashSpent,
     val pocketBalance: Long = 0,
     val cashInHand: Long = 0,
     val cashInHandByCurrency: List<CurrencyAmount> = emptyList(),

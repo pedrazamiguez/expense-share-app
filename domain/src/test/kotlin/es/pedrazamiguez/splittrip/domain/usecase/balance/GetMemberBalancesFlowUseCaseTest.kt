@@ -1009,10 +1009,12 @@ class GetMemberBalancesFlowUseCaseTest {
             assertEquals(1, balance.refundableSpentByCurrency.size)
             assertEquals("EUR", balance.refundableSpentByCurrency[0].currency)
             assertEquals(10000L, balance.refundableSpentByCurrency[0].amountCents)
+            assertEquals(10000L, balance.nonCashSpent)
+            assertEquals(-10000L, balance.pocketBalance)
         }
 
         @Test
-        fun `refundable expenses are included in totalSpent but do not reduce pocketBalance`() {
+        fun `refundable expenses are included in totalSpent and reduce pocketBalance`() {
             val contributions = listOf(
                 Contribution(userId = "user-1", amount = 20000L)
             )
@@ -1032,10 +1034,10 @@ class GetMemberBalancesFlowUseCaseTest {
             val balanceMap = result.associateBy { it.userId }
             val balance = balanceMap["user-1"]!!
 
-            // totalSpent includes refundable: cash (0) + non-cash (0) + refundable (10000) = 10000
+            // totalSpent includes refundable non-cash spent: cash (0) + non-cash (10000) = 10000
             assertEquals(10000L, balance.totalSpent)
-            // pocketBalance is not reduced by refundable: 20000 - 0 (withdrawn) - 0 (nonCashSpent) = 20000
-            assertEquals(20000L, balance.pocketBalance)
+            // pocketBalance is reduced by refundable: 20000 - 0 (withdrawn) - 10000 (nonCashSpent) = 10000
+            assertEquals(10000L, balance.pocketBalance)
         }
     }
 }

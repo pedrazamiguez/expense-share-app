@@ -66,7 +66,7 @@ class BalancesUiMapper(
                 ""
             },
             formattedAvailableBalance = if (balance.scheduledHoldAmount > 0 || balance.refundableHoldAmount > 0) {
-                val available = balance.virtualBalance - balance.scheduledHoldAmount - balance.refundableHoldAmount
+                val available = balance.virtualBalance - balance.scheduledHoldAmount
                 formatCurrencyAmount(available, balance.currency, locale)
             } else {
                 null
