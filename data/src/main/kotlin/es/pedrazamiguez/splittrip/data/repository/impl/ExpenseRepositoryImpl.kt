@@ -5,12 +5,18 @@ import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalExpenseDataSource
+import es.pedrazamiguez.splittrip.domain.datasource.local.LocalGroupDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SplitType
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.exception.CashConflictException
 import es.pedrazamiguez.splittrip.domain.model.Expense
+import es.pedrazamiguez.splittrip.domain.model.ExpenseSplit
+import es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptStorageService
+import es.pedrazamiguez.splittrip.domain.service.RemainderDistributionService
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -20,10 +26,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+@Suppress("TooManyFunctions")
 class ExpenseRepositoryImpl(
     private val cloudExpenseDataSource: CloudExpenseDataSource,
     private val localExpenseDataSource: LocalExpenseDataSource,
@@ -31,6 +39,8 @@ class ExpenseRepositoryImpl(
     private val cloudStorageDataSource: CloudStorageDataSource,
     private val receiptStorageService: ReceiptStorageService,
     private val performanceMonitor: PerformanceMonitor,
+    private val localGroupDataSource: LocalGroupDataSource,
+    private val remainderDistributionService: RemainderDistributionService,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ExpenseRepository {
 
@@ -183,6 +193,9 @@ class ExpenseRepositoryImpl(
                 // Cancel any previous cloud subscription for this group to prevent duplicates.
                 cloudSubscriptionJobs[groupId]?.cancel()
                 cloudSubscriptionJobs[groupId] = syncScope.launch {
+                    launch {
+                        observeAndProcessMembershipRemovals(groupId)
+                    }
                     subscribeToCloudChanges(groupId)
                 }
             }
@@ -352,47 +365,181 @@ class ExpenseRepositoryImpl(
             syncStatus = SyncStatus.PENDING_SYNC
         )
     }
-}
 
-private suspend fun deleteLocalReceiptFileBestEffort(
-    receiptStorageService: ReceiptStorageService,
-    localUri: String
-) {
-    try {
-        receiptStorageService.deleteLocalFile(localUri)
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Timber.w(e, "Failed to delete local receipt file: $localUri")
-    }
-}
-
-private fun launchCloudExpenseDeletion(
-    syncScope: CoroutineScope,
-    cloudExpenseDataSource: CloudExpenseDataSource,
-    cloudStorageDataSource: CloudStorageDataSource,
-    groupId: String,
-    expenseId: String,
-    remoteUrl: String?
-) {
-    syncScope.launch {
+    private suspend fun deleteLocalReceiptFileBestEffort(
+        receiptStorageService: ReceiptStorageService,
+        localUri: String
+    ) {
         try {
-            cloudExpenseDataSource.deleteExpense(groupId, expenseId)
-            Timber.d("Expense deletion synced to cloud: $expenseId")
+            receiptStorageService.deleteLocalFile(localUri)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.w(e, "Failed to sync expense deletion to cloud, will retry later")
+            Timber.w(e, "Failed to delete local receipt file: $localUri")
         }
+    }
 
-        if (remoteUrl != null) {
+    @Suppress("CyclomaticComplexMethod", "CognitiveComplexMethod")
+    private fun launchCloudExpenseDeletion(
+        syncScope: CoroutineScope,
+        cloudExpenseDataSource: CloudExpenseDataSource,
+        cloudStorageDataSource: CloudStorageDataSource,
+        groupId: String,
+        expenseId: String,
+        remoteUrl: String?
+    ) {
+        syncScope.launch {
             try {
-                cloudStorageDataSource.deleteReceipt(expenseId)
-                Timber.d("Cloud receipt deletion synced to cloud: $expenseId")
+                cloudExpenseDataSource.deleteExpense(groupId, expenseId)
+                Timber.d("Expense deletion synced to cloud: $expenseId")
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.w(e, "Failed to delete remote receipt for expense $expenseId")
+                Timber.w(e, "Failed to sync expense deletion to cloud, will retry later")
+            }
+
+            if (remoteUrl != null) {
+                try {
+                    cloudStorageDataSource.deleteReceipt(expenseId)
+                    Timber.d("Cloud receipt deletion synced to cloud: $expenseId")
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.w(e, "Failed to delete remote receipt for expense $expenseId")
+                }
+            }
+        }
+    }
+
+    private suspend fun observeAndProcessMembershipRemovals(groupId: String) {
+        localGroupDataSource.getUnprocessedMembershipRemovalEventsFlow(groupId)
+            .collect { events ->
+                for (event in events) {
+                    processMembershipRemoval(groupId, event)
+                }
+            }
+    }
+
+    private suspend fun processMembershipRemoval(
+        groupId: String,
+        event: MembershipRemovalEvent
+    ) {
+        val expenses = localExpenseDataSource.getExpensesByGroupIdFlow(groupId).first()
+
+        for (expense in expenses) {
+            val splits = expense.splits
+            val departedSplit = splits.find { it.userId == event.userId }
+
+            if (departedSplit != null && departedSplit.amountCents > 0) {
+                performReSplitForExpense(groupId, expense, departedSplit, event.userId)
+            }
+        }
+
+        localGroupDataSource.markMembershipRemovalEventProcessed(event.id)
+        Timber.d("Membership removal event processed locally: ${event.id}")
+    }
+
+    private suspend fun performReSplitForExpense(
+        groupId: String,
+        expense: Expense,
+        departedSplit: ExpenseSplit,
+        leftUserId: String
+    ) {
+        val debtToRedistribute = departedSplit.amountCents
+        val remainingSplits = expense.splits.filter { it.userId != leftUserId }
+        if (remainingSplits.isEmpty()) return
+
+        val remainingTotalCents = remainingSplits.sumOf { it.amountCents }
+        val newTotalCents = remainingTotalCents + debtToRedistribute
+
+        val amounts = remainingSplits.map { it.amountCents }
+        val isExcluded = remainingSplits.map { it.isExcluded }
+
+        val newAmounts = remainderDistributionService.rescaleAmounts(
+            originalTotal = remainingTotalCents,
+            newTotal = newTotalCents,
+            amounts = amounts,
+            isExcluded = isExcluded
+        )
+
+        val newPercentages = calculateNewPercentages(expense, newAmounts, newTotalCents)
+        val updatedSplits = buildUpdatedSplits(expense, departedSplit, remainingSplits, newAmounts, newPercentages)
+
+        val updatedExpense = expense.copy(
+            splits = updatedSplits,
+            lastUpdatedAt = LocalDateTime.now(),
+            syncStatus = SyncStatus.PENDING_SYNC
+        )
+
+        localExpenseDataSource.saveExpense(updatedExpense)
+        syncReSplitExpenseToCloud(groupId, updatedExpense)
+    }
+
+    private fun calculateNewPercentages(
+        expense: Expense,
+        newAmounts: List<Long>,
+        newTotalCents: Long
+    ): List<BigDecimal>? {
+        return if (expense.splitType == SplitType.PERCENT) {
+            remainderDistributionService.distributePercentages(
+                remainingPercentage = BigDecimal("100.00"),
+                amounts = newAmounts,
+                totalCents = newTotalCents
+            )
+        } else {
+            null
+        }
+    }
+
+    private fun buildUpdatedSplits(
+        expense: Expense,
+        departedSplit: ExpenseSplit,
+        remainingSplits: List<ExpenseSplit>,
+        newAmounts: List<Long>,
+        newPercentages: List<BigDecimal>?
+    ): List<ExpenseSplit> {
+        val updatedSplits = mutableListOf<ExpenseSplit>()
+
+        updatedSplits.add(
+            departedSplit.copy(
+                amountCents = 0L,
+                percentage = if (expense.splitType == SplitType.PERCENT) {
+                    BigDecimal.ZERO
+                } else {
+                    null
+                },
+                isExcluded = true
+            )
+        )
+
+        remainingSplits.forEachIndexed { index, split ->
+            val newAmount = newAmounts[index]
+            val newPercentage = newPercentages?.get(index)
+            updatedSplits.add(
+                split.copy(
+                    amountCents = newAmount,
+                    percentage = newPercentage
+                )
+            )
+        }
+
+        return updatedSplits
+    }
+
+    private fun syncReSplitExpenseToCloud(groupId: String, updatedExpense: Expense) {
+        syncScope.launch {
+            try {
+                cloudExpenseDataSource.addExpense(groupId, updatedExpense)
+                localExpenseDataSource.updateSyncStatus(updatedExpense.id, SyncStatus.SYNCED)
+                Timber.d("Re-split expense synced to cloud: ${updatedExpense.id}")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                val currentStatus = localExpenseDataSource.getExpenseById(updatedExpense.id)?.syncStatus
+                if (currentStatus == SyncStatus.PENDING_SYNC) {
+                    localExpenseDataSource.updateSyncStatus(updatedExpense.id, SyncStatus.SYNC_FAILED)
+                }
+                Timber.e(e, "Failed to sync re-split expense ${updatedExpense.id}")
             }
         }
     }

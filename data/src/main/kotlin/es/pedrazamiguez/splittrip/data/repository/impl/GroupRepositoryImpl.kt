@@ -11,6 +11,7 @@ import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalGroupDataSource
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.GroupImageStorageService
@@ -410,6 +411,16 @@ class GroupRepositoryImpl(
         val currentUserId = authenticationService.requireUserId()
         val group = localGroupDataSource.getGroupById(groupId) ?: return
 
+        val leaveEventId = UUID.randomUUID().toString()
+        val leaveEvent = MembershipRemovalEvent(
+            id = leaveEventId,
+            groupId = groupId,
+            userId = currentUserId,
+            createdAt = LocalDateTime.now(),
+            processed = false,
+            syncStatus = SyncStatus.PENDING_SYNC
+        )
+
         val updatedMembers = group.members - currentUserId
         val updatedGroup = group.copy(
             members = updatedMembers,
@@ -417,17 +428,32 @@ class GroupRepositoryImpl(
             syncStatus = SyncStatus.PENDING_SYNC
         )
 
+        // Room write first — UI reflects the change instantly.
+        localGroupDataSource.saveMembershipRemovalEvent(leaveEvent)
         localGroupDataSource.saveGroup(updatedGroup)
 
+        // Background: upload event, cleanup subcollections, then group membership removal.
         syncScope.launch {
             try {
+                // 1. Upload membership removal event to cloud (while user has access)
+                cloudGroupDataSource.uploadMembershipRemovalEvent(groupId, leaveEvent)
+
+                // 2. Remove user from all subunit memberIds BEFORE group-level removal.
+                //    Prevents snapshot listeners from seeing stale subunit membership.
+                cloudGroupDataSource.removeUserFromSubunits(groupId, currentUserId)
+
+                // 3. Remove from group document + delete member document (existing batch).
                 cloudGroupDataSource.leaveGroup(groupId, currentUserId)
+
                 localGroupDataSource.updateSyncStatus(groupId, SyncStatus.SYNCED)
+                localGroupDataSource.updateMembershipRemovalEventSyncStatus(leaveEventId, SyncStatus.SYNCED)
+                Timber.d("Leave group synced for $groupId, leaveEventId=$leaveEventId")
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to sync leave group $groupId to cloud")
+                Timber.e(e, "Failed to sync leave group $groupId to cloud (leaveEventId=$leaveEventId)")
                 localGroupDataSource.updateSyncStatus(groupId, SyncStatus.SYNC_FAILED)
+                localGroupDataSource.updateMembershipRemovalEventSyncStatus(leaveEventId, SyncStatus.SYNC_FAILED)
             }
         }
     }

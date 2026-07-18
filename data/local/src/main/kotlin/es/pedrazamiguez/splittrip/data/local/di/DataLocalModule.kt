@@ -11,6 +11,7 @@ import es.pedrazamiguez.splittrip.data.local.dao.ExchangeRateDao
 import es.pedrazamiguez.splittrip.data.local.dao.ExpenseDao
 import es.pedrazamiguez.splittrip.data.local.dao.ExpenseSplitDao
 import es.pedrazamiguez.splittrip.data.local.dao.GroupDao
+import es.pedrazamiguez.splittrip.data.local.dao.MembershipRemovalEventDao
 import es.pedrazamiguez.splittrip.data.local.dao.SettlementRecordDao
 import es.pedrazamiguez.splittrip.data.local.dao.SubunitDao
 import es.pedrazamiguez.splittrip.data.local.dao.UserDao
@@ -88,6 +89,8 @@ val dataLocalModule = module {
 
     single<GroupDao> { get<AppDatabase>().groupDao() }
 
+    single<MembershipRemovalEventDao> { get<AppDatabase>().membershipRemovalEventDao() }
+
     single<ExpenseDao> { get<AppDatabase>().expenseDao() }
 
     single<ExpenseSplitDao> { get<AppDatabase>().expenseSplitDao() }
@@ -105,7 +108,8 @@ val dataLocalModule = module {
 
     single<LocalGroupDataSource> {
         LocalGroupDataSourceImpl(
-            groupDao = get<GroupDao>()
+            groupDao = get<GroupDao>(),
+            membershipRemovalEventDao = get<MembershipRemovalEventDao>()
         )
     }
 

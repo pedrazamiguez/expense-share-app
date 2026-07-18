@@ -1,8 +1,10 @@
 package es.pedrazamiguez.splittrip.domain.datasource.cloud
 
 import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.model.MembershipRemovalEvent
 import kotlinx.coroutines.flow.Flow
 
+@Suppress("TooManyFunctions")
 interface CloudGroupDataSource {
     suspend fun createGroup(group: Group): String
     suspend fun getGroupById(groupId: String): Group?
@@ -84,6 +86,18 @@ interface CloudGroupDataSource {
     suspend fun leaveGroup(groupId: String, userId: String)
 
     /**
+     * Removes [userId] from the `memberIds` field of every subunit document
+     * in the group's subunits subcollection.
+     *
+     * Must be called BEFORE [leaveGroup] to prevent active snapshot listeners
+     * from seeing stale subunit membership after the user is removed from the group.
+     *
+     * @param groupId The ID of the group.
+     * @param userId The ID of the departing member to remove from all subunits.
+     */
+    suspend fun removeUserFromSubunits(groupId: String, userId: String)
+
+    /**
      * Adds new members to a group in Firestore.
      *
      * Uses a WriteBatch to atomically:
@@ -109,4 +123,16 @@ interface CloudGroupDataSource {
      * @param userId The ID of the user to remove.
      */
     suspend fun removeMember(groupId: String, userId: String)
+
+    /**
+     * Uploads a membership removal event to Firestore.
+     * Stored at `groups/{groupId}/membership_removal_events/{eventId}`.
+     *
+     * @param groupId The ID of the group.
+     * @param event The membership removal event to upload.
+     */
+    suspend fun uploadMembershipRemovalEvent(
+        groupId: String,
+        event: MembershipRemovalEvent
+    )
 }
