@@ -516,6 +516,32 @@ class BalancesUiMapperMemberBalancesTest {
             assertFalse(item.hasNegativeCashInHand)
             assertTrue(item.formattedCashInHand.contains("25"))
         }
+
+        @Test
+        fun `formats refundable spent fields correctly`() {
+            val balance = MemberBalance(
+                userId = "user-1",
+                refundableSpent = 10000L,
+                refundableSpentByCurrency = listOf(
+                    CurrencyAmount(currency = "USD", amountCents = 10000L, equivalentCents = 9000L)
+                )
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = listOf(balance),
+                currency = currency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles,
+                groupCurrency = "EUR"
+            )
+
+            assertEquals("You", result[0].displayName)
+            assertTrue(result[0].formattedRefundableSpent!!.contains("100"))
+            assertEquals(1, result[0].refundableSpentByCurrency.size)
+            assertEquals("USD", result[0].refundableSpentByCurrency[0].currency)
+            assertTrue(result[0].refundableSpentByCurrency[0].formattedAmount.contains("100"))
+            assertTrue(result[0].refundableSpentByCurrency[0].formattedEquivalent.contains("90"))
+        }
     }
 
     @Nested

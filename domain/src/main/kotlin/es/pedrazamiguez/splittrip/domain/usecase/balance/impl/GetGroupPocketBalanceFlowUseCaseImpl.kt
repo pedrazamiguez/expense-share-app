@@ -78,7 +78,8 @@ class GetGroupPocketBalanceFlowUseCaseImpl(
 
         // Total base cost for the UI summary (excludes future scheduled, excludes add-ons).
         // Shows the pure service/goods cost without extras.
-        val totalExpenses = expenseAmounts.sumOf { it.base }
+        // Update to include refundable expenses:
+        val totalExpenses = expenseAmounts.sumOf { it.base } + refundable.sumOf { it.groupAmount }
 
         // Only non-cash expenses deduct from the virtual bank account.
         // Cash expenses are funded from the physical cash pocket (already
