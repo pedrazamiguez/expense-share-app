@@ -10,7 +10,6 @@ import es.pedrazamiguez.splittrip.domain.datasource.local.LocalSettlementDataSou
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.repository.SettlementRepository
-import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +19,6 @@ import kotlinx.coroutines.flow.onStart
 class SettlementRepositoryImpl(
     private val cloudSettlementDataSource: CloudSettlementDataSource,
     private val localSettlementDataSource: LocalSettlementDataSource,
-    private val authenticationService: AuthenticationService,
     private val performanceMonitor: PerformanceMonitor,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : SettlementRepository {
@@ -69,24 +67,18 @@ class SettlementRepositoryImpl(
         localSettlementDataSource.getSettlementById(id)
 
     override suspend fun addSettlement(record: SettlementRecord) {
-        val currentUserId = authenticationService.currentUserId() ?: ""
-        val recordWithMeta = if (record.settlement.fromUserId.isBlank()) {
-            record.copy(
-                settlement = record.settlement.copy(fromUserId = currentUserId)
-            )
-        } else {
-            record
-        }
+        require(record.settlement.fromUserId.isNotBlank()) { "Settlement fromUserId cannot be blank" }
+        require(record.settlement.toUserId.isNotBlank()) { "Settlement toUserId cannot be blank" }
 
-        localSettlementDataSource.saveSettlement(recordWithMeta, SyncStatus.PENDING_SYNC)
+        localSettlementDataSource.saveSettlement(record, SyncStatus.PENDING_SYNC)
 
         syncCreateToCloud(
             scope = syncScope,
-            entityId = recordWithMeta.id,
+            entityId = record.id,
             cloudWrite = {
                 cloudSettlementDataSource.upsertSettlement(
-                    recordWithMeta.groupId,
-                    recordWithMeta
+                    record.groupId,
+                    record
                 )
             },
             updateSyncStatus = localSettlementDataSource::updateSyncStatus,

@@ -43,7 +43,6 @@ val balancesDataModule = module {
         SettlementRepositoryImpl(
             cloudSettlementDataSource = get<CloudSettlementDataSource>(),
             localSettlementDataSource = get<LocalSettlementDataSource>(),
-            authenticationService = get<AuthenticationService>(),
             performanceMonitor = get<PerformanceMonitor>(),
             ioDispatcher = Dispatchers.IO
         )

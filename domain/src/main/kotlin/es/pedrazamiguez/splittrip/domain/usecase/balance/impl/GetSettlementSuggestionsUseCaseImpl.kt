@@ -89,6 +89,15 @@ class GetSettlementSuggestionsUseCaseImpl(
             if (existing != null) {
                 if (existing.status == SettlementStatus.SUGGESTED && existing.settlement != settlement) {
                     settlementRepository.updateSettlement(existing.copy(settlement = settlement))
+                } else if (existing.status == SettlementStatus.DISPUTED && existing.settlement != settlement) {
+                    settlementRepository.updateSettlement(
+                        existing.copy(
+                            settlement = settlement,
+                            status = SettlementStatus.SUGGESTED,
+                            disputedBy = null,
+                            disputeReason = null
+                        )
+                    )
                 }
                 continue
             }
