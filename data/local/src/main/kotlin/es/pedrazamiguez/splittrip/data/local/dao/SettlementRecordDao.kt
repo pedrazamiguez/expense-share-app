@@ -5,6 +5,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import es.pedrazamiguez.splittrip.data.local.entity.SettlementRecordEntity
+import es.pedrazamiguez.splittrip.data.local.entity.SyncStatusEntry
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -46,9 +47,32 @@ interface SettlementRecordDao {
     @Query("DELETE FROM settlement_records WHERE groupId = :groupId")
     suspend fun deleteByGroupId(groupId: String)
 
+    @Query("SELECT id, syncStatus FROM settlement_records WHERE groupId = :groupId AND syncStatus != 'SYNCED'")
+    suspend fun getUnsyncedSettlementStatuses(groupId: String): List<SyncStatusEntry>
+
+    @Query("SELECT id FROM settlement_records WHERE groupId = :groupId")
+    suspend fun getSettlementIdsByGroupId(groupId: String): List<String>
+
+    @Query("DELETE FROM settlement_records WHERE id IN (:ids)")
+    suspend fun deleteSettlementsByIds(ids: List<String>)
+
     @Transaction
     suspend fun replaceForGroup(groupId: String, entities: List<SettlementRecordEntity>) {
-        deleteByGroupId(groupId)
+        val unsyncedStatuses = getUnsyncedSettlementStatuses(groupId)
+        val unsyncedIds = unsyncedStatuses.map { it.id }.toSet()
+
+        val remoteIds = entities.map { it.id }.toSet()
+        val localIds = getSettlementIdsByGroupId(groupId)
+
         entities.forEach { upsert(it) }
+
+        for (entry in unsyncedStatuses) {
+            updateSyncStatus(entry.id, entry.syncStatus)
+        }
+
+        val staleIds = localIds.filter { it !in remoteIds && it !in unsyncedIds }
+        if (staleIds.isNotEmpty()) {
+            deleteSettlementsByIds(staleIds)
+        }
     }
 }

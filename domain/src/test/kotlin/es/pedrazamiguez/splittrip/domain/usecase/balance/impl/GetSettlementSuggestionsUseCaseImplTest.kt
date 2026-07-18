@@ -222,6 +222,62 @@ class GetSettlementSuggestionsUseCaseImplTest {
     }
 
     @Test
+    fun `persistForGroup resets existing DISPUTED record when details changed`() = runTest {
+        val existingSettlement =
+            Settlement(
+                fromUserId = "1",
+                toUserId = "2",
+                amount = 1000L,
+                currency = "EUR",
+                sourcePocket = SettlementPocketType.CASH
+            )
+        val computedSettlement = existingSettlement.copy(amount = 1500L)
+        every { debtSimplificationService.simplifyByPocket(memberBalances, "EUR") } returns listOf(computedSettlement)
+        mockBaseFlowRepos()
+
+        val existingRecord =
+            SettlementRecord(
+                id = "existing-1",
+                groupId = groupId,
+                settlement = existingSettlement,
+                status = SettlementStatus.DISPUTED,
+                createdAt = LocalDateTime.now(),
+                disputedBy = "1",
+                disputeReason = "Wrong amount"
+            )
+        coEvery { settlementRepository.getGroupSettlements(groupId) } returnsMany listOf(
+            listOf(existingRecord),
+            listOf(
+                existingRecord.copy(
+                    settlement = computedSettlement,
+                    status = SettlementStatus.SUGGESTED,
+                    disputedBy = null,
+                    disputeReason = null
+                )
+            )
+        )
+        coEvery { settlementRepository.updateSettlement(any()) } returns Unit
+
+        val result = useCase.persistForGroup(groupId)
+
+        coVerify(exactly = 0) { settlementRepository.addSettlement(any()) }
+        coVerify(exactly = 1) {
+            settlementRepository.updateSettlement(
+                match {
+                    it.id == "existing-1" &&
+                        it.settlement.amount == 1500L &&
+                        it.status == SettlementStatus.SUGGESTED &&
+                        it.disputedBy == null &&
+                        it.disputeReason == null
+                }
+            )
+        }
+        assertEquals(1, result.size)
+        assertEquals(1500L, result.first().settlement.amount)
+        assertEquals(SettlementStatus.SUGGESTED, result.first().status)
+    }
+
+    @Test
     fun `persistForGroup skips existing SUGGESTED record when details did not change`() = runTest {
         val existingSettlement =
             Settlement(

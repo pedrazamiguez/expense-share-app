@@ -37,11 +37,11 @@ data class SettlementRecord(
 
 Represents the state of mutual consensus:
 
-| Status | Meaning | Permitted Actor to Advance |
+| Status | Meaning | Permitted Actor to Advance / Trigger |
 |---|---|---|
 | `SUGGESTED` | Materialized proposal generated from balances. | Debtor (`fromUserId`) confirms payment sent. |
 | `CONFIRMED_BY_PAYER` | Debtor marked payment as sent. | Creditor (`toUserId`) confirms receipt. |
-| `DISPUTED` | Either party flagged an issue (amount, non-receipt, invalid currency). | Re-evaluated or resolved upon consensus. |
+| `DISPUTED` | Either party flagged an issue (amount, non-receipt, invalid currency). | Creditor (`toUserId`) or group creator/admin (direct resolution to `RESOLVED`), or auto-reset on debt details change (to `SUGGESTED`). |
 | `RESOLVED` | Final state. Settlement is complete and cleared. | Terminal state. |
 
 #### `SettlementPocketType`
@@ -70,8 +70,8 @@ stateDiagram-v2
     SUGGESTED --> DISPUTED: DisputeSettlementUseCase (Payer or Payee)
     CONFIRMED_BY_PAYER --> DISPUTED: DisputeSettlementUseCase (Payee)
     
-    DISPUTED --> SUGGESTED: Re-seeded / Reset
-    DISPUTED --> RESOLVED: Direct Resolution
+    DISPUTED --> SUGGESTED: Re-seeded / Reset (when calculated debt details change)
+    DISPUTED --> RESOLVED: ConfirmSettlementUseCase (Payee / toUserId or Group Creator)
     
     RESOLVED --> [*]
 ```
@@ -92,6 +92,16 @@ stateDiagram-v2
    - **Allowed Actor**: Either `fromUserId` or `toUserId`.
    - **Enforcement**: `require(isPayer || isPayee)` and `require(status != RESOLVED)` in `DisputeSettlementUseCaseImpl`.
    - **Effect**: Sets `status = DISPUTED`, records `disputedBy = currentUserId` and `disputeReason`.
+
+4. **`DISPUTED` → `RESOLVED` (Direct Resolution)**:
+   - **Allowed Actor**: `toUserId` (the payee/creditor) or the group creator.
+   - **Enforcement**: `require(isPayee || isCreator)` in `ConfirmSettlementUseCaseImpl`.
+   - **Effect**: Sets `status = RESOLVED`, populates `confirmedByPayeeAt` and `resolvedAt`.
+
+5. **`DISPUTED` → `SUGGESTED` (Re-seed / Reset)**:
+   - **Trigger**: Debt details (e.g., amount, currency) change due to expense/contribution updates during reconciliation.
+   - **Enforcement**: Handled automatically in `GetSettlementSuggestionsUseCaseImpl`.
+   - **Effect**: Resets `status = SUGGESTED`, clears `disputedBy = null` and `disputeReason = null`, and updates details.
 
 ---
 
