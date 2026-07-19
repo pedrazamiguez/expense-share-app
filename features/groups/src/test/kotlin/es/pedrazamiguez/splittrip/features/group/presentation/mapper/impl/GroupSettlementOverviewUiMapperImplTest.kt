@@ -11,7 +11,10 @@ import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.features.group.R
+import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupSettlementOverviewUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.model.SettlementRowStatusStyle
+import es.pedrazamiguez.splittrip.features.group.presentation.model.archive.ArchiveWizardStep
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupSettlementOverviewUiState
 import io.mockk.every
 import io.mockk.mockk
 import java.time.LocalDateTime
@@ -442,4 +445,102 @@ class GroupSettlementOverviewUiMapperImplTest {
         disputedBy = disputedBy,
         disputeReason = disputeReason
     )
+
+    private fun GroupSettlementOverviewUiMapper.toUiState(
+        settlements: List<SettlementRecord>,
+        memberProfiles: Map<String, User>,
+        currentUserId: String
+    ): GroupSettlementOverviewUiState {
+        return toUiState(
+            settlements = settlements,
+            memberProfiles = memberProfiles,
+            currentUserId = currentUserId,
+            groupCreatorId = "user-1",
+            groupName = "Test Group"
+        )
+    }
+
+    @Nested
+    inner class ArchiveWizardMapping {
+
+        @Test
+        fun `maps creator status and group name correctly`() {
+            val resultCreator = mapper.toUiState(
+                settlements = emptyList(),
+                memberProfiles = emptyMap(),
+                currentUserId = "creator-id",
+                groupCreatorId = "creator-id",
+                groupName = "Creator Group"
+            )
+            assertTrue(resultCreator.isUserCreator)
+            assertEquals("Creator Group", resultCreator.groupName)
+
+            val resultMember = mapper.toUiState(
+                settlements = emptyList(),
+                memberProfiles = emptyMap(),
+                currentUserId = "member-id",
+                groupCreatorId = "creator-id",
+                groupName = "Member Group"
+            )
+            assertFalse(resultMember.isUserCreator)
+            assertEquals("Member Group", resultMember.groupName)
+        }
+
+        @Test
+        fun `maps activeSteps streamlined when all resolved`() {
+            val suggested = createRecord("1", SettlementStatus.RESOLVED)
+            val result = mapper.toUiState(
+                settlements = listOf(suggested),
+                memberProfiles = emptyMap(),
+                currentUserId = "user-1",
+                groupCreatorId = "user-1",
+                groupName = "Test Group"
+            )
+            assertTrue(result.areAllSettlementsResolved)
+            assertEquals(
+                listOf(ArchiveWizardStep.SETTLEMENT_SUMMARY, ArchiveWizardStep.CONFIRMATION),
+                result.activeSteps
+            )
+        }
+
+        @Test
+        fun `maps activeSteps multi-step when unresolved exists`() {
+            val suggested = createRecord("1", SettlementStatus.SUGGESTED)
+            val result = mapper.toUiState(
+                settlements = listOf(suggested),
+                memberProfiles = emptyMap(),
+                currentUserId = "user-1",
+                groupCreatorId = "user-1",
+                groupName = "Test Group"
+            )
+            assertFalse(result.areAllSettlementsResolved)
+            assertEquals(
+                listOf(
+                    ArchiveWizardStep.SETTLEMENT_SUMMARY,
+                    ArchiveWizardStep.ACTION_REQUIRED,
+                    ArchiveWizardStep.CONFIRMATION
+                ),
+                result.activeSteps
+            )
+        }
+
+        @Test
+        fun `counts sections correctly`() {
+            val pendingAction = createRecord("1", SettlementStatus.SUGGESTED, fromUser = "user-1", toUser = "user-2")
+            val pendingWaiting = createRecord("2", SettlementStatus.SUGGESTED, fromUser = "user-2", toUser = "user-1")
+            val disputed = createRecord("3", SettlementStatus.DISPUTED)
+
+            val result = mapper.toUiState(
+                settlements = listOf(pendingAction, pendingWaiting, disputed),
+                memberProfiles = emptyMap(),
+                currentUserId = "user-1",
+                groupCreatorId = "user-1",
+                groupName = "Test Group"
+            )
+
+            assertEquals(1, result.actionRequiredCount)
+            assertEquals(1, result.waitingOnOthersCount)
+            assertEquals(1, result.disputedCount)
+        }
+    }
 }

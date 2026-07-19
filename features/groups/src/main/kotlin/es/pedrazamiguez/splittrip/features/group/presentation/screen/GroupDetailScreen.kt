@@ -81,16 +81,6 @@ fun GroupDetailScreen(
         else -> {
             val group = uiState.group
 
-            if (uiState.showArchiveConfirmation) {
-                DestructiveConfirmationDialog(
-                    title = stringResource(DesignSystemR.string.group_detail_end_trip_title),
-                    text = stringResource(DesignSystemR.string.group_detail_end_trip_message),
-                    onConfirm = { onEvent(GroupDetailUiEvent.ArchiveConfirmed) },
-                    onDismiss = { onEvent(GroupDetailUiEvent.ArchiveCancelled) },
-                    confirmLabel = stringResource(DesignSystemR.string.group_detail_end_trip_confirm)
-                )
-            }
-
             if (uiState.showDeleteConfirmation) {
                 DestructiveConfirmationDialog(
                     title = stringResource(R.string.group_delete_title),
@@ -281,8 +271,7 @@ fun GroupDetailScreen(
                                 text = stringResource(DesignSystemR.string.group_detail_end_trip),
                                 onClick = { onEvent(GroupDetailUiEvent.ArchiveClicked) },
                                 leadingIcon = TablerIcons.Outline.Lock,
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = !uiState.isArchiving
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                         if (group.status == GroupStatus.ACTIVE && !uiState.isUserAdmin) {

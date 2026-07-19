@@ -13,6 +13,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupSettlementOverviewUiMapper
+import es.pedrazamiguez.splittrip.features.group.presentation.model.archive.ArchiveWizardStep
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupSettlementOverviewUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupSettlementOverviewUiEvent
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupSettlementOverviewUiState
@@ -72,7 +73,9 @@ class GroupSettlementOverviewViewModel(
                 groupSettlementOverviewUiMapper.toUiState(
                     settlements = settlements,
                     memberProfiles = memberProfiles,
-                    currentUserId = currentUserId
+                    currentUserId = currentUserId,
+                    groupCreatorId = group?.createdBy ?: "",
+                    groupName = group?.name ?: ""
                 )
             }
 
@@ -83,7 +86,8 @@ class GroupSettlementOverviewViewModel(
                 baseState.copy(
                     activeDisputeSettlementId = localState.activeDisputeSettlementId,
                     disputeReasonInput = localState.disputeReasonInput,
-                    isArchiving = localState.isArchiving
+                    isArchiving = localState.isArchiving,
+                    currentStep = localState.currentStep
                 )
             }
         }
@@ -112,6 +116,55 @@ class GroupSettlementOverviewViewModel(
             GroupSettlementOverviewUiEvent.DisputeSubmitted -> handleSubmitDispute()
             GroupSettlementOverviewUiEvent.DisputeCancelled -> handleCancelDispute()
             GroupSettlementOverviewUiEvent.CloseTripClicked -> handleArchive()
+            GroupSettlementOverviewUiEvent.WizardNextClicked -> handleWizardNext()
+            GroupSettlementOverviewUiEvent.WizardBackClicked -> handleWizardBack()
+            GroupSettlementOverviewUiEvent.WizardCancelled -> handleWizardCancelled()
+            is GroupSettlementOverviewUiEvent.WizardJumpToStep -> handleJumpToStep(event.step)
+        }
+    }
+
+    private fun handleWizardNext() {
+        val state = uiState.value
+        val currentIndex = state.activeSteps.indexOf(state.currentStep)
+        if (currentIndex in 0 until state.activeSteps.lastIndex) {
+            val nextStep = state.activeSteps[currentIndex + 1]
+            _localState.update {
+                it.copy(
+                    currentStep = nextStep
+                )
+            }
+        }
+    }
+
+    private fun handleWizardBack() {
+        val state = uiState.value
+        val currentIndex = state.activeSteps.indexOf(state.currentStep)
+        if (currentIndex > 0) {
+            val prevStep = state.activeSteps[currentIndex - 1]
+            _localState.update {
+                it.copy(
+                    currentStep = prevStep
+                )
+            }
+        } else if (currentIndex == 0) {
+            handleWizardCancelled()
+        }
+    }
+
+    private fun handleWizardCancelled() {
+        viewModelScope.launch {
+            _actions.send(GroupSettlementOverviewUiAction.NavigateBack)
+        }
+    }
+
+    private fun handleJumpToStep(step: ArchiveWizardStep) {
+        val state = uiState.value
+        if (state.activeSteps.contains(step)) {
+            _localState.update {
+                it.copy(
+                    currentStep = step
+                )
+            }
         }
     }
 

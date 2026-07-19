@@ -56,11 +56,6 @@ internal fun SettlementContent(
                 uiState.resolvedSettlements.isEmpty()
         )
         Spacer(modifier = Modifier.height(MaterialTheme.spacing.Medium))
-        SettlementCloseTripButton(
-            allResolved = uiState.areAllSettlementsResolved,
-            isArchiving = uiState.isArchiving,
-            onCloseTrip = { onEvent(GroupSettlementOverviewUiEvent.CloseTripClicked) }
-        )
         Spacer(modifier = Modifier.height(bottomPadding))
     }
 }

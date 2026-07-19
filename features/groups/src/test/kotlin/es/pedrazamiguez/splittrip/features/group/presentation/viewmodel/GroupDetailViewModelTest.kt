@@ -166,7 +166,6 @@ class GroupDetailViewModelTest {
         getMemberProfilesUseCase = getMemberProfilesUseCase,
         groupUiMapper = groupUiMapper,
         authenticationService = authenticationService,
-        archiveGroupUseCase = archiveGroupUseCase,
         deleteGroupUseCase = deleteGroupUseCase,
         getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
         leaveWizardUiMapper = leaveWizardUiMapper,
@@ -646,82 +645,25 @@ class GroupDetailViewModelTest {
     inner class ArchiveFlow {
 
         @Test
-        fun `ArchiveClicked and ArchiveCancelled update showArchiveConfirmation state`() = runTest(testDispatcher) {
+        fun `ArchiveClicked emits NavigateToSettlementOverview action`() = runTest(testDispatcher) {
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.setGroupId(testGroupId)
             advanceUntilIdle()
+
+            val actions = mutableListOf<GroupDetailUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
 
             viewModel.onEvent(GroupDetailUiEvent.ArchiveClicked)
             advanceUntilIdle()
-            assertTrue(viewModel.uiState.value.showArchiveConfirmation)
 
-            viewModel.onEvent(GroupDetailUiEvent.ArchiveCancelled)
-            advanceUntilIdle()
-            assertFalse(viewModel.uiState.value.showArchiveConfirmation)
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `ArchiveConfirmed success emits ArchiveSuccess action`() = runTest(testDispatcher) {
-            coEvery { archiveGroupUseCase(testGroupId) } returns Result.success(Unit)
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setGroupId(testGroupId)
-            advanceUntilIdle()
-
-            val actions = mutableListOf<GroupDetailUiAction>()
-            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.actions.collect { actions.add(it) }
-            }
-
-            viewModel.onEvent(GroupDetailUiEvent.ArchiveConfirmed)
-            advanceUntilIdle()
-
-            assertTrue(actions.any { it is GroupDetailUiAction.ArchiveSuccess })
-
-            actionsJob.cancel()
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `ArchiveConfirmed with UnresolvedSettlementsException emits NavigateToSettlementOverview action`() =
-            runTest(testDispatcher) {
-                val ex = UnresolvedSettlementsException(testGroupId, emptyList())
-                coEvery { archiveGroupUseCase(testGroupId) } returns Result.failure(ex)
-                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-                viewModel.setGroupId(testGroupId)
-                advanceUntilIdle()
-
-                val actions = mutableListOf<GroupDetailUiAction>()
-                val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                    viewModel.actions.collect { actions.add(it) }
+            assertTrue(
+                actions.any {
+                    it is GroupDetailUiAction.NavigateToSettlementOverview &&
+                        (it as GroupDetailUiAction.NavigateToSettlementOverview).groupId == testGroupId
                 }
-
-                viewModel.onEvent(GroupDetailUiEvent.ArchiveConfirmed)
-                advanceUntilIdle()
-
-                assertTrue(actions.any { it is GroupDetailUiAction.NavigateToSettlementOverview })
-
-                actionsJob.cancel()
-                collectJob.cancel()
-            }
-
-        @Test
-        fun `ArchiveConfirmed with general failure emits ShowError action`() = runTest(testDispatcher) {
-            coEvery { archiveGroupUseCase(testGroupId) } returns Result.failure(Exception("Archive failed"))
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setGroupId(testGroupId)
-            advanceUntilIdle()
-
-            val actions = mutableListOf<GroupDetailUiAction>()
-            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.actions.collect { actions.add(it) }
-            }
-
-            viewModel.onEvent(GroupDetailUiEvent.ArchiveConfirmed)
-            advanceUntilIdle()
-
-            assertTrue(actions.any { it is GroupDetailUiAction.ShowError })
+            )
 
             actionsJob.cancel()
             collectJob.cancel()

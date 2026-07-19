@@ -13,6 +13,7 @@ import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupSettlementOverviewUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.model.SettlementRowStatusStyle
 import es.pedrazamiguez.splittrip.features.group.presentation.model.SettlementRowUiModel
+import es.pedrazamiguez.splittrip.features.group.presentation.model.archive.ArchiveWizardStep
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupSettlementOverviewUiState
 import kotlinx.collections.immutable.toImmutableList
 
@@ -25,7 +26,9 @@ class GroupSettlementOverviewUiMapperImpl(
     override fun toUiState(
         settlements: List<SettlementRecord>,
         memberProfiles: Map<String, User>,
-        currentUserId: String
+        currentUserId: String,
+        groupCreatorId: String,
+        groupName: String
     ): GroupSettlementOverviewUiState {
         val rows = settlements.map { record ->
             toRowModel(record, memberProfiles, currentUserId)
@@ -38,12 +41,36 @@ class GroupSettlementOverviewUiMapperImpl(
         val disputed = rows.filter { it.status == SettlementStatus.DISPUTED }
         val resolved = rows.filter { it.status == SettlementStatus.RESOLVED }
 
+        val areAllSettlementsResolved = settlements.isNotEmpty() && rows.all { it.status == SettlementStatus.RESOLVED }
+
+        val isUserCreator = groupCreatorId == currentUserId
+        val actionRequiredCount = pending.count { it.canCurrentUserConfirm }
+        val waitingOnOthersCount = pending.count { !it.canCurrentUserConfirm }
+        val disputedCount = disputed.size
+
+        val activeSteps = if (areAllSettlementsResolved) {
+            listOf(ArchiveWizardStep.SETTLEMENT_SUMMARY, ArchiveWizardStep.CONFIRMATION).toImmutableList()
+        } else {
+            listOf(
+                ArchiveWizardStep.SETTLEMENT_SUMMARY,
+                ArchiveWizardStep.ACTION_REQUIRED,
+                ArchiveWizardStep.CONFIRMATION
+            ).toImmutableList()
+        }
+
         return GroupSettlementOverviewUiState(
             pendingSettlements = pending.toImmutableList(),
             disputedSettlements = disputed.toImmutableList(),
             resolvedSettlements = resolved.toImmutableList(),
-            areAllSettlementsResolved = settlements.isNotEmpty() && rows.all { it.status == SettlementStatus.RESOLVED },
-            isLoading = false
+            areAllSettlementsResolved = areAllSettlementsResolved,
+            isLoading = false,
+            currentStep = ArchiveWizardStep.SETTLEMENT_SUMMARY,
+            activeSteps = activeSteps,
+            isUserCreator = isUserCreator,
+            actionRequiredCount = actionRequiredCount,
+            waitingOnOthersCount = waitingOnOthersCount,
+            disputedCount = disputedCount,
+            groupName = groupName
         )
     }
 
