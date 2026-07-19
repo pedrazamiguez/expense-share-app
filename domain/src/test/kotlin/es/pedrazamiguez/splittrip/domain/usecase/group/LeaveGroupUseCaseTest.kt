@@ -101,7 +101,7 @@ class LeaveGroupUseCaseTest {
         )
 
         every { authenticationService.requireUserId() } returns currentUserId
-        coEvery { getSettlementSuggestionsUseCase.persistForGroup(groupId) } returns emptyList()
+        coEvery { getSettlementSuggestionsUseCase.persistForGroup(groupId, any()) } returns emptyList()
         coEvery { reassignSubunitSharesUseCase(groupId, currentUserId) } returns Result.success(Unit)
         coEvery { groupRepository.leaveGroup(any()) } just Runs
 
@@ -232,7 +232,7 @@ class LeaveGroupUseCaseTest {
             useCase(groupId)
 
             coVerifyOrder {
-                getSettlementSuggestionsUseCase.persistForGroup(groupId)
+                getSettlementSuggestionsUseCase.persistForGroup(groupId, currentUserId)
                 reassignSubunitSharesUseCase(groupId, currentUserId)
                 groupRepository.leaveGroup(groupId)
             }

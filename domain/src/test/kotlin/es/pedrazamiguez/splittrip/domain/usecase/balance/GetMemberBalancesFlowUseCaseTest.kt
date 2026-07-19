@@ -124,21 +124,6 @@ class GetMemberBalancesFlowUseCaseTest {
         }
 
         @Test
-        fun `GROUP contribution physical attribution with Physical strategy`() {
-            val contributions = listOf(
-                Contribution(userId = "user-1", contributionScope = PayerType.GROUP, amount = 10000L)
-            )
-            val result =
-                compute(contributions = contributions, attributionStrategy = PhysicalContributionAttributionStrategy)
-            val balanceMap = result.associateBy { it.userId }
-            assertEquals(10000L, balanceMap["user-1"]!!.contributed)
-            assertEquals(0L, balanceMap["user-2"]!!.contributed)
-            assertEquals(0L, balanceMap["user-3"]!!.contributed)
-            assertEquals(0L, balanceMap["user-4"]!!.contributed)
-            assertEquals(10000L, balanceMap.values.sumOf { it.contributed })
-        }
-
-        @Test
         fun `subunit contribution distributed by memberShares (50-50 couple)`() {
             val subunit = Subunit(
                 id = "sub-1",
@@ -293,43 +278,6 @@ class GetMemberBalancesFlowUseCaseTest {
             assertEquals(1000L + 1000L, balanceMap["user-2"]!!.contributed) // 2000
             assertEquals(1000L + 500L, balanceMap["user-3"]!!.contributed) // 1500
             assertEquals(1000L, balanceMap["user-4"]!!.contributed) // 1000
-        }
-
-        @Test
-        fun `mixed contributions physical attribution with Physical strategy`() {
-            val subunit = Subunit(
-                id = "sub-1",
-                groupId = groupId,
-                memberIds = listOf("user-1", "user-2"),
-                memberShares = mapOf(
-                    "user-1" to BigDecimal("0.5"),
-                    "user-2" to BigDecimal("0.5")
-                )
-            )
-            val contributions = listOf(
-                Contribution(userId = "user-1", contributionScope = PayerType.GROUP, amount = 4000L),
-                Contribution(
-                    userId = "user-1",
-                    contributionScope = PayerType.SUBUNIT,
-                    subunitId = "sub-1",
-                    amount = 2000L
-                ),
-                Contribution(userId = "user-3", contributionScope = PayerType.USER, amount = 500L)
-            )
-            val result =
-                compute(
-                    contributions = contributions,
-                    subunits = listOf(subunit),
-                    attributionStrategy = PhysicalContributionAttributionStrategy
-                )
-            val balanceMap = result.associateBy { it.userId }
-            // GROUP: 4000 → user-1: 4000
-            // SUBUNIT: 2000 → user-1: 1000, user-2: 1000
-            // USER: user-3: 500
-            assertEquals(4000L + 1000L, balanceMap["user-1"]!!.contributed) // 5000
-            assertEquals(1000L, balanceMap["user-2"]!!.contributed) // 1000
-            assertEquals(500L, balanceMap["user-3"]!!.contributed) // 500
-            assertEquals(0L, balanceMap["user-4"]!!.contributed) // 0
         }
     }
 
@@ -1118,7 +1066,7 @@ class GetMemberBalancesFlowUseCaseTest {
             // Antonio has -10000 pocket balance. Andres has +10000 pocket balance.
             // Resolved pocket settlement of 10000 from user-2 to user-1.
             val contributions = listOf(
-                Contribution(userId = "user-1", contributionScope = PayerType.GROUP, amount = 10000L)
+                Contribution(userId = "user-1", contributionScope = PayerType.USER, amount = 10000L)
             )
             val withdrawals = listOf(
                 CashWithdrawal(
@@ -1146,8 +1094,7 @@ class GetMemberBalancesFlowUseCaseTest {
             val result = compute(
                 contributions = contributions,
                 withdrawals = withdrawals,
-                settlements = settlements,
-                attributionStrategy = PhysicalContributionAttributionStrategy
+                settlements = settlements
             )
             val balanceMap = result.associateBy { it.userId }
 

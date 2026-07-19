@@ -14,8 +14,8 @@ import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.PhysicalContributionAttributionStrategy
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ResolveCashOnLeaveUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.StandardContributionAttributionStrategy
 import es.pedrazamiguez.splittrip.domain.usecase.group.LeaveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.ReassignSubunitSharesUseCase
 import kotlinx.coroutines.flow.first
@@ -53,7 +53,7 @@ class LeaveGroupUseCaseImpl(
             throw CannotLeaveGroupException(CannotLeaveGroupException.Reason.IS_CREATOR)
         }
 
-        getSettlementSuggestionsUseCase.persistForGroup(groupId)
+        getSettlementSuggestionsUseCase.persistForGroup(groupId, currentUserId)
 
         val unresolvedSettlements = areMemberSettlementsResolvedUseCase(groupId, currentUserId)
         if (unresolvedSettlements.isNotEmpty()) {
@@ -76,7 +76,7 @@ class LeaveGroupUseCaseImpl(
             groupMemberIds = group.members,
             groupCurrency = group.currency,
             settlements = settlements,
-            attributionStrategy = PhysicalContributionAttributionStrategy
+            attributionStrategy = StandardContributionAttributionStrategy
         )
 
         val userBalance = balances.find { it.userId == currentUserId }

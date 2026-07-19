@@ -12,7 +12,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.PhysicalContributionAttributionStrategy
+import es.pedrazamiguez.splittrip.domain.usecase.balance.StandardContributionAttributionStrategy
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.LeaveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
@@ -90,13 +90,13 @@ class GroupLeaveWizardEventHandlerImpl(
                     groupMemberIds = group.members,
                     groupCurrency = group.currency,
                     settlements = settlementRecords,
-                    attributionStrategy = PhysicalContributionAttributionStrategy
+                    attributionStrategy = StandardContributionAttributionStrategy
                 )
 
                 val myBalance = memberBalances.find { it.userId == currentUserId }
                     ?: MemberBalance(userId = currentUserId)
 
-                getSettlementSuggestionsUseCase.persistForGroup(groupId)
+                getSettlementSuggestionsUseCase.persistForGroup(groupId, currentUserId)
                 val unresolvedSettlements = areMemberSettlementsResolvedUseCase(groupId, currentUserId)
                 val memberProfiles = if (group.members.isNotEmpty()) {
                     getMemberProfilesUseCase(group.members)
