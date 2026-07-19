@@ -112,7 +112,13 @@ class GroupLeaveWizardEventHandlerImpl(
                 }
                 activeSteps.add(LeaveWizardStep.CONFIRMATION)
 
-                val balanceSummary = leaveWizardUiMapper.toBalanceSummaryUiModel(myBalance, group.currency)
+                val balanceSummary = leaveWizardUiMapper.toBalanceSummaryUiModel(
+                    memberBalance = myBalance,
+                    memberBalances = memberBalances,
+                    currentUserId = currentUserId,
+                    memberProfiles = memberProfiles,
+                    currency = group.currency
+                )
                 val settlements = leaveWizardUiMapper.toSettlementUiModels(
                     unresolvedSettlements,
                     memberProfiles,
@@ -294,5 +300,11 @@ class GroupLeaveWizardEventHandlerImpl(
             )
         }
         onError(UiText.StringResource(R.string.leave_wizard_unresolved_settlements_error))
+    }
+
+    override fun handleJumpToStep(step: LeaveWizardStep) {
+        if (step in _wizardState.value.activeSteps) {
+            _wizardState.update { it.copy(currentStep = step) }
+        }
     }
 }

@@ -201,6 +201,10 @@
     <string name="leave_wizard_settlement_other_owes">%1$s owes %2$s</string>
     <string name="leave_wizard_settlement_waiting_other">Awaiting %1$s</string>
     <string name="leave_wizard_settlement_action_required">Action required by you</string>
-    <string name="leave_wizard_settlement_warning_banner">All pending settlements must be confirmed before you can leave the group.</string>
+    <string name="leave_wizard_settlement_warning_banner">You must resolve all pending settlements before leaving the group.</string>
     <string name="leave_wizard_unresolved_settlements_error">There are pending settlements that must be resolved before leaving.</string>
+    <string name="leave_wizard_settlement_section_your_action">Your Action Required</string>
+    <string name="leave_wizard_settlement_section_waiting">Waiting on Others</string>
+    <string name="leave_wizard_balances_with_members">Balances with other travelers</string>
+    <string name="leave_wizard_go_to_settlements">Go to Settlements</string>
 </resources>

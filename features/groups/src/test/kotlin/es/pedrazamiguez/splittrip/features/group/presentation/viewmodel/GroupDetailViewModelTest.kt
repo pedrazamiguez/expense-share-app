@@ -239,8 +239,15 @@ class GroupDetailViewModelTest {
                 getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
             } returns
                 listOf(memberBalance)
-            every { leaveWizardUiMapper.toBalanceSummaryUiModel(any(), any()) } returns
-                LeaveBalanceSummaryUiModel("€25.00", "€10.00", "€35.00")
+            every {
+                leaveWizardUiMapper.toBalanceSummaryUiModel(
+                    memberBalance = any(),
+                    memberBalances = any(),
+                    currentUserId = any(),
+                    memberProfiles = any(),
+                    currency = any()
+                )
+            } returns LeaveBalanceSummaryUiModel("€25.00", "€10.00", "€35.00")
             every { leaveWizardUiMapper.toCashResolutionUiModel(any(), any()) } returns
                 LeaveCashResolutionUiModel(requiresDeposit = true, formattedAmount = "€10.00")
             every { leaveWizardUiMapper.toSubunitImpactUiModel(any()) } returns

@@ -189,6 +189,7 @@ class GroupsViewModel(
                 event.settlementId
             )
             is GroupsUiEvent.LeaveConfirmed -> leaveWizardEventHandler.handleLeave(event.groupId)
+            is GroupsUiEvent.WizardJumpToStepClicked -> leaveWizardEventHandler.handleJumpToStep(event.step)
         }
     }
 

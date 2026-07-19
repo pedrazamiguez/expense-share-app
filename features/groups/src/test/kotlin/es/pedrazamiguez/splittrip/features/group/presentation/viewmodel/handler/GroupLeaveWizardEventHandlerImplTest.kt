@@ -139,8 +139,15 @@ class GroupLeaveWizardEventHandlerImplTest {
         every {
             getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
         } returns listOf(memberBalance)
-        every { leaveWizardUiMapper.toBalanceSummaryUiModel(any(), any()) } returns
-            LeaveBalanceSummaryUiModel("€25.00", "€10.00", "€35.00")
+        every {
+            leaveWizardUiMapper.toBalanceSummaryUiModel(
+                memberBalance = any(),
+                memberBalances = any(),
+                currentUserId = any(),
+                memberProfiles = any(),
+                currency = any()
+            )
+        } returns LeaveBalanceSummaryUiModel("€25.00", "€10.00", "€35.00")
         every { leaveWizardUiMapper.toCashResolutionUiModel(any(), any()) } returns
             LeaveCashResolutionUiModel(requiresDeposit = true, formattedAmount = "€10.00")
         every { leaveWizardUiMapper.toSubunitImpactUiModel(any()) } returns
@@ -260,4 +267,27 @@ class GroupLeaveWizardEventHandlerImplTest {
             assertTrue(state.activeSteps.contains(LeaveWizardStep.SETTLEMENTS))
             assertEquals(LeaveWizardStep.SETTLEMENTS, state.currentStep)
         }
+
+    @Test
+    fun `handleJumpToStep transitions step correctly when step is in activeSteps`() = runTest(testDispatcher) {
+        handler.bind(this, onSuccess, onError)
+        val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 0L)
+        every {
+            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
+        } returns listOf(memberBalance)
+
+        handler.handleLeaveClicked(testGroupId)
+        advanceUntilIdle()
+
+        // Steps will be BALANCE_SUMMARY and CONFIRMATION
+        assertEquals(LeaveWizardStep.BALANCE_SUMMARY, handler.wizardState.value.currentStep)
+
+        handler.handleJumpToStep(LeaveWizardStep.CONFIRMATION)
+        assertEquals(LeaveWizardStep.CONFIRMATION, handler.wizardState.value.currentStep)
+
+        // Try to jump to step not in activeSteps (e.g. SETTLEMENTS)
+        handler.handleJumpToStep(LeaveWizardStep.SETTLEMENTS)
+        // Should remain at CONFIRMATION
+        assertEquals(LeaveWizardStep.CONFIRMATION, handler.wizardState.value.currentStep)
+    }
 }

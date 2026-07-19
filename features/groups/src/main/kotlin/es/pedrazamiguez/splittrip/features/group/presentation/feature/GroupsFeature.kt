@@ -95,6 +95,7 @@ fun GroupsFeature(
         onConfirmSettlement = { groupId, settlementId ->
             groupsViewModel.onEvent(GroupsUiEvent.ConfirmSettlementClicked(groupId, settlementId))
         },
-        onConfirmLeave = { groupsViewModel.onEvent(GroupsUiEvent.LeaveConfirmed(it)) }
+        onConfirmLeave = { groupsViewModel.onEvent(GroupsUiEvent.LeaveConfirmed(it)) },
+        onWizardJumpToStepClicked = { groupsViewModel.onEvent(GroupsUiEvent.WizardJumpToStepClicked(it)) }
     )
 }

@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler
 
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardStep
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardUiState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +24,7 @@ interface GroupLeaveWizardEventHandler {
     fun handleWizardCancelled()
     fun handleConfirmSettlement(groupId: String, settlementId: String)
     fun handleLeave(groupId: String)
+    fun handleJumpToStep(step: LeaveWizardStep)
 }
 
 /**

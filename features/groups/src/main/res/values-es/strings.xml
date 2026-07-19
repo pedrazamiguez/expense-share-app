@@ -202,6 +202,10 @@
     <string name="leave_wizard_settlement_other_owes">%1$s debe a %2$s</string>
     <string name="leave_wizard_settlement_waiting_other">Esperando a %1$s</string>
     <string name="leave_wizard_settlement_action_required">Acción requerida por ti</string>
-    <string name="leave_wizard_settlement_warning_banner">Debes resolver o esperar la confirmación de todas las liquidaciones pendientes para poder salir del grupo.</string>
+    <string name="leave_wizard_settlement_warning_banner">Debes resolver todas las liquidaciones pendientes antes de salir del grupo.</string>
     <string name="leave_wizard_unresolved_settlements_error">Tienes liquidaciones pendientes que deben resolverse antes de poder salir.</string>
+    <string name="leave_wizard_settlement_section_your_action">Tu acción requerida</string>
+    <string name="leave_wizard_settlement_section_waiting">Esperando a otros</string>
+    <string name="leave_wizard_balances_with_members">Saldos con otros viajeros</string>
+    <string name="leave_wizard_go_to_settlements">Ir a Liquidaciones</string>
 </resources>

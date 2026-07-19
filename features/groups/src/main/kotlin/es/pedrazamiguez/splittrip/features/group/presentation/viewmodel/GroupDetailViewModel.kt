@@ -191,6 +191,8 @@ class GroupDetailViewModel(
             GroupDetailUiEvent.WizardBackClicked -> leaveWizardEventHandler.handleWizardBack()
             is GroupDetailUiEvent.ConfirmSettlementClicked ->
                 leaveWizardEventHandler.handleConfirmSettlement(_groupId.value, event.settlementId)
+            is GroupDetailUiEvent.WizardJumpToStepClicked ->
+                leaveWizardEventHandler.handleJumpToStep(event.step)
         }
     }
 
