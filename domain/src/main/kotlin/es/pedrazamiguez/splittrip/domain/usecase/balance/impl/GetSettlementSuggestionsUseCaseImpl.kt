@@ -14,6 +14,7 @@ import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.service.DebtSimplificationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.PhysicalContributionAttributionStrategy
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlinx.coroutines.flow.first
@@ -47,21 +48,23 @@ class GetSettlementSuggestionsUseCaseImpl(
         val withdrawals = cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId).first()
         val subunits = subunitRepository.getGroupSubunits(groupId)
 
+        val existingRecords = settlementRepository.getGroupSettlements(groupId)
+
         val memberBalances = getMemberBalancesFlowUseCase.computeMemberBalances(
             contributions = contributions,
             withdrawals = withdrawals,
             expenses = expenses,
             subunits = subunits,
             groupMemberIds = group.members,
-            groupCurrency = group.currency
+            groupCurrency = group.currency,
+            settlements = existingRecords,
+            attributionStrategy = PhysicalContributionAttributionStrategy
         )
 
         val computedSettlements = debtSimplificationService.simplifyByPocket(
             memberBalances,
             group.currency
         ).filter { it.sourcePocket != SettlementPocketType.NET }
-
-        val existingRecords = settlementRepository.getGroupSettlements(groupId)
 
         reconcileSettlements(groupId, computedSettlements, existingRecords)
         purgeObsoleteSuggested(computedSettlements, existingRecords)

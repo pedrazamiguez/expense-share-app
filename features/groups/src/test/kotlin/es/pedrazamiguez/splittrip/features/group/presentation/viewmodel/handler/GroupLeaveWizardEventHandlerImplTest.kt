@@ -11,6 +11,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsRes
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
@@ -60,6 +61,7 @@ class GroupLeaveWizardEventHandlerImplTest {
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
     private lateinit var confirmSettlementUseCase: ConfirmSettlementUseCase
     private lateinit var leaveGroupUseCase: LeaveGroupUseCase
+    private lateinit var getGroupSettlementsFlowUseCase: GetGroupSettlementsFlowUseCase
     private lateinit var leaveWizardUiMapper: LeaveWizardUiMapper
 
     private lateinit var handler: GroupLeaveWizardEventHandlerImpl
@@ -92,6 +94,7 @@ class GroupLeaveWizardEventHandlerImplTest {
         getMemberProfilesUseCase = mockk(relaxed = true)
         confirmSettlementUseCase = mockk(relaxed = true)
         leaveGroupUseCase = mockk(relaxed = true)
+        getGroupSettlementsFlowUseCase = mockk(relaxed = true)
         leaveWizardUiMapper = mockk(relaxed = true)
 
         every { authenticationService.requireUserId() } returns "user-1"
@@ -100,6 +103,7 @@ class GroupLeaveWizardEventHandlerImplTest {
         every { getGroupContributionsFlowUseCase(any()) } returns flowOf(emptyList())
         every { getCashWithdrawalsFlowUseCase(any()) } returns flowOf(emptyList())
         every { getGroupSubunitsFlowUseCase(any()) } returns flowOf(emptyList())
+        every { getGroupSettlementsFlowUseCase(any()) } returns flowOf(emptyList())
         coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
         coEvery { areMemberSettlementsResolvedUseCase(any(), any()) } returns emptyList()
 
@@ -116,6 +120,7 @@ class GroupLeaveWizardEventHandlerImplTest {
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             confirmSettlementUseCase = confirmSettlementUseCase,
             leaveGroupUseCase = leaveGroupUseCase,
+            getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
             leaveWizardUiMapper = leaveWizardUiMapper
         )
     }
@@ -137,7 +142,7 @@ class GroupLeaveWizardEventHandlerImplTest {
         )
         every { getGroupSubunitsFlowUseCase(testGroupId) } returns flowOf(listOf(subunit))
         every {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
         } returns listOf(memberBalance)
         every {
             leaveWizardUiMapper.toBalanceSummaryUiModel(
@@ -169,7 +174,7 @@ class GroupLeaveWizardEventHandlerImplTest {
         handler.bind(this, onSuccess, onError)
         val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 0L, cashInHand = 0L)
         every {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
         } returns listOf(memberBalance)
 
         handler.handleLeaveClicked(testGroupId)
@@ -186,7 +191,7 @@ class GroupLeaveWizardEventHandlerImplTest {
         handler.bind(this, onSuccess, onError)
         val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 0L)
         every {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
         } returns listOf(memberBalance)
 
         handler.handleLeaveClicked(testGroupId)
@@ -211,7 +216,7 @@ class GroupLeaveWizardEventHandlerImplTest {
         handler.bind(this, onSuccess, onError)
         val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 0L)
         every {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
         } returns listOf(memberBalance)
 
         handler.handleLeaveClicked(testGroupId)
@@ -273,7 +278,7 @@ class GroupLeaveWizardEventHandlerImplTest {
         handler.bind(this, onSuccess, onError)
         val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 0L)
         every {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
         } returns listOf(memberBalance)
 
         handler.handleLeaveClicked(testGroupId)

@@ -62,7 +62,9 @@ class GetSettlementSuggestionsUseCaseImplTest {
         every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
         every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
         coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
-        coEvery { getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any()) } returns
+        coEvery {
+            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+        } returns
             memberBalances
     }
 

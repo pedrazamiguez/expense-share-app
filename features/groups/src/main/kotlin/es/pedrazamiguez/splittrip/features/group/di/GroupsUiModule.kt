@@ -188,6 +188,7 @@ val groupsUiModule = module {
         val confirmSettlementUseCase = get<ConfirmSettlementUseCase>()
         val leaveGroupUseCase = get<LeaveGroupUseCase>()
         val leaveWizardUiMapper = get<LeaveWizardUiMapper>()
+        val getGroupSettlementsFlowUseCase = get<GetGroupSettlementsFlowUseCase>()
 
         GroupLeaveWizardEventHandlerImpl(
             authenticationService = authenticationService,
@@ -202,7 +203,8 @@ val groupsUiModule = module {
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             confirmSettlementUseCase = confirmSettlementUseCase,
             leaveGroupUseCase = leaveGroupUseCase,
-            leaveWizardUiMapper = leaveWizardUiMapper
+            leaveWizardUiMapper = leaveWizardUiMapper,
+            getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase
         )
     }
 

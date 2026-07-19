@@ -8,6 +8,7 @@ import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
+import es.pedrazamiguez.splittrip.domain.repository.SettlementRepository
 import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.impl.RemoveGroupMemberUseCaseImpl
@@ -28,6 +29,7 @@ class RemoveGroupMemberUseCaseImplTest {
     private lateinit var cashWithdrawalRepository: CashWithdrawalRepository
     private lateinit var subunitRepository: SubunitRepository
     private lateinit var getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase
+    private lateinit var settlementRepository: SettlementRepository
     private lateinit var useCase: RemoveGroupMemberUseCase
 
     private val groupId = "group-123"
@@ -51,6 +53,7 @@ class RemoveGroupMemberUseCaseImplTest {
         cashWithdrawalRepository = mockk()
         subunitRepository = mockk()
         getMemberBalancesFlowUseCase = mockk()
+        settlementRepository = mockk()
 
         useCase = RemoveGroupMemberUseCaseImpl(
             groupRepository = groupRepository,
@@ -58,7 +61,8 @@ class RemoveGroupMemberUseCaseImplTest {
             contributionRepository = contributionRepository,
             cashWithdrawalRepository = cashWithdrawalRepository,
             subunitRepository = subunitRepository,
-            getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase
+            getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
+            settlementRepository = settlementRepository
         )
 
         coEvery { groupRepository.getGroupById(groupId) } returns testGroup
@@ -67,11 +71,14 @@ class RemoveGroupMemberUseCaseImplTest {
         coEvery { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
         coEvery { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
         coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
+        coEvery { settlementRepository.getGroupSettlements(groupId) } returns emptyList()
     }
 
     @Test
     fun `removes member when balance is zero and validation passes`() = runTest {
-        coEvery { getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any()) } returns
+        coEvery {
+            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+        } returns
             listOf(MemberBalance(userId = memberToRemove))
 
         val result = useCase(groupId, memberToRemove)
@@ -122,7 +129,9 @@ class RemoveGroupMemberUseCaseImplTest {
 
     @Test
     fun `fails when member has non-zero balance`() = runTest {
-        coEvery { getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any()) } returns
+        coEvery {
+            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+        } returns
             listOf(MemberBalance(userId = memberToRemove, pocketBalance = 5000))
 
         val result = useCase(groupId, memberToRemove)
@@ -134,7 +143,9 @@ class RemoveGroupMemberUseCaseImplTest {
 
     @Test
     fun `fails when member balance entry is not found`() = runTest {
-        coEvery { getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any()) } returns
+        coEvery {
+            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+        } returns
             emptyList()
 
         val result = useCase(groupId, memberToRemove)

@@ -8,11 +8,16 @@ import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.ExpenseSplit
+import es.pedrazamiguez.splittrip.domain.model.Settlement
+import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
+import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
+import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.impl.AddOnCalculationServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetMemberBalancesFlowUseCaseImpl
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.LocalDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -36,8 +41,19 @@ class GetMemberBalancesFlowUseCaseTest {
         expenses: List<Expense> = emptyList(),
         subunits: List<Subunit> = emptyList(),
         memberIds: List<String> = groupMemberIds,
-        groupCurrency: String = "EUR"
-    ) = useCase.computeMemberBalances(contributions, withdrawals, expenses, subunits, memberIds, groupCurrency)
+        groupCurrency: String = "EUR",
+        settlements: List<SettlementRecord> = emptyList(),
+        attributionStrategy: ContributionAttributionStrategy = StandardContributionAttributionStrategy
+    ) = useCase.computeMemberBalances(
+        contributions,
+        withdrawals,
+        expenses,
+        subunits,
+        memberIds,
+        groupCurrency,
+        settlements,
+        attributionStrategy
+    )
 
     @Nested
     @DisplayName("Zero data / edge cases")
@@ -82,7 +98,7 @@ class GetMemberBalancesFlowUseCaseTest {
         }
 
         @Test
-        fun `GROUP-scoped contribution distributed equally among all members`() {
+        fun `GROUP-scoped contribution distributed equally among all members by default`() {
             val contributions = listOf(
                 Contribution(userId = "user-1", contributionScope = PayerType.GROUP, amount = 10000L)
             )
@@ -96,7 +112,7 @@ class GetMemberBalancesFlowUseCaseTest {
         }
 
         @Test
-        fun `GROUP-scoped contribution remainder allocated correctly`() {
+        fun `GROUP-scoped contribution remainder allocated correctly by default`() {
             // 101 / 4 = 25 each + 1 remainder unit distributed to first member
             val contributions = listOf(
                 Contribution(userId = "user-1", contributionScope = PayerType.GROUP, amount = 101L)
@@ -105,6 +121,21 @@ class GetMemberBalancesFlowUseCaseTest {
             val balanceMap = result.associateBy { it.userId }
             val totalContributed = balanceMap.values.sumOf { it.contributed }
             assertEquals(101L, totalContributed)
+        }
+
+        @Test
+        fun `GROUP contribution physical attribution with Physical strategy`() {
+            val contributions = listOf(
+                Contribution(userId = "user-1", contributionScope = PayerType.GROUP, amount = 10000L)
+            )
+            val result =
+                compute(contributions = contributions, attributionStrategy = PhysicalContributionAttributionStrategy)
+            val balanceMap = result.associateBy { it.userId }
+            assertEquals(10000L, balanceMap["user-1"]!!.contributed)
+            assertEquals(0L, balanceMap["user-2"]!!.contributed)
+            assertEquals(0L, balanceMap["user-3"]!!.contributed)
+            assertEquals(0L, balanceMap["user-4"]!!.contributed)
+            assertEquals(10000L, balanceMap.values.sumOf { it.contributed })
         }
 
         @Test
@@ -233,7 +264,7 @@ class GetMemberBalancesFlowUseCaseTest {
         }
 
         @Test
-        fun `mixed GROUP, SUBUNIT, and USER contributions`() {
+        fun `mixed GROUP, SUBUNIT, and USER contributions by default`() {
             val subunit = Subunit(
                 id = "sub-1",
                 groupId = groupId,
@@ -262,6 +293,43 @@ class GetMemberBalancesFlowUseCaseTest {
             assertEquals(1000L + 1000L, balanceMap["user-2"]!!.contributed) // 2000
             assertEquals(1000L + 500L, balanceMap["user-3"]!!.contributed) // 1500
             assertEquals(1000L, balanceMap["user-4"]!!.contributed) // 1000
+        }
+
+        @Test
+        fun `mixed contributions physical attribution with Physical strategy`() {
+            val subunit = Subunit(
+                id = "sub-1",
+                groupId = groupId,
+                memberIds = listOf("user-1", "user-2"),
+                memberShares = mapOf(
+                    "user-1" to BigDecimal("0.5"),
+                    "user-2" to BigDecimal("0.5")
+                )
+            )
+            val contributions = listOf(
+                Contribution(userId = "user-1", contributionScope = PayerType.GROUP, amount = 4000L),
+                Contribution(
+                    userId = "user-1",
+                    contributionScope = PayerType.SUBUNIT,
+                    subunitId = "sub-1",
+                    amount = 2000L
+                ),
+                Contribution(userId = "user-3", contributionScope = PayerType.USER, amount = 500L)
+            )
+            val result =
+                compute(
+                    contributions = contributions,
+                    subunits = listOf(subunit),
+                    attributionStrategy = PhysicalContributionAttributionStrategy
+                )
+            val balanceMap = result.associateBy { it.userId }
+            // GROUP: 4000 → user-1: 4000
+            // SUBUNIT: 2000 → user-1: 1000, user-2: 1000
+            // USER: user-3: 500
+            assertEquals(4000L + 1000L, balanceMap["user-1"]!!.contributed) // 5000
+            assertEquals(1000L, balanceMap["user-2"]!!.contributed) // 1000
+            assertEquals(500L, balanceMap["user-3"]!!.contributed) // 500
+            assertEquals(0L, balanceMap["user-4"]!!.contributed) // 0
         }
     }
 
@@ -1038,6 +1106,101 @@ class GetMemberBalancesFlowUseCaseTest {
             assertEquals(10000L, balance.totalSpent)
             // pocketBalance is reduced by refundable: 20000 - 0 (withdrawn) - 10000 (nonCashSpent) = 10000
             assertEquals(10000L, balance.pocketBalance)
+        }
+    }
+
+    @Nested
+    @DisplayName("Settlement reconciliation")
+    inner class SettlementReconciliation {
+        @Test
+        fun `resolved pocket settlement adjusts contributed, withdrawn, and pocketBalance`() {
+            // Andres (user-1) contributed 10000, Antonio (user-2) withdrew 10000.
+            // Antonio has -10000 pocket balance. Andres has +10000 pocket balance.
+            // Resolved pocket settlement of 10000 from user-2 to user-1.
+            val contributions = listOf(
+                Contribution(userId = "user-1", contributionScope = PayerType.GROUP, amount = 10000L)
+            )
+            val withdrawals = listOf(
+                CashWithdrawal(
+                    withdrawnBy = "user-2",
+                    withdrawalScope = PayerType.USER,
+                    deductedBaseAmount = 10000L
+                )
+            )
+            val settlements = listOf(
+                SettlementRecord(
+                    id = "settlement-1",
+                    groupId = groupId,
+                    settlement = Settlement(
+                        fromUserId = "user-2",
+                        toUserId = "user-1",
+                        amount = 10000L,
+                        currency = "EUR",
+                        sourcePocket = SettlementPocketType.POCKET
+                    ),
+                    status = SettlementStatus.RESOLVED,
+                    createdAt = LocalDateTime.now()
+                )
+            )
+
+            val result = compute(
+                contributions = contributions,
+                withdrawals = withdrawals,
+                settlements = settlements,
+                attributionStrategy = PhysicalContributionAttributionStrategy
+            )
+            val balanceMap = result.associateBy { it.userId }
+
+            // Payer user-2: contributed increases by 10000, pocketBalance increases by 10000 (from -10000 to 0)
+            assertEquals(10000L, balanceMap["user-2"]!!.contributed)
+            assertEquals(0L, balanceMap["user-2"]!!.pocketBalance)
+
+            // Creditor user-1: withdrawn increases by 10000, pocketBalance decreases by 10000 (from +10000 to 0)
+            assertEquals(10000L, balanceMap["user-1"]!!.withdrawn)
+            assertEquals(0L, balanceMap["user-1"]!!.pocketBalance)
+        }
+
+        @Test
+        fun `resolved cash settlement adjusts cashSpent, cashInHand, and contributed`() {
+            // user-1 withdrew 10000 cash (has 10000 cash in hand).
+            // user-2 has 0 cash in hand.
+            // Resolved cash settlement of 6000 cash from user-1 to user-2.
+            val withdrawals = listOf(
+                CashWithdrawal(
+                    withdrawnBy = "user-1",
+                    withdrawalScope = PayerType.USER,
+                    amountWithdrawn = 10000L,
+                    remainingAmount = 10000L,
+                    deductedBaseAmount = 10000L
+                )
+            )
+            val settlements = listOf(
+                SettlementRecord(
+                    id = "settlement-2",
+                    groupId = groupId,
+                    settlement = Settlement(
+                        fromUserId = "user-1",
+                        toUserId = "user-2",
+                        amount = 6000L,
+                        currency = "EUR",
+                        sourcePocket = SettlementPocketType.CASH
+                    ),
+                    status = SettlementStatus.RESOLVED,
+                    createdAt = LocalDateTime.now()
+                )
+            )
+
+            val result = compute(withdrawals = withdrawals, settlements = settlements)
+            val balanceMap = result.associateBy { it.userId }
+
+            // Payer user-1: cashSpent increases by 6000, cashInHand decreases by 6000 (from 10000 to 4000)
+            assertEquals(6000L, balanceMap["user-1"]!!.cashSpent)
+            assertEquals(4000L, balanceMap["user-1"]!!.cashInHand)
+
+            // Creditor user-2: contributed increases by 6000, withdrawn increases by 6000, cashInHand increases by 6000 (from 0 to 6000)
+            assertEquals(6000L, balanceMap["user-2"]!!.contributed)
+            assertEquals(6000L, balanceMap["user-2"]!!.withdrawn)
+            assertEquals(6000L, balanceMap["user-2"]!!.cashInHand)
         }
     }
 }
