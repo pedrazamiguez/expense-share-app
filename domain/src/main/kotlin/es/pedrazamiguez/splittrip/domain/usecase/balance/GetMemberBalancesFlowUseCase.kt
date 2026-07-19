@@ -7,6 +7,8 @@ import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.usecase.UseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.ContributionAttributionStrategy
+import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.StandardContributionAttributionStrategy
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.balanceDistributeByShares
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.balanceDistributeEvenly
 import java.math.BigDecimal

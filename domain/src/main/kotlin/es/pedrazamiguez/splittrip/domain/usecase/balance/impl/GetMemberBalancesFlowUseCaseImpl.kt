@@ -5,13 +5,14 @@ import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.CurrencyAmount
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
+import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AddOnCalculationService
-import es.pedrazamiguez.splittrip.domain.usecase.balance.ContributionAttributionStrategy
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.ContributionAttributionStrategy
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.ExpenseResult
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.RemainingResult
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.WithdrawalResult
@@ -93,7 +94,7 @@ class GetMemberBalancesFlowUseCaseImpl(
 
     private fun applySettlementRecord(
         balanceMap: MutableMap<String, MemberBalance>,
-        settlement: es.pedrazamiguez.splittrip.domain.model.Settlement,
+        settlement: Settlement,
         groupCurrency: String
     ) {
         val fromUser = balanceMap[settlement.fromUserId] ?: return
@@ -111,7 +112,7 @@ class GetMemberBalancesFlowUseCaseImpl(
 
     private fun applyPocketSettlement(
         balanceMap: MutableMap<String, MemberBalance>,
-        settlement: es.pedrazamiguez.splittrip.domain.model.Settlement,
+        settlement: Settlement,
         fromUser: MemberBalance,
         toUser: MemberBalance
     ) {
@@ -127,7 +128,7 @@ class GetMemberBalancesFlowUseCaseImpl(
 
     private fun applyCashSettlement(
         balanceMap: MutableMap<String, MemberBalance>,
-        settlement: es.pedrazamiguez.splittrip.domain.model.Settlement,
+        settlement: Settlement,
         fromUser: MemberBalance,
         toUser: MemberBalance,
         groupCurrency: String

@@ -1,4 +1,4 @@
-package es.pedrazamiguez.splittrip.domain.usecase.balance
+package es.pedrazamiguez.splittrip.domain.usecase.balance.strategy
 
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Subunit

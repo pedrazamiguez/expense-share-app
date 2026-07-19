@@ -14,7 +14,7 @@ import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.service.DebtSimplificationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.StandardContributionAttributionStrategy
+import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.StandardContributionAttributionStrategy
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlinx.coroutines.flow.first
