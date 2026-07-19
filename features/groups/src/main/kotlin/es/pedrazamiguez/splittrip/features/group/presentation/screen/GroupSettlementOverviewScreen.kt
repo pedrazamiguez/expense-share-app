@@ -4,9 +4,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardNavigationBar
@@ -47,6 +51,7 @@ fun GroupSettlementOverviewScreen(
             val activeSteps = uiState.activeSteps
             val currentStepIndex = activeSteps.indexOf(uiState.currentStep).coerceAtLeast(0)
             val isOnLastStep = uiState.currentStep == activeSteps.lastOrNull()
+            val bottomPadding = LocalBottomPadding.current
 
             val isCurrentStepValid = when (uiState.currentStep) {
                 ArchiveWizardStep.CONFIRMATION -> uiState.areAllSettlementsResolved
@@ -72,7 +77,8 @@ fun GroupSettlementOverviewScreen(
                                 pendingCount = uiState.actionRequiredCount + uiState.waitingOnOthersCount,
                                 disputedCount = uiState.disputedCount,
                                 resolvedCount = uiState.resolvedSettlements.size,
-                                areAllSettlementsResolved = uiState.areAllSettlementsResolved
+                                areAllSettlementsResolved = uiState.areAllSettlementsResolved,
+                                modifier = Modifier.verticalScroll(rememberScrollState())
                             )
                         }
                         ArchiveWizardStep.ACTION_REQUIRED -> {
@@ -83,7 +89,8 @@ fun GroupSettlementOverviewScreen(
                                 },
                                 onDisputeSettlement = { id ->
                                     onEvent(GroupSettlementOverviewUiEvent.DisputeSettlement(id))
-                                }
+                                },
+                                modifier = Modifier.verticalScroll(rememberScrollState())
                             )
                         }
                         ArchiveWizardStep.CONFIRMATION -> {
@@ -96,7 +103,8 @@ fun GroupSettlementOverviewScreen(
                                             ArchiveWizardStep.ACTION_REQUIRED
                                         )
                                     )
-                                }
+                                },
+                                modifier = Modifier.verticalScroll(rememberScrollState())
                             )
                         }
                     }
@@ -114,7 +122,10 @@ fun GroupSettlementOverviewScreen(
                     ),
                     onBack = { onEvent(GroupSettlementOverviewUiEvent.WizardBackClicked) },
                     onNext = { onEvent(GroupSettlementOverviewUiEvent.WizardNextClicked) },
-                    onSubmit = { onEvent(GroupSettlementOverviewUiEvent.CloseTripClicked) }
+                    onSubmit = { onEvent(GroupSettlementOverviewUiEvent.CloseTripClicked) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = bottomPadding)
                 )
             }
         }
