@@ -85,11 +85,22 @@ class GroupSettlementOverviewViewModel(
                 domainState,
                 _localState
             ) { baseState, localState ->
+                // Clamp currentStep to a valid step in the live activeSteps list.
+                // If another user resolves settlements in real-time, activeSteps shrinks
+                // (e.g. ACTION_REQUIRED is dropped from the list). Keeping the stale
+                // currentStep causes indexOf() to return -1, making both Back and Next
+                // handlers no-op silently. We advance to the last step (Confirmation)
+                // so the creator can proceed to archive immediately.
+                val clampedStep = if (baseState.activeSteps.contains(localState.currentStep)) {
+                    localState.currentStep
+                } else {
+                    baseState.activeSteps.lastOrNull() ?: localState.currentStep
+                }
                 baseState.copy(
                     activeDisputeSettlementId = localState.activeDisputeSettlementId,
                     disputeReasonInput = localState.disputeReasonInput,
                     isArchiving = localState.isArchiving,
-                    currentStep = localState.currentStep
+                    currentStep = clampedStep
                 )
             }
         }
