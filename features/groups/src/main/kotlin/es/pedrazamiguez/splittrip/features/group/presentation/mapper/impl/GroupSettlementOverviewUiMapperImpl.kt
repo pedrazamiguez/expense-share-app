@@ -41,7 +41,7 @@ class GroupSettlementOverviewUiMapperImpl(
         val disputed = rows.filter { it.status == SettlementStatus.DISPUTED }
         val resolved = rows.filter { it.status == SettlementStatus.RESOLVED }
 
-        val areAllSettlementsResolved = settlements.isNotEmpty() && rows.all { it.status == SettlementStatus.RESOLVED }
+        val areAllSettlementsResolved = rows.all { it.status == SettlementStatus.RESOLVED }
 
         val isUserCreator = groupCreatorId == currentUserId
         val actionRequiredCount = pending.count { it.canCurrentUserConfirm }

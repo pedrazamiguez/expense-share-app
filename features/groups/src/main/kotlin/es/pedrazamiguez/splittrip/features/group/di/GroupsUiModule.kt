@@ -254,6 +254,7 @@ val groupsUiModule = module {
         val confirmSettlementUseCase = get<ConfirmSettlementUseCase>()
         val disputeSettlementUseCase = get<DisputeSettlementUseCase>()
         val archiveGroupUseCase = get<ArchiveGroupUseCase>()
+        val getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>()
         GroupSettlementOverviewViewModel(
             getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
@@ -262,7 +263,8 @@ val groupsUiModule = module {
             authenticationService = authenticationService,
             confirmSettlementUseCase = confirmSettlementUseCase,
             disputeSettlementUseCase = disputeSettlementUseCase,
-            archiveGroupUseCase = archiveGroupUseCase
+            archiveGroupUseCase = archiveGroupUseCase,
+            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase
         )
     }
 

@@ -54,11 +54,11 @@ class GroupSettlementOverviewUiMapperImplTest {
     inner class EmptySettlements {
 
         @Test
-        fun `empty settlements list produces empty groups and areAllSettlementsResolved false`() {
+        fun `empty settlements list produces empty groups and areAllSettlementsResolved true`() {
             val result = mapper.toUiState(emptyList(), emptyMap(), currentUserId)
 
             assertFalse(result.isLoading)
-            assertFalse(result.areAllSettlementsResolved)
+            assertTrue(result.areAllSettlementsResolved)
             assertTrue(result.pendingSettlements.isEmpty())
             assertTrue(result.disputedSettlements.isEmpty())
             assertTrue(result.resolvedSettlements.isEmpty())
@@ -491,6 +491,22 @@ class GroupSettlementOverviewUiMapperImplTest {
             val suggested = createRecord("1", SettlementStatus.RESOLVED)
             val result = mapper.toUiState(
                 settlements = listOf(suggested),
+                memberProfiles = emptyMap(),
+                currentUserId = "user-1",
+                groupCreatorId = "user-1",
+                groupName = "Test Group"
+            )
+            assertTrue(result.areAllSettlementsResolved)
+            assertEquals(
+                listOf(ArchiveWizardStep.SETTLEMENT_SUMMARY, ArchiveWizardStep.CONFIRMATION),
+                result.activeSteps
+            )
+        }
+
+        @Test
+        fun `maps activeSteps streamlined when settlements is empty`() {
+            val result = mapper.toUiState(
+                settlements = emptyList(),
                 memberProfiles = emptyMap(),
                 currentUserId = "user-1",
                 groupCreatorId = "user-1",

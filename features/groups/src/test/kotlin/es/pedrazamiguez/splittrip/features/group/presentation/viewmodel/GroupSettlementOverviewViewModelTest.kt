@@ -9,6 +9,7 @@ import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.DisputeSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
@@ -54,6 +55,7 @@ class GroupSettlementOverviewViewModelTest {
     private lateinit var confirmSettlementUseCase: ConfirmSettlementUseCase
     private lateinit var disputeSettlementUseCase: DisputeSettlementUseCase
     private lateinit var archiveGroupUseCase: ArchiveGroupUseCase
+    private lateinit var getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase
     private lateinit var viewModel: GroupSettlementOverviewViewModel
 
     private val testGroupId = "group-123"
@@ -76,7 +78,9 @@ class GroupSettlementOverviewViewModelTest {
         confirmSettlementUseCase = mockk(relaxed = true)
         disputeSettlementUseCase = mockk(relaxed = true)
         archiveGroupUseCase = mockk(relaxed = true)
+        getSettlementSuggestionsUseCase = mockk(relaxed = true)
 
+        coEvery { getSettlementSuggestionsUseCase.persistForGroup(any(), any()) } returns emptyList()
         every { getGroupSettlementsFlowUseCase(any()) } returns flowOf(emptyList())
         every { observeGroupUseCase(any()) } returns flowOf(testGroup)
         every { groupSettlementOverviewUiMapper.toUiState(any(), any(), any(), any(), any()) } returns
@@ -102,7 +106,8 @@ class GroupSettlementOverviewViewModelTest {
         authenticationService = authenticationService,
         confirmSettlementUseCase = confirmSettlementUseCase,
         disputeSettlementUseCase = disputeSettlementUseCase,
-        archiveGroupUseCase = archiveGroupUseCase
+        archiveGroupUseCase = archiveGroupUseCase,
+        getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase
     )
 
     @Nested
@@ -138,6 +143,18 @@ class GroupSettlementOverviewViewModelTest {
 
             val state = viewModel.uiState.value
             assertFalse(state.isLoading)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `setGroupId calls persistForGroup to load fresh suggestions`() = runTest(testDispatcher) {
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.setGroupId(testGroupId)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { getSettlementSuggestionsUseCase.persistForGroup(testGroupId) }
 
             collectJob.cancel()
         }

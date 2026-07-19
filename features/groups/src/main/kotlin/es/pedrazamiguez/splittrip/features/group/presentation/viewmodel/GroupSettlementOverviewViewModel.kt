@@ -8,6 +8,7 @@ import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.DisputeSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
@@ -40,7 +41,8 @@ class GroupSettlementOverviewViewModel(
     private val authenticationService: AuthenticationService,
     private val confirmSettlementUseCase: ConfirmSettlementUseCase,
     private val disputeSettlementUseCase: DisputeSettlementUseCase,
-    private val archiveGroupUseCase: ArchiveGroupUseCase
+    private val archiveGroupUseCase: ArchiveGroupUseCase,
+    private val getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase
 ) : ViewModel() {
 
     private val _groupId = MutableStateFlow("")
@@ -103,6 +105,13 @@ class GroupSettlementOverviewViewModel(
     fun setGroupId(groupId: String) {
         if (groupId != _groupId.value) {
             _groupId.value = groupId
+            viewModelScope.launch {
+                try {
+                    getSettlementSuggestionsUseCase.persistForGroup(groupId)
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to persist settlement suggestions for group $groupId")
+                }
+            }
         }
     }
 
