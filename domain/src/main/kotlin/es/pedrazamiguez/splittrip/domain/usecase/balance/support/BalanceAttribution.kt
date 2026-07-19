@@ -4,42 +4,12 @@ import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
-import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.CurrencyAmount
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AddOnCalculationService
 import java.math.BigDecimal
 import java.math.RoundingMode
-
-/**
- * Distributes contribution amounts to individual members.
- *
- * - GROUP contributions → equal split among all group members.
- * - SUBUNIT contributions → distribute by member shares with remainder allocation.
- * - USER contributions (individual) → full amount to userId.
- */
-internal fun attributeContributions(
-    contributions: List<Contribution>,
-    subunitMap: Map<String, Subunit>,
-    groupMemberIds: List<String>
-): Map<String, Long> {
-    val result = mutableMapOf<String, Long>()
-    for (contribution in contributions) {
-        val distributions = distributeByScope(
-            contribution.amount,
-            contribution.contributionScope,
-            contribution.userId,
-            subunitMap,
-            contribution.subunitId,
-            groupMemberIds
-        )
-        for ((userId, amount) in distributions) {
-            result[userId] = (result[userId] ?: 0L) + amount
-        }
-    }
-    return result
-}
 
 /**
  * Distributes withdrawal deducted amounts to individual members based on scope,

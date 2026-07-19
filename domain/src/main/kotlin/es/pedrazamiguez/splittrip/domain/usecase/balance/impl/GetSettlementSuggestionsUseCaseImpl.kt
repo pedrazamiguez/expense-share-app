@@ -14,6 +14,7 @@ import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.service.DebtSimplificationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.StandardContributionAttributionStrategy
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlinx.coroutines.flow.first
@@ -38,7 +39,7 @@ class GetSettlementSuggestionsUseCaseImpl(
     ): List<Settlement> =
         debtSimplificationService.simplifyByPocket(memberBalances, groupCurrency)
 
-    override suspend fun persistForGroup(groupId: String): List<SettlementRecord> {
+    override suspend fun persistForGroup(groupId: String, leavingUserId: String?): List<SettlementRecord> {
         val group = groupRepository.getGroupById(groupId)
             ?: return emptyList()
 
@@ -47,26 +48,79 @@ class GetSettlementSuggestionsUseCaseImpl(
         val withdrawals = cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId).first()
         val subunits = subunitRepository.getGroupSubunits(groupId)
 
+        val existingRecords = settlementRepository.getGroupSettlements(groupId)
+
         val memberBalances = getMemberBalancesFlowUseCase.computeMemberBalances(
             contributions = contributions,
             withdrawals = withdrawals,
             expenses = expenses,
             subunits = subunits,
             groupMemberIds = group.members,
-            groupCurrency = group.currency
+            groupCurrency = group.currency,
+            settlements = existingRecords,
+            attributionStrategy = StandardContributionAttributionStrategy
         )
 
-        val computedSettlements = debtSimplificationService.simplifyByPocket(
-            memberBalances,
-            group.currency
-        ).filter { it.sourcePocket != SettlementPocketType.NET }
-
-        val existingRecords = settlementRepository.getGroupSettlements(groupId)
+        val computedSettlements = if (leavingUserId != null) {
+            calculateLeaveSettlements(leavingUserId, memberBalances, group.currency)
+        } else {
+            debtSimplificationService.simplifyByPocket(
+                memberBalances,
+                group.currency
+            ).filter { it.sourcePocket != SettlementPocketType.NET }
+        }
 
         reconcileSettlements(groupId, computedSettlements, existingRecords)
         purgeObsoleteSuggested(computedSettlements, existingRecords)
 
         return settlementRepository.getGroupSettlements(groupId)
+    }
+
+    private fun calculateLeaveSettlements(
+        leavingUserId: String,
+        memberBalances: List<MemberBalance>,
+        groupCurrency: String
+    ): List<Settlement> {
+        val leavingMember = memberBalances.find { it.userId == leavingUserId } ?: return emptyList()
+        val remainingMembers = memberBalances.filter { it.userId != leavingUserId }
+        if (remainingMembers.isEmpty()) return emptyList()
+
+        val amount = leavingMember.pocketBalance
+        if (amount == 0L) return emptyList()
+
+        val absAmount = if (amount < 0) -amount else amount
+        val eachAmount = absAmount / remainingMembers.size
+        val remainder = (absAmount % remainingMembers.size).toInt()
+
+        val settlements = mutableListOf<Settlement>()
+        for (i in remainingMembers.indices) {
+            val member = remainingMembers[i]
+            val memberAmount = eachAmount + if (i < remainder) 1L else 0L
+            if (memberAmount == 0L) continue
+
+            if (amount > 0L) {
+                settlements.add(
+                    Settlement(
+                        fromUserId = member.userId,
+                        toUserId = leavingUserId,
+                        amount = memberAmount,
+                        currency = groupCurrency,
+                        sourcePocket = SettlementPocketType.POCKET
+                    )
+                )
+            } else {
+                settlements.add(
+                    Settlement(
+                        fromUserId = leavingUserId,
+                        toUserId = member.userId,
+                        amount = memberAmount,
+                        currency = groupCurrency,
+                        sourcePocket = SettlementPocketType.POCKET
+                    )
+                )
+            }
+        }
+        return settlements
     }
 
     private suspend fun reconcileSettlements(

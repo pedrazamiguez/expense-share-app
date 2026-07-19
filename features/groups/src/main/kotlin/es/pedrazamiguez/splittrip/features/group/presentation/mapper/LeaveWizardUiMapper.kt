@@ -12,6 +12,9 @@ import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveS
 interface LeaveWizardUiMapper {
     fun toBalanceSummaryUiModel(
         memberBalance: MemberBalance,
+        memberBalances: List<MemberBalance>,
+        currentUserId: String,
+        memberProfiles: Map<String, User>,
         currency: String
     ): LeaveBalanceSummaryUiModel
 

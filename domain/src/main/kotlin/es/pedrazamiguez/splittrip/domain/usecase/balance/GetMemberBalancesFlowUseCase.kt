@@ -4,8 +4,11 @@ import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
+import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.usecase.UseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.ContributionAttributionStrategy
+import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.StandardContributionAttributionStrategy
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.balanceDistributeByShares
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.balanceDistributeEvenly
 import java.math.BigDecimal
@@ -17,7 +20,9 @@ interface GetMemberBalancesFlowUseCase : UseCase {
         expenses: List<Expense>,
         subunits: List<Subunit>,
         groupMemberIds: List<String>,
-        groupCurrency: String = ""
+        groupCurrency: String = "",
+        settlements: List<SettlementRecord> = emptyList(),
+        attributionStrategy: ContributionAttributionStrategy = StandardContributionAttributionStrategy
     ): List<MemberBalance>
 
     companion object {

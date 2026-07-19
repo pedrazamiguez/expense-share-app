@@ -10,6 +10,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUi
 import es.pedrazamiguez.splittrip.core.logging.TelemetryTracker
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.service.DebtSimplificationService
 import es.pedrazamiguez.splittrip.domain.service.EmailValidationService
 import es.pedrazamiguez.splittrip.domain.service.GroupImageStorageService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
@@ -81,7 +82,8 @@ val groupsUiModule = module {
         LeaveWizardUiMapperImpl(
             formattingHelper = get<FormattingHelper>(),
             resourceProvider = get<ResourceProvider>(),
-            userUiMapper = get<UserUiMapper>()
+            userUiMapper = get<UserUiMapper>(),
+            debtSimplificationService = get<DebtSimplificationService>()
         )
     }
 
@@ -186,6 +188,7 @@ val groupsUiModule = module {
         val confirmSettlementUseCase = get<ConfirmSettlementUseCase>()
         val leaveGroupUseCase = get<LeaveGroupUseCase>()
         val leaveWizardUiMapper = get<LeaveWizardUiMapper>()
+        val getGroupSettlementsFlowUseCase = get<GetGroupSettlementsFlowUseCase>()
 
         GroupLeaveWizardEventHandlerImpl(
             authenticationService = authenticationService,
@@ -200,7 +203,8 @@ val groupsUiModule = module {
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             confirmSettlementUseCase = confirmSettlementUseCase,
             leaveGroupUseCase = leaveGroupUseCase,
-            leaveWizardUiMapper = leaveWizardUiMapper
+            leaveWizardUiMapper = leaveWizardUiMapper,
+            getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase
         )
     }
 

@@ -27,7 +27,7 @@ import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveW
 
 private val StepBottomPadding = 80.dp
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "LongParameterList")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupLeaveWizardSheet(
@@ -38,6 +38,7 @@ fun GroupLeaveWizardSheet(
     onDismissRequest: () -> Unit,
     onConfirmSettlement: (String) -> Unit,
     onConfirmLeave: () -> Unit,
+    onGoToSettlementsClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val sheetState =
@@ -58,6 +59,7 @@ fun GroupLeaveWizardSheet(
 
         val isCurrentStepValid = when (leaveWizardState.currentStep) {
             LeaveWizardStep.SETTLEMENTS -> leaveWizardState.settlements.all { it.isConfirmed }
+            LeaveWizardStep.CONFIRMATION -> leaveWizardState.settlements.all { it.isConfirmed }
             else -> true
         }
 
@@ -96,9 +98,12 @@ fun GroupLeaveWizardSheet(
                         )
                     }
                     LeaveWizardStep.CONFIRMATION -> {
+                        val hasUnresolved = leaveWizardState.settlements.any { !it.isConfirmed }
                         LeaveConfirmationStep(
                             groupName = groupName,
                             subunitImpact = leaveWizardState.subunitImpact,
+                            hasUnresolvedSettlements = hasUnresolved,
+                            onGoToSettlementsClicked = onGoToSettlementsClicked,
                             modifier = Modifier.padding(bottom = StepBottomPadding)
                         )
                     }
