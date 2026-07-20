@@ -17,6 +17,8 @@ data class GroupDocument(
     val lastUpdatedAt: Timestamp? = null,
     val status: String = "ACTIVE",
     val deletionRequested: Boolean = false,
+    val deletedBy: String? = null,
+    val deletedAt: Timestamp? = null,
     val lastArchiveEventId: String? = null
 ) {
     companion object {
