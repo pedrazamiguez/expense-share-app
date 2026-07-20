@@ -1,7 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.usecase.group
 
 import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
-import es.pedrazamiguez.splittrip.domain.exception.GroupArchivedException
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
 import es.pedrazamiguez.splittrip.domain.usecase.group.impl.DeleteGroupUseCaseImpl
@@ -81,39 +80,21 @@ class DeleteGroupUseCaseTest {
     }
 
     @Nested
-    inner class ArchiveGuard {
+    inner class ArchivedGroup {
 
         @Test
-        fun `throws GroupArchivedException when group is archived`() = runTest {
+        fun `delegates to repository deleteGroup when group is archived`() = runTest {
             // Given
             val groupId = "archived-group-id"
             val archivedGroup = Group(id = groupId, name = "Archived", currency = "EUR", status = GroupStatus.ARCHIVED)
             coEvery { groupRepository.getGroupById(groupId) } returns archivedGroup
+            coEvery { groupRepository.deleteGroup(groupId) } just Runs
 
-            // When/Then
-            try {
-                useCase(groupId)
-                fail("Expected GroupArchivedException to be thrown")
-            } catch (e: GroupArchivedException) {
-                assertEquals(groupId, e.groupId)
-            }
-        }
+            // When
+            useCase(groupId)
 
-        @Suppress("SwallowedException")
-        @Test
-        fun `does not call deleteGroup when group is archived`() = runTest {
-            // Given
-            val groupId = "archived-group-id"
-            val archivedGroup = Group(id = groupId, name = "Archived", currency = "EUR", status = GroupStatus.ARCHIVED)
-            coEvery { groupRepository.getGroupById(groupId) } returns archivedGroup
-
-            // When/Then
-            try {
-                useCase(groupId)
-                fail("Expected GroupArchivedException to be thrown")
-            } catch (e: GroupArchivedException) {
-                coVerify(exactly = 0) { groupRepository.deleteGroup(any()) }
-            }
+            // Then
+            coVerify(exactly = 1) { groupRepository.deleteGroup(groupId) }
         }
 
         @Test
