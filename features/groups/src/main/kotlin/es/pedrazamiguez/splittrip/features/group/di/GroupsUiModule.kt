@@ -215,7 +215,6 @@ val groupsUiModule = module {
         val getMemberProfilesUseCase = get<GetMemberProfilesUseCase>()
         val groupUiMapper = get<GroupUiMapper>()
         val authenticationService = get<AuthenticationService>()
-        val archiveGroupUseCase = get<ArchiveGroupUseCase>()
         val deleteGroupUseCase = get<DeleteGroupUseCase>()
         val getGroupSettlementsFlowUseCase = get<GetGroupSettlementsFlowUseCase>()
         val leaveWizardUiMapper = get<LeaveWizardUiMapper>()
@@ -229,7 +228,6 @@ val groupsUiModule = module {
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             groupUiMapper = groupUiMapper,
             authenticationService = authenticationService,
-            archiveGroupUseCase = archiveGroupUseCase,
             deleteGroupUseCase = deleteGroupUseCase,
             getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
             leaveWizardUiMapper = leaveWizardUiMapper,
@@ -256,6 +254,7 @@ val groupsUiModule = module {
         val confirmSettlementUseCase = get<ConfirmSettlementUseCase>()
         val disputeSettlementUseCase = get<DisputeSettlementUseCase>()
         val archiveGroupUseCase = get<ArchiveGroupUseCase>()
+        val getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>()
         GroupSettlementOverviewViewModel(
             getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
@@ -264,7 +263,8 @@ val groupsUiModule = module {
             authenticationService = authenticationService,
             confirmSettlementUseCase = confirmSettlementUseCase,
             disputeSettlementUseCase = disputeSettlementUseCase,
-            archiveGroupUseCase = archiveGroupUseCase
+            archiveGroupUseCase = archiveGroupUseCase,
+            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase
         )
     }
 

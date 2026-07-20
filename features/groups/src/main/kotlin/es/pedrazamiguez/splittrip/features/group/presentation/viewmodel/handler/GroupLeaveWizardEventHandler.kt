@@ -31,8 +31,6 @@ interface GroupLeaveWizardEventHandler {
  * Internal state maintained by [es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.GroupDetailViewModel].
  */
 data class GroupDetailViewModelLocalState(
-    val showArchiveConfirmation: Boolean = false,
-    val isArchiving: Boolean = false,
     val showDeleteConfirmation: Boolean = false,
     val isDeleting: Boolean = false
 )

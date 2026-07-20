@@ -208,4 +208,22 @@
     <string name="leave_wizard_settlement_section_waiting">Esperando a otros</string>
     <string name="leave_wizard_balances_with_members">Saldos con otros viajeros</string>
     <string name="leave_wizard_go_to_settlements">Ir a Liquidaciones</string>
+
+    <!-- Archive Group Wizard -->
+    <string name="archive_wizard_step_summary">Resumen</string>
+    <string name="archive_wizard_step_action">Acción requerida</string>
+    <string name="archive_wizard_step_confirm">Confirmar</string>
+    <string name="archive_wizard_summary_title">Resumen del viaje</string>
+    <string name="archive_wizard_summary_subtitle">Revisa el estado de las liquidaciones de este grupo antes de finalizar el viaje.</string>
+    <string name="archive_wizard_summary_ready_title">Listo para archivar</string>
+    <string name="archive_wizard_summary_ready_desc">Todas las liquidaciones se han resuelto correctamente. Puedes proceder directamente a archivar el grupo y finalizar el viaje.</string>
+    <string name="archive_wizard_summary_unresolved_title">Liquidaciones pendientes</string>
+    <string name="archive_wizard_summary_unresolved_desc">Hay liquidaciones pendientes o disputadas. Debes resolverlas antes de poder cerrar el viaje.</string>
+    <string name="archive_wizard_action_title">Acciones de consenso</string>
+    <string name="archive_wizard_action_subtitle">Revisa y actúa sobre las liquidaciones pendientes para llegar a un consenso.</string>
+    <string name="archive_wizard_confirm_title">Finalizar viaje</string>
+    <string name="archive_wizard_confirm_subtitle">¿Estás seguro de que quieres finalizar el viaje para %1$s?</string>
+    <string name="archive_wizard_confirm_warning_banner">Todas las liquidaciones deben estar resueltas antes de poder archivar este grupo.</string>
+    <string name="archive_wizard_confirm_desc">Archivar este grupo congelará todos los saldos y marcará el grupo como inactivo. Esta acción es permanente y no se puede deshacer.</string>
+    <string name="archive_wizard_go_to_settlements">Ir a Liquidaciones</string>
 </resources>

@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
-import es.pedrazamiguez.splittrip.features.group.presentation.component.ArchiveConfirmationDialog
 import es.pedrazamiguez.splittrip.features.group.presentation.component.DeleteConfirmationDialog
 import es.pedrazamiguez.splittrip.features.group.presentation.component.GroupsScreenContent
 import es.pedrazamiguez.splittrip.features.group.presentation.component.GroupsScreenOverlays
@@ -47,7 +46,6 @@ fun GroupsScreen(
     val listState = rememberLazyListState()
     var selectedGroupForMenu by remember { mutableStateOf<GroupUiModel?>(null) }
     var groupToDelete by remember { mutableStateOf<GroupUiModel?>(null) }
-    var groupToArchive by remember { mutableStateOf<GroupUiModel?>(null) }
     var groupToLeave by remember { mutableStateOf<GroupUiModel?>(null) }
     val scrollBehavior = rememberConnectedScrollBehavior()
 
@@ -83,8 +81,8 @@ fun GroupsScreen(
             selectedGroupForMenu = null
         },
         onArchiveRequested = { group ->
-            groupToArchive = group
             selectedGroupForMenu = null
+            onArchiveGroup(group.id)
         },
         onLeaveRequested = { group ->
             groupToLeave = group
@@ -94,8 +92,6 @@ fun GroupsScreen(
     )
 
     DeleteConfirmationDialog(groupToDelete, onDeleteGroup) { groupToDelete = null }
-
-    ArchiveConfirmationDialog(groupToArchive, onArchiveGroup) { groupToArchive = null }
 
     val shouldClearGroupToLeave = !uiState.leaveWizardState.showSheet &&
         groupToLeave != null &&

@@ -8,11 +8,13 @@ import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.DisputeSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupSettlementOverviewUiMapper
+import es.pedrazamiguez.splittrip.features.group.presentation.model.archive.ArchiveWizardStep
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupSettlementOverviewUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupSettlementOverviewUiEvent
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupSettlementOverviewUiState
@@ -39,7 +41,8 @@ class GroupSettlementOverviewViewModel(
     private val authenticationService: AuthenticationService,
     private val confirmSettlementUseCase: ConfirmSettlementUseCase,
     private val disputeSettlementUseCase: DisputeSettlementUseCase,
-    private val archiveGroupUseCase: ArchiveGroupUseCase
+    private val archiveGroupUseCase: ArchiveGroupUseCase,
+    private val getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase
 ) : ViewModel() {
 
     private val _groupId = MutableStateFlow("")
@@ -72,7 +75,9 @@ class GroupSettlementOverviewViewModel(
                 groupSettlementOverviewUiMapper.toUiState(
                     settlements = settlements,
                     memberProfiles = memberProfiles,
-                    currentUserId = currentUserId
+                    currentUserId = currentUserId,
+                    groupCreatorId = group?.createdBy ?: "",
+                    groupName = group?.name ?: ""
                 )
             }
 
@@ -80,10 +85,22 @@ class GroupSettlementOverviewViewModel(
                 domainState,
                 _localState
             ) { baseState, localState ->
+                // Clamp currentStep to a valid step in the live activeSteps list.
+                // If another user resolves settlements in real-time, activeSteps shrinks
+                // (e.g. ACTION_REQUIRED is dropped from the list). Keeping the stale
+                // currentStep causes indexOf() to return -1, making both Back and Next
+                // handlers no-op silently. We advance to the last step (Confirmation)
+                // so the creator can proceed to archive immediately.
+                val clampedStep = if (baseState.activeSteps.contains(localState.currentStep)) {
+                    localState.currentStep
+                } else {
+                    baseState.activeSteps.lastOrNull() ?: localState.currentStep
+                }
                 baseState.copy(
                     activeDisputeSettlementId = localState.activeDisputeSettlementId,
                     disputeReasonInput = localState.disputeReasonInput,
-                    isArchiving = localState.isArchiving
+                    isArchiving = localState.isArchiving,
+                    currentStep = clampedStep
                 )
             }
         }
@@ -99,6 +116,13 @@ class GroupSettlementOverviewViewModel(
     fun setGroupId(groupId: String) {
         if (groupId != _groupId.value) {
             _groupId.value = groupId
+            viewModelScope.launch {
+                try {
+                    getSettlementSuggestionsUseCase.persistForGroup(groupId)
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to persist settlement suggestions for group $groupId")
+                }
+            }
         }
     }
 
@@ -112,6 +136,55 @@ class GroupSettlementOverviewViewModel(
             GroupSettlementOverviewUiEvent.DisputeSubmitted -> handleSubmitDispute()
             GroupSettlementOverviewUiEvent.DisputeCancelled -> handleCancelDispute()
             GroupSettlementOverviewUiEvent.CloseTripClicked -> handleArchive()
+            GroupSettlementOverviewUiEvent.WizardNextClicked -> handleWizardNext()
+            GroupSettlementOverviewUiEvent.WizardBackClicked -> handleWizardBack()
+            GroupSettlementOverviewUiEvent.WizardCancelled -> handleWizardCancelled()
+            is GroupSettlementOverviewUiEvent.WizardJumpToStep -> handleJumpToStep(event.step)
+        }
+    }
+
+    private fun handleWizardNext() {
+        val state = uiState.value
+        val currentIndex = state.activeSteps.indexOf(state.currentStep)
+        if (currentIndex in 0 until state.activeSteps.lastIndex) {
+            val nextStep = state.activeSteps[currentIndex + 1]
+            _localState.update {
+                it.copy(
+                    currentStep = nextStep
+                )
+            }
+        }
+    }
+
+    private fun handleWizardBack() {
+        val state = uiState.value
+        val currentIndex = state.activeSteps.indexOf(state.currentStep)
+        if (currentIndex > 0) {
+            val prevStep = state.activeSteps[currentIndex - 1]
+            _localState.update {
+                it.copy(
+                    currentStep = prevStep
+                )
+            }
+        } else if (currentIndex == 0) {
+            handleWizardCancelled()
+        }
+    }
+
+    private fun handleWizardCancelled() {
+        viewModelScope.launch {
+            _actions.send(GroupSettlementOverviewUiAction.NavigateBack)
+        }
+    }
+
+    private fun handleJumpToStep(step: ArchiveWizardStep) {
+        val state = uiState.value
+        if (state.activeSteps.contains(step)) {
+            _localState.update {
+                it.copy(
+                    currentStep = step
+                )
+            }
         }
     }
 
