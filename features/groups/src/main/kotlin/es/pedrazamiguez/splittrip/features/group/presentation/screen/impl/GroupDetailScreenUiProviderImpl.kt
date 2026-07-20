@@ -48,7 +48,7 @@ class GroupDetailScreenUiProviderImpl(override val route: String = Routes.GROUP_
                                 )
                             }
                         }
-                        if (group.status == GroupStatus.ACTIVE && uiState.isUserAdmin) {
+                        if (uiState.isUserAdmin) {
                             IconButton(
                                 onClick = {
                                     groupDetailViewModel.onEvent(GroupDetailUiEvent.DeleteClicked)
