@@ -28,7 +28,6 @@ internal fun BalancesBodyContent(
     onNavigateToContribution: () -> Unit,
     onNavigateToWithdrawal: () -> Unit,
     onShowExtrasBreakdown: () -> Unit,
-    onSimplifyDebts: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier) {
@@ -63,8 +62,7 @@ internal fun BalancesBodyContent(
                         onEvent = onEvent,
                         onNavigateToContribution = onNavigateToContribution,
                         onNavigateToWithdrawal = onNavigateToWithdrawal,
-                        onShowExtrasBreakdown = onShowExtrasBreakdown,
-                        onSimplifyDebts = onSimplifyDebts
+                        onShowExtrasBreakdown = onShowExtrasBreakdown
                     )
                 }
             }
