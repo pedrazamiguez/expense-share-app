@@ -89,6 +89,7 @@
     <string name="balances_extras_expense_fallback">Gâtto</string>
     <string name="balances_extras_atm_fallback">Cahero — %1$s</string>
     <string name="balances_filter">Firtrâh çardô</string>
+    <string name="balances_my_status_title">Mi êttao</string>
     <string name="balances_simplify_debts">Çimplificâh deudâ</string>
     <string name="balances_settlements_title">Liquidaçionê çuheridâ</string>
     <string name="balances_settlements_subtitle">Pagô recomendáô entre miembrô pa çardâh lâ cuentâ der grupo.</string>

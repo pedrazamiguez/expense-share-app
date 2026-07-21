@@ -112,6 +112,7 @@
 
     <!-- Main Action -->
     <string name="balances_filter">Filtrar saldos</string>
+    <string name="balances_my_status_title">Mi estado</string>
 
     <!-- Simplificación de Deudas -->
     <string name="balances_simplify_debts">Simplificar deudas</string>

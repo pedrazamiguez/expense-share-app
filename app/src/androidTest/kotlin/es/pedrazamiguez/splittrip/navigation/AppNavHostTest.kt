@@ -299,4 +299,42 @@ class AppNavHostTest {
         val graphStartRoute = navController.graph.startDestinationRoute
         assertEquals(Routes.LOGIN, graphStartRoute)
     }
+
+    // ═════════════════════════════════════════════════════════════════════
+    //  My Status Navigation
+    // ═════════════════════════════════════════════════════════════════════
+
+    @Test
+    fun navigatesToMyStatus_whenMyStatusRouteIsTriggered() {
+        val navController = buildTestNavController()
+
+        composeRule.setContent {
+            KoinApplication(application = {
+                modules(
+                    createAppNavHostTestModule(
+                        authStateFlow = flowOf(true),
+                        onboardingFlow = flowOf(true)
+                    ),
+                    createFeatureTestModule()
+                )
+            }) {
+                SplitTripTheme {
+                    AppNavHost(navController = navController)
+                }
+            }
+        }
+
+        composeRule.waitForIdle()
+
+        composeRule.runOnUiThread {
+            navController.navigate(Routes.MY_STATUS)
+        }
+
+        composeRule.waitForIdle()
+
+        assertEquals(
+            Routes.MY_STATUS,
+            navController.currentDestination?.route
+        )
+    }
 }

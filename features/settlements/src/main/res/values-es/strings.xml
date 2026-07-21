@@ -1,0 +1,4 @@
+<resources>
+    <string name="my_status_title">Mi estado</string>
+    <string name="my_status_subtitle">Posición personal y consenso de liquidaciones</string>
+</resources>

@@ -4,7 +4,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChartArcs
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReportAnalytics
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.MainAction
@@ -37,9 +37,12 @@ class BalancesScreenUiProviderImpl(
 
     override val mainAction: MainAction?
         @Composable
-        get() = MainAction(
-            icon = TablerIcons.Outline.ChartArcs,
-            contentDescription = stringResource(R.string.balances_filter),
-            onClick = {} // TODO(#1441): open filter UI (out of scope)
-        )
+        get() {
+            val rootNavController = LocalRootNavController.current
+            return MainAction(
+                icon = TablerIcons.Outline.ReportAnalytics,
+                contentDescription = stringResource(R.string.balances_my_status_title),
+                onClick = { rootNavController.navigate(Routes.MY_STATUS) }
+            )
+        }
 }

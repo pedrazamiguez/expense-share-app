@@ -26,6 +26,7 @@ import es.pedrazamiguez.splittrip.di.notificationModules
 import es.pedrazamiguez.splittrip.di.onboardingFeatureModules
 import es.pedrazamiguez.splittrip.di.profileFeatureModules
 import es.pedrazamiguez.splittrip.di.settingsFeatureModules
+import es.pedrazamiguez.splittrip.di.settlementsFeatureModules
 import es.pedrazamiguez.splittrip.di.subunitsFeatureModules
 import es.pedrazamiguez.splittrip.di.withdrawalsFeatureModules
 import es.pedrazamiguez.splittrip.domain.repository.AppConfigRepository
@@ -67,6 +68,7 @@ class App : Application() {
                 expensesFeatureModules,
                 groupsFeatureModules,
                 subunitsFeatureModules,
+                settlementsFeatureModules,
                 profileFeatureModules,
                 settingsFeatureModules,
                 withdrawalsFeatureModules,

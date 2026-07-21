@@ -55,6 +55,7 @@ import es.pedrazamiguez.splittrip.features.main.navigation.mainGraph
 import es.pedrazamiguez.splittrip.features.onboarding.navigation.onboardingGraph
 import es.pedrazamiguez.splittrip.features.profile.navigation.profileGraph
 import es.pedrazamiguez.splittrip.features.settings.navigation.settingsGraph
+import es.pedrazamiguez.splittrip.features.settlement.navigation.settlementsGraph
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.compose.getKoin
@@ -305,6 +306,8 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
                         settingsGraph()
 
                         profileGraph()
+
+                        settlementsGraph()
                     }
                 }
             }
