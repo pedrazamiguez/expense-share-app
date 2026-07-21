@@ -1,16 +1,16 @@
 <resources>
-    <string name="my_position_title">Mi posición</string>
-    <string name="my_position_subtitle">Posición personal y consenso de liquidaciones</string>
-    <string name="my_position_section_personal_position">Posición personal</string>
-    <string name="my_position_label_net_position">Posición neta</string>
-    <string name="my_position_label_pocket_balance">Saldo del bote</string>
-    <string name="my_position_label_cash_in_hand">Efectivo en mano</string>
-    <string name="my_position_label_total_contributed">Total aportado</string>
-    <string name="my_position_label_total_spent">Total gastado</string>
-    <string name="my_position_label_cash_spent">Gastos en efectivo</string>
-    <string name="my_position_label_non_cash_spent">Gastos sin efectivo</string>
-    <string name="my_position_label_refundable_spent">Reembolsable / En espera</string>
-    <string name="my_position_negative_cash_hint">Tu parte de gastos en efectivo supera tus retiradas atribuidas.</string>
-    <string name="my_position_empty_title">Sin datos de posición</string>
-    <string name="my_position_empty_description">Tu posición financiera aparecerá aquí cuando el grupo tenga contribuciones y gastos.</string>
+    <string name="your_position_title">Tu posición</string>
+    <string name="your_position_subtitle">Posición personal y consenso de liquidaciones</string>
+    <string name="your_position_section_personal_position">Tu posición</string>
+    <string name="your_position_label_net_position">Posición neta</string>
+    <string name="your_position_label_pocket_balance">Saldo del bote</string>
+    <string name="your_position_label_cash_in_hand">Efectivo en mano</string>
+    <string name="your_position_label_total_contributed">Total aportado</string>
+    <string name="your_position_label_total_spent">Total gastado</string>
+    <string name="your_position_label_cash_spent">Gastos en efectivo</string>
+    <string name="your_position_label_non_cash_spent">Gastos sin efectivo</string>
+    <string name="your_position_label_refundable_spent">Reembolsable / En espera</string>
+    <string name="your_position_negative_cash_hint">Tu parte de gastos en efectivo supera tus retiradas atribuidas.</string>
+    <string name="your_position_empty_title">Sin datos de posición</string>
+    <string name="your_position_empty_description">Tu posición financiera aparecerá aquí cuando el grupo tenga contribuciones y gastos.</string>
 </resources>

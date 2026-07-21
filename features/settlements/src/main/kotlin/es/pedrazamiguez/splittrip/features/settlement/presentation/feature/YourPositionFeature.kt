@@ -17,42 +17,41 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layou
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.splittrip.core.designsystem.transition.SharedTransitionSurface
 import es.pedrazamiguez.splittrip.features.settlement.R
-import es.pedrazamiguez.splittrip.features.settlement.presentation.component.MyPositionContent
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.MyPositionViewModel
+import es.pedrazamiguez.splittrip.features.settlement.presentation.component.YourPositionContent
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourPositionViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun MyPositionFeature(
-    myPositionViewModel: MyPositionViewModel = koinViewModel(),
+fun YourPositionFeature(
+    yourPositionViewModel: YourPositionViewModel = koinViewModel(),
     sharedViewModel: SharedViewModel = koinViewModel(
         viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
     ),
     modifier: Modifier = Modifier
 ) {
-    val uiState by myPositionViewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by yourPositionViewModel.uiState.collectAsStateWithLifecycle()
     val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
 
     LaunchedEffect(selectedGroupId) {
-        myPositionViewModel.setSelectedGroup(selectedGroupId)
+        yourPositionViewModel.setSelectedGroup(selectedGroupId)
     }
 
     SharedTransitionSurface(
-        sharedElementKey = SharedElementKeys.MY_POSITION,
+        sharedElementKey = SharedElementKeys.YOUR_POSITION,
         modifier = modifier
     ) {
-        val position = uiState.personalPosition
         when {
             uiState.isLoading -> ShimmerLoadingList(modifier = Modifier.fillMaxSize())
-            position != null -> {
-                MyPositionContent(
-                    personalPosition = position,
+            uiState.personalPosition != null -> {
+                YourPositionContent(
+                    personalPosition = uiState.personalPosition!!,
                     modifier = Modifier.fillMaxSize()
                 )
             }
             else -> EmptyStateView(
                 icon = TablerIcons.Outline.Wallet,
-                title = stringResource(R.string.my_position_empty_title),
-                description = stringResource(R.string.my_position_empty_description),
+                title = stringResource(R.string.your_position_empty_title),
+                description = stringResource(R.string.your_position_empty_description),
                 modifier = Modifier.fillMaxSize()
             )
         }

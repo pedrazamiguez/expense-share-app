@@ -11,7 +11,7 @@ import java.util.Locale
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
-class MyPositionUiMapper(
+class YourPositionUiMapper(
     private val localeProvider: LocaleProvider
 ) {
     companion object {
@@ -27,24 +27,28 @@ class MyPositionUiMapper(
 
         return PersonalPositionUiModel(
             groupCurrencyCode = groupCurrencyCode,
-            formattedNetPosition = formatCurrencyAmount(memberBalance.totalBalance, groupCurrencyCode, locale),
+            formattedNetPosition = formatAmount(memberBalance.totalBalance, groupCurrencyCode, locale),
             netPositionStatus = resolveNetPositionStatus(memberBalance.totalBalance),
-            formattedPocketBalance = formatCurrencyAmount(memberBalance.pocketBalance, groupCurrencyCode, locale),
+            formattedPocketBalance = formatAmount(memberBalance.pocketBalance, groupCurrencyCode, locale),
             formattedCashInHand = if (isNegativeCash) {
                 EM_DASH
             } else {
-                formatCurrencyAmount(
+                formatAmount(
                     memberBalance.cashInHand,
                     groupCurrencyCode,
                     locale
                 )
             },
             hasNegativeCashInHand = isNegativeCash,
-            formattedTotalContributed = formatCurrencyAmount(memberBalance.contributed, groupCurrencyCode, locale),
-            formattedTotalSpent = formatCurrencyAmount(memberBalance.totalSpent, groupCurrencyCode, locale),
-            formattedCashSpent = formatCurrencyAmount(memberBalance.cashSpent, groupCurrencyCode, locale),
-            formattedNonCashSpent = formatCurrencyAmount(memberBalance.nonCashSpent, groupCurrencyCode, locale),
-            formattedRefundableSpent = formatRefundableSpent(memberBalance.refundableSpent, groupCurrencyCode, locale),
+            formattedTotalContributed = formatAmount(memberBalance.contributed, groupCurrencyCode, locale),
+            formattedTotalSpent = formatAmount(memberBalance.totalSpent, groupCurrencyCode, locale),
+            formattedCashSpent = formatAmount(memberBalance.cashSpent, groupCurrencyCode, locale),
+            formattedNonCashSpent = formatAmount(memberBalance.nonCashSpent, groupCurrencyCode, locale),
+            formattedRefundableSpent = if (memberBalance.refundableSpent > 0L) {
+                formatAmount(memberBalance.refundableSpent, groupCurrencyCode, locale)
+            } else {
+                null
+            },
             cashInHandByCurrency = mapCurrencyBreakdowns(memberBalance.cashInHandByCurrency, groupCurrencyCode, locale),
             cashSpentByCurrency = mapCurrencyBreakdowns(memberBalance.cashSpentByCurrency, groupCurrencyCode, locale),
             nonCashSpentByCurrency = mapCurrencyBreakdowns(
@@ -55,18 +59,14 @@ class MyPositionUiMapper(
         )
     }
 
+    private fun formatAmount(amount: Long, currencyCode: String, locale: Locale): String {
+        return formatCurrencyAmount(amount = amount, currencyCode = currencyCode, locale = locale)
+    }
+
     private fun resolveNetPositionStatus(totalBalance: Long): NetPositionStatus = when {
         totalBalance > 0 -> NetPositionStatus.POSITIVE
         totalBalance < 0 -> NetPositionStatus.NEGATIVE
         else -> NetPositionStatus.NEUTRAL
-    }
-
-    private fun formatRefundableSpent(amount: Long, currencyCode: String, locale: Locale): String? {
-        return if (amount > 0L) {
-            formatCurrencyAmount(amount, currencyCode, locale)
-        } else {
-            null
-        }
     }
 
     private fun mapCurrencyBreakdowns(

@@ -13,10 +13,10 @@ import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUse
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.features.settlement.navigation.impl.SettlementsTabGraphContributorImpl
-import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.MyPositionUiMapper
-import es.pedrazamiguez.splittrip.features.settlement.presentation.screen.impl.MyPositionScreenUiProviderImpl
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.MyPositionUseCases
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.MyPositionViewModel
+import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourPositionUiMapper
+import es.pedrazamiguez.splittrip.features.settlement.presentation.screen.impl.YourPositionScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourPositionUseCases
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourPositionViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -34,11 +34,11 @@ val settlementsUiModule = module {
         val appConfigService = get<AppConfigService>()
         val localeProvider = get<LocaleProvider>()
 
-        val myPositionUiMapper = MyPositionUiMapper(
+        val yourPositionUiMapper = YourPositionUiMapper(
             localeProvider = localeProvider
         )
 
-        val myPositionUseCases = MyPositionUseCases(
+        val yourPositionUseCases = YourPositionUseCases(
             getGroupByIdUseCase = getGroupByIdUseCase,
             getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
             getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
@@ -48,13 +48,13 @@ val settlementsUiModule = module {
             getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase
         )
 
-        MyPositionViewModel(
-            useCases = myPositionUseCases,
+        YourPositionViewModel(
+            useCases = yourPositionUseCases,
             authenticationService = authenticationService,
-            myPositionUiMapper = myPositionUiMapper,
+            yourPositionUiMapper = yourPositionUiMapper,
             appConfigService = appConfigService
         )
     }
     factory { SettlementsTabGraphContributorImpl() } bind TabGraphContributor::class
-    single { MyPositionScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { YourPositionScreenUiProviderImpl() } bind ScreenUiProvider::class
 }

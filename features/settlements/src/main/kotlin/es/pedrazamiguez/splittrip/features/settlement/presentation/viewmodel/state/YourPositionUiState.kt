@@ -2,7 +2,7 @@ package es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.st
 
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.PersonalPositionUiModel
 
-data class MyPositionUiState(
+data class YourPositionUiState(
     val isLoading: Boolean = true,
     val personalPosition: PersonalPositionUiModel? = null
 )

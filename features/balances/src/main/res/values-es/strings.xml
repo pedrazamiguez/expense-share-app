@@ -112,7 +112,7 @@
 
     <!-- Main Action -->
     <string name="balances_filter">Filtrar saldos</string>
-    <string name="balances_my_position_title">Mi posición</string>
+    <string name="balances_your_position_title">Tu posición</string>
 
 </resources>
 

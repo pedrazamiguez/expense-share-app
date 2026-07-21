@@ -8,7 +8,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUse
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 
-data class MyPositionUseCases(
+data class YourPositionUseCases(
     val getGroupByIdUseCase: GetGroupByIdUseCase,
     val getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase,
     val getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase,

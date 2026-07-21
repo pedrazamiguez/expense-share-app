@@ -11,8 +11,8 @@ import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.MemberBalanceCalculationInputs
-import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.MyPositionUiMapper
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.state.MyPositionUiState
+import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourPositionUiMapper
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.state.YourPositionUiState
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,17 +30,17 @@ import kotlinx.coroutines.flow.stateIn
 import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-class MyPositionViewModel(
-    private val useCases: MyPositionUseCases,
+class YourPositionViewModel(
+    private val useCases: YourPositionUseCases,
     private val authenticationService: AuthenticationService,
-    private val myPositionUiMapper: MyPositionUiMapper,
+    private val yourPositionUiMapper: YourPositionUiMapper,
     private val appConfigService: AppConfigService,
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
     private val _selectedGroupId = MutableStateFlow<String?>(null)
 
-    val uiState: StateFlow<MyPositionUiState> = _selectedGroupId
+    val uiState: StateFlow<YourPositionUiState> = _selectedGroupId
         .filterNotNull()
         .flatMapLatest { groupId ->
             val group = useCases.getGroupByIdUseCase(groupId)
@@ -82,20 +82,20 @@ class MyPositionViewModel(
                     }
 
                     val personalPosition = currentMemberBalance?.let { balance ->
-                        myPositionUiMapper.toPersonalPosition(
+                        yourPositionUiMapper.toPersonalPosition(
                             memberBalance = balance,
                             groupCurrencyCode = currency
                         )
                     }
 
-                    MyPositionUiState(
+                    YourPositionUiState(
                         isLoading = false,
                         personalPosition = personalPosition
                     )
                 }
                 .catch { e ->
                     Timber.e(e, "Error loading personal position for group $groupId")
-                    emit(MyPositionUiState(isLoading = false))
+                    emit(YourPositionUiState(isLoading = false))
                 }
                 .flowOn(computationDispatcher)
         }
@@ -105,7 +105,7 @@ class MyPositionViewModel(
                 stopTimeoutMillis = AppConstants.FLOW_RETENTION_TIME,
                 replayExpirationMillis = AppConstants.FLOW_REPLAY_EXPIRATION
             ),
-            initialValue = MyPositionUiState(isLoading = true)
+            initialValue = YourPositionUiState(isLoading = true)
         )
 
     fun setSelectedGroup(groupId: String?) {

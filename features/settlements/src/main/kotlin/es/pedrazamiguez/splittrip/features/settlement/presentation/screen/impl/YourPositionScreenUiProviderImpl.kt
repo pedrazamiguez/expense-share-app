@@ -9,16 +9,16 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUi
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.splittrip.features.settlement.R
 
-class MyPositionScreenUiProviderImpl(
-    override val route: String = Routes.MY_POSITION
+class YourPositionScreenUiProviderImpl(
+    override val route: String = Routes.YOUR_POSITION
 ) : ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {
         val navController = LocalTabNavController.current
         DynamicTopAppBar(
-            title = stringResource(R.string.my_position_title),
-            subtitle = stringResource(R.string.my_position_subtitle),
+            title = stringResource(R.string.your_position_title),
+            subtitle = stringResource(R.string.your_position_subtitle),
             onBack = { navController.popBackStack() }
         )
     }
