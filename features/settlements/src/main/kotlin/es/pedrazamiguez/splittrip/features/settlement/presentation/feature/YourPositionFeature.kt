@@ -19,6 +19,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.transition.SharedTransitionS
 import es.pedrazamiguez.splittrip.features.settlement.R
 import es.pedrazamiguez.splittrip.features.settlement.presentation.component.YourPositionContent
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourPositionViewModel
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourPositionUiEvent
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -45,6 +46,11 @@ fun YourPositionFeature(
             uiState.personalPosition != null -> {
                 YourPositionContent(
                     personalPosition = uiState.personalPosition!!,
+                    isCashBreakdownVisible = uiState.isCashBreakdownVisible,
+                    onShowCashBreakdown = { yourPositionViewModel.onEvent(YourPositionUiEvent.ShowCashBreakdown) },
+                    onDismissCashBreakdown = {
+                        yourPositionViewModel.onEvent(YourPositionUiEvent.DismissCashBreakdown)
+                    },
                     modifier = Modifier.fillMaxSize()
                 )
             }

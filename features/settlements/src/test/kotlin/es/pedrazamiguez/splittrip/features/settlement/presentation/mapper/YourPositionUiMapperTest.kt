@@ -1,6 +1,11 @@
 package es.pedrazamiguez.splittrip.features.settlement.presentation.mapper
 
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
+import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.domain.enums.AddOnType
+import es.pedrazamiguez.splittrip.domain.enums.PayerType
+import es.pedrazamiguez.splittrip.domain.model.AddOn
+import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.CurrencyAmount
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.NetPositionStatus
@@ -17,12 +22,15 @@ import org.junit.jupiter.api.Test
 class YourPositionUiMapperTest {
 
     private val localeProvider: LocaleProvider = mockk()
+    private val resourceProvider: ResourceProvider = mockk()
     private lateinit var mapper: YourPositionUiMapper
 
     @BeforeEach
     fun setUp() {
         every { localeProvider.getCurrentLocale() } returns Locale.US
-        mapper = YourPositionUiMapper(localeProvider)
+        every { resourceProvider.getString(any()) } returns "Label"
+        every { resourceProvider.getString(any(), *anyVararg()) } returns "Formatted Label"
+        mapper = YourPositionUiMapper(localeProvider, resourceProvider)
     }
 
     @Test
@@ -120,5 +128,35 @@ class YourPositionUiMapperTest {
         assertEquals("USD", result.cashInHandByCurrency[0].currency)
         assertEquals("$10.00", result.cashInHandByCurrency[0].formattedAmount)
         assertEquals("€9.00", result.cashInHandByCurrency[0].formattedEquivalent)
+    }
+
+    @Test
+    fun `toPersonalPosition calculates total fees and cash breakdown`() {
+        val memberBalance = MemberBalance(
+            userId = "user1",
+            cashInHand = 1200L
+        )
+        val withdrawal = CashWithdrawal(
+            id = "w1",
+            withdrawnBy = "user1",
+            amountWithdrawn = 1200L,
+            remainingAmount = 1200L,
+            currency = "EUR",
+            withdrawalScope = PayerType.USER,
+            addOns = listOf(
+                AddOn(id = "a1", type = AddOnType.FEE, groupAmountCents = 100L)
+            )
+        )
+
+        val result = mapper.toPersonalPosition(
+            memberBalance = memberBalance,
+            groupCurrencyCode = "EUR",
+            withdrawals = listOf(withdrawal),
+            groupMemberIds = listOf("user1")
+        )
+
+        assertEquals("€1.00", result.formattedTotalFees)
+        assertEquals(1, result.cashBreakdown.size)
+        assertEquals("€12.00", result.cashBreakdown[0].formattedNativeRemaining)
     }
 }

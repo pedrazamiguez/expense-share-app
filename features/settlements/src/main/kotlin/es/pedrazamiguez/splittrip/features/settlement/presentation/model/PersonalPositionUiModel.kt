@@ -18,7 +18,9 @@ data class PersonalPositionUiModel(
     val formattedTotalFees: String? = null,
     val cashInHandByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf(),
     val cashSpentByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf(),
-    val nonCashSpentByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf()
+    val nonCashSpentByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf(),
+    val refundableSpentByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf(),
+    val cashBreakdown: ImmutableList<CashBreakdownUiModel> = persistentListOf()
 )
 
 enum class NetPositionStatus {

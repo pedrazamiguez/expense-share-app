@@ -11,6 +11,7 @@ import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Cash
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Coin
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CreditCard
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Receipt
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReceiptRefund
@@ -48,17 +49,35 @@ internal fun YourPositionActivityBreakdown(
                 formattedValue = personalPosition.formattedCashSpent,
                 icon = TablerIcons.Outline.Cash
             )
+            if (personalPosition.cashSpentByCurrency.isNotEmpty()) {
+                CurrencyBreakdownRows(items = personalPosition.cashSpentByCurrency)
+            }
+
             PositionBreakdownSubRow(
                 label = stringResource(R.string.your_position_label_non_cash_spent),
                 formattedValue = personalPosition.formattedNonCashSpent,
                 icon = TablerIcons.Outline.CreditCard
             )
+            if (personalPosition.nonCashSpentByCurrency.isNotEmpty()) {
+                CurrencyBreakdownRows(items = personalPosition.nonCashSpentByCurrency)
+            }
 
             personalPosition.formattedRefundableSpent?.let { refundable ->
                 PositionBreakdownRow(
                     label = stringResource(R.string.your_position_label_refundable_spent),
                     formattedValue = refundable,
                     icon = TablerIcons.Outline.ReceiptRefund
+                )
+                if (personalPosition.refundableSpentByCurrency.isNotEmpty()) {
+                    CurrencyBreakdownRows(items = personalPosition.refundableSpentByCurrency)
+                }
+            }
+
+            personalPosition.formattedTotalFees?.let { fees ->
+                PositionBreakdownRow(
+                    label = stringResource(R.string.your_position_label_atm_fees),
+                    formattedValue = fees,
+                    icon = TablerIcons.Outline.Coin
                 )
             }
         }

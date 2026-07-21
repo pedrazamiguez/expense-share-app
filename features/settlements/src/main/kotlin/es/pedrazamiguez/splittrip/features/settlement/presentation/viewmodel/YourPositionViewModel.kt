@@ -12,6 +12,7 @@ import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourPositionUiMapper
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourPositionUiEvent
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.state.YourPositionUiState
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +40,7 @@ class YourPositionViewModel(
 ) : ViewModel() {
 
     private val _selectedGroupId = MutableStateFlow<String?>(null)
+    private val _isCashBreakdownVisible = MutableStateFlow(false)
 
     val uiState: StateFlow<YourPositionUiState> = _selectedGroupId
         .filterNotNull()
@@ -64,7 +66,7 @@ class YourPositionViewModel(
                 )
             }
                 .debounce { appConfigService.balanceComputationDebounceMs.value }
-                .combine(MutableStateFlow(Unit)) { snapshot, _ ->
+                .combine(_isCashBreakdownVisible) { snapshot, isCashBreakdownVisible ->
                     val memberBalances = useCases.getMemberBalancesFlowUseCase.computeMemberBalances(
                         MemberBalanceCalculationInputs(
                             contributions = snapshot.contributions,
@@ -81,16 +83,22 @@ class YourPositionViewModel(
                         it.userId == currentUserId
                     }
 
+                    val subunitsMap = snapshot.subunits.associateBy { it.id }
+
                     val personalPosition = currentMemberBalance?.let { balance ->
                         yourPositionUiMapper.toPersonalPosition(
                             memberBalance = balance,
-                            groupCurrencyCode = currency
+                            groupCurrencyCode = currency,
+                            withdrawals = snapshot.withdrawals,
+                            subunitsMap = subunitsMap,
+                            groupMemberIds = groupMemberIds
                         )
                     }
 
                     YourPositionUiState(
                         isLoading = false,
-                        personalPosition = personalPosition
+                        personalPosition = personalPosition,
+                        isCashBreakdownVisible = isCashBreakdownVisible
                     )
                 }
                 .catch { e ->
@@ -111,6 +119,18 @@ class YourPositionViewModel(
     fun setSelectedGroup(groupId: String?) {
         if (groupId != _selectedGroupId.value) {
             _selectedGroupId.value = groupId
+        }
+    }
+
+    fun onEvent(event: YourPositionUiEvent) {
+        when (event) {
+            YourPositionUiEvent.Refresh -> { /* no-op */ }
+            YourPositionUiEvent.ShowCashBreakdown -> {
+                _isCashBreakdownVisible.value = true
+            }
+            YourPositionUiEvent.DismissCashBreakdown -> {
+                _isCashBreakdownVisible.value = false
+            }
         }
     }
 

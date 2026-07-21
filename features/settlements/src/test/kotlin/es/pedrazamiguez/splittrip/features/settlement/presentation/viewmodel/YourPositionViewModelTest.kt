@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel
 
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
+import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
@@ -13,6 +14,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUse
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourPositionUiMapper
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourPositionUiEvent
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -52,6 +54,7 @@ class YourPositionViewModelTest {
     private val authenticationService: AuthenticationService = mockk()
     private val appConfigService: AppConfigService = mockk()
     private val localeProvider: LocaleProvider = mockk()
+    private val resourceProvider: ResourceProvider = mockk()
 
     private lateinit var useCases: YourPositionUseCases
     private lateinit var mapper: YourPositionUiMapper
@@ -62,11 +65,13 @@ class YourPositionViewModelTest {
         Dispatchers.setMain(testDispatcher)
 
         every { localeProvider.getCurrentLocale() } returns Locale.US
+        every { resourceProvider.getString(any()) } returns "Label"
+        every { resourceProvider.getString(any(), *anyVararg()) } returns "Formatted Label"
         every { appConfigService.defaultCurrencyCode } returns MutableStateFlow("EUR")
         every { appConfigService.balanceComputationDebounceMs } returns MutableStateFlow(0L)
         every { authenticationService.currentUserId() } returns "user1"
 
-        mapper = YourPositionUiMapper(localeProvider)
+        mapper = YourPositionUiMapper(localeProvider, resourceProvider)
 
         useCases = YourPositionUseCases(
             getGroupByIdUseCase = getGroupByIdUseCase,
@@ -96,6 +101,7 @@ class YourPositionViewModelTest {
     fun `initial state is loading`() = runTest(testDispatcher) {
         assertTrue(viewModel.uiState.value.isLoading)
         assertNull(viewModel.uiState.value.personalPosition)
+        assertFalse(viewModel.uiState.value.isCashBreakdownVisible)
     }
 
     @Test
@@ -126,5 +132,32 @@ class YourPositionViewModelTest {
         assertFalse(state.isLoading)
         assertNotNull(state.personalPosition)
         assertEquals("€500.00", state.personalPosition?.formattedNetPosition)
+    }
+
+    @Test
+    fun `cash breakdown visibility toggles on event`() = runTest(testDispatcher) {
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
+        coEvery { getGroupByIdUseCase("group1") } returns group
+        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
+
+        viewModel.setSelectedGroup("group1")
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isCashBreakdownVisible)
+
+        viewModel.onEvent(YourPositionUiEvent.ShowCashBreakdown)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.isCashBreakdownVisible)
+
+        viewModel.onEvent(YourPositionUiEvent.DismissCashBreakdown)
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.isCashBreakdownVisible)
     }
 }

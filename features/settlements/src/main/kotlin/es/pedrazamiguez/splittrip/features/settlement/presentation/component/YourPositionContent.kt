@@ -21,6 +21,9 @@ import es.pedrazamiguez.splittrip.features.settlement.presentation.model.Persona
 @Composable
 internal fun YourPositionContent(
     personalPosition: PersonalPositionUiModel,
+    isCashBreakdownVisible: Boolean,
+    onShowCashBreakdown: () -> Unit,
+    onDismissCashBreakdown: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val bottomPadding = LocalBottomPadding.current
@@ -43,7 +46,10 @@ internal fun YourPositionContent(
         }
 
         item(key = "pocket_cash_row") {
-            YourPositionPocketCashRow(personalPosition = personalPosition)
+            YourPositionPocketCashRow(
+                personalPosition = personalPosition,
+                onShowCashBreakdown = onShowCashBreakdown
+            )
         }
 
         item(key = "activity_breakdown") {
@@ -58,5 +64,14 @@ internal fun YourPositionContent(
                 )
             }
         }
+    }
+
+    if (isCashBreakdownVisible) {
+        CashBreakdownBottomSheet(
+            breakdown = personalPosition.cashBreakdown,
+            formattedTotal = personalPosition.formattedCashInHand,
+            formattedTotalFees = personalPosition.formattedTotalFees,
+            onDismiss = onDismissCashBreakdown
+        )
     }
 }

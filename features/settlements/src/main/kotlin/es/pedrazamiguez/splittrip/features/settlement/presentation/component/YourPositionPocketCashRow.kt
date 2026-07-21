@@ -17,6 +17,7 @@ import es.pedrazamiguez.splittrip.features.settlement.presentation.model.Persona
 @Composable
 internal fun YourPositionPocketCashRow(
     personalPosition: PersonalPositionUiModel,
+    onShowCashBreakdown: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -37,7 +38,13 @@ internal fun YourPositionPocketCashRow(
                 MaterialTheme.colorScheme.error
             } else {
                 MaterialTheme.colorScheme.onSurface
+            },
+            showInfoIcon = personalPosition.cashBreakdown.isNotEmpty(),
+            onInfoClick = onShowCashBreakdown
+        ) {
+            if (personalPosition.cashInHandByCurrency.isNotEmpty()) {
+                CurrencyBreakdownRows(items = personalPosition.cashInHandByCurrency)
             }
-        )
+        }
     }
 }

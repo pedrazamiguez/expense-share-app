@@ -39,6 +39,7 @@ MAX_OFFENDERS_PRINTED = 30
 # runtime, so they cannot be excluded via JacocoExclusions class-path patterns.
 IGNORED_SOURCEFILES = {
     "SafeCollector.common.kt",
+    "Comparisons.kt",
 }
 
 RED = "\033[0;31m"
@@ -152,4 +153,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

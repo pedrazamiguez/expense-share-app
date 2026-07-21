@@ -10,7 +10,19 @@
     <string name="your_position_label_cash_spent">Cash Expenses</string>
     <string name="your_position_label_non_cash_spent">Non-cash Expenses</string>
     <string name="your_position_label_refundable_spent">Refundable / On Hold</string>
+    <string name="your_position_label_atm_fees">ATM Fees</string>
     <string name="your_position_negative_cash_hint">Your share of cash expenses exceeds your attributed withdrawals.</string>
     <string name="your_position_empty_title">No position data</string>
     <string name="your_position_empty_description">Your financial position will appear here once the group has contributions and expenses.</string>
+
+    <string name="your_position_cash_breakdown_title">Cash Breakdown</string>
+    <string name="your_position_cash_breakdown_empty">No cash withdrawals recorded</string>
+    <string name="your_position_cash_breakdown_total">Total Cash in Hand</string>
+    <string name="your_position_cash_breakdown_fees">ATM Fees</string>
+    <string name="your_position_cash_breakdown_rate">@ %1$s %2$s/%3$s</string>
+    <string name="your_position_cash_breakdown_atm_fallback">ATM — %1$s</string>
+    <string name="your_position_cash_breakdown_group_scope">Group cash (est. share)</string>
+    <string name="your_position_cash_breakdown_personal_scope">Personal cash</string>
+    <string name="your_position_cash_breakdown_unknown_subunit">Subunit cash</string>
+    <string name="your_position_cash_breakdown_view_cd">View cash breakdown</string>
 </resources>
