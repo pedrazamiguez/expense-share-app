@@ -1,0 +1,124 @@
+package es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
+import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
+import es.pedrazamiguez.splittrip.domain.model.Contribution
+import es.pedrazamiguez.splittrip.domain.model.Expense
+import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
+import es.pedrazamiguez.splittrip.domain.model.Subunit
+import es.pedrazamiguez.splittrip.domain.service.AppConfigService
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.usecase.balance.MemberBalanceCalculationInputs
+import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.MyPositionUiMapper
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.state.MyPositionUiState
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.stateIn
+import timber.log.Timber
+
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+class MyPositionViewModel(
+    private val useCases: MyPositionUseCases,
+    private val authenticationService: AuthenticationService,
+    private val myPositionUiMapper: MyPositionUiMapper,
+    private val appConfigService: AppConfigService,
+    private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default
+) : ViewModel() {
+
+    private val _selectedGroupId = MutableStateFlow<String?>(null)
+
+    val uiState: StateFlow<MyPositionUiState> = _selectedGroupId
+        .filterNotNull()
+        .flatMapLatest { groupId ->
+            val group = useCases.getGroupByIdUseCase(groupId)
+            val currency = group?.currency ?: appConfigService.defaultCurrencyCode.value
+            val groupMemberIds = group?.members ?: emptyList()
+            val currentUserId = authenticationService.currentUserId()
+
+            combine(
+                useCases.getGroupContributionsFlowUseCase(groupId),
+                useCases.getCashWithdrawalsFlowUseCase(groupId),
+                useCases.getGroupExpensesFlowUseCase(groupId),
+                useCases.getGroupSubunitsFlowUseCase(groupId),
+                useCases.getGroupSettlementsFlowUseCase(groupId)
+            ) { contributions, withdrawals, expenses, subunits, settlements ->
+                DataSnapshot(
+                    contributions = contributions,
+                    withdrawals = withdrawals,
+                    expenses = expenses,
+                    subunits = subunits,
+                    settlements = settlements
+                )
+            }
+                .debounce { appConfigService.balanceComputationDebounceMs.value }
+                .combine(MutableStateFlow(Unit)) { snapshot, _ ->
+                    val memberBalances = useCases.getMemberBalancesFlowUseCase.computeMemberBalances(
+                        MemberBalanceCalculationInputs(
+                            contributions = snapshot.contributions,
+                            withdrawals = snapshot.withdrawals,
+                            expenses = snapshot.expenses,
+                            subunits = snapshot.subunits,
+                            groupMemberIds = groupMemberIds,
+                            groupCurrency = currency,
+                            settlements = snapshot.settlements
+                        )
+                    )
+
+                    val currentMemberBalance = memberBalances.firstOrNull {
+                        it.userId == currentUserId
+                    }
+
+                    val personalPosition = currentMemberBalance?.let { balance ->
+                        myPositionUiMapper.toPersonalPosition(
+                            memberBalance = balance,
+                            groupCurrencyCode = currency
+                        )
+                    }
+
+                    MyPositionUiState(
+                        isLoading = false,
+                        personalPosition = personalPosition
+                    )
+                }
+                .catch { e ->
+                    Timber.e(e, "Error loading personal position for group $groupId")
+                    emit(MyPositionUiState(isLoading = false))
+                }
+                .flowOn(computationDispatcher)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(
+                stopTimeoutMillis = AppConstants.FLOW_RETENTION_TIME,
+                replayExpirationMillis = AppConstants.FLOW_REPLAY_EXPIRATION
+            ),
+            initialValue = MyPositionUiState(isLoading = true)
+        )
+
+    fun setSelectedGroup(groupId: String?) {
+        if (groupId != _selectedGroupId.value) {
+            _selectedGroupId.value = groupId
+        }
+    }
+
+    private data class DataSnapshot(
+        val contributions: List<Contribution>,
+        val withdrawals: List<CashWithdrawal>,
+        val expenses: List<Expense>,
+        val subunits: List<Subunit>,
+        val settlements: List<SettlementRecord>
+    )
+}

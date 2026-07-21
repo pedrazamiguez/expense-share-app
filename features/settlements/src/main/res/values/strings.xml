@@ -1,4 +1,16 @@
 <resources>
     <string name="my_position_title">My Position</string>
     <string name="my_position_subtitle">Personal position &amp; settlement consensus</string>
+    <string name="my_position_section_personal_position">Personal Position</string>
+    <string name="my_position_label_net_position">Net Position</string>
+    <string name="my_position_label_pocket_balance">Pocket Balance</string>
+    <string name="my_position_label_cash_in_hand">Cash in Hand</string>
+    <string name="my_position_label_total_contributed">Total Contributed</string>
+    <string name="my_position_label_total_spent">Total Spent</string>
+    <string name="my_position_label_cash_spent">Cash Expenses</string>
+    <string name="my_position_label_non_cash_spent">Non-cash Expenses</string>
+    <string name="my_position_label_refundable_spent">Refundable / On Hold</string>
+    <string name="my_position_negative_cash_hint">Your share of cash expenses exceeds your attributed withdrawals.</string>
+    <string name="my_position_empty_title">No position data</string>
+    <string name="my_position_empty_description">Your financial position will appear here once the group has contributions and expenses.</string>
 </resources>

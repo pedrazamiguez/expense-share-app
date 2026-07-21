@@ -1,0 +1,89 @@
+package es.pedrazamiguez.splittrip.features.settlement.presentation.mapper
+
+import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatCurrencyAmount
+import es.pedrazamiguez.splittrip.domain.model.CurrencyAmount
+import es.pedrazamiguez.splittrip.domain.model.MemberBalance
+import es.pedrazamiguez.splittrip.features.settlement.presentation.model.CurrencyBreakdownUiModel
+import es.pedrazamiguez.splittrip.features.settlement.presentation.model.NetPositionStatus
+import es.pedrazamiguez.splittrip.features.settlement.presentation.model.PersonalPositionUiModel
+import java.util.Locale
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
+
+class MyPositionUiMapper(
+    private val localeProvider: LocaleProvider
+) {
+    companion object {
+        internal const val EM_DASH = "\u2014"
+    }
+
+    fun toPersonalPosition(
+        memberBalance: MemberBalance,
+        groupCurrencyCode: String
+    ): PersonalPositionUiModel {
+        val locale = localeProvider.getCurrentLocale()
+        val isNegativeCash = memberBalance.cashInHand < 0
+
+        return PersonalPositionUiModel(
+            groupCurrencyCode = groupCurrencyCode,
+            formattedNetPosition = formatCurrencyAmount(memberBalance.totalBalance, groupCurrencyCode, locale),
+            netPositionStatus = resolveNetPositionStatus(memberBalance.totalBalance),
+            formattedPocketBalance = formatCurrencyAmount(memberBalance.pocketBalance, groupCurrencyCode, locale),
+            formattedCashInHand = if (isNegativeCash) {
+                EM_DASH
+            } else {
+                formatCurrencyAmount(
+                    memberBalance.cashInHand,
+                    groupCurrencyCode,
+                    locale
+                )
+            },
+            hasNegativeCashInHand = isNegativeCash,
+            formattedTotalContributed = formatCurrencyAmount(memberBalance.contributed, groupCurrencyCode, locale),
+            formattedTotalSpent = formatCurrencyAmount(memberBalance.totalSpent, groupCurrencyCode, locale),
+            formattedCashSpent = formatCurrencyAmount(memberBalance.cashSpent, groupCurrencyCode, locale),
+            formattedNonCashSpent = formatCurrencyAmount(memberBalance.nonCashSpent, groupCurrencyCode, locale),
+            formattedRefundableSpent = formatRefundableSpent(memberBalance.refundableSpent, groupCurrencyCode, locale),
+            cashInHandByCurrency = mapCurrencyBreakdowns(memberBalance.cashInHandByCurrency, groupCurrencyCode, locale),
+            cashSpentByCurrency = mapCurrencyBreakdowns(memberBalance.cashSpentByCurrency, groupCurrencyCode, locale),
+            nonCashSpentByCurrency = mapCurrencyBreakdowns(
+                memberBalance.nonCashSpentByCurrency,
+                groupCurrencyCode,
+                locale
+            )
+        )
+    }
+
+    private fun resolveNetPositionStatus(totalBalance: Long): NetPositionStatus = when {
+        totalBalance > 0 -> NetPositionStatus.POSITIVE
+        totalBalance < 0 -> NetPositionStatus.NEGATIVE
+        else -> NetPositionStatus.NEUTRAL
+    }
+
+    private fun formatRefundableSpent(amount: Long, currencyCode: String, locale: Locale): String? {
+        return if (amount > 0L) {
+            formatCurrencyAmount(amount, currencyCode, locale)
+        } else {
+            null
+        }
+    }
+
+    private fun mapCurrencyBreakdowns(
+        amounts: List<CurrencyAmount>,
+        groupCurrency: String,
+        locale: Locale
+    ): ImmutableList<CurrencyBreakdownUiModel> {
+        return amounts.map { ca ->
+            CurrencyBreakdownUiModel(
+                currency = ca.currency,
+                formattedAmount = formatCurrencyAmount(ca.amountCents, ca.currency, locale),
+                formattedEquivalent = if (ca.currency != groupCurrency && ca.equivalentCents > 0) {
+                    formatCurrencyAmount(ca.equivalentCents, groupCurrency, locale)
+                } else {
+                    ""
+                }
+            )
+        }.toImmutableList()
+    }
+}
