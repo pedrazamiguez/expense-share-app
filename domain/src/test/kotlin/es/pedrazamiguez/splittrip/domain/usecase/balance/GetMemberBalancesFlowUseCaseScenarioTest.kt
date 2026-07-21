@@ -9,6 +9,7 @@ import es.pedrazamiguez.splittrip.domain.model.ExpenseSplit
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.impl.AddOnCalculationServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetMemberBalancesFlowUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
 import java.math.BigDecimal
 import java.math.RoundingMode
 import org.junit.jupiter.api.Assertions.assertEquals

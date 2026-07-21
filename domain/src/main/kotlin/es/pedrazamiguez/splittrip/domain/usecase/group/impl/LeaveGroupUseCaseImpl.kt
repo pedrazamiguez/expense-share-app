@@ -14,9 +14,9 @@ import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ResolveCashOnLeaveUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.StandardContributionAttributionStrategy
+import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.domain.usecase.group.LeaveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.ReassignSubunitSharesUseCase
 import kotlinx.coroutines.flow.first

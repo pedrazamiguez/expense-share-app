@@ -10,7 +10,7 @@ import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
-import es.pedrazamiguez.splittrip.domain.usecase.balance.MemberBalanceCalculationInputs
+import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourPositionUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.state.YourPositionUiState
 import kotlinx.coroutines.CoroutineDispatcher
