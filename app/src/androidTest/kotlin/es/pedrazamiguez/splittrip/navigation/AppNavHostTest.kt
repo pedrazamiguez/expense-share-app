@@ -301,11 +301,11 @@ class AppNavHostTest {
     }
 
     // ═════════════════════════════════════════════════════════════════════
-    //  My Status Navigation
+    //  My Position Navigation
     // ═════════════════════════════════════════════════════════════════════
 
     @Test
-    fun navigatesToMyStatus_whenMyStatusRouteIsTriggered() {
+    fun navigatesToMyPosition_whenMyPositionRouteIsTriggered() {
         val navController = buildTestNavController()
 
         composeRule.setContent {
@@ -327,13 +327,13 @@ class AppNavHostTest {
         composeRule.waitForIdle()
 
         composeRule.runOnUiThread {
-            navController.navigate(Routes.MY_STATUS)
+            navController.navigate(Routes.MY_POSITION)
         }
 
         composeRule.waitForIdle()
 
         assertEquals(
-            Routes.MY_STATUS,
+            Routes.MY_POSITION,
             navController.currentDestination?.route
         )
     }

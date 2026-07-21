@@ -1,4 +1,4 @@
 <resources>
-    <string name="my_status_title">My Status</string>
-    <string name="my_status_subtitle">Personal position &amp; settlement consensus</string>
+    <string name="my_position_title">My Position</string>
+    <string name="my_position_subtitle">Personal position &amp; settlement consensus</string>
 </resources>

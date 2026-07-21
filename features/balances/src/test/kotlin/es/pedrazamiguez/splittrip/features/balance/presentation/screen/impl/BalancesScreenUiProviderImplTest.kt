@@ -18,4 +18,12 @@ class BalancesScreenUiProviderImplTest {
         val customRouteProvider = BalancesScreenUiProviderImpl(route = "custom_route")
         assertEquals("custom_route", customRouteProvider.route)
     }
+
+    @Test
+    fun `mainAction sharedTransitionKey matches MY_POSITION key`() {
+        assertEquals(
+            es.pedrazamiguez.splittrip.core.designsystem.navigation.SharedElementKeys.MY_POSITION,
+            "my_position_container"
+        )
+    }
 }

@@ -7,6 +7,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReportAnalytics
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.SharedElementKeys
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.MainAction
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.DynamicTopAppBar
@@ -41,8 +42,9 @@ class BalancesScreenUiProviderImpl(
             val rootNavController = LocalRootNavController.current
             return MainAction(
                 icon = TablerIcons.Outline.ReportAnalytics,
-                contentDescription = stringResource(R.string.balances_my_status_title),
-                onClick = { rootNavController.navigate(Routes.MY_STATUS) }
+                contentDescription = stringResource(R.string.balances_my_position_title),
+                onClick = { rootNavController.navigate(Routes.MY_POSITION) },
+                sharedTransitionKey = SharedElementKeys.MY_POSITION
             )
         }
 }
