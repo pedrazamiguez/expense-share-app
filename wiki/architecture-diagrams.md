@@ -58,7 +58,6 @@ graph TD
         FA[":features:authentication"]
         FO[":features:onboarding"]
         FM[":features:main-entry"]
-        FL[":features:activity-logging"]
     end
 
     APP --> Core

@@ -29,7 +29,6 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 :features:settings      → App settings
 :features:subunits      → Subunit management lifecycle — CRUD (standalone, non-tab)
 :features:withdrawals   → Add cash withdrawal write-flow (standalone, non-tab)
-:features:activity-logging → (Planned) Activity log feature
 ```
 
 **Strict:** Features cannot see other features or `:data`. Features only depend on `:domain` interfaces and `:core`.

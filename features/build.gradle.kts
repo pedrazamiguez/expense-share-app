@@ -7,7 +7,6 @@ android {
 }
 
 dependencies {
-    api(project(":features:activity-logging"))
     api(project(":features:authentication"))
     api(project(":features:balances"))
     api(project(":features:contributions"))
