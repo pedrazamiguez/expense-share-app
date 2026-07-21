@@ -299,42 +299,4 @@ class AppNavHostTest {
         val graphStartRoute = navController.graph.startDestinationRoute
         assertEquals(Routes.LOGIN, graphStartRoute)
     }
-
-    // ═════════════════════════════════════════════════════════════════════
-    //  My Position Navigation
-    // ═════════════════════════════════════════════════════════════════════
-
-    @Test
-    fun navigatesToMyPosition_whenMyPositionRouteIsTriggered() {
-        val navController = buildTestNavController()
-
-        composeRule.setContent {
-            KoinApplication(application = {
-                modules(
-                    createAppNavHostTestModule(
-                        authStateFlow = flowOf(true),
-                        onboardingFlow = flowOf(true)
-                    ),
-                    createFeatureTestModule()
-                )
-            }) {
-                SplitTripTheme {
-                    AppNavHost(navController = navController)
-                }
-            }
-        }
-
-        composeRule.waitForIdle()
-
-        composeRule.runOnUiThread {
-            navController.navigate(Routes.MY_POSITION)
-        }
-
-        composeRule.waitForIdle()
-
-        assertEquals(
-            Routes.MY_POSITION,
-            navController.currentDestination?.route
-        )
-    }
 }

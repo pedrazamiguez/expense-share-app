@@ -6,6 +6,7 @@ import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReportAnalytics
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalRootNavController
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.SharedElementKeys
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.MainAction
@@ -39,11 +40,11 @@ class BalancesScreenUiProviderImpl(
     override val mainAction: MainAction?
         @Composable
         get() {
-            val rootNavController = LocalRootNavController.current
+            val tabNavController = LocalTabNavController.current
             return MainAction(
                 icon = TablerIcons.Outline.ReportAnalytics,
                 contentDescription = stringResource(R.string.balances_my_position_title),
-                onClick = { rootNavController.navigate(Routes.MY_POSITION) },
+                onClick = { tabNavController.navigate(Routes.MY_POSITION) },
                 sharedTransitionKey = SharedElementKeys.MY_POSITION
             )
         }
