@@ -13,16 +13,20 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.support.balanceDistribu
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.balanceDistributeEvenly
 import java.math.BigDecimal
 
+data class MemberBalanceCalculationInputs(
+    val contributions: List<Contribution> = emptyList(),
+    val withdrawals: List<CashWithdrawal> = emptyList(),
+    val expenses: List<Expense> = emptyList(),
+    val subunits: List<Subunit> = emptyList(),
+    val groupMemberIds: List<String> = emptyList(),
+    val groupCurrency: String = "",
+    val settlements: List<SettlementRecord> = emptyList(),
+    val attributionStrategy: ContributionAttributionStrategy = StandardContributionAttributionStrategy
+)
+
 interface GetMemberBalancesFlowUseCase : UseCase {
     fun computeMemberBalances(
-        contributions: List<Contribution>,
-        withdrawals: List<CashWithdrawal>,
-        expenses: List<Expense>,
-        subunits: List<Subunit>,
-        groupMemberIds: List<String>,
-        groupCurrency: String = "",
-        settlements: List<SettlementRecord> = emptyList(),
-        attributionStrategy: ContributionAttributionStrategy = StandardContributionAttributionStrategy
+        inputs: MemberBalanceCalculationInputs
     ): List<MemberBalance>
 
     companion object {

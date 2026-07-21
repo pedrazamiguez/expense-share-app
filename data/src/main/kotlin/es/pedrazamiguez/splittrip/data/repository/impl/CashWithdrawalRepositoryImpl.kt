@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
 import es.pedrazamiguez.splittrip.data.sync.KeyedSubscriptionTracker
+import es.pedrazamiguez.splittrip.data.sync.SyncReconciliationParams
 import es.pedrazamiguez.splittrip.data.sync.subscribeAndReconcile
 import es.pedrazamiguez.splittrip.data.sync.syncCreateToCloud
 import es.pedrazamiguez.splittrip.data.sync.syncDeletionToCloud
@@ -89,24 +90,26 @@ class CashWithdrawalRepositoryImpl(
                     subscribeAndReconcile(
                         cloudFlow = cloudCashWithdrawalDataSource
                             .getWithdrawalsByGroupIdFlow(groupId),
-                        reconcileLocal = { remoteWithdrawals ->
-                            localWriteDataSource.replaceWithdrawalsForGroup(
-                                groupId,
-                                remoteWithdrawals
-                            )
-                        },
-                        getPendingIds = {
-                            localQueryDataSource.getPendingSyncWithdrawalIds(groupId)
-                        },
-                        verifyOnServer = { id ->
-                            cloudCashWithdrawalDataSource.verifyWithdrawalOnServer(groupId, id)
-                        },
-                        markSynced = { id ->
-                            localWriteDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
-                        },
-                        entityLabel = ENTITY_LABEL,
-                        logContext = "for group $groupId",
-                        performanceMonitor = performanceMonitor
+                        params = SyncReconciliationParams(
+                            reconcileLocal = { remoteWithdrawals ->
+                                localWriteDataSource.replaceWithdrawalsForGroup(
+                                    groupId,
+                                    remoteWithdrawals
+                                )
+                            },
+                            getPendingIds = {
+                                localQueryDataSource.getPendingSyncWithdrawalIds(groupId)
+                            },
+                            verifyOnServer = { id ->
+                                cloudCashWithdrawalDataSource.verifyWithdrawalOnServer(groupId, id)
+                            },
+                            markSynced = { id ->
+                                localWriteDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
+                            },
+                            entityLabel = ENTITY_LABEL,
+                            logContext = "for group $groupId",
+                            performanceMonitor = performanceMonitor
+                        )
                     )
                 }
             }

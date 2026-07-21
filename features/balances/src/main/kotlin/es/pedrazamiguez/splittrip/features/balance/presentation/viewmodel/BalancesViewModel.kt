@@ -13,6 +13,7 @@ import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.usecase.balance.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.SettlementsUiMapper
@@ -124,13 +125,15 @@ class BalancesViewModel(
 
                     // Compute member balances from already-loaded data (pure computation)
                     val memberBalances = useCases.getMemberBalancesFlowUseCase.computeMemberBalances(
-                        contributions = contributions,
-                        withdrawals = withdrawals,
-                        expenses = expenses,
-                        subunits = subunits,
-                        groupMemberIds = groupMemberIds,
-                        groupCurrency = currency,
-                        settlements = settlements
+                        MemberBalanceCalculationInputs(
+                            contributions = contributions,
+                            withdrawals = withdrawals,
+                            expenses = expenses,
+                            subunits = subunits,
+                            groupMemberIds = groupMemberIds,
+                            groupCurrency = currency,
+                            settlements = settlements
+                        )
                     )
 
                     // Build subunit lookup map for mapper use

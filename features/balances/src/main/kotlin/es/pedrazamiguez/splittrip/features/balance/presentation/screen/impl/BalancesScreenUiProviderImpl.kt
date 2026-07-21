@@ -40,6 +40,6 @@ class BalancesScreenUiProviderImpl(
         get() = MainAction(
             icon = TablerIcons.Outline.ChartArcs,
             contentDescription = stringResource(R.string.balances_filter),
-            onClick = {} // TODO: open filter UI (out of scope)
+            onClick = {} // TODO(#1441): open filter UI (out of scope)
         )
 }

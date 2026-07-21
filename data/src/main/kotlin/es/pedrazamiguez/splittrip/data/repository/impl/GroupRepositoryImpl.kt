@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
 import es.pedrazamiguez.splittrip.data.sync.KeyedSubscriptionTracker
+import es.pedrazamiguez.splittrip.data.sync.SyncReconciliationParams
 import es.pedrazamiguez.splittrip.data.sync.subscribeAndReconcile
 import es.pedrazamiguez.splittrip.data.sync.syncCreateToCloud
 import es.pedrazamiguez.splittrip.data.worker.GroupDeletionRetryScheduler
@@ -72,15 +73,17 @@ class GroupRepositoryImpl(
             cloudSubscriptionJob = syncScope.launch {
                 subscribeAndReconcile(
                     cloudFlow = cloudGroupDataSource.getAllGroupsFlow(),
-                    reconcileLocal = localGroupDataSource::replaceAllGroups,
-                    getPendingIds = localGroupDataSource::getPendingSyncGroupIds,
-                    verifyOnServer = cloudGroupDataSource::verifyGroupOnServer,
-                    markSynced = { id ->
-                        localGroupDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
-                    },
-                    entityLabel = "group",
-                    logContext = "",
-                    performanceMonitor = performanceMonitor
+                    params = SyncReconciliationParams(
+                        reconcileLocal = localGroupDataSource::replaceAllGroups,
+                        getPendingIds = localGroupDataSource::getPendingSyncGroupIds,
+                        verifyOnServer = cloudGroupDataSource::verifyGroupOnServer,
+                        markSynced = { id ->
+                            localGroupDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
+                        },
+                        entityLabel = "group",
+                        logContext = "",
+                        performanceMonitor = performanceMonitor
+                    )
                 )
             }
         }

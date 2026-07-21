@@ -37,7 +37,16 @@ class GetMemberBalancesFlowUseCaseScenarioTest {
         subunits: List<Subunit> = emptyList(),
         memberIds: List<String> = groupMemberIds,
         groupCurrency: String = "EUR"
-    ) = useCase.computeMemberBalances(contributions, withdrawals, expenses, subunits, memberIds, groupCurrency)
+    ) = useCase.computeMemberBalances(
+        MemberBalanceCalculationInputs(
+            contributions = contributions,
+            withdrawals = withdrawals,
+            expenses = expenses,
+            subunits = subunits,
+            groupMemberIds = memberIds,
+            groupCurrency = groupCurrency
+        )
+    )
 
     @Nested
     @DisplayName("Full scenario — wiki example")

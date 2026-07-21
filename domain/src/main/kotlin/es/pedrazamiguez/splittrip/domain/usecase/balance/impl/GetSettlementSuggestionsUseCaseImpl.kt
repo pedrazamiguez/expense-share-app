@@ -14,6 +14,7 @@ import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.service.DebtSimplificationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.StandardContributionAttributionStrategy
 import java.time.LocalDateTime
 import java.util.UUID
@@ -51,14 +52,16 @@ class GetSettlementSuggestionsUseCaseImpl(
         val existingRecords = settlementRepository.getGroupSettlements(groupId)
 
         val memberBalances = getMemberBalancesFlowUseCase.computeMemberBalances(
-            contributions = contributions,
-            withdrawals = withdrawals,
-            expenses = expenses,
-            subunits = subunits,
-            groupMemberIds = group.members,
-            groupCurrency = group.currency,
-            settlements = existingRecords,
-            attributionStrategy = StandardContributionAttributionStrategy
+            MemberBalanceCalculationInputs(
+                contributions = contributions,
+                withdrawals = withdrawals,
+                expenses = expenses,
+                subunits = subunits,
+                groupMemberIds = group.members,
+                groupCurrency = group.currency,
+                settlements = existingRecords,
+                attributionStrategy = StandardContributionAttributionStrategy
+            )
         )
 
         val computedSettlements = if (leavingUserId != null) {

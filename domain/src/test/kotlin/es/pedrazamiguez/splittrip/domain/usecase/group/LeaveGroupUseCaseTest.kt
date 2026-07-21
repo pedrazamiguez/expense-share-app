@@ -114,16 +114,7 @@ class LeaveGroupUseCaseTest {
         coEvery { subunitRepository.getGroupSubunits(any()) } returns emptyList()
         coEvery { settlementRepository.getGroupSettlements(any()) } returns emptyList()
         coEvery {
-            getMemberBalancesFlowUseCase.computeMemberBalances(
-                contributions = any(),
-                withdrawals = any(),
-                expenses = any(),
-                subunits = any(),
-                groupMemberIds = any(),
-                groupCurrency = any(),
-                settlements = any(),
-                attributionStrategy = any()
-            )
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns listOf(
             MemberBalance(userId = currentUserId, pocketBalance = 0L, cashInHand = 0L)
         )
@@ -256,16 +247,7 @@ class LeaveGroupUseCaseTest {
             coEvery { groupRepository.getGroupById(groupId) } returns sampleGroup
             coEvery { areMemberSettlementsResolvedUseCase(groupId, currentUserId) } returns emptyList()
             coEvery {
-                getMemberBalancesFlowUseCase.computeMemberBalances(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any()
-                )
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns listOf(
                 MemberBalance(userId = currentUserId, pocketBalance = 0L, cashInHand = 0L)
             )
@@ -290,16 +272,7 @@ class LeaveGroupUseCaseTest {
                 )
             )
             coEvery {
-                getMemberBalancesFlowUseCase.computeMemberBalances(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any()
-                )
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns listOf(userBalance)
 
             val result = useCase(groupId)
@@ -316,16 +289,7 @@ class LeaveGroupUseCaseTest {
             coEvery { groupRepository.getGroupById(groupId) } returns sampleGroup
             coEvery { areMemberSettlementsResolvedUseCase(groupId, currentUserId) } returns emptyList()
             coEvery {
-                getMemberBalancesFlowUseCase.computeMemberBalances(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any()
-                )
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns listOf(
                 MemberBalance(userId = currentUserId, pocketBalance = 1000L, cashInHand = 0L)
             )
@@ -356,16 +320,7 @@ class LeaveGroupUseCaseTest {
                 )
             )
             coEvery {
-                getMemberBalancesFlowUseCase.computeMemberBalances(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any()
-                )
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns listOf(userBalance)
             coEvery {
                 resolveCashOnLeaveUseCase(groupId, currentUserId, userBalance, sampleGroup.currency)
