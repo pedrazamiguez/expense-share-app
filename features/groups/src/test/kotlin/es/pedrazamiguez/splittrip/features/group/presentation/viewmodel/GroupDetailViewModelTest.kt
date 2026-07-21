@@ -236,16 +236,7 @@ class GroupDetailViewModelTest {
             )
             every { getGroupSubunitsFlowUseCase(testGroupId) } returns flowOf(listOf(subunit))
             every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any()
-                )
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns
                 listOf(memberBalance)
             every {
@@ -285,16 +276,7 @@ class GroupDetailViewModelTest {
         ) {
             val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 0L, cashInHand = 0L)
             every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any()
-                )
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns
                 listOf(memberBalance)
             coEvery { areMemberSettlementsResolvedUseCase(any(), any()) } returns emptyList()
@@ -320,16 +302,7 @@ class GroupDetailViewModelTest {
         ) {
             val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 0L, cashInHand = 0L)
             every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any()
-                )
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns listOf(memberBalance)
             coEvery { areMemberSettlementsResolvedUseCase(any(), any()) } returns listOf(mockk())
             every { leaveWizardUiMapper.toSettlementUiModels(any(), any(), any()) } returns listOf(mockk())
@@ -362,16 +335,7 @@ class GroupDetailViewModelTest {
             advanceUntilIdle()
 
             every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any()
-                )
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } throws
                 RuntimeException("Calculation failed")
 
@@ -393,16 +357,7 @@ class GroupDetailViewModelTest {
         fun `on WizardNextClicked advances currentStep through activeSteps sequence`() = runTest(testDispatcher) {
             val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 0L)
             every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any()
-                )
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns
                 listOf(memberBalance)
 
@@ -433,16 +388,7 @@ class GroupDetailViewModelTest {
         fun `on WizardBackClicked moves currentStep backward or closes sheet`() = runTest(testDispatcher) {
             val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 0L)
             every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any()
-                )
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns
                 listOf(memberBalance)
 
@@ -472,16 +418,7 @@ class GroupDetailViewModelTest {
         fun `on WizardCancelled or LeaveCancelled closes leave wizard sheet`() = runTest(testDispatcher) {
             val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 0L)
             every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any()
-                )
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns listOf(memberBalance)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }

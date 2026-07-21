@@ -43,13 +43,15 @@ class CloudSyncDelegatesTest {
 
             subscribeAndReconcile(
                 cloudFlow = flowOf(remoteItems),
-                reconcileLocal = { reconciled.add(it) },
-                getPendingIds = { emptyList() },
-                verifyOnServer = { true },
-                markSynced = { },
-                entityLabel = "test",
-                logContext = "for test",
-                performanceMonitor = mockPerformanceMonitor
+                params = SyncReconciliationParams(
+                    reconcileLocal = { reconciled.add(it) },
+                    getPendingIds = { emptyList() },
+                    verifyOnServer = { true },
+                    markSynced = { },
+                    entityLabel = "test",
+                    logContext = "for test",
+                    performanceMonitor = mockPerformanceMonitor
+                )
             )
 
             assertEquals(1, reconciled.size)
@@ -62,13 +64,15 @@ class CloudSyncDelegatesTest {
 
             subscribeAndReconcile(
                 cloudFlow = flowOf(listOf("item-1")),
-                reconcileLocal = { },
-                getPendingIds = { listOf("pending-1", "pending-2") },
-                verifyOnServer = { true },
-                markSynced = { confirmedIds.add(it) },
-                entityLabel = "test",
-                logContext = "",
-                performanceMonitor = mockPerformanceMonitor
+                params = SyncReconciliationParams(
+                    reconcileLocal = { },
+                    getPendingIds = { listOf("pending-1", "pending-2") },
+                    verifyOnServer = { true },
+                    markSynced = { confirmedIds.add(it) },
+                    entityLabel = "test",
+                    logContext = "",
+                    performanceMonitor = mockPerformanceMonitor
+                )
             )
 
             assertEquals(listOf("pending-1", "pending-2"), confirmedIds)
@@ -82,16 +86,18 @@ class CloudSyncDelegatesTest {
 
             subscribeAndReconcile(
                 cloudFlow = flowOf(listOf("item-1")),
-                reconcileLocal = {
-                    reconcileCallCount++
-                    throw IOException("Reconciliation error")
-                },
-                getPendingIds = { emptyList() },
-                verifyOnServer = { true },
-                markSynced = { },
-                entityLabel = "test",
-                logContext = "",
-                performanceMonitor = mockPerformanceMonitor
+                params = SyncReconciliationParams(
+                    reconcileLocal = {
+                        reconcileCallCount++
+                        throw IOException("Reconciliation error")
+                    },
+                    getPendingIds = { emptyList() },
+                    verifyOnServer = { true },
+                    markSynced = { },
+                    entityLabel = "test",
+                    logContext = "",
+                    performanceMonitor = mockPerformanceMonitor
+                )
             )
 
             assertEquals(1, reconcileCallCount)
@@ -104,16 +110,18 @@ class CloudSyncDelegatesTest {
 
                 subscribeAndReconcile(
                     cloudFlow = flowOf(listOf("item-1")),
-                    reconcileLocal = { },
-                    getPendingIds = { emptyList() },
-                    verifyOnServer = {
-                        verifyOnServerCalled = true
-                        true
-                    },
-                    markSynced = { },
-                    entityLabel = "test",
-                    logContext = "",
-                    performanceMonitor = mockPerformanceMonitor
+                    params = SyncReconciliationParams(
+                        reconcileLocal = { },
+                        getPendingIds = { emptyList() },
+                        verifyOnServer = {
+                            verifyOnServerCalled = true
+                            true
+                        },
+                        markSynced = { },
+                        entityLabel = "test",
+                        logContext = "",
+                        performanceMonitor = mockPerformanceMonitor
+                    )
                 )
 
                 assertEquals(false, verifyOnServerCalled)
@@ -125,13 +133,15 @@ class CloudSyncDelegatesTest {
 
             subscribeAndReconcile(
                 cloudFlow = flow<List<String>> { throw IOException("Cloud flow error") },
-                reconcileLocal = { reconcileCallCount++ },
-                getPendingIds = { emptyList() },
-                verifyOnServer = { true },
-                markSynced = { },
-                entityLabel = "test",
-                logContext = "test context",
-                performanceMonitor = mockPerformanceMonitor
+                params = SyncReconciliationParams(
+                    reconcileLocal = { reconcileCallCount++ },
+                    getPendingIds = { emptyList() },
+                    verifyOnServer = { true },
+                    markSynced = { },
+                    entityLabel = "test",
+                    logContext = "test context",
+                    performanceMonitor = mockPerformanceMonitor
+                )
             )
 
             // Should complete without throwing; reconcileLocal never reached
@@ -143,13 +153,15 @@ class CloudSyncDelegatesTest {
             val thrown = runCatching {
                 subscribeAndReconcile(
                     cloudFlow = flow<List<String>> { throw CancellationException("Flow cancelled") },
-                    reconcileLocal = { },
-                    getPendingIds = { emptyList() },
-                    verifyOnServer = { true },
-                    markSynced = { },
-                    entityLabel = "test",
-                    logContext = "",
-                    performanceMonitor = mockPerformanceMonitor
+                    params = SyncReconciliationParams(
+                        reconcileLocal = { },
+                        getPendingIds = { emptyList() },
+                        verifyOnServer = { true },
+                        markSynced = { },
+                        entityLabel = "test",
+                        logContext = "",
+                        performanceMonitor = mockPerformanceMonitor
+                    )
                 )
             }.exceptionOrNull()
 

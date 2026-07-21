@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 
 import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.data.sync.KeyedSubscriptionTracker
+import es.pedrazamiguez.splittrip.data.sync.SyncReconciliationParams
 import es.pedrazamiguez.splittrip.data.sync.subscribeAndReconcile
 import es.pedrazamiguez.splittrip.data.sync.syncCreateToCloud
 import es.pedrazamiguez.splittrip.data.sync.syncDeletionToCloud
@@ -111,19 +112,21 @@ class SubunitRepositoryImpl(
                 subscriptionTracker.cancelAndRelaunch(groupId, syncScope) {
                     subscribeAndReconcile(
                         cloudFlow = cloudSubunitDataSource.getSubunitsByGroupIdFlow(groupId),
-                        reconcileLocal = { remoteSubunits ->
-                            localSubunitDataSource.replaceSubunitsForGroup(groupId, remoteSubunits)
-                        },
-                        getPendingIds = { localSubunitDataSource.getPendingSyncSubunitIds(groupId) },
-                        verifyOnServer = { id ->
-                            cloudSubunitDataSource.verifySubunitOnServer(groupId, id)
-                        },
-                        markSynced = { id ->
-                            localSubunitDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
-                        },
-                        entityLabel = ENTITY_LABEL,
-                        logContext = "for group $groupId",
-                        performanceMonitor = performanceMonitor
+                        params = SyncReconciliationParams(
+                            reconcileLocal = { remoteSubunits ->
+                                localSubunitDataSource.replaceSubunitsForGroup(groupId, remoteSubunits)
+                            },
+                            getPendingIds = { localSubunitDataSource.getPendingSyncSubunitIds(groupId) },
+                            verifyOnServer = { id ->
+                                cloudSubunitDataSource.verifySubunitOnServer(groupId, id)
+                            },
+                            markSynced = { id ->
+                                localSubunitDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
+                            },
+                            entityLabel = ENTITY_LABEL,
+                            logContext = "for group $groupId",
+                            performanceMonitor = performanceMonitor
+                        )
                     )
                 }
             }

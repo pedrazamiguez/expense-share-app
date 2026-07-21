@@ -63,7 +63,7 @@ class GetSettlementSuggestionsUseCaseImplTest {
         every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
         coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
         coEvery {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns
             memberBalances
     }
@@ -404,7 +404,7 @@ class GetSettlementSuggestionsUseCaseImplTest {
             MemberBalance(userId = "member-3", pocketBalance = -1500, cashInHand = 0)
         )
         coEvery {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns balances
 
         coEvery { settlementRepository.getGroupSettlements(groupId) } returns emptyList()
@@ -450,7 +450,7 @@ class GetSettlementSuggestionsUseCaseImplTest {
             MemberBalance(userId = "member-3", pocketBalance = 1500, cashInHand = 0)
         )
         coEvery {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns balances
 
         coEvery { settlementRepository.getGroupSettlements(groupId) } returns emptyList()
@@ -495,7 +495,7 @@ class GetSettlementSuggestionsUseCaseImplTest {
             MemberBalance(userId = "member-2", pocketBalance = 0, cashInHand = 0)
         )
         coEvery {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns balances
 
         coEvery { settlementRepository.getGroupSettlements(groupId) } returns emptyList()
@@ -521,7 +521,7 @@ class GetSettlementSuggestionsUseCaseImplTest {
             MemberBalance(userId = "member-2", pocketBalance = 1000, cashInHand = 0)
         )
         coEvery {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns balances
 
         coEvery { settlementRepository.getGroupSettlements(groupId) } returns emptyList()
@@ -547,7 +547,7 @@ class GetSettlementSuggestionsUseCaseImplTest {
             MemberBalance(userId = "leaving-user", pocketBalance = 1000, cashInHand = 0)
         )
         coEvery {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns balances
 
         coEvery { settlementRepository.getGroupSettlements(groupId) } returns emptyList()

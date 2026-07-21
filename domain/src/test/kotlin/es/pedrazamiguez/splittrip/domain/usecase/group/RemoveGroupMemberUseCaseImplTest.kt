@@ -77,7 +77,7 @@ class RemoveGroupMemberUseCaseImplTest {
     @Test
     fun `removes member when balance is zero and validation passes`() = runTest {
         coEvery {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns
             listOf(MemberBalance(userId = memberToRemove))
 
@@ -130,7 +130,7 @@ class RemoveGroupMemberUseCaseImplTest {
     @Test
     fun `fails when member has non-zero balance`() = runTest {
         coEvery {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns
             listOf(MemberBalance(userId = memberToRemove, pocketBalance = 5000))
 
@@ -144,7 +144,7 @@ class RemoveGroupMemberUseCaseImplTest {
     @Test
     fun `fails when member balance entry is not found`() = runTest {
         coEvery {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns
             emptyList()
 

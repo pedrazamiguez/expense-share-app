@@ -1,3 +1,5 @@
+@file:Suppress("MatchingDeclarationName")
+
 package es.pedrazamiguez.splittrip.data.sync
 
 import es.pedrazamiguez.splittrip.core.logging.LogTag
@@ -10,6 +12,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+@Suppress("MatchingDeclarationName")
+internal data class SyncReconciliationParams<T>(
+    val reconcileLocal: suspend (List<T>) -> Unit,
+    val getPendingIds: suspend () -> List<String>,
+    val verifyOnServer: suspend (String) -> Boolean,
+    val markSynced: suspend (String) -> Unit,
+    val entityLabel: String,
+    val logContext: String,
+    val performanceMonitor: PerformanceMonitor
+)
+
 /**
  * Subscribes to a real-time cloud [Flow] and reconciles the local database
  * on each emission. After reconciliation, attempts to confirm any PENDING_SYNC
@@ -21,47 +34,40 @@ import timber.log.Timber
  * @param T The domain entity type.
  * @param cloudFlow The Firestore snapshot listener Flow emitting the complete
  *   authoritative state of the collection.
- * @param reconcileLocal Merge reconciliation function (upsert remote + selective
- *   delete of stale). Typically calls `replaceXxxForGroup()`.
- * @param getPendingIds Returns IDs of locally-stored entities with
- *   `syncStatus == PENDING_SYNC`.
- * @param verifyOnServer Performs a `Source.SERVER` read to confirm the entity
- *   exists on the server (not just in the local Firestore cache).
- * @param markSynced Updates the entity's sync status to [SyncStatus.SYNCED].
- * @param entityLabel Human-readable entity name for Timber logging
- *   (e.g., "expense", "subunit").
- * @param logContext Additional context appended to log messages
- *   (e.g., "for group abc-123").
+ * @param params Configuration parameters for reconciliation, server verification, logging, and monitoring.
  */
-@Suppress("LongParameterList")
 internal suspend fun <T> subscribeAndReconcile(
     cloudFlow: Flow<List<T>>,
-    reconcileLocal: suspend (List<T>) -> Unit,
-    getPendingIds: suspend () -> List<String>,
-    verifyOnServer: suspend (String) -> Boolean,
-    markSynced: suspend (String) -> Unit,
-    entityLabel: String,
-    logContext: String,
-    performanceMonitor: PerformanceMonitor
+    params: SyncReconciliationParams<T>
 ) {
     try {
         cloudFlow.collect { remoteItems ->
             try {
-                performanceMonitor.traceAsync(PerformanceTraces.SYNC_SUBSCRIBE_AND_RECONCILE) {
-                    Timber.tag(LogTag.SYNC).v("Real-time sync: %d %ss %s", remoteItems.size, entityLabel, logContext)
-                    reconcileLocal(remoteItems)
-                    confirmPendingSync(getPendingIds, verifyOnServer, markSynced, entityLabel)
+                params.performanceMonitor.traceAsync(PerformanceTraces.SYNC_SUBSCRIBE_AND_RECONCILE) {
+                    Timber.tag(LogTag.SYNC).v(
+                        "Real-time sync: %d %ss %s",
+                        remoteItems.size,
+                        params.entityLabel,
+                        params.logContext
+                    )
+                    params.reconcileLocal(remoteItems)
+                    confirmPendingSync(
+                        params.getPendingIds,
+                        params.verifyOnServer,
+                        params.markSynced,
+                        params.entityLabel
+                    )
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.tag(LogTag.SYNC).w(e, "Error reconciling %ss from cloud snapshot", entityLabel)
+                Timber.tag(LogTag.SYNC).w(e, "Error reconciling %ss from cloud snapshot", params.entityLabel)
             }
         }
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        Timber.tag(LogTag.SYNC).w(e, "Error subscribing to cloud %s changes, using local cache", entityLabel)
+        Timber.tag(LogTag.SYNC).w(e, "Error subscribing to cloud %s changes, using local cache", params.entityLabel)
     }
 }
 

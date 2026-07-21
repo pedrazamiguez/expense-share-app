@@ -142,7 +142,7 @@ class GroupLeaveWizardEventHandlerImplTest {
         )
         every { getGroupSubunitsFlowUseCase(testGroupId) } returns flowOf(listOf(subunit))
         every {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns listOf(memberBalance)
         every {
             leaveWizardUiMapper.toBalanceSummaryUiModel(
@@ -174,7 +174,7 @@ class GroupLeaveWizardEventHandlerImplTest {
         handler.bind(this, onSuccess, onError)
         val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 0L, cashInHand = 0L)
         every {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns listOf(memberBalance)
 
         handler.handleLeaveClicked(testGroupId)
@@ -191,7 +191,7 @@ class GroupLeaveWizardEventHandlerImplTest {
         handler.bind(this, onSuccess, onError)
         val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 0L)
         every {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns listOf(memberBalance)
 
         handler.handleLeaveClicked(testGroupId)
@@ -216,7 +216,7 @@ class GroupLeaveWizardEventHandlerImplTest {
         handler.bind(this, onSuccess, onError)
         val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 0L)
         every {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns listOf(memberBalance)
 
         handler.handleLeaveClicked(testGroupId)
@@ -278,7 +278,7 @@ class GroupLeaveWizardEventHandlerImplTest {
         handler.bind(this, onSuccess, onError)
         val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 0L)
         every {
-            getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any(), any(), any())
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns listOf(memberBalance)
 
         handler.handleLeaveClicked(testGroupId)

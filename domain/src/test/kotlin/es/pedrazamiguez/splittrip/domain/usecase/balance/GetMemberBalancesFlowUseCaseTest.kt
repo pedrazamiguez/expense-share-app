@@ -47,14 +47,16 @@ class GetMemberBalancesFlowUseCaseTest {
         settlements: List<SettlementRecord> = emptyList(),
         attributionStrategy: ContributionAttributionStrategy = StandardContributionAttributionStrategy
     ) = useCase.computeMemberBalances(
-        contributions,
-        withdrawals,
-        expenses,
-        subunits,
-        memberIds,
-        groupCurrency,
-        settlements,
-        attributionStrategy
+        MemberBalanceCalculationInputs(
+            contributions = contributions,
+            withdrawals = withdrawals,
+            expenses = expenses,
+            subunits = subunits,
+            groupMemberIds = memberIds,
+            groupCurrency = groupCurrency,
+            settlements = settlements,
+            attributionStrategy = attributionStrategy
+        )
     )
 
     @Nested

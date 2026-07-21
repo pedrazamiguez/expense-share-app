@@ -14,6 +14,7 @@ import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ResolveCashOnLeaveUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.StandardContributionAttributionStrategy
 import es.pedrazamiguez.splittrip.domain.usecase.group.LeaveGroupUseCase
@@ -69,14 +70,16 @@ class LeaveGroupUseCaseImpl(
         val settlements = settlementRepository.getGroupSettlements(groupId)
 
         val balances = getMemberBalancesFlowUseCase.computeMemberBalances(
-            contributions = contributions,
-            withdrawals = withdrawals,
-            expenses = expenses,
-            subunits = subunits,
-            groupMemberIds = group.members,
-            groupCurrency = group.currency,
-            settlements = settlements,
-            attributionStrategy = StandardContributionAttributionStrategy
+            MemberBalanceCalculationInputs(
+                contributions = contributions,
+                withdrawals = withdrawals,
+                expenses = expenses,
+                subunits = subunits,
+                groupMemberIds = group.members,
+                groupCurrency = group.currency,
+                settlements = settlements,
+                attributionStrategy = StandardContributionAttributionStrategy
+            )
         )
 
         val userBalance = balances.find { it.userId == currentUserId }

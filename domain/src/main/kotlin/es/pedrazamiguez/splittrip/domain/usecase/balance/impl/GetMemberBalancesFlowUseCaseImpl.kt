@@ -1,18 +1,14 @@
 package es.pedrazamiguez.splittrip.domain.usecase.balance.impl
 
-import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
-import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.CurrencyAmount
-import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
-import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AddOnCalculationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.ContributionAttributionStrategy
+import es.pedrazamiguez.splittrip.domain.usecase.balance.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.ExpenseResult
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.RemainingResult
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.WithdrawalResult
@@ -32,28 +28,33 @@ class GetMemberBalancesFlowUseCaseImpl(
 ) : GetMemberBalancesFlowUseCase {
 
     override fun computeMemberBalances(
-        contributions: List<Contribution>,
-        withdrawals: List<CashWithdrawal>,
-        expenses: List<Expense>,
-        subunits: List<Subunit>,
-        groupMemberIds: List<String>,
-        groupCurrency: String,
-        settlements: List<SettlementRecord>,
-        attributionStrategy: ContributionAttributionStrategy
+        inputs: MemberBalanceCalculationInputs
     ): List<MemberBalance> {
-        val subunitMap = subunits.associateBy { it.id }
+        val subunitMap = inputs.subunits.associateBy { it.id }
 
-        val contributedMap = attributionStrategy.attribute(
-            contributions = contributions,
+        val contributedMap = inputs.attributionStrategy.attribute(
+            contributions = inputs.contributions,
             subunitMap = subunitMap,
-            groupMemberIds = groupMemberIds
+            groupMemberIds = inputs.groupMemberIds
         )
-        val withdrawalResult = attributeWithdrawals(withdrawals, subunitMap, groupMemberIds, addOnCalculationService)
-        val remainingResult = attributeRemainingByScope(withdrawals, subunitMap, groupMemberIds)
-        val expenseResult = attributeExpensesByPaymentMethod(expenses, addOnCalculationService)
+        val withdrawalResult = attributeWithdrawals(
+            inputs.withdrawals,
+            subunitMap,
+            inputs.groupMemberIds,
+            addOnCalculationService
+        )
+        val remainingResult = attributeRemainingByScope(
+            inputs.withdrawals,
+            subunitMap,
+            inputs.groupMemberIds
+        )
+        val expenseResult = attributeExpensesByPaymentMethod(
+            inputs.expenses,
+            addOnCalculationService
+        )
 
         val allUserIds = buildSet {
-            addAll(groupMemberIds)
+            addAll(inputs.groupMemberIds)
             addAll(contributedMap.keys)
             addAll(withdrawalResult.groupCurrencyMap.keys)
             addAll(expenseResult.cashSpentMap.keys)
@@ -68,11 +69,11 @@ class GetMemberBalancesFlowUseCaseImpl(
                 withdrawalResult = withdrawalResult,
                 remainingResult = remainingResult,
                 expenseResult = expenseResult,
-                groupCurrency = groupCurrency
+                groupCurrency = inputs.groupCurrency
             )
         }
 
-        return applyResolvedSettlements(rawBalances, settlements, groupCurrency)
+        return applyResolvedSettlements(rawBalances, inputs.settlements, inputs.groupCurrency)
     }
 
     private fun applyResolvedSettlements(

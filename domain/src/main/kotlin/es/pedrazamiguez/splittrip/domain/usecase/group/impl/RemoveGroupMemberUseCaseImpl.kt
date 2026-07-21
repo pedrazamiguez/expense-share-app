@@ -10,6 +10,7 @@ import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
 import es.pedrazamiguez.splittrip.domain.repository.SettlementRepository
 import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.StandardContributionAttributionStrategy
 import es.pedrazamiguez.splittrip.domain.usecase.group.RemoveGroupMemberUseCase
 import kotlinx.coroutines.flow.first
@@ -40,14 +41,16 @@ class RemoveGroupMemberUseCaseImpl(
         val settlements = settlementRepository.getGroupSettlements(groupId)
 
         val balances = getMemberBalancesFlowUseCase.computeMemberBalances(
-            contributions = contributions,
-            withdrawals = withdrawals,
-            expenses = expenses,
-            subunits = subunits,
-            groupMemberIds = group.members,
-            groupCurrency = group.currency,
-            settlements = settlements,
-            attributionStrategy = StandardContributionAttributionStrategy
+            MemberBalanceCalculationInputs(
+                contributions = contributions,
+                withdrawals = withdrawals,
+                expenses = expenses,
+                subunits = subunits,
+                groupMemberIds = group.members,
+                groupCurrency = group.currency,
+                settlements = settlements,
+                attributionStrategy = StandardContributionAttributionStrategy
+            )
         )
 
         val memberBalance = balances.find { it.userId == userId }
