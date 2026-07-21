@@ -27,6 +27,7 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 :features:onboarding    → Onboarding wizard
 :features:profile       → User profile display + edit
 :features:settings      → App settings
+:features:settlements   → "Mi posición" / "My position" screen & settlement consensus sub-flow (standalone, non-tab)
 :features:subunits      → Subunit management lifecycle — CRUD (standalone, non-tab)
 :features:withdrawals   → Add cash withdrawal write-flow (standalone, non-tab)
 ```
@@ -51,7 +52,7 @@ See the standalone rule files in `.agents/rules/` for detailed constraints:
 - Two nav controllers: `LocalRootNavController` (full-screen flows) and `LocalTabNavController` (within bottom tabs). Consumed via CompositionLocals in Feature layer only.
 - Notifications: `LocalTopPillController` — top pill notifications replace snackbars. Never use `Scaffold(snackbarHost=...)` in features.
 - **Tab features** register as bottom tabs via `NavigationProvider` interface + Koin `bind`. See `GroupsNavigationProviderImpl`.
-- **Non-tab features** (write-flows extracted into standalone modules) implement `TabGraphContributor` instead. The host tab's `NavigationProvider` injects all `TabGraphContributor` instances via Koin and calls `contributeGraph(builder)` inside `buildGraph()`. This allows runtime route merging without compile-time cross-feature dependencies. See `ContributionsTabGraphContributorImpl`, `WithdrawalsTabGraphContributorImpl`, `SubunitsTabGraphContributorImpl`.
+- **Non-tab features** (write-flows and sub-flows extracted into standalone modules) implement `TabGraphContributor` instead. The host tab's `NavigationProvider` injects all `TabGraphContributor` instances via Koin and calls `contributeGraph(builder)` inside `buildGraph()`. This allows runtime route merging without compile-time cross-feature dependencies. See `ContributionsTabGraphContributorImpl`, `WithdrawalsTabGraphContributorImpl`, `SubunitsTabGraphContributorImpl`, `SettlementsTabGraphContributorImpl`.
 - Tab screens define TopBar/MainAction via `ScreenUiProvider` implementations (not their own Scaffold).
 
 ## Offline-First Data Flow
@@ -95,6 +96,7 @@ groupsDomainModule + groupsDataModule + groupsUiModule → groupsFeatureModules
 subunitsDomainModule + subunitsDataModule + subunitsUiModule → subunitsFeatureModules
 contributionsDomainModule + contributionsUiModule → contributionsFeatureModules  (no dedicated contributions data module — relies on `ContributionRepository` impl from `balancesDataModule` in :data)
 withdrawalsDomainModule + withdrawalsUiModule → withdrawalsFeatureModules  (no dedicated withdrawals data module — relies on `CashWithdrawalRepository` impl from `balancesDataModule` in :data)
+settlementsUiModule → settlementsFeatureModules  (contributes `SettlementsTabGraphContributorImpl` for the "Mi posición" / "My position" sub-flow inside Balances tab)
 ```
 - **Tab features** UI modules declare: ViewModel, Mapper, `NavigationProvider` (factory + bind), `ScreenUiProvider` (single + bind).
 - **Non-tab features** UI modules declare: ViewModel, Mapper, `TabGraphContributor` (factory + bind). They typically do **not** implement `NavigationProvider` but still register a `ScreenUiProvider` when they need a top bar (e.g. write-flow screens).
