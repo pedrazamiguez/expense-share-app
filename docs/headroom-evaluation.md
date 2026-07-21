@@ -81,6 +81,7 @@ Running `headroom learn` analyzes session logs for repeated tool failures or ine
 - **`Makefile`**: Updated `make doctor` to verify Headroom availability (`headroom` binary present).
 - **`scripts/ai-setup.sh`**: Integrated `install_headroom()` and `setup_headroom_opencode()` for automated, idempotent machine setup via `make ai-setup`.
 - **`AGENTS.md`**: Added explicit rules for Headroom context compression usage.
+- **`.gitignore`**: Added `.serena/` and `.headroom/` to gitignore to ensure local memory caches stay untracked.
 
 ---
 
