@@ -146,6 +146,12 @@ doctor: ## Check that required files and tools are present
 	else \
 		printf "  $(YELLOW)⚠️   uv not found$(NC) — run 'make ai-setup'\n"; \
 	fi
+	@# Headroom binary
+	@if command -v headroom >/dev/null 2>&1 || [ -x "$${HOME}/.local/bin/headroom" ]; then \
+		printf "  $(GREEN)✅  Headroom present$(NC)\n"; \
+	else \
+		printf "  $(YELLOW)⚠️   Headroom not found$(NC) — run 'make ai-setup'\n"; \
+	fi
 	@# graphify
 	@if command -v graphify >/dev/null 2>&1; then \
 		printf "  $(GREEN)✅  graphify present$(NC)\n"; \

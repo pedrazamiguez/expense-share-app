@@ -247,6 +247,28 @@ with open(path, 'w') as f:
   log_ok "Opencode config merged"
 }
 
+# ─── Step 9: Install Headroom ────────────────────────────────────────────────
+install_headroom() {
+  if command -v headroom &>/dev/null || [ -x "${HOME}/.local/bin/headroom" ]; then
+    log_ok "headroom already installed"
+    return 0
+  fi
+  log_info "Installing headroom-ai..."
+  if uv tool install "headroom-ai[all]"; then
+    log_ok "headroom-ai installed"
+  else
+    log_err "Failed to install headroom-ai"
+    return 1
+  fi
+}
+
+# ─── Step 10: Setup Headroom proxy wrapper for opencode ──────────────────────
+setup_headroom_opencode() {
+  if command -v headroom &>/dev/null || [ -x "${HOME}/.local/bin/headroom" ]; then
+    log_ok "Headroom proxy wrapper ready — use 'headroom wrap opencode' to launch opencode sessions"
+  fi
+}
+
 # ─── Summary ─────────────────────────────────────────────────────────────────
 print_summary() {
   echo ""
@@ -276,6 +298,8 @@ main() {
   echo ""
   install_uv || ((errors++))
   echo ""
+  install_headroom || ((errors++))
+  echo ""
   install_graphify || ((errors++))
   echo ""
   index_graphify || ((errors++))
@@ -287,6 +311,8 @@ main() {
   merge_gemini_config || ((errors++))
   echo ""
   merge_opencode_config || ((errors++))
+  echo ""
+  setup_headroom_opencode || ((errors++))
   echo ""
 
   print_summary
