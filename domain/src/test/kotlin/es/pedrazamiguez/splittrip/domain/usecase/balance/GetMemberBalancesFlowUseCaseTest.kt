@@ -17,6 +17,7 @@ import es.pedrazamiguez.splittrip.domain.service.impl.AddOnCalculationServiceImp
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetMemberBalancesFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.ContributionAttributionStrategy
 import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.StandardContributionAttributionStrategy
+import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDateTime

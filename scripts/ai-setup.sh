@@ -269,6 +269,39 @@ setup_headroom_opencode() {
   fi
 }
 
+# ─── Step 11: Setup RTK (Rust Token Killer) ──────────────────────────────────
+install_and_setup_rtk() {
+  if command -v rtk &>/dev/null || [ -x "${HOME}/.cargo/bin/rtk" ]; then
+    log_ok "rtk already installed"
+  else
+    log_info "Installing rtk..."
+    if command -v cargo &>/dev/null && cargo install rtk; then
+      log_ok "rtk installed via cargo"
+    elif command -v brew &>/dev/null && brew install rtk; then
+      log_ok "rtk installed via brew"
+    else
+      log_warn "Could not auto-install rtk — please install manually: cargo install rtk or brew install rtk"
+    fi
+  fi
+
+  if command -v rtk &>/dev/null || [ -x "${HOME}/.cargo/bin/rtk" ]; then
+    log_info "Configuring RTK for Antigravity..."
+    if rtk init --agent antigravity; then
+      log_ok "RTK configured for Antigravity"
+    else
+      log_warn "Failed to configure RTK for Antigravity"
+    fi
+
+    log_info "Configuring RTK for OpenCode..."
+    mkdir -p "${HOME}/.config/opencode/plugins" 2>/dev/null || true
+    if rtk init -g --opencode 2>/dev/null; then
+      log_ok "RTK configured for OpenCode"
+    else
+      log_warn "Failed to configure RTK for OpenCode (may require manually creating ~/.config/opencode/plugins)"
+    fi
+  fi
+}
+
 # ─── Summary ─────────────────────────────────────────────────────────────────
 print_summary() {
   echo ""
@@ -314,9 +347,12 @@ main() {
   echo ""
   setup_headroom_opencode || ((errors++))
   echo ""
+  install_and_setup_rtk || ((errors++))
+  echo ""
 
   print_summary
   return "$errors"
 }
 
 main "$@"
+

@@ -1,4 +1,28 @@
 <resources>
-    <string name="my_position_title">Mi posición</string>
-    <string name="my_position_subtitle">Posición personal y consenso de liquidaciones</string>
+    <string name="your_position_title">Tu posición</string>
+    <string name="your_position_subtitle">Posición personal y consenso de liquidaciones</string>
+    <string name="your_position_section_personal_position">Tu posición</string>
+    <string name="your_position_label_net_position">Posición neta</string>
+    <string name="your_position_label_pocket_balance">En cuenta</string>
+    <string name="your_position_label_cash_in_hand">Efectivo en mano</string>
+    <string name="your_position_label_total_contributed">Aportado</string>
+    <string name="your_position_label_total_spent">Gastado</string>
+    <string name="your_position_label_cash_spent">Efectivo</string>
+    <string name="your_position_label_non_cash_spent">Tarjeta / Otro</string>
+    <string name="your_position_label_refundable_spent">Retenido</string>
+    <string name="your_position_label_atm_fees">Comisiones</string>
+    <string name="your_position_negative_cash_hint">Tu parte de gastos en efectivo supera tus retiradas atribuidas.</string>
+    <string name="your_position_empty_title">Sin datos de posición</string>
+    <string name="your_position_empty_description">Tu posición financiera aparecerá aquí cuando el grupo tenga contribuciones y gastos.</string>
+
+    <string name="your_position_cash_breakdown_title">Desglose de efectivo</string>
+    <string name="your_position_cash_breakdown_empty">Sin retiradas de efectivo registradas</string>
+    <string name="your_position_cash_breakdown_total">Total efectivo en mano</string>
+    <string name="your_position_cash_breakdown_fees">Comisiones</string>
+    <string name="your_position_cash_breakdown_rate">@ %1$s %2$s/%3$s</string>
+    <string name="your_position_cash_breakdown_atm_fallback">Cajero — %1$s</string>
+    <string name="your_position_cash_breakdown_group_scope">Efectivo del grupo (estimación)</string>
+    <string name="your_position_cash_breakdown_personal_scope">Efectivo personal</string>
+    <string name="your_position_cash_breakdown_unknown_subunit">Efectivo de subunidad</string>
+    <string name="your_position_cash_breakdown_view_cd">Ver desglose de efectivo</string>
 </resources>
