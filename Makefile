@@ -8,7 +8,9 @@
 #   make check
 # ─────────────────────────────────────────────────────────────────────────────
 
-GRADLEW       := ./gradlew
+# Default Gradle flags for quality gates (cold run: no build cache, rerun all tasks, no daemon)
+GRADLE_FLAGS  := --no-build-cache --rerun-tasks --no-daemon
+GRADLEW       := ./gradlew $(GRADLE_FLAGS)
 LOCAL_PROPS   := local.properties
 HOOK_SRC      := scripts/pre-commit
 HOOK_DST      := .git/hooks/pre-commit
@@ -198,7 +200,7 @@ doctor: ## Check that required files and tools are present
 	@echo ""
 
 # ─── Quality gates (mirrors CI) ───────────────────────────────────────────────
-check: andaluz-lenient ktlint detekt konsist test coverage build ## Run all local quality gates before pushing (mirrors CI)
+check: clean andaluz-lenient ktlint detekt konsist test coverage build ## Run all local quality gates from a 100% cold state before pushing (mirrors CI)
 
 andaluz: ## Automatically generate Andaluz string resources from Spanish strings.xml (fails if python andaluh package is missing)
 	@if python3 -c "import andaluh" >/dev/null 2>&1; then \
