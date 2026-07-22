@@ -158,6 +158,12 @@ doctor: ## Check that required files and tools are present
 	else \
 		printf "  $(YELLOW)⚠️   graphify not found$(NC) — run 'make ai-setup'\n"; \
 	fi
+	@# rtk (Rust Token Killer)
+	@if command -v rtk >/dev/null 2>&1 || [ -x "$${HOME}/.cargo/bin/rtk" ]; then \
+		printf "  $(GREEN)✅  rtk present$(NC)\n"; \
+	else \
+		printf "  $(YELLOW)⚠️   rtk not found$(NC) — run 'make ai-setup' or 'cargo install rtk'\n"; \
+	fi
 	@# codebase-memory-mcp index
 	@if [ -d "$${HOME}/.cache/codebase-memory-mcp" ]; then \
 		printf "  $(GREEN)✅  codebase-memory-mcp index present$(NC)\n"; \
