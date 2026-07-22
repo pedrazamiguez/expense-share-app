@@ -57,53 +57,53 @@ export const expenseReminders = functions.scheduler.onSchedule(
         // We run hourly, so we just check if the hour matches
         if (userNow.getHours() === prefHour) {
             
-            const userDueDate = toZonedTime(dueDate, timezone);
-            const userTomorrow = addDays(userNow, 1);
+          const userDueDate = toZonedTime(dueDate, timezone);
+          const userTomorrow = addDays(userNow, 1);
 
-            const isToday = userDueDate.getFullYear() === userNow.getFullYear() &&
+          const isToday = userDueDate.getFullYear() === userNow.getFullYear() &&
                 userDueDate.getMonth() === userNow.getMonth() &&
                 userDueDate.getDate() === userNow.getDate();
 
-            const isTomorrow = userDueDate.getFullYear() === userTomorrow.getFullYear() &&
+          const isTomorrow = userDueDate.getFullYear() === userTomorrow.getFullYear() &&
                 userDueDate.getMonth() === userTomorrow.getMonth() &&
                 userDueDate.getDate() === userTomorrow.getDate();
 
-            let type: string | null = null;
-            if (isToday && paymentStatus === "SCHEDULED") {
-                type = "EXPENSE_SCHEDULED_EFFECTIVE";
-            } else if (isTomorrow) {
-                type = paymentStatus === "SCHEDULED" ? "EXPENSE_SCHEDULED_REMINDER" : "EXPENSE_REFUNDABLE_REMINDER";
-            }
+          let type: string | null = null;
+          if (isToday && paymentStatus === "SCHEDULED") {
+            type = "EXPENSE_SCHEDULED_EFFECTIVE";
+          } else if (isTomorrow) {
+            type = paymentStatus === "SCHEDULED" ? "EXPENSE_SCHEDULED_REMINDER" : "EXPENSE_REFUNDABLE_REMINDER";
+          }
 
-            if (type) {
-                // Fetch FCM tokens (assuming they might be stored in users/fcmTokens collection)
-                const tokensSnapshot = await db
-                  .collection("users")
-                  .doc(memberId)
-                  .collection("fcmTokens")
-                  .get();
+          if (type) {
+            // Fetch FCM tokens (assuming they might be stored in users/fcmTokens collection)
+            const tokensSnapshot = await db
+              .collection("users")
+              .doc(memberId)
+              .collection("fcmTokens")
+              .get();
 
-                const tokens = tokensSnapshot.docs.map((t) => t.id);
-                if (tokens.length > 0) {
-                    const payload = {
-                        data: {
-                            type,
-                            expenseId,
-                            groupId
-                        },
-                        tokens: tokens
-                    };
+            const tokens = tokensSnapshot.docs.map((t) => t.id);
+            if (tokens.length > 0) {
+              const payload = {
+                data: {
+                  type,
+                  expenseId,
+                  groupId
+                },
+                tokens: tokens
+              };
 
-                    try {
-                      const response = await messaging.sendEachForMulticast(payload);
-                      if (response.failureCount > 0) {
-                          console.warn(`Failed to send ${response.failureCount} notifications for user ${memberId}`);
-                      }
-                    } catch (e) {
-                      console.error(`Error sending notification to user ${memberId}`, e);
-                    }
+              try {
+                const response = await messaging.sendEachForMulticast(payload);
+                if (response.failureCount > 0) {
+                  console.warn(`Failed to send ${response.failureCount} notifications for user ${memberId}`);
                 }
+              } catch (e) {
+                console.error(`Error sending notification to user ${memberId}`, e);
+              }
             }
+          }
         }
       }
     }
