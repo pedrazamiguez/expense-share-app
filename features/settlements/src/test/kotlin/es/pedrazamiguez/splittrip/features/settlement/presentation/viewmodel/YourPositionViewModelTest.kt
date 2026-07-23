@@ -6,25 +6,34 @@ import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.DisputeSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
+import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.SettlementConsensusUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourPositionUiMapper
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.action.YourPositionUiAction
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourPositionUiEvent
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.util.Locale
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -50,11 +59,16 @@ class YourPositionViewModelTest {
     private val getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase = mockk()
     private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase = mockk()
     private val getGroupSettlementsFlowUseCase: GetGroupSettlementsFlowUseCase = mockk()
+    private val confirmSettlementUseCase: ConfirmSettlementUseCase = mockk()
+    private val disputeSettlementUseCase: DisputeSettlementUseCase = mockk()
+    private val getMemberProfilesUseCase: GetMemberProfilesUseCase = mockk()
+    private val getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase = mockk()
 
     private val authenticationService: AuthenticationService = mockk()
     private val appConfigService: AppConfigService = mockk()
     private val localeProvider: LocaleProvider = mockk()
     private val resourceProvider: ResourceProvider = mockk()
+    private val settlementConsensusUiMapper: SettlementConsensusUiMapper = mockk()
 
     private lateinit var useCases: YourPositionUseCases
     private lateinit var mapper: YourPositionUiMapper
@@ -70,6 +84,9 @@ class YourPositionViewModelTest {
         every { appConfigService.defaultCurrencyCode } returns MutableStateFlow("EUR")
         every { appConfigService.balanceComputationDebounceMs } returns MutableStateFlow(0L)
         every { authenticationService.currentUserId() } returns "user1"
+        coEvery { getSettlementSuggestionsUseCase.persistForGroup(any(), any()) } returns emptyList()
+        coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
+        every { settlementConsensusUiMapper.toConsensusItems(any(), any(), any(), any()) } returns persistentListOf()
 
         mapper = YourPositionUiMapper(localeProvider, resourceProvider)
 
@@ -80,13 +97,18 @@ class YourPositionViewModelTest {
             getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
             getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
             getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
-            getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase
+            getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
+            confirmSettlementUseCase = confirmSettlementUseCase,
+            disputeSettlementUseCase = disputeSettlementUseCase,
+            getMemberProfilesUseCase = getMemberProfilesUseCase,
+            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase
         )
 
         viewModel = YourPositionViewModel(
             useCases = useCases,
             authenticationService = authenticationService,
             yourPositionUiMapper = mapper,
+            settlementConsensusUiMapper = settlementConsensusUiMapper,
             appConfigService = appConfigService,
             computationDispatcher = testDispatcher
         )
@@ -132,6 +154,7 @@ class YourPositionViewModelTest {
         assertFalse(state.isLoading)
         assertNotNull(state.personalPosition)
         assertEquals("€500.00", state.personalPosition?.formattedNetPosition)
+        coVerify { getSettlementSuggestionsUseCase.persistForGroup("group1") }
     }
 
     @Test
@@ -159,5 +182,131 @@ class YourPositionViewModelTest {
         viewModel.onEvent(YourPositionUiEvent.DismissCashBreakdown)
         advanceUntilIdle()
         assertFalse(viewModel.uiState.value.isCashBreakdownVisible)
+    }
+
+    @Test
+    fun `ConfirmSettlement event calls confirmSettlementUseCase and emits success`() = runTest(testDispatcher) {
+        val actions = mutableListOf<YourPositionUiAction>()
+        val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.actions.collect { actions.add(it) }
+        }
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
+        coEvery { getGroupByIdUseCase("group1") } returns group
+        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
+        coEvery { confirmSettlementUseCase("group1", "s1") } returns Result.success(mockk())
+
+        viewModel.setSelectedGroup("group1")
+        advanceUntilIdle()
+
+        viewModel.onEvent(YourPositionUiEvent.ConfirmSettlement("s1"))
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { confirmSettlementUseCase("group1", "s1") }
+        assertEquals(1, actions.size)
+        assertTrue(actions[0] is YourPositionUiAction.ShowSuccess)
+        actionsJob.cancel()
+    }
+
+    @Test
+    fun `ConfirmSettlement failure emits ShowError action`() = runTest(testDispatcher) {
+        val actions = mutableListOf<YourPositionUiAction>()
+        val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.actions.collect { actions.add(it) }
+        }
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
+        coEvery { getGroupByIdUseCase("group1") } returns group
+        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
+        coEvery { confirmSettlementUseCase("group1", "s1") } returns Result.failure(RuntimeException("Error"))
+
+        viewModel.setSelectedGroup("group1")
+        advanceUntilIdle()
+
+        viewModel.onEvent(YourPositionUiEvent.ConfirmSettlement("s1"))
+        advanceUntilIdle()
+
+        assertEquals(1, actions.size)
+        assertTrue(actions[0] is YourPositionUiAction.ShowError)
+        actionsJob.cancel()
+    }
+
+    @Test
+    fun `DisputeSettlement event opens dispute dialog`() = runTest(testDispatcher) {
+        viewModel.onEvent(YourPositionUiEvent.DisputeSettlement("s1"))
+
+        viewModel.onEvent(YourPositionUiEvent.DisputeReasonChanged("Invalid amount"))
+
+        viewModel.onEvent(YourPositionUiEvent.DisputeCancelled)
+    }
+
+    @Test
+    fun `DisputeSubmitted calls disputeSettlementUseCase and clears dialog state on success`() = runTest(
+        testDispatcher
+    ) {
+        val actions = mutableListOf<YourPositionUiAction>()
+        val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.actions.collect { actions.add(it) }
+        }
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
+        coEvery { getGroupByIdUseCase("group1") } returns group
+        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
+        coEvery { disputeSettlementUseCase("group1", "s1", "Wrong amount") } returns Result.success(mockk())
+
+        viewModel.setSelectedGroup("group1")
+        advanceUntilIdle()
+
+        viewModel.onEvent(YourPositionUiEvent.DisputeSettlement("s1"))
+        viewModel.onEvent(YourPositionUiEvent.DisputeReasonChanged("Wrong amount"))
+        viewModel.onEvent(YourPositionUiEvent.DisputeSubmitted)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { disputeSettlementUseCase("group1", "s1", "Wrong amount") }
+        assertEquals(1, actions.size)
+        assertTrue(actions[0] is YourPositionUiAction.ShowSuccess)
+        assertNull(viewModel.uiState.value.activeDisputeSettlementId)
+        assertEquals("", viewModel.uiState.value.disputeReasonInput)
+        actionsJob.cancel()
+    }
+
+    @Test
+    fun `DisputeSubmitted with blank reason does nothing`() = runTest(testDispatcher) {
+        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
+        coEvery { getGroupByIdUseCase("group1") } returns group
+        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
+
+        viewModel.setSelectedGroup("group1")
+        advanceUntilIdle()
+
+        viewModel.onEvent(YourPositionUiEvent.DisputeSettlement("s1"))
+        viewModel.onEvent(YourPositionUiEvent.DisputeReasonChanged("   "))
+        viewModel.onEvent(YourPositionUiEvent.DisputeSubmitted)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { disputeSettlementUseCase(any(), any(), any()) }
     }
 }
