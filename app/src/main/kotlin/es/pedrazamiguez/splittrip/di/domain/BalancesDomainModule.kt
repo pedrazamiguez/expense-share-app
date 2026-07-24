@@ -112,7 +112,8 @@ val balancesDomainModule = module {
         ConfirmSettlementUseCaseImpl(
             settlementRepository = get<SettlementRepository>(),
             authenticationService = get<AuthenticationService>(),
-            groupRepository = get<GroupRepository>()
+            groupRepository = get<GroupRepository>(),
+            contributionRepository = get<ContributionRepository>()
         )
     }
 

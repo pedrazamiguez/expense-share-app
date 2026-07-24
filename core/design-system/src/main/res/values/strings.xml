@@ -74,6 +74,7 @@
     <string name="self_identification_beneficiary">For you</string>
     <string name="self_identification_agent">By you</string>
     <string name="self_identification_recipient">To you</string>
+    <string name="self_identification_prepositional">you</string>
 
     <!-- User Fallback -->
     <string name="user_pending_fallback">Pending member</string>

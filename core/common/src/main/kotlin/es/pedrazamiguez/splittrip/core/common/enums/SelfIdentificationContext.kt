@@ -4,5 +4,6 @@ enum class SelfIdentificationContext {
     NOMINATIVE,
     BENEFICIARY,
     AGENT,
-    RECIPIENT
+    RECIPIENT,
+    PREPOSITIONAL
 }

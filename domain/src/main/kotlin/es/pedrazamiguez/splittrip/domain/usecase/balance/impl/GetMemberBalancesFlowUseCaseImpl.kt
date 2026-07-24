@@ -103,7 +103,7 @@ class GetMemberBalancesFlowUseCaseImpl(
 
         when (settlement.sourcePocket) {
             SettlementPocketType.POCKET, SettlementPocketType.NET -> {
-                applyPocketSettlement(balanceMap, settlement, fromUser, toUser)
+                applyPocketSettlement(balanceMap, settlement, fromUser)
             }
             SettlementPocketType.CASH -> {
                 applyCashSettlement(balanceMap, settlement, fromUser, toUser, groupCurrency)
@@ -114,17 +114,15 @@ class GetMemberBalancesFlowUseCaseImpl(
     private fun applyPocketSettlement(
         balanceMap: MutableMap<String, MemberBalance>,
         settlement: Settlement,
-        fromUser: MemberBalance,
-        toUser: MemberBalance
+        fromUser: MemberBalance
     ) {
-        balanceMap[settlement.fromUserId] = fromUser.copy(
-            contributed = fromUser.contributed + settlement.amount,
-            pocketBalance = fromUser.pocketBalance + settlement.amount
-        )
-        balanceMap[settlement.toUserId] = toUser.copy(
-            withdrawn = toUser.withdrawn + settlement.amount,
-            pocketBalance = toUser.pocketBalance - settlement.amount
-        )
+        val isAlreadyMaterialized = fromUser.contributed >= settlement.amount
+        if (!isAlreadyMaterialized) {
+            balanceMap[settlement.fromUserId] = fromUser.copy(
+                contributed = fromUser.contributed + settlement.amount,
+                pocketBalance = fromUser.pocketBalance + settlement.amount
+            )
+        }
     }
 
     private fun applyCashSettlement(

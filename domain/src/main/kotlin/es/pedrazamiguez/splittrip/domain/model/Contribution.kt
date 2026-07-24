@@ -14,6 +14,7 @@ data class Contribution(
     val amount: Long = 0,
     val currency: String = "EUR",
     val linkedExpenseId: String? = null,
+    val linkedSettlementId: String? = null,
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null,
     val syncStatus: SyncStatus = SyncStatus.SYNCED

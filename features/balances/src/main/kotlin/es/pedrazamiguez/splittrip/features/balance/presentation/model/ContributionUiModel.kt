@@ -27,6 +27,7 @@ data class ContributionUiModel(
     val isGroupContribution: Boolean = false,
     val createdByDisplayName: String? = null,
     val isLinkedContribution: Boolean = false,
+    val isSettlementContribution: Boolean = false,
     /** Cloud synchronization status of this contribution. */
     val syncStatus: SyncStatus = SyncStatus.SYNCED,
     val displayName: String = memberDisplay.displayName

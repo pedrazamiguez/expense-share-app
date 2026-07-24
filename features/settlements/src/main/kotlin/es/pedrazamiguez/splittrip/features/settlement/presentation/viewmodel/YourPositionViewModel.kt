@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -62,6 +63,7 @@ class YourPositionViewModel(
             val currency = group?.currency ?: appConfigService.defaultCurrencyCode.value
             val groupMemberIds = group?.members ?: emptyList()
             val currentUserId = authenticationService.currentUserId() ?: ""
+            var lastTransactionSignature: String? = null
 
             val baseStateFlow = combine(
                 useCases.getGroupContributionsFlowUseCase(groupId),
@@ -78,6 +80,21 @@ class YourPositionViewModel(
                     settlements = settlements
                 )
             }
+                .onEach { snapshot ->
+                    val totalExpensesAmount = snapshot.expenses.sumOf { it.sourceAmount }
+                    val signature = "${snapshot.contributions.size}_${snapshot.withdrawals.size}_" +
+                        "${snapshot.expenses.size}_${snapshot.subunits.size}_$totalExpensesAmount"
+                    if (signature != lastTransactionSignature) {
+                        lastTransactionSignature = signature
+                        viewModelScope.launch {
+                            try {
+                                useCases.getSettlementSuggestionsUseCase.persistForGroup(groupId)
+                            } catch (e: Exception) {
+                                Timber.e(e, "Failed to persist settlement suggestions for group $groupId")
+                            }
+                        }
+                    }
+                }
                 .debounce { appConfigService.balanceComputationDebounceMs.value }
                 .combine(_isCashBreakdownVisible) { snapshot, isCashBreakdownVisible ->
                     val memberBalances = useCases.getMemberBalancesFlowUseCase.computeMemberBalances(
