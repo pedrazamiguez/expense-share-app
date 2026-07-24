@@ -11,6 +11,7 @@ data class ContributionDocument(
     val contributionScope: String = "USER",
     val subunitId: String? = null,
     val linkedExpenseId: String? = null,
+    val linkedSettlementId: String? = null,
     val amountCents: Long = 0L,
     val currency: String = "EUR",
     val createdBy: String = "",

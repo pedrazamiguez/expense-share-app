@@ -25,4 +25,29 @@
     <string name="your_position_cash_breakdown_personal_scope">Efectivo personal</string>
     <string name="your_position_cash_breakdown_unknown_subunit">Efectivo de subunidad</string>
     <string name="your_position_cash_breakdown_view_cd">Ver desglose de efectivo</string>
+
+    <!-- Settlement Consensus Section -->
+    <string name="your_position_settlement_consensus_title">Consenso de liquidaciones</string>
+    <string name="your_position_settlement_empty_title">Sin liquidaciones activas</string>
+    <string name="your_position_settlement_empty_description">No tienes liquidaciones pendientes por resolver en este grupo.</string>
+    <string name="your_position_settlement_you_owe">Debes a %s</string>
+    <string name="your_position_settlement_owes_you">%s te debe</string>
+    <string name="your_position_settlement_mark_paid">Marcar como pagado</string>
+    <string name="your_position_settlement_confirm_receipt">Confirmar recepción</string>
+    <string name="your_position_settlement_resolve_dispute">Resolver disputa</string>
+    <string name="your_position_settlement_dispute">Disputar</string>
+    <string name="your_position_settlement_status_suggested">Sugerido</string>
+    <string name="your_position_settlement_status_confirmed_payer">Confirmado por pagador</string>
+    <string name="your_position_settlement_status_disputed">Disputado</string>
+    <string name="your_position_settlement_pocket_pocket">Bolsillo</string>
+    <string name="your_position_settlement_pocket_cash">Efectivo</string>
+    <string name="your_position_settlement_pocket_net">Neto</string>
+    <string name="your_position_dispute_dialog_title">Disputar liquidación</string>
+    <string name="your_position_dispute_dialog_hint">Describe la razón de la disputa…</string>
+    <string name="your_position_dispute_dialog_submit">Enviar disputa</string>
+    <string name="your_position_dispute_dialog_cancel">Cancelar</string>
+    <string name="your_position_confirm_success">Liquidación confirmada correctamente</string>
+    <string name="your_position_confirm_error">No se pudo confirmar la liquidación. Inténtalo de nuevo.</string>
+    <string name="your_position_dispute_success">Liquidación disputada correctamente</string>
+    <string name="your_position_dispute_error">No se pudo disputar la liquidación. Inténtalo de nuevo.</string>
 </resources>

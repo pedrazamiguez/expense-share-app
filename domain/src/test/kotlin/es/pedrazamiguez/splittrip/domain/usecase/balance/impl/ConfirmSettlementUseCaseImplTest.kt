@@ -5,6 +5,7 @@ import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
+import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
 import es.pedrazamiguez.splittrip.domain.repository.SettlementRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
@@ -25,6 +26,7 @@ class ConfirmSettlementUseCaseImplTest {
     private val settlementRepository = mockk<SettlementRepository>()
     private val authenticationService = mockk<AuthenticationService>()
     private val groupRepository = mockk<GroupRepository>()
+    private val contributionRepository = mockk<ContributionRepository>()
     private lateinit var useCase: ConfirmSettlementUseCaseImpl
 
     private val groupId = "group-123"
@@ -48,10 +50,12 @@ class ConfirmSettlementUseCaseImplTest {
 
     @BeforeEach
     fun setUp() {
+        coEvery { contributionRepository.addContribution(any(), any()) } returns Unit
         useCase = ConfirmSettlementUseCaseImpl(
             settlementRepository = settlementRepository,
             authenticationService = authenticationService,
-            groupRepository = groupRepository
+            groupRepository = groupRepository,
+            contributionRepository = contributionRepository
         )
     }
 
@@ -98,6 +102,12 @@ class ConfirmSettlementUseCaseImplTest {
         assertEquals(SettlementStatus.RESOLVED, updated.status)
         assertNotNull(updated.confirmedByPayeeAt)
         assertNotNull(updated.resolvedAt)
+        coVerify(exactly = 1) {
+            contributionRepository.addContribution(
+                groupId,
+                match { it.linkedSettlementId == settlementId }
+            )
+        }
     }
 
     @Test

@@ -138,6 +138,20 @@ class ContributionDocumentMapperTest {
         }
 
         @Test
+        fun `maps linkedSettlementId correctly when present`() {
+            val contributionWithLinkedSettlement = fullContribution.copy(linkedSettlementId = "settlement-303")
+
+            val document = contributionWithLinkedSettlement.toDocument(
+                testContributionId,
+                testGroupId,
+                testGroupDocRef,
+                testActorId
+            )
+
+            assertEquals("settlement-303", document.linkedSettlementId)
+        }
+
+        @Test
         fun `maps null linkedExpenseId correctly`() {
             val document = fullContribution.toDocument(
                 testContributionId,
@@ -147,6 +161,7 @@ class ContributionDocumentMapperTest {
             )
 
             assertNull(document.linkedExpenseId)
+            assertNull(document.linkedSettlementId)
         }
 
         @Test
@@ -231,10 +246,20 @@ class ContributionDocumentMapperTest {
         }
 
         @Test
+        fun `maps linkedSettlementId correctly when present`() {
+            val documentWithLinkedSettlement = fullDocument.copy(linkedSettlementId = "settlement-303")
+
+            val contribution = documentWithLinkedSettlement.toDomain()
+
+            assertEquals("settlement-303", contribution.linkedSettlementId)
+        }
+
+        @Test
         fun `maps null linkedExpenseId correctly`() {
             val contribution = fullDocument.toDomain()
 
             assertNull(contribution.linkedExpenseId)
+            assertNull(contribution.linkedSettlementId)
         }
 
         @Test

@@ -25,4 +25,29 @@
     <string name="your_position_cash_breakdown_personal_scope">Personal cash</string>
     <string name="your_position_cash_breakdown_unknown_subunit">Subunit cash</string>
     <string name="your_position_cash_breakdown_view_cd">View cash breakdown</string>
+
+    <!-- Settlement Consensus Section -->
+    <string name="your_position_settlement_consensus_title">Settlement consensus</string>
+    <string name="your_position_settlement_empty_title">No active settlements</string>
+    <string name="your_position_settlement_empty_description">You have no pending settlements to resolve in this group.</string>
+    <string name="your_position_settlement_you_owe">You owe %s</string>
+    <string name="your_position_settlement_owes_you">%s owes you</string>
+    <string name="your_position_settlement_mark_paid">Mark as paid</string>
+    <string name="your_position_settlement_confirm_receipt">Confirm receipt</string>
+    <string name="your_position_settlement_resolve_dispute">Resolve dispute</string>
+    <string name="your_position_settlement_dispute">Dispute</string>
+    <string name="your_position_settlement_status_suggested">Suggested</string>
+    <string name="your_position_settlement_status_confirmed_payer">Confirmed by payer</string>
+    <string name="your_position_settlement_status_disputed">Disputed</string>
+    <string name="your_position_settlement_pocket_pocket">Pocket</string>
+    <string name="your_position_settlement_pocket_cash">Cash</string>
+    <string name="your_position_settlement_pocket_net">Net</string>
+    <string name="your_position_dispute_dialog_title">Dispute settlement</string>
+    <string name="your_position_dispute_dialog_hint">Describe the reason for the dispute…</string>
+    <string name="your_position_dispute_dialog_submit">Submit dispute</string>
+    <string name="your_position_dispute_dialog_cancel">Cancel</string>
+    <string name="your_position_confirm_success">Settlement confirmed successfully</string>
+    <string name="your_position_confirm_error">Failed to confirm settlement. Try again.</string>
+    <string name="your_position_dispute_success">Settlement disputed successfully</string>
+    <string name="your_position_dispute_error">Failed to dispute settlement. Try again.</string>
 </resources>

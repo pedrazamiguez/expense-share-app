@@ -16,14 +16,19 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.splittrip.features.settlement.R
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.PersonalPositionUiModel
+import es.pedrazamiguez.splittrip.features.settlement.presentation.model.SettlementConsensusItemUiModel
+import kotlinx.collections.immutable.ImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun YourPositionContent(
     personalPosition: PersonalPositionUiModel,
     isCashBreakdownVisible: Boolean,
+    settlementConsensus: ImmutableList<SettlementConsensusItemUiModel>,
     onShowCashBreakdown: () -> Unit,
     onDismissCashBreakdown: () -> Unit,
+    onConfirmSettlement: (String) -> Unit,
+    onDisputeSettlement: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val bottomPadding = LocalBottomPadding.current
@@ -63,6 +68,14 @@ internal fun YourPositionContent(
                     color = MaterialTheme.colorScheme.error
                 )
             }
+        }
+
+        item(key = "settlement_consensus") {
+            SettlementConsensusSection(
+                settlements = settlementConsensus,
+                onConfirm = onConfirmSettlement,
+                onDispute = onDisputeSettlement
+            )
         }
     }
 

@@ -135,7 +135,10 @@ private fun LazyListScope.activitySection(
         when (item) {
             is ActivityItemUiModel.ContributionItem -> ContributionHistoryItem(
                 contribution = item.contribution,
-                onLongClick = if (!item.contribution.isLinkedContribution && !isGroupArchived) {
+                onLongClick = if (!item.contribution.isLinkedContribution &&
+                    !item.contribution.isSettlementContribution &&
+                    !isGroupArchived
+                ) {
                     { onEvent(BalancesUiEvent.DeleteContributionRequested(item.contribution)) }
                 } else {
                     null
