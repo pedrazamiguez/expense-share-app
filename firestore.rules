@@ -129,6 +129,13 @@ service cloud.firestore {
         allow create, update: if isAuthenticated() && isGroupActiveOrNew(groupId);
         allow delete: if isAuthenticated();
       }
+
+      // Nudges subcollection
+      match /nudges/{nudgeId} {
+        allow read: if isAuthenticated();
+        allow create, update: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow delete: if isAuthenticated();
+      }
     }
   }
 }
