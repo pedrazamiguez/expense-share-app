@@ -92,7 +92,7 @@ class YourPositionViewModelTest {
         coEvery { getSettlementSuggestionsUseCase.persistForGroup(any(), any()) } returns emptyList()
         coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
         every { getNudgeTimestampsFlowUseCase() } returns flowOf(emptyMap())
-        every { settlementConsensusUiMapper.toConsensusItems(any(), any(), any(), any(), any(), any()) } returns
+        every { settlementConsensusUiMapper.toConsensusItems(any(), any(), any(), any(), any(), any(), any()) } returns
             persistentListOf()
 
         mapper = YourPositionUiMapper(localeProvider, resourceProvider)

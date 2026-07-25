@@ -1,12 +1,12 @@
 package es.pedrazamiguez.splittrip.data.di
 
-import com.google.firebase.firestore.FirebaseFirestore
 import es.pedrazamiguez.splittrip.data.BuildConfig
 import es.pedrazamiguez.splittrip.data.local.database.AppDatabase
 import es.pedrazamiguez.splittrip.data.local.datastore.SettlementNudgePreferences
 import es.pedrazamiguez.splittrip.data.local.service.LocalDatabaseCleanerServiceImpl
 import es.pedrazamiguez.splittrip.data.repository.impl.CurrencyRepositoryImpl
 import es.pedrazamiguez.splittrip.data.repository.impl.SettlementNudgeRepositoryImpl
+import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudSettlementDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalCurrencyDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalSettlementDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.remote.RemoteCurrencyDataSource
@@ -38,7 +38,7 @@ val dataCommonModule = module {
     single<SettlementNudgeRepository> {
         SettlementNudgeRepositoryImpl(
             settlementNudgePreferences = get<SettlementNudgePreferences>(),
-            firestore = get<FirebaseFirestore>(),
+            cloudSettlementDataSource = get<CloudSettlementDataSource>(),
             localSettlementDataSource = get<LocalSettlementDataSource>(),
             authenticationService = get<AuthenticationService>()
         )

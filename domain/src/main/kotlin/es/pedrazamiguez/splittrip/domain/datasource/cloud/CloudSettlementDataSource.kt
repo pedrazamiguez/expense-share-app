@@ -8,4 +8,5 @@ interface CloudSettlementDataSource {
     suspend fun upsertSettlement(groupId: String, record: SettlementRecord)
     suspend fun deleteSettlement(groupId: String, id: String)
     suspend fun verifySettlementOnServer(groupId: String, id: String): Boolean
+    suspend fun sendDebtorNudge(groupId: String, settlementId: String, fromUserId: String, toUserId: String)
 }
