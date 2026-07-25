@@ -13,6 +13,7 @@ private object DefaultAppConfigService : AppConfigService {
     override val maxMembersPerGroup: StateFlow<Int> = MutableStateFlow(20)
     override val extractedDateMaxFutureDays: StateFlow<Int> = MutableStateFlow(30)
     override val supportEmailAddress: StateFlow<String> = MutableStateFlow("support@splittrip.com")
+    override val settlementNudgeRateLimitHours: StateFlow<Long> = MutableStateFlow(24L)
 }
 
 /**

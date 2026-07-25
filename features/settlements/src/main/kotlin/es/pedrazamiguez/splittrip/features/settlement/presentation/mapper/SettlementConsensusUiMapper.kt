@@ -21,7 +21,10 @@ class SettlementConsensusUiMapper(
         settlements: List<SettlementRecord>,
         currentUserId: String,
         groupCreatorId: String,
-        memberProfiles: Map<String, User>
+        memberProfiles: Map<String, User>,
+        nudgeTimestamps: Map<String, Long> = emptyMap(),
+        rateLimitHours: Long = 24L,
+        currentTimeMillis: Long = System.currentTimeMillis()
     ): ImmutableList<SettlementConsensusItemUiModel> {
         return settlements
             .filter { record ->
@@ -43,7 +46,10 @@ class SettlementConsensusUiMapper(
                     record = record,
                     currentUserId = currentUserId,
                     groupCreatorId = groupCreatorId,
-                    memberProfiles = memberProfiles
+                    memberProfiles = memberProfiles,
+                    nudgeTimestamps = nudgeTimestamps,
+                    rateLimitHours = rateLimitHours,
+                    currentTimeMillis = currentTimeMillis
                 )
             }
             .toImmutableList()
@@ -53,7 +59,10 @@ class SettlementConsensusUiMapper(
         record: SettlementRecord,
         currentUserId: String,
         groupCreatorId: String,
-        memberProfiles: Map<String, User>
+        memberProfiles: Map<String, User>,
+        nudgeTimestamps: Map<String, Long>,
+        rateLimitHours: Long,
+        currentTimeMillis: Long
     ): SettlementConsensusItemUiModel {
         val isCurrentUserPayer = record.settlement.fromUserId == currentUserId
         val counterpartyId = if (isCurrentUserPayer) record.settlement.toUserId else record.settlement.fromUserId
@@ -79,6 +88,17 @@ class SettlementConsensusUiMapper(
             isGroupCreator = currentUserId == groupCreatorId
         )
 
+        val isCreditor = record.settlement.toUserId == currentUserId
+        val canNudge = isCreditor
+        val lastNudgeTs = nudgeTimestamps[record.id] ?: 0L
+        val rateLimitMillis = rateLimitHours * MILLIS_PER_HOUR
+        val isNudgeRateLimited = lastNudgeTs > 0 && (currentTimeMillis - lastNudgeTs) < rateLimitMillis
+        val nudgeButtonLabel = if (isNudgeRateLimited) {
+            resourceProvider.getString(R.string.your_position_settlement_reminded)
+        } else {
+            resourceProvider.getString(R.string.your_position_settlement_remind)
+        }
+
         return SettlementConsensusItemUiModel(
             settlementId = record.id,
             counterpartyName = counterpartyName,
@@ -93,7 +113,10 @@ class SettlementConsensusUiMapper(
             confirmLabel = actions.confirmLabel,
             canDispute = actions.canDispute,
             disputeReason = record.disputeReason,
-            status = record.status
+            status = record.status,
+            canNudge = canNudge,
+            isNudgeRateLimited = isNudgeRateLimited,
+            nudgeButtonLabel = nudgeButtonLabel
         )
     }
 
@@ -160,6 +183,7 @@ class SettlementConsensusUiMapper(
     private data class ActionCapabilities(val canConfirm: Boolean, val confirmLabel: String, val canDispute: Boolean)
 
     companion object {
+        private const val MILLIS_PER_HOUR = 3_600_000L
         private val ACTIVE_STATUSES = setOf(
             SettlementStatus.SUGGESTED,
             SettlementStatus.CONFIRMED_BY_PAYER,

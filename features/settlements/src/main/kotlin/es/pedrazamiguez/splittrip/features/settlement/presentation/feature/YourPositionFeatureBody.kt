@@ -19,10 +19,7 @@ internal fun YourPositionFeatureBody(
         personalPosition = personalPosition,
         isCashBreakdownVisible = uiState.isCashBreakdownVisible,
         settlementConsensus = uiState.settlementConsensus,
-        onShowCashBreakdown = { onEvent(YourPositionUiEvent.ShowCashBreakdown) },
-        onDismissCashBreakdown = { onEvent(YourPositionUiEvent.DismissCashBreakdown) },
-        onConfirmSettlement = { id -> onEvent(YourPositionUiEvent.ConfirmSettlement(id)) },
-        onDisputeSettlement = { id -> onEvent(YourPositionUiEvent.DisputeSettlement(id)) },
+        onEvent = onEvent,
         modifier = modifier.fillMaxSize()
     )
 

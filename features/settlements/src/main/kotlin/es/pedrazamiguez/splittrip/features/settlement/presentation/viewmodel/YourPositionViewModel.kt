@@ -65,19 +65,35 @@ class YourPositionViewModel(
             val currentUserId = authenticationService.currentUserId() ?: ""
             var lastTransactionSignature: String? = null
 
-            val baseStateFlow = combine(
+            val transactionsFlow = combine(
                 useCases.getGroupContributionsFlowUseCase(groupId),
                 useCases.getCashWithdrawalsFlowUseCase(groupId),
                 useCases.getGroupExpensesFlowUseCase(groupId),
                 useCases.getGroupSubunitsFlowUseCase(groupId),
                 useCases.getGroupSettlementsFlowUseCase(groupId)
             ) { contributions, withdrawals, expenses, subunits, settlements ->
-                DataSnapshot(
+                TransactionData(
                     contributions = contributions,
                     withdrawals = withdrawals,
                     expenses = expenses,
                     subunits = subunits,
                     settlements = settlements
+                )
+            }
+
+            val baseStateFlow = combine(
+                transactionsFlow,
+                useCases.getNudgeTimestampsFlowUseCase(),
+                appConfigService.settlementNudgeRateLimitHours
+            ) { txData, nudgeTimestamps, rateLimitHours ->
+                DataSnapshot(
+                    contributions = txData.contributions,
+                    withdrawals = txData.withdrawals,
+                    expenses = txData.expenses,
+                    subunits = txData.subunits,
+                    settlements = txData.settlements,
+                    nudgeTimestamps = nudgeTimestamps,
+                    rateLimitHours = rateLimitHours
                 )
             }
                 .onEach { snapshot ->
@@ -140,7 +156,9 @@ class YourPositionViewModel(
                         settlements = snapshot.settlements,
                         currentUserId = currentUserId,
                         groupCreatorId = group?.createdBy ?: "",
-                        memberProfiles = memberProfiles
+                        memberProfiles = memberProfiles,
+                        nudgeTimestamps = snapshot.nudgeTimestamps,
+                        rateLimitHours = snapshot.rateLimitHours
                     )
 
                     YourPositionUiState(
@@ -203,6 +221,7 @@ class YourPositionViewModel(
             }
             YourPositionUiEvent.DisputeSubmitted -> handleSubmitDispute()
             YourPositionUiEvent.DisputeCancelled -> handleCancelDispute()
+            is YourPositionUiEvent.NudgeDebtor -> handleNudgeDebtor(event.settlementId)
         }
     }
 
@@ -222,6 +241,29 @@ class YourPositionViewModel(
                     _actions.send(
                         YourPositionUiAction.ShowError(
                             UiText.StringResource(R.string.your_position_confirm_error)
+                        )
+                    )
+                }
+            )
+        }
+    }
+
+    private fun handleNudgeDebtor(settlementId: String) {
+        val groupId = _selectedGroupId.value ?: return
+        viewModelScope.launch {
+            useCases.nudgeDebtorUseCase(groupId, settlementId).fold(
+                onSuccess = {
+                    _actions.send(
+                        YourPositionUiAction.ShowSuccess(
+                            UiText.StringResource(R.string.your_position_nudge_success)
+                        )
+                    )
+                },
+                onFailure = { e ->
+                    Timber.w(e, "Failed to send nudge for settlement $settlementId")
+                    _actions.send(
+                        YourPositionUiAction.ShowError(
+                            UiText.StringResource(R.string.your_position_nudge_error)
                         )
                     )
                 }
@@ -285,11 +327,21 @@ class YourPositionViewModel(
         val disputeReasonInput: String = ""
     )
 
-    private data class DataSnapshot(
+    private data class TransactionData(
         val contributions: List<Contribution>,
         val withdrawals: List<CashWithdrawal>,
         val expenses: List<Expense>,
         val subunits: List<Subunit>,
         val settlements: List<SettlementRecord>
+    )
+
+    private data class DataSnapshot(
+        val contributions: List<Contribution>,
+        val withdrawals: List<CashWithdrawal>,
+        val expenses: List<Expense>,
+        val subunits: List<Subunit>,
+        val settlements: List<SettlementRecord>,
+        val nudgeTimestamps: Map<String, Long>,
+        val rateLimitHours: Long
     )
 }

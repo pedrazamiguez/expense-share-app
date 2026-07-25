@@ -20,6 +20,7 @@ internal fun SettlementConsensusCard(
     item: SettlementConsensusItemUiModel,
     onConfirm: () -> Unit,
     onDispute: () -> Unit,
+    onNudge: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     SectionCard(modifier = modifier.fillMaxWidth()) {
@@ -64,11 +65,12 @@ internal fun SettlementConsensusCard(
             )
         }
 
-        if (item.canConfirm || item.canDispute) {
+        if (item.canConfirm || item.canDispute || item.canNudge) {
             ConsensusCardActions(
                 item = item,
                 onConfirm = onConfirm,
-                onDispute = onDispute
+                onDispute = onDispute,
+                onNudge = onNudge
             )
         }
     }

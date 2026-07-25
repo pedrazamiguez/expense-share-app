@@ -49,4 +49,8 @@
     <string name="your_position_confirm_error">No çe pudo confirmâh la liquidaçión. Inténtalo de nuebo.</string>
     <string name="your_position_dispute_success">Liquidaçión dîpputá corrêttamente</string>
     <string name="your_position_dispute_error">No çe pudo dîpputâh la liquidaçión. Inténtalo de nuebo.</string>
+    <string name="your_position_settlement_remind">Recordâh</string>
+    <string name="your_position_settlement_reminded">Recordao</string>
+    <string name="your_position_nudge_success">Recordatorio embiao corrêttamente</string>
+    <string name="your_position_nudge_error">No çe pudo embiâh el recordatorio. Inténtalo de nuebo.</string>
 </resources>

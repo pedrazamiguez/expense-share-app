@@ -18,25 +18,56 @@ internal fun ConsensusCardActions(
     item: SettlementConsensusItemUiModel,
     onConfirm: () -> Unit,
     onDispute: () -> Unit,
+    onNudge: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val disputeLabel = stringResource(R.string.your_position_settlement_dispute)
+    val actions = buildList {
+        if (item.canConfirm) {
+            add(ConsensusActionData(label = item.confirmLabel, isPrimary = true, isEnabled = true, onClick = onConfirm))
+        }
+        if (item.canDispute) {
+            add(ConsensusActionData(label = disputeLabel, isPrimary = false, isEnabled = true, onClick = onDispute))
+        }
+        if (item.canNudge) {
+            add(
+                ConsensusActionData(
+                    label = item.nudgeButtonLabel,
+                    isPrimary = false,
+                    isEnabled = !item.isNudgeRateLimited,
+                    onClick = onNudge
+                )
+            )
+        }
+    }
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
     ) {
-        if (item.canConfirm) {
-            GradientButton(
-                text = item.confirmLabel,
-                onClick = onConfirm,
-                modifier = if (item.canDispute) Modifier.weight(1f) else Modifier.fillMaxWidth()
-            )
-        }
-        if (item.canDispute) {
-            SecondaryButton(
-                text = stringResource(R.string.your_position_settlement_dispute),
-                onClick = onDispute,
-                modifier = if (item.canConfirm) Modifier.weight(1f) else Modifier.fillMaxWidth()
-            )
+        val actionModifier = if (actions.size > 1) Modifier.weight(1f) else Modifier.fillMaxWidth()
+        actions.forEach { action ->
+            if (action.isPrimary) {
+                GradientButton(
+                    text = action.label,
+                    onClick = action.onClick,
+                    modifier = actionModifier
+                )
+            } else {
+                SecondaryButton(
+                    text = action.label,
+                    onClick = action.onClick,
+                    enabled = action.isEnabled,
+                    modifier = actionModifier
+                )
+            }
         }
     }
 }
+
+private data class ConsensusActionData(
+    val label: String,
+    val isPrimary: Boolean,
+    val isEnabled: Boolean,
+    val onClick: () -> Unit
+)
