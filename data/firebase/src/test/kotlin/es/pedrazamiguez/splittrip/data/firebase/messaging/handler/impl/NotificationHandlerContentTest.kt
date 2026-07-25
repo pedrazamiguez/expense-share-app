@@ -228,6 +228,18 @@ class NotificationHandlerContentTest {
             assertNotNull(content.body)
             assertNotNull(content.title)
         }
+
+        @Test
+        fun `SettlementRequestHandler uses localized fallback name when payerName is missing`() {
+            val handler = SettlementRequestHandler(context, localeProvider)
+            val dataWithoutName = baseData - "memberName" - "payerName" - "actorName"
+
+            handler.handle(dataWithoutName)
+
+            verify {
+                context.getString(es.pedrazamiguez.splittrip.data.firebase.R.string.notification_fallback_actor_name)
+            }
+        }
     }
 
     @Nested
