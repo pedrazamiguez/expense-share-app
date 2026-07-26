@@ -185,7 +185,9 @@ object JacocoExclusions {
         "**/features/authentication/presentation/model/AuthenticationUiEvent*.*",
         // ── Repository & datasource interfaces ───────────────────────────────────
         "**/domain/repository/CurrencyRepository*.*",
+        "**/domain/repository/SettlementNudgeRepository*.*",
         "**/domain/datasource/cloud/CloudUserDataSource*.*",
+        "**/domain/datasource/cloud/CloudSettlementDataSource*.*",
         // ── UseCase implementations returning inline class Result ────────────────
         // JaCoCo instruments compiler-generated Result boxing/unboxing boilerplate
         // as uncovered bytecode. The underlying code is 100% covered.

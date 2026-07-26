@@ -6,5 +6,10 @@ interface SettlementNudgeRepository {
     fun getNudgeTimestampsFlow(): Flow<Map<String, Long>>
     suspend fun getLastNudgeTimestamp(settlementId: String): Long
     suspend fun recordNudgeTimestamp(settlementId: String, timestamp: Long)
-    suspend fun sendDebtorNudge(groupId: String, settlementId: String): Result<Unit>
+    suspend fun sendDebtorNudge(
+        groupId: String,
+        settlementId: String,
+        amountCents: Long? = null,
+        currency: String? = null
+    ): Result<Unit>
 }

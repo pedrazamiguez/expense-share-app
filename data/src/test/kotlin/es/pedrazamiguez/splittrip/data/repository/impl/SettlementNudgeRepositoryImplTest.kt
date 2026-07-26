@@ -109,7 +109,9 @@ class SettlementNudgeRepositoryImplTest {
                 groupId = "group-1",
                 settlementId = "s1",
                 fromUserId = "creditor-id",
-                toUserId = "debtor-id"
+                toUserId = "debtor-id",
+                amountCents = 3700L,
+                currency = "EUR"
             )
         } returns Unit
 
@@ -121,7 +123,9 @@ class SettlementNudgeRepositoryImplTest {
                 groupId = "group-1",
                 settlementId = "s1",
                 fromUserId = "creditor-id",
-                toUserId = "debtor-id"
+                toUserId = "debtor-id",
+                amountCents = 3700L,
+                currency = "EUR"
             )
         }
     }

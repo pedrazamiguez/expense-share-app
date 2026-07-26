@@ -23,7 +23,12 @@ class SettlementNudgeRepositoryImpl(
     override suspend fun recordNudgeTimestamp(settlementId: String, timestamp: Long) =
         settlementNudgePreferences.recordNudgeTimestamp(settlementId, timestamp)
 
-    override suspend fun sendDebtorNudge(groupId: String, settlementId: String): Result<Unit> = runCatching {
+    override suspend fun sendDebtorNudge(
+        groupId: String,
+        settlementId: String,
+        amountCents: Long?,
+        currency: String?
+    ): Result<Unit> = runCatching {
         val currentUserId = checkNotNull(authenticationService.currentUserId()) {
             "User not authenticated"
         }
@@ -32,11 +37,16 @@ class SettlementNudgeRepositoryImpl(
             "Settlement not found: $settlementId"
         }
 
+        val resolvedAmount = amountCents ?: settlementRecord.settlement.amount
+        val resolvedCurrency = currency ?: settlementRecord.settlement.currency
+
         cloudSettlementDataSource.sendDebtorNudge(
             groupId = groupId,
             settlementId = settlementId,
             fromUserId = currentUserId,
-            toUserId = settlementRecord.settlement.fromUserId
+            toUserId = settlementRecord.settlement.fromUserId,
+            amountCents = resolvedAmount,
+            currency = resolvedCurrency
         )
     }
 }

@@ -102,12 +102,25 @@ export interface DeviceDoc {
   model: string;
 }
 
+export interface SettlementDoc {
+  id: string;
+  groupId: string;
+  fromUserId: string;
+  toUserId: string;
+  amountCents?: string | number;
+  currency?: string;
+  status?: string;
+}
+
 export interface NudgeDoc {
   id: string;
   settlementId: string;
   groupId: string;
   fromUserId: string;
   toUserId: string;
+  amountCents?: string | number;
+  currencyCode?: string;
+  currency?: string;
   createdAt: any;
 }
 

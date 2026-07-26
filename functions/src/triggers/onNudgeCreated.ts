@@ -18,7 +18,7 @@ import {
 } from "../types";
 import { getUserDeviceTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
-import { getGroupData, getActorDisplayName } from "../services/firestore.service";
+import { getGroupData, getActorDisplayName, getSettlementData } from "../services/firestore.service";
 import { buildDeepLink } from "../utils/format";
 
 export const onNudgeCreated = onDocumentCreated(
@@ -39,9 +39,10 @@ export const onNudgeCreated = onDocumentCreated(
       return;
     }
 
-    const [groupData, creditorName] = await Promise.all([
+    const [groupData, creditorName, settlementData] = await Promise.all([
       getGroupData(groupId),
       getActorDisplayName(nudge.fromUserId),
+      getSettlementData(groupId, nudge.settlementId),
     ]);
 
     // Suppress notifications during cascading group deletion (or missing group)
@@ -64,6 +65,19 @@ export const onNudgeCreated = onDocumentCreated(
       return;
     }
 
+    const rawAmountCents = nudge.amountCents ?? settlementData?.amountCents;
+    const amountCents = rawAmountCents !== undefined && rawAmountCents !== null ? String(rawAmountCents) : undefined;
+    const currencyCode = nudge.currencyCode || nudge.currency || settlementData?.currency || groupData.currency;
+
+    let formattedAmount = "";
+    if (amountCents && currencyCode) {
+      const numericAmount = Number(amountCents);
+      if (!isNaN(numericAmount)) {
+        const units = (numericAmount / 100).toFixed(2);
+        formattedAmount = `${units} ${currencyCode}`;
+      }
+    }
+
     const payload: FcmDataPayload = {
       type: NotificationType.SETTLEMENT_REQUEST,
       groupId,
@@ -73,13 +87,15 @@ export const onNudgeCreated = onDocumentCreated(
       entityId: nudge.settlementId,
       actorName: creditorName,
       payerName: creditorName,
+      ...(amountCents && { amountCents }),
+      ...(currencyCode && { currencyCode }),
     };
 
     const display: NotificationDisplay = {
       title: groupData.name,
       titleLocKey: "notification_settlement_request_title",
       bodyLocKey: "notification_settlement_request_body",
-      bodyLocArgs: [creditorName],
+      bodyLocArgs: [creditorName, formattedAmount],
       channelId: NotificationChannelId.FINANCIAL,
     };
 

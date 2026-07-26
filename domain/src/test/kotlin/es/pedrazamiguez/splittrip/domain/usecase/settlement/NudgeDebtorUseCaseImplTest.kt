@@ -64,7 +64,7 @@ class NudgeDebtorUseCaseImplTest {
         val result = useCase("g1", "s1")
 
         assertTrue(result.isFailure)
-        coVerify(exactly = 0) { settlementNudgeRepository.sendDebtorNudge(any(), any()) }
+        coVerify(exactly = 0) { settlementNudgeRepository.sendDebtorNudge(any(), any(), any(), any()) }
     }
 
     @Test
@@ -75,7 +75,7 @@ class NudgeDebtorUseCaseImplTest {
         val result = useCase("g1", "s1")
 
         assertTrue(result.isFailure)
-        coVerify(exactly = 0) { settlementNudgeRepository.sendDebtorNudge(any(), any()) }
+        coVerify(exactly = 0) { settlementNudgeRepository.sendDebtorNudge(any(), any(), any(), any()) }
     }
 
     @Test
@@ -87,7 +87,7 @@ class NudgeDebtorUseCaseImplTest {
         val result = useCase("g1", "s1")
 
         assertTrue(result.isFailure)
-        coVerify(exactly = 0) { settlementNudgeRepository.sendDebtorNudge(any(), any()) }
+        coVerify(exactly = 0) { settlementNudgeRepository.sendDebtorNudge(any(), any(), any(), any()) }
     }
 
     @Test
@@ -101,7 +101,7 @@ class NudgeDebtorUseCaseImplTest {
         val result = useCase("g1", "s1")
 
         assertTrue(result.isFailure)
-        coVerify(exactly = 0) { settlementNudgeRepository.sendDebtorNudge(any(), any()) }
+        coVerify(exactly = 0) { settlementNudgeRepository.sendDebtorNudge(any(), any(), any(), any()) }
     }
 
     @Test
@@ -110,13 +110,13 @@ class NudgeDebtorUseCaseImplTest {
         val record = createRecord("s1", fromUserId = "debtor1", toUserId = "creditor1")
         coEvery { settlementRepository.getSettlementById("s1") } returns record
         coEvery { settlementNudgeRepository.getLastNudgeTimestamp("s1") } returns 0L
-        coEvery { settlementNudgeRepository.sendDebtorNudge("g1", "s1") } returns Result.success(Unit)
+        coEvery { settlementNudgeRepository.sendDebtorNudge("g1", "s1", 1000L, "EUR") } returns Result.success(Unit)
         coEvery { settlementNudgeRepository.recordNudgeTimestamp(eq("s1"), any()) } returns Unit
 
         val result = useCase("g1", "s1")
 
         assertFalse(result.isFailure)
-        coVerify(exactly = 1) { settlementNudgeRepository.sendDebtorNudge("g1", "s1") }
+        coVerify(exactly = 1) { settlementNudgeRepository.sendDebtorNudge("g1", "s1", 1000L, "EUR") }
         coVerify(exactly = 1) { settlementNudgeRepository.recordNudgeTimestamp(eq("s1"), any()) }
     }
 }

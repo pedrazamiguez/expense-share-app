@@ -33,7 +33,12 @@ class NudgeDebtorUseCaseImpl(
             return Result.failure(IllegalStateException("Nudge rate limit exceeded"))
         }
 
-        val result = settlementNudgeRepository.sendDebtorNudge(groupId, settlementId)
+        val result = settlementNudgeRepository.sendDebtorNudge(
+            groupId = groupId,
+            settlementId = settlementId,
+            amountCents = settlementRecord.settlement.amount,
+            currency = settlementRecord.settlement.currency
+        )
         if (result.isSuccess) {
             settlementNudgeRepository.recordNudgeTimestamp(settlementId, currentTime)
         }

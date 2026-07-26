@@ -76,17 +76,22 @@ class FirestoreSettlementDataSourceImpl(
         groupId: String,
         settlementId: String,
         fromUserId: String,
-        toUserId: String
+        toUserId: String,
+        amountCents: Long?,
+        currency: String?
     ) {
         val nudgeId = UUID.randomUUID().toString()
-        val nudgeDocument = hashMapOf(
+        val nudgeDocument = hashMapOf<String, Any?>(
             "id" to nudgeId,
             "settlementId" to settlementId,
             "groupId" to groupId,
             "fromUserId" to fromUserId,
             "toUserId" to toUserId,
             "createdAt" to Timestamp.now()
-        )
+        ).apply {
+            amountCents?.let { put("amountCents", it.toString()) }
+            currency?.let { put("currency", it) }
+        }
 
         firestore
             .collection(GroupDocument.COLLECTION_PATH)

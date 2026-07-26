@@ -230,6 +230,21 @@ class NotificationHandlerContentTest {
         }
 
         @Test
+        fun `SettlementRequestHandler uses payerName and formatted amount in notification body`() {
+            val handler = SettlementRequestHandler(context, localeProvider)
+
+            handler.handle(baseData)
+
+            verify {
+                context.getString(
+                    es.pedrazamiguez.splittrip.data.firebase.R.string.notification_settlement_request_body,
+                    "John",
+                    "€50.00"
+                )
+            }
+        }
+
+        @Test
         fun `SettlementRequestHandler uses localized fallback name when payerName is missing`() {
             val handler = SettlementRequestHandler(context, localeProvider)
             val dataWithoutName = baseData - "memberName" - "payerName" - "actorName"
