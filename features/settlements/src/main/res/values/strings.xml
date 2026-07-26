@@ -50,4 +50,8 @@
     <string name="your_position_confirm_error">Failed to confirm settlement. Try again.</string>
     <string name="your_position_dispute_success">Settlement disputed successfully</string>
     <string name="your_position_dispute_error">Failed to dispute settlement. Try again.</string>
+    <string name="your_position_settlement_remind">Remind</string>
+    <string name="your_position_settlement_reminded">Reminded</string>
+    <string name="your_position_nudge_success">Reminder sent successfully</string>
+    <string name="your_position_nudge_error">Could not send reminder. Try again.</string>
 </resources>

@@ -9,4 +9,5 @@ sealed class YourPositionUiEvent {
     data class DisputeReasonChanged(val reason: String) : YourPositionUiEvent()
     data object DisputeSubmitted : YourPositionUiEvent()
     data object DisputeCancelled : YourPositionUiEvent()
+    data class NudgeDebtor(val settlementId: String) : YourPositionUiEvent()
 }

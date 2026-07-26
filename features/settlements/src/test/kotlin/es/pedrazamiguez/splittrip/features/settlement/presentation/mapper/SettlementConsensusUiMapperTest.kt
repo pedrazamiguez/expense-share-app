@@ -48,6 +48,8 @@ class SettlementConsensusUiMapperTest {
         every { resourceProvider.getString(R.string.your_position_settlement_pocket_pocket) } returns "Pocket"
         every { resourceProvider.getString(R.string.your_position_settlement_pocket_cash) } returns "Cash"
         every { resourceProvider.getString(R.string.your_position_settlement_pocket_net) } returns "Net"
+        every { resourceProvider.getString(R.string.your_position_settlement_remind) } returns "Remind"
+        every { resourceProvider.getString(R.string.your_position_settlement_reminded) } returns "Reminded"
 
         mapper = SettlementConsensusUiMapper(localeProvider, resourceProvider)
     }
@@ -236,5 +238,63 @@ class SettlementConsensusUiMapperTest {
         val result = mapper.toConsensusItems(listOf(record), "user1", "creator1", profiles)
 
         assertEquals("Bob owes you", result[0].directionLabel)
+    }
+
+    @Test
+    fun `toConsensusItems_whenUserIsCreditorAndNotRateLimited_setsCanNudgeTrueAndIsRateLimitedFalse`() {
+        val record = createRecord("s1", "debtor1", "creditor1")
+        val now = 100_000_000L
+
+        val result = mapper.toConsensusItems(
+            settlements = listOf(record),
+            currentUserId = "creditor1",
+            groupCreatorId = "creator1",
+            memberProfiles = emptyMap(),
+            nudgeTimestamps = emptyMap(),
+            rateLimitHours = 24L,
+            currentTimeMillis = now
+        )
+
+        val item = result[0]
+        assertTrue(item.canNudge)
+        assertFalse(item.isNudgeRateLimited)
+        assertEquals("Remind", item.nudgeButtonLabel)
+    }
+
+    @Test
+    fun `toConsensusItems_whenUserIsCreditorAndRateLimited_setsCanNudgeTrueAndIsRateLimitedTrue`() {
+        val record = createRecord("s1", "debtor1", "creditor1")
+        val now = 100_000_000L
+        val lastNudgeTs = now - (12 * 3600 * 1000L) // 12 hours ago (within 24h)
+
+        val result = mapper.toConsensusItems(
+            settlements = listOf(record),
+            currentUserId = "creditor1",
+            groupCreatorId = "creator1",
+            memberProfiles = emptyMap(),
+            nudgeTimestamps = mapOf("s1" to lastNudgeTs),
+            rateLimitHours = 24L,
+            currentTimeMillis = now
+        )
+
+        val item = result[0]
+        assertTrue(item.canNudge)
+        assertTrue(item.isNudgeRateLimited)
+        assertEquals("Reminded", item.nudgeButtonLabel)
+    }
+
+    @Test
+    fun `toConsensusItems_whenUserIsDebtor_setsCanNudgeFalse`() {
+        val record = createRecord("s1", "debtor1", "creditor1")
+
+        val result = mapper.toConsensusItems(
+            settlements = listOf(record),
+            currentUserId = "debtor1",
+            groupCreatorId = "creator1",
+            memberProfiles = emptyMap()
+        )
+
+        val item = result[0]
+        assertFalse(item.canNudge)
     }
 }

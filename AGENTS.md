@@ -45,6 +45,7 @@ See the standalone rule files in `.agents/rules/` for detailed constraints:
 - `.agents/rules/enum-centralization.md`
 - `.agents/rules/single-composable-per-file.md`
 - `.agents/rules/feature-screen-pattern.md`
+- `.agents/rules/no-fqn-imports.md`
 
 ## Navigation
 

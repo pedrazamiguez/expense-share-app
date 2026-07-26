@@ -16,7 +16,10 @@ data class SettlementConsensusItemUiModel(
     val confirmLabel: String,
     val canDispute: Boolean,
     val disputeReason: String? = null,
-    val status: SettlementStatus
+    val status: SettlementStatus,
+    val canNudge: Boolean = false,
+    val isNudgeRateLimited: Boolean = false,
+    val nudgeButtonLabel: String = ""
 )
 
 enum class ConsensusChipStyle {

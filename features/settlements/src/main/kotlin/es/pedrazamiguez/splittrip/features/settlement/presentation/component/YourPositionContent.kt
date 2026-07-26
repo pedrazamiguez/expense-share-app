@@ -17,6 +17,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.remember
 import es.pedrazamiguez.splittrip.features.settlement.R
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.PersonalPositionUiModel
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.SettlementConsensusItemUiModel
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourPositionUiEvent
 import kotlinx.collections.immutable.ImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -25,10 +26,7 @@ internal fun YourPositionContent(
     personalPosition: PersonalPositionUiModel,
     isCashBreakdownVisible: Boolean,
     settlementConsensus: ImmutableList<SettlementConsensusItemUiModel>,
-    onShowCashBreakdown: () -> Unit,
-    onDismissCashBreakdown: () -> Unit,
-    onConfirmSettlement: (String) -> Unit,
-    onDisputeSettlement: (String) -> Unit,
+    onEvent: (YourPositionUiEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val bottomPadding = LocalBottomPadding.current
@@ -53,7 +51,7 @@ internal fun YourPositionContent(
         item(key = "pocket_cash_row") {
             YourPositionPocketCashRow(
                 personalPosition = personalPosition,
-                onShowCashBreakdown = onShowCashBreakdown
+                onShowCashBreakdown = { onEvent(YourPositionUiEvent.ShowCashBreakdown) }
             )
         }
 
@@ -73,8 +71,9 @@ internal fun YourPositionContent(
         item(key = "settlement_consensus") {
             SettlementConsensusSection(
                 settlements = settlementConsensus,
-                onConfirm = onConfirmSettlement,
-                onDispute = onDisputeSettlement
+                onConfirm = { id -> onEvent(YourPositionUiEvent.ConfirmSettlement(id)) },
+                onDispute = { id -> onEvent(YourPositionUiEvent.DisputeSettlement(id)) },
+                onNudge = { id -> onEvent(YourPositionUiEvent.NudgeDebtor(id)) }
             )
         }
     }
@@ -84,7 +83,7 @@ internal fun YourPositionContent(
             breakdown = personalPosition.cashBreakdown,
             formattedTotal = personalPosition.formattedCashInHand,
             formattedTotalFees = personalPosition.formattedTotalFees,
-            onDismiss = onDismissCashBreakdown
+            onDismiss = { onEvent(YourPositionUiEvent.DismissCashBreakdown) }
         )
     }
 }

@@ -15,6 +15,8 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUs
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.settlement.GetNudgeTimestampsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.settlement.NudgeDebtorUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.settlement.navigation.impl.SettlementsTabGraphContributorImpl
@@ -40,6 +42,8 @@ val settlementsUiModule = module {
         val disputeSettlementUseCase = get<DisputeSettlementUseCase>()
         val getMemberProfilesUseCase = get<GetMemberProfilesUseCase>()
         val getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>()
+        val nudgeDebtorUseCase = get<NudgeDebtorUseCase>()
+        val getNudgeTimestampsFlowUseCase = get<GetNudgeTimestampsFlowUseCase>()
         val authenticationService = get<AuthenticationService>()
         val appConfigService = get<AppConfigService>()
         val localeProvider = get<LocaleProvider>()
@@ -66,7 +70,9 @@ val settlementsUiModule = module {
             confirmSettlementUseCase = confirmSettlementUseCase,
             disputeSettlementUseCase = disputeSettlementUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
-            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase
+            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
+            nudgeDebtorUseCase = nudgeDebtorUseCase,
+            getNudgeTimestampsFlowUseCase = getNudgeTimestampsFlowUseCase
         )
 
         YourPositionViewModel(

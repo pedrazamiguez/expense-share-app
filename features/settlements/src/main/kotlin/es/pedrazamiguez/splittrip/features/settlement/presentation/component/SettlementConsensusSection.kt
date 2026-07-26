@@ -22,6 +22,7 @@ internal fun SettlementConsensusSection(
     settlements: ImmutableList<SettlementConsensusItemUiModel>,
     onConfirm: (settlementId: String) -> Unit,
     onDispute: (settlementId: String) -> Unit,
+    onNudge: (settlementId: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -45,7 +46,8 @@ internal fun SettlementConsensusSection(
                 SettlementConsensusCard(
                     item = item,
                     onConfirm = { onConfirm(item.settlementId) },
-                    onDispute = { onDispute(item.settlementId) }
+                    onDispute = { onDispute(item.settlementId) },
+                    onNudge = { onNudge(item.settlementId) }
                 )
             }
         }

@@ -15,7 +15,8 @@ class SettlementRequestHandler(
 ) : NotificationHandler {
 
     override fun handle(data: Map<String, String>): NotificationContent {
-        val payerName = data["payerName"] ?: "Someone"
+        val fallbackName = context.getString(R.string.notification_fallback_actor_name)
+        val payerName = data["payerName"] ?: data["actorName"] ?: data["memberName"] ?: fallbackName
         val amount = formatNotificationAmount(data, localeProvider)
         val groupName = data["groupName"] ?: ""
         val groupId = data["groupId"]

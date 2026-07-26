@@ -9,6 +9,8 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUs
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.settlement.GetNudgeTimestampsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.settlement.NudgeDebtorUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 
@@ -23,5 +25,7 @@ data class YourPositionUseCases(
     val confirmSettlementUseCase: ConfirmSettlementUseCase,
     val disputeSettlementUseCase: DisputeSettlementUseCase,
     val getMemberProfilesUseCase: GetMemberProfilesUseCase,
-    val getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase
+    val getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase,
+    val nudgeDebtorUseCase: NudgeDebtorUseCase,
+    val getNudgeTimestampsFlowUseCase: GetNudgeTimestampsFlowUseCase
 )

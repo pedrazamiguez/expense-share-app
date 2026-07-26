@@ -53,6 +53,7 @@ class FirebaseAppConfigRepositoryTest {
         every { firebaseRemoteConfig.getLong("max_members_per_group") } returns 15L
         every { firebaseRemoteConfig.getLong("extracted_date_max_future_days") } returns 45L
         every { firebaseRemoteConfig.getString("support_email_address") } returns "test-support@splittrip.com"
+        every { firebaseRemoteConfig.getLong("settlement_nudge_rate_limit_hours") } returns 48L
 
         // Trigger updates
         repository = FirebaseAppConfigRepository(firebaseRemoteConfig)
@@ -62,6 +63,7 @@ class FirebaseAppConfigRepositoryTest {
         assertEquals(15, repository.maxMembersPerGroup.value)
         assertEquals(45, repository.extractedDateMaxFutureDays.value)
         assertEquals("test-support@splittrip.com", repository.supportEmailAddress.value)
+        assertEquals(48L, repository.settlementNudgeRateLimitHours.value)
     }
 
     @Test
@@ -76,6 +78,7 @@ class FirebaseAppConfigRepositoryTest {
         every { firebaseRemoteConfig.getLong("max_members_per_group") } returns 25L
         every { firebaseRemoteConfig.getLong("extracted_date_max_future_days") } returns 60L
         every { firebaseRemoteConfig.getString("support_email_address") } returns "fetch-support@splittrip.com"
+        every { firebaseRemoteConfig.getLong("settlement_nudge_rate_limit_hours") } returns 12L
 
         val result = repository.fetchConfiguration()
 
@@ -85,6 +88,7 @@ class FirebaseAppConfigRepositoryTest {
         assertEquals(25, repository.maxMembersPerGroup.value)
         assertEquals(60, repository.extractedDateMaxFutureDays.value)
         assertEquals("fetch-support@splittrip.com", repository.supportEmailAddress.value)
+        assertEquals(12L, repository.settlementNudgeRateLimitHours.value)
         verify(exactly = 1) { firebaseRemoteConfig.fetchAndActivate() }
     }
 

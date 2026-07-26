@@ -15,6 +15,8 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUs
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.settlement.GetNudgeTimestampsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.settlement.NudgeDebtorUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.SettlementConsensusUiMapper
@@ -63,6 +65,8 @@ class YourPositionViewModelTest {
     private val disputeSettlementUseCase: DisputeSettlementUseCase = mockk()
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase = mockk()
     private val getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase = mockk()
+    private val nudgeDebtorUseCase: NudgeDebtorUseCase = mockk()
+    private val getNudgeTimestampsFlowUseCase: GetNudgeTimestampsFlowUseCase = mockk()
 
     private val authenticationService: AuthenticationService = mockk()
     private val appConfigService: AppConfigService = mockk()
@@ -83,10 +87,13 @@ class YourPositionViewModelTest {
         every { resourceProvider.getString(any(), *anyVararg()) } returns "Formatted Label"
         every { appConfigService.defaultCurrencyCode } returns MutableStateFlow("EUR")
         every { appConfigService.balanceComputationDebounceMs } returns MutableStateFlow(0L)
+        every { appConfigService.settlementNudgeRateLimitHours } returns MutableStateFlow(24L)
         every { authenticationService.currentUserId() } returns "user1"
         coEvery { getSettlementSuggestionsUseCase.persistForGroup(any(), any()) } returns emptyList()
         coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
-        every { settlementConsensusUiMapper.toConsensusItems(any(), any(), any(), any()) } returns persistentListOf()
+        every { getNudgeTimestampsFlowUseCase() } returns flowOf(emptyMap())
+        every { settlementConsensusUiMapper.toConsensusItems(any(), any(), any(), any(), any(), any(), any()) } returns
+            persistentListOf()
 
         mapper = YourPositionUiMapper(localeProvider, resourceProvider)
 
@@ -101,7 +108,9 @@ class YourPositionViewModelTest {
             confirmSettlementUseCase = confirmSettlementUseCase,
             disputeSettlementUseCase = disputeSettlementUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
-            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase
+            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
+            nudgeDebtorUseCase = nudgeDebtorUseCase,
+            getNudgeTimestampsFlowUseCase = getNudgeTimestampsFlowUseCase
         )
 
         viewModel = YourPositionViewModel(
@@ -308,5 +317,65 @@ class YourPositionViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 0) { disputeSettlementUseCase(any(), any(), any()) }
+    }
+
+    @Test
+    fun `onEvent_NudgeDebtor_whenUseCaseSucceeds_emitsShowSuccessAction`() = runTest(testDispatcher) {
+        val actions = mutableListOf<YourPositionUiAction>()
+        val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.actions.collect { actions.add(it) }
+        }
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
+        coEvery { getGroupByIdUseCase("group1") } returns group
+        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
+        coEvery { nudgeDebtorUseCase("group1", "s1") } returns Result.success(Unit)
+
+        viewModel.setSelectedGroup("group1")
+        advanceUntilIdle()
+
+        viewModel.onEvent(YourPositionUiEvent.NudgeDebtor("s1"))
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { nudgeDebtorUseCase("group1", "s1") }
+        assertEquals(1, actions.size)
+        assertTrue(actions[0] is YourPositionUiAction.ShowSuccess)
+        actionsJob.cancel()
+    }
+
+    @Test
+    fun `onEvent_NudgeDebtor_whenUseCaseFails_emitsShowErrorAction`() = runTest(testDispatcher) {
+        val actions = mutableListOf<YourPositionUiAction>()
+        val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.actions.collect { actions.add(it) }
+        }
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
+        coEvery { getGroupByIdUseCase("group1") } returns group
+        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
+        coEvery { nudgeDebtorUseCase("group1", "s1") } returns Result.failure(RuntimeException("Rate limit"))
+
+        viewModel.setSelectedGroup("group1")
+        advanceUntilIdle()
+
+        viewModel.onEvent(YourPositionUiEvent.NudgeDebtor("s1"))
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { nudgeDebtorUseCase("group1", "s1") }
+        assertEquals(1, actions.size)
+        assertTrue(actions[0] is YourPositionUiAction.ShowError)
+        actionsJob.cancel()
     }
 }
