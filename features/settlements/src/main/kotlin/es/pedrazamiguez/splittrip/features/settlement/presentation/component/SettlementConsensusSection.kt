@@ -23,7 +23,8 @@ internal fun SettlementConsensusSection(
     onConfirm: (settlementId: String) -> Unit,
     onDispute: (settlementId: String) -> Unit,
     onNudge: (settlementId: String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isOffline: Boolean = false
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -47,7 +48,8 @@ internal fun SettlementConsensusSection(
                     item = item,
                     onConfirm = { onConfirm(item.settlementId) },
                     onDispute = { onDispute(item.settlementId) },
-                    onNudge = { onNudge(item.settlementId) }
+                    onNudge = { onNudge(item.settlementId) },
+                    isOffline = isOffline
                 )
             }
         }

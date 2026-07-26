@@ -19,6 +19,7 @@ internal fun YourPositionFeatureBody(
         personalPosition = personalPosition,
         isCashBreakdownVisible = uiState.isCashBreakdownVisible,
         settlementConsensus = uiState.settlementConsensus,
+        isOffline = uiState.isOffline,
         onEvent = onEvent,
         modifier = modifier.fillMaxSize()
     )

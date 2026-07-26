@@ -53,4 +53,5 @@
     <string name="your_position_settlement_reminded">Recordao</string>
     <string name="your_position_nudge_success">Recordatorio embiao corrêttamente</string>
     <string name="your_position_nudge_error">No çe pudo embiâh el recordatorio. Inténtalo de nuebo.</string>
+    <string name="your_position_offline_warning">Modo çin conêççión: La poçiçión finançiera y lâ âççionê de conçenço pendientê êttán guardâh locarmente y çe çincroniçarán ar conêttarte</string>
 </resources>

@@ -91,6 +91,7 @@ object JacocoExclusions {
         "**/logging/**",
         // Context-dependent provider implementations (require Android Context)
         "**/provider/impl/**",
+        "**/network/impl/**",
         // ── WorkManager — requires Android runtime ──────────────────────────────
         "**/worker/**",
         // ── Firebase cloud infra — suspend functions use Tasks.await() which requires

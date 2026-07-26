@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
+import es.pedrazamiguez.splittrip.core.common.network.NetworkMonitor
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.Contribution
@@ -46,6 +47,7 @@ class YourPositionViewModel(
     private val yourPositionUiMapper: YourPositionUiMapper,
     private val settlementConsensusUiMapper: SettlementConsensusUiMapper,
     private val appConfigService: AppConfigService,
+    private val networkMonitor: NetworkMonitor,
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
@@ -169,8 +171,9 @@ class YourPositionViewModel(
                     )
                 }
 
-            combine(baseStateFlow, _localState) { baseState, localState ->
+            combine(baseStateFlow, _localState, networkMonitor.isOnline) { baseState, localState, isOnline ->
                 baseState.copy(
+                    isOffline = !isOnline,
                     activeDisputeSettlementId = localState.activeDisputeSettlementId,
                     disputeReasonInput = localState.disputeReasonInput
                 )

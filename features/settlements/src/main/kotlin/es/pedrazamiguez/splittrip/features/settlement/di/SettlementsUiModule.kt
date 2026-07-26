@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.settlement.di
 
+import es.pedrazamiguez.splittrip.core.common.network.NetworkMonitor
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.TabGraphContributor
@@ -46,6 +47,7 @@ val settlementsUiModule = module {
         val getNudgeTimestampsFlowUseCase = get<GetNudgeTimestampsFlowUseCase>()
         val authenticationService = get<AuthenticationService>()
         val appConfigService = get<AppConfigService>()
+        val networkMonitor = get<NetworkMonitor>()
         val localeProvider = get<LocaleProvider>()
         val resourceProvider = get<ResourceProvider>()
 
@@ -80,7 +82,8 @@ val settlementsUiModule = module {
             authenticationService = authenticationService,
             yourPositionUiMapper = yourPositionUiMapper,
             settlementConsensusUiMapper = settlementConsensusUiMapper,
-            appConfigService = appConfigService
+            appConfigService = appConfigService,
+            networkMonitor = networkMonitor
         )
     }
     factory { SettlementsTabGraphContributorImpl() } bind TabGraphContributor::class
