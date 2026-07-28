@@ -255,6 +255,36 @@ class NotificationHandlerContentTest {
                 context.getString(es.pedrazamiguez.splittrip.data.firebase.R.string.notification_fallback_actor_name)
             }
         }
+
+        @Test
+        fun `SettlementConfirmedHandler uses actorName and formatted amount in notification body`() {
+            val handler = SettlementConfirmedHandler(context, localeProvider)
+
+            handler.handle(baseData)
+
+            verify {
+                context.getString(
+                    es.pedrazamiguez.splittrip.data.firebase.R.string.notification_settlement_confirmed_body,
+                    "John",
+                    "€50.00"
+                )
+            }
+        }
+
+        @Test
+        fun `SettlementDisputedHandler uses actorName and formatted amount in notification body`() {
+            val handler = SettlementDisputedHandler(context, localeProvider)
+
+            handler.handle(baseData)
+
+            verify {
+                context.getString(
+                    es.pedrazamiguez.splittrip.data.firebase.R.string.notification_settlement_disputed_body,
+                    "John",
+                    "€50.00"
+                )
+            }
+        }
     }
 
     @Nested

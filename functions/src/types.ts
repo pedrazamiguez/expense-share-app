@@ -21,6 +21,8 @@ export enum NotificationType {
   GROUP_DELETED = "GROUP_DELETED",
   GROUP_INVITE = "GROUP_INVITE",
   SETTLEMENT_REQUEST = "SETTLEMENT_REQUEST",
+  SETTLEMENT_CONFIRMED = "SETTLEMENT_CONFIRMED",
+  SETTLEMENT_DISPUTED = "SETTLEMENT_DISPUTED",
   DEFAULT = "DEFAULT",
 }
 
@@ -110,6 +112,7 @@ export interface SettlementDoc {
   amountCents?: string | number;
   currency?: string;
   status?: string;
+  disputedBy?: string;
 }
 
 export interface NudgeDoc {
@@ -121,7 +124,7 @@ export interface NudgeDoc {
   amountCents?: string | number;
   currencyCode?: string;
   currency?: string;
-  createdAt: any;
+  createdAt: unknown;
 }
 
 // ---------------------------------------------------------------------------

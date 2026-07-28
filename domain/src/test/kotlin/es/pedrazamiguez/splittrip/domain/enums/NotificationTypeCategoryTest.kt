@@ -72,6 +72,16 @@ class NotificationTypeCategoryTest {
         fun `SETTLEMENT_REQUEST maps to FINANCIAL`() {
             assertEquals(NotificationCategory.FINANCIAL, NotificationType.SETTLEMENT_REQUEST.toCategory())
         }
+
+        @Test
+        fun `SETTLEMENT_CONFIRMED maps to FINANCIAL`() {
+            assertEquals(NotificationCategory.FINANCIAL, NotificationType.SETTLEMENT_CONFIRMED.toCategory())
+        }
+
+        @Test
+        fun `SETTLEMENT_DISPUTED maps to FINANCIAL`() {
+            assertEquals(NotificationCategory.FINANCIAL, NotificationType.SETTLEMENT_DISPUTED.toCategory())
+        }
     }
 
     @Nested

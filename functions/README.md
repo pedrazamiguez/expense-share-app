@@ -42,6 +42,7 @@ functions/
 | `onMemberRemoved` | `onDelete` | `groups/{groupId}/members/{memberId}` | `MEMBER_REMOVED` |
 | `onCashWithdrawal` | `onCreate` | `groups/{groupId}/cash_withdrawals/{id}` | `CASH_WITHDRAWAL` |
 | `onContributionAdded` | `onCreate` | `groups/{groupId}/contributions/{id}` | `CONTRIBUTION_ADDED` |
+| `onSettlementUpdated` | `onUpdate` | `groups/{groupId}/settlements/{settlementId}` | `SETTLEMENT_REQUEST` / `SETTLEMENT_CONFIRMED` / `SETTLEMENT_DISPUTED` |
 
 ## FCM Payload Contract
 
