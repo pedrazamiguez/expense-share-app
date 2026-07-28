@@ -11,6 +11,8 @@
 # Default Gradle flags for quality gates (cold run: no build cache, rerun all tasks, no daemon)
 GRADLE_FLAGS  := --no-build-cache --rerun-tasks --no-daemon --console=plain
 GRADLEW       := ./gradlew $(GRADLE_FLAGS)
+FAST_GRADLE_FLAGS := --console=plain
+FAST_GRADLEW  := ./gradlew $(FAST_GRADLE_FLAGS)
 LOCAL_PROPS   := local.properties
 HOOK_SRC      := scripts/pre-commit
 HOOK_DST      := .git/hooks/pre-commit
@@ -22,7 +24,7 @@ YELLOW := \033[1;33m
 CYAN   := \033[0;36m
 NC     := \033[0m
 
-.PHONY: help setup hooks local-props doctor check ktlint detekt test konsist coverage build clean andaluz andaluz-lenient catalog-update firebase prune-branches ai-setup
+.PHONY: help setup hooks local-props doctor fast-check check ktlint detekt test konsist coverage build clean andaluz andaluz-lenient catalog-update firebase prune-branches ai-setup
 
 # ─── Default: show help ───────────────────────────────────────────────────────
 help: ## Show this help message
@@ -200,7 +202,17 @@ doctor: ## Check that required files and tools are present
 	@echo ""
 
 # ─── Quality gates (mirrors CI) ───────────────────────────────────────────────
-check: clean andaluz-lenient ktlint detekt konsist test coverage build ## Run all local quality gates from a 100% cold state before pushing (mirrors CI)
+fast-check: andaluz-lenient ## Fast incremental check using Gradle daemon & build cache (for rapid iteration)
+	@printf "$(YELLOW)⏳  Running fast incremental quality checks...$(NC)\n"
+	@$(FAST_GRADLEW) ktlintCheck detekt :konsist-tests:test jacocoMergedReport --continue
+	@printf "$(YELLOW)⏳  Checking LINE coverage gates (overall + per-file, ≥ 80%%)...$(NC)\n"
+	@python3 scripts/check_coverage.py
+
+check: clean andaluz-lenient ## Run all local quality gates from a 100% cold state before pushing (single-pass Gradle execution, mirrors CI)
+	@printf "$(YELLOW)⏳  Running full cold quality gates (single-pass Gradle execution)...$(NC)\n"
+	@$(GRADLEW) ktlintFormat ktlintCheck detekt :konsist-tests:test jacocoMergedReport --continue
+	@printf "$(YELLOW)⏳  Checking LINE coverage gates (overall + per-file, ≥ 80%%)...$(NC)\n"
+	@python3 scripts/check_coverage.py
 
 andaluz: ## Automatically generate Andaluz string resources from Spanish strings.xml (fails if python andaluh package is missing)
 	@if python3 -c "import andaluh" >/dev/null 2>&1; then \

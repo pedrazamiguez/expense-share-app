@@ -63,7 +63,8 @@ A checklist of verifiable conditions that define "done":
 - [ ] Criterion 1
 - [ ] Criterion 2
 - [ ] All existing tests pass; new tests added where behaviour changes.
-- [ ] `make check > build.log 2>&1 && echo "Check passed successfully" || (tail -n 100 build.log && exit 1)` passes with 0 failures.
+- [ ] `make fast-check` passes during iterative development (~15–30s).
+- [ ] `make check > build.log 2>&1 && echo "Check passed successfully" || (tail -n 100 build.log && exit 1)` passes with 0 failures before merging.
 - [ ] No new detekt findings introduced.
 
 ### Out of Scope
