@@ -79,7 +79,7 @@ class NetworkMonitorImplTest {
         val callbackSlot = slot<ConnectivityManager.NetworkCallback>()
         every { connectivityManager.activeNetwork } returns null
         try {
-            every { connectivityManager.registerNetworkCallback(any(), capture(callbackSlot)) } answers { }
+            every { connectivityManager.registerDefaultNetworkCallback(capture(callbackSlot)) } answers { }
         } catch (_: Throwable) { }
 
         val context = mockk<Context>()

@@ -18,7 +18,8 @@ internal fun DisputeReasonDialog(
     onReasonChanged: (String) -> Unit,
     onSubmit: () -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isOffline: Boolean = false
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -43,7 +44,7 @@ internal fun DisputeReasonDialog(
         confirmButton = {
             TextButton(
                 onClick = onSubmit,
-                enabled = reason.isNotBlank()
+                enabled = reason.isNotBlank() && !isOffline
             ) {
                 Text(text = stringResource(R.string.your_position_dispute_dialog_submit))
             }

@@ -414,4 +414,40 @@ class YourPositionViewModelTest {
         assertTrue(actions[0] is YourPositionUiAction.ShowError)
         actionsJob.cancel()
     }
+
+    @Test
+    fun `consensus actions are blocked when isOffline is true`() = runTest(testDispatcher) {
+        val actions = mutableListOf<YourPositionUiAction>()
+        val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.actions.collect { actions.add(it) }
+        }
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
+        coEvery { getGroupByIdUseCase("group1") } returns group
+        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
+
+        viewModel.setSelectedGroup("group1")
+        advanceUntilIdle()
+
+        isOnlineFlow.value = false
+        advanceUntilIdle()
+
+        viewModel.onEvent(YourPositionUiEvent.ConfirmSettlement("s1"))
+        viewModel.onEvent(YourPositionUiEvent.DisputeSettlement("s1"))
+        viewModel.onEvent(YourPositionUiEvent.NudgeDebtor("s1"))
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { confirmSettlementUseCase(any(), any()) }
+        coVerify(exactly = 0) { disputeSettlementUseCase(any(), any(), any()) }
+        coVerify(exactly = 0) { nudgeDebtorUseCase(any(), any()) }
+        assertTrue(actions.all { it is YourPositionUiAction.ShowError })
+
+        actionsJob.cancel()
+    }
 }
