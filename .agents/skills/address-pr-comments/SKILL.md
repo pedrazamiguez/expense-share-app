@@ -61,8 +61,12 @@ Ensure you adhere to the project quality and style standards, including detekt r
 
 ## Step 4 — Local verification gate (run BEFORE declaring done)
 
-Do not consider the comments addressed until ALL of the following pass locally:
+Use `make fast-check` for fast feedback during iterative edits (~15–30s):
+```bash
+make fast-check > build.log 2>&1 && echo "Fast check passed" || (echo "Fast check failed. Last 100 lines:" && tail -n 100 build.log)
+```
 
+Do not consider the comments addressed until `make check` passes locally (full cold verification):
 ```bash
 make check > build.log 2>&1 && echo "Check passed successfully" || (tail -n 100 build.log && exit 1)
 ```
