@@ -12,6 +12,8 @@ import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.MemberAdd
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.MemberRemovedHandler
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.RefundableExpenseReminderHandler
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.ScheduledExpenseReminderHandler
+import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.SettlementConfirmedHandler
+import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.SettlementDisputedHandler
 import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl.SettlementRequestHandler
 import es.pedrazamiguez.splittrip.domain.enums.NotificationType
 import io.mockk.mockk
@@ -80,6 +82,16 @@ class NotificationHandlerFactoryTest {
     @Test
     fun `SETTLEMENT_REQUEST returns SettlementRequestHandler`() {
         assertTrue(factory.getHandler(NotificationType.SETTLEMENT_REQUEST) is SettlementRequestHandler)
+    }
+
+    @Test
+    fun `SETTLEMENT_CONFIRMED returns SettlementConfirmedHandler`() {
+        assertTrue(factory.getHandler(NotificationType.SETTLEMENT_CONFIRMED) is SettlementConfirmedHandler)
+    }
+
+    @Test
+    fun `SETTLEMENT_DISPUTED returns SettlementDisputedHandler`() {
+        assertTrue(factory.getHandler(NotificationType.SETTLEMENT_DISPUTED) is SettlementDisputedHandler)
     }
 
     @Test
