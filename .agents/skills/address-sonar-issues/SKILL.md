@@ -83,7 +83,7 @@ Ensure all local verification checks pass successfully:
 
 1. **Run Check Suite:**
    ```bash
-   make check
+   make check > build.log 2>&1 && echo "Check passed successfully" || (tail -n 100 build.log && exit 1)
    ```
    This verifies compilation, runs Konsist architecture tests, detekt, ktlint formatting checks, and all unit tests.
 2. **Verify Coverage:** Run the coverage suite to verify that overall and per-file coverage stays above the 80% threshold:

@@ -84,7 +84,7 @@ Implement the technical solution by sticking strictly to the posted implementati
 Do not consider the work complete until ALL of the following pass locally:
 
 ```bash
-make check   # Konsist architecture rules + all unit tests + debug compilation — must show 0 failures
+make check > build.log 2>&1 && echo "Check passed successfully" || (tail -n 100 build.log && exit 1)
 ```
 
 If any check fails, fix it before finishing. Do not leave the user to discover failures in CI.
