@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.BasketUp
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CreditCardPay
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Wallet
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
@@ -37,6 +38,7 @@ fun ContributionHistoryItem(
 ) {
     val haptics = LocalHapticFeedback.current
     val isLinked = contribution.isLinkedContribution
+    val isSettlement = contribution.isSettlementContribution
 
     val cardModifier = if (onLongClick != null) {
         Modifier
@@ -66,7 +68,11 @@ fun ContributionHistoryItem(
                 horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
             ) {
                 Icon(
-                    imageVector = if (isLinked) TablerIcons.Outline.CreditCardPay else TablerIcons.Outline.Wallet,
+                    imageVector = when {
+                        isSettlement -> TablerIcons.Outline.BasketUp
+                        isLinked -> TablerIcons.Outline.CreditCardPay
+                        else -> TablerIcons.Outline.Wallet
+                    },
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )

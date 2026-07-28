@@ -26,6 +26,7 @@ import es.pedrazamiguez.splittrip.data.local.datasource.impl.LocalSettlementData
 import es.pedrazamiguez.splittrip.data.local.datasource.impl.LocalSubunitDataSourceImpl
 import es.pedrazamiguez.splittrip.data.local.datasource.impl.LocalUserDataSourceImpl
 import es.pedrazamiguez.splittrip.data.local.datastore.NotificationUserPreferences
+import es.pedrazamiguez.splittrip.data.local.datastore.SettlementNudgePreferences
 import es.pedrazamiguez.splittrip.data.local.datastore.UserPreferences
 import es.pedrazamiguez.splittrip.data.local.service.GroupImageStorageServiceImpl
 import es.pedrazamiguez.splittrip.data.local.service.ProfileImageStorageServiceImpl
@@ -60,6 +61,13 @@ val dataLocalModule = module {
 
     single {
         NotificationUserPreferences(
+            context = androidContext(),
+            authenticationService = get<AuthenticationService>()
+        )
+    }
+
+    single {
+        SettlementNudgePreferences(
             context = androidContext(),
             authenticationService = get<AuthenticationService>()
         )

@@ -13,7 +13,6 @@ import es.pedrazamiguez.splittrip.core.logging.LogContext
 import es.pedrazamiguez.splittrip.core.logging.tree.DevelopmentLogcatTree
 import es.pedrazamiguez.splittrip.core.logging.tree.ProductionCrashlyticsTree
 import es.pedrazamiguez.splittrip.data.firebase.messaging.channel.NotificationChannelInitializer
-import es.pedrazamiguez.splittrip.di.activityLoggingFeatureModules
 import es.pedrazamiguez.splittrip.di.appModule
 import es.pedrazamiguez.splittrip.di.authenticationFeatureModules
 import es.pedrazamiguez.splittrip.di.balancesFeatureModules
@@ -27,6 +26,7 @@ import es.pedrazamiguez.splittrip.di.notificationModules
 import es.pedrazamiguez.splittrip.di.onboardingFeatureModules
 import es.pedrazamiguez.splittrip.di.profileFeatureModules
 import es.pedrazamiguez.splittrip.di.settingsFeatureModules
+import es.pedrazamiguez.splittrip.di.settlementsFeatureModules
 import es.pedrazamiguez.splittrip.di.subunitsFeatureModules
 import es.pedrazamiguez.splittrip.di.withdrawalsFeatureModules
 import es.pedrazamiguez.splittrip.domain.repository.AppConfigRepository
@@ -63,12 +63,12 @@ class App : Application() {
 
                 authenticationFeatureModules,
                 balancesFeatureModules,
-                activityLoggingFeatureModules,
                 contributionsFeatureModules,
                 currenciesFeatureModules,
                 expensesFeatureModules,
                 groupsFeatureModules,
                 subunitsFeatureModules,
+                settlementsFeatureModules,
                 profileFeatureModules,
                 settingsFeatureModules,
                 withdrawalsFeatureModules,

@@ -9,10 +9,12 @@ import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.DisputeSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupSettlementOverviewUiMapper
+import es.pedrazamiguez.splittrip.features.group.presentation.model.archive.ArchiveWizardStep
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupSettlementOverviewUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupSettlementOverviewUiEvent
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupSettlementOverviewUiState
@@ -53,6 +55,7 @@ class GroupSettlementOverviewViewModelTest {
     private lateinit var confirmSettlementUseCase: ConfirmSettlementUseCase
     private lateinit var disputeSettlementUseCase: DisputeSettlementUseCase
     private lateinit var archiveGroupUseCase: ArchiveGroupUseCase
+    private lateinit var getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase
     private lateinit var viewModel: GroupSettlementOverviewViewModel
 
     private val testGroupId = "group-123"
@@ -75,13 +78,16 @@ class GroupSettlementOverviewViewModelTest {
         confirmSettlementUseCase = mockk(relaxed = true)
         disputeSettlementUseCase = mockk(relaxed = true)
         archiveGroupUseCase = mockk(relaxed = true)
+        getSettlementSuggestionsUseCase = mockk(relaxed = true)
 
+        coEvery { getSettlementSuggestionsUseCase.persistForGroup(any(), any()) } returns emptyList()
         every { getGroupSettlementsFlowUseCase(any()) } returns flowOf(emptyList())
         every { observeGroupUseCase(any()) } returns flowOf(testGroup)
-        every { groupSettlementOverviewUiMapper.toUiState(any(), any(), any()) } returns GroupSettlementOverviewUiState(
-            isLoading = false,
-            areAllSettlementsResolved = true
-        )
+        every { groupSettlementOverviewUiMapper.toUiState(any(), any(), any(), any(), any()) } returns
+            GroupSettlementOverviewUiState(
+                isLoading = false,
+                areAllSettlementsResolved = true
+            )
         every { authenticationService.requireUserId() } returns "user-1"
 
         viewModel = createViewModel()
@@ -100,7 +106,8 @@ class GroupSettlementOverviewViewModelTest {
         authenticationService = authenticationService,
         confirmSettlementUseCase = confirmSettlementUseCase,
         disputeSettlementUseCase = disputeSettlementUseCase,
-        archiveGroupUseCase = archiveGroupUseCase
+        archiveGroupUseCase = archiveGroupUseCase,
+        getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase
     )
 
     @Nested
@@ -136,6 +143,18 @@ class GroupSettlementOverviewViewModelTest {
 
             val state = viewModel.uiState.value
             assertFalse(state.isLoading)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `setGroupId calls persistForGroup to load fresh suggestions`() = runTest(testDispatcher) {
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.setGroupId(testGroupId)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { getSettlementSuggestionsUseCase.persistForGroup(testGroupId) }
 
             collectJob.cancel()
         }
@@ -362,4 +381,176 @@ class GroupSettlementOverviewViewModelTest {
         status = status,
         createdAt = LocalDateTime.now()
     )
+
+    @Nested
+    inner class WizardFlow {
+
+        @Test
+        fun `WizardNextClicked and WizardBackClicked update currentStep state`() = runTest(testDispatcher) {
+            every { groupSettlementOverviewUiMapper.toUiState(any(), any(), any(), any(), any()) } returns
+                GroupSettlementOverviewUiState(
+                    isLoading = false,
+                    currentStep = ArchiveWizardStep.SETTLEMENT_SUMMARY,
+                    activeSteps = kotlinx.collections.immutable.persistentListOf(
+                        ArchiveWizardStep.SETTLEMENT_SUMMARY,
+                        ArchiveWizardStep.ACTION_REQUIRED,
+                        ArchiveWizardStep.CONFIRMATION
+                    )
+                )
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setGroupId(testGroupId)
+            advanceUntilIdle()
+
+            // Verify initial step
+            assertEquals(ArchiveWizardStep.SETTLEMENT_SUMMARY, viewModel.uiState.value.currentStep)
+
+            // Step forward
+            viewModel.onEvent(GroupSettlementOverviewUiEvent.WizardNextClicked)
+            advanceUntilIdle()
+            assertEquals(ArchiveWizardStep.ACTION_REQUIRED, viewModel.uiState.value.currentStep)
+
+            // Step forward again
+            viewModel.onEvent(GroupSettlementOverviewUiEvent.WizardNextClicked)
+            advanceUntilIdle()
+            assertEquals(ArchiveWizardStep.CONFIRMATION, viewModel.uiState.value.currentStep)
+
+            // Step backward
+            viewModel.onEvent(GroupSettlementOverviewUiEvent.WizardBackClicked)
+            advanceUntilIdle()
+            assertEquals(ArchiveWizardStep.ACTION_REQUIRED, viewModel.uiState.value.currentStep)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `WizardCancelled or Back on first step navigates back`() = runTest(testDispatcher) {
+            every { groupSettlementOverviewUiMapper.toUiState(any(), any(), any(), any(), any()) } returns
+                GroupSettlementOverviewUiState(
+                    isLoading = false,
+                    currentStep = ArchiveWizardStep.SETTLEMENT_SUMMARY,
+                    activeSteps = kotlinx.collections.immutable.persistentListOf(
+                        ArchiveWizardStep.SETTLEMENT_SUMMARY,
+                        ArchiveWizardStep.ACTION_REQUIRED,
+                        ArchiveWizardStep.CONFIRMATION
+                    )
+                )
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setGroupId(testGroupId)
+            advanceUntilIdle()
+
+            val actions = mutableListOf<GroupSettlementOverviewUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            // Wizard cancelled
+            viewModel.onEvent(GroupSettlementOverviewUiEvent.WizardCancelled)
+            advanceUntilIdle()
+            assertTrue(actions.any { it is GroupSettlementOverviewUiAction.NavigateBack })
+
+            actions.clear()
+
+            // Back on first step
+            viewModel.onEvent(GroupSettlementOverviewUiEvent.WizardBackClicked)
+            advanceUntilIdle()
+            assertTrue(actions.any { it is GroupSettlementOverviewUiAction.NavigateBack })
+
+            actionsJob.cancel()
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `WizardJumpToStep updates currentStep if step is active`() = runTest(testDispatcher) {
+            every { groupSettlementOverviewUiMapper.toUiState(any(), any(), any(), any(), any()) } returns
+                GroupSettlementOverviewUiState(
+                    isLoading = false,
+                    currentStep = ArchiveWizardStep.SETTLEMENT_SUMMARY,
+                    activeSteps = kotlinx.collections.immutable.persistentListOf(
+                        ArchiveWizardStep.SETTLEMENT_SUMMARY,
+                        ArchiveWizardStep.ACTION_REQUIRED,
+                        ArchiveWizardStep.CONFIRMATION
+                    )
+                )
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setGroupId(testGroupId)
+            advanceUntilIdle()
+
+            viewModel.onEvent(GroupSettlementOverviewUiEvent.WizardJumpToStep(ArchiveWizardStep.CONFIRMATION))
+            advanceUntilIdle()
+            assertEquals(ArchiveWizardStep.CONFIRMATION, viewModel.uiState.value.currentStep)
+
+            viewModel.onEvent(GroupSettlementOverviewUiEvent.WizardJumpToStep(ArchiveWizardStep.ACTION_REQUIRED))
+            advanceUntilIdle()
+            assertEquals(ArchiveWizardStep.ACTION_REQUIRED, viewModel.uiState.value.currentStep)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `currentStep is clamped to last active step when real-time update removes current step from activeSteps`() =
+            runTest(testDispatcher) {
+                // Simulate the 3-step flow (pending settlements exist)
+                val threeStepState = GroupSettlementOverviewUiState(
+                    isLoading = false,
+                    currentStep = ArchiveWizardStep.SETTLEMENT_SUMMARY,
+                    activeSteps = kotlinx.collections.immutable.persistentListOf(
+                        ArchiveWizardStep.SETTLEMENT_SUMMARY,
+                        ArchiveWizardStep.ACTION_REQUIRED,
+                        ArchiveWizardStep.CONFIRMATION
+                    )
+                )
+                // Simulate the streamlined flow after peer resolves all settlements in real-time
+                val twoStepState = GroupSettlementOverviewUiState(
+                    isLoading = false,
+                    currentStep = ArchiveWizardStep.SETTLEMENT_SUMMARY,
+                    activeSteps = kotlinx.collections.immutable.persistentListOf(
+                        ArchiveWizardStep.SETTLEMENT_SUMMARY,
+                        ArchiveWizardStep.CONFIRMATION
+                    ),
+                    areAllSettlementsResolved = true
+                )
+
+                // Use a replay=1 SharedFlow so the first emission is not lost before subscription
+                val settlementsFlow = kotlinx.coroutines.flow.MutableSharedFlow<List<Nothing>>(replay = 1)
+
+                // Reconfigure mocks BEFORE creating a new ViewModel so flatMapLatest picks up the
+                // controlled flow on the very first setGroupId() call
+                every { getGroupSettlementsFlowUseCase(any()) } returns settlementsFlow
+                var callCount = 0
+                every { groupSettlementOverviewUiMapper.toUiState(any(), any(), any(), any(), any()) } answers {
+                    if (callCount++ == 0) threeStepState else twoStepState
+                }
+                val vm = createViewModel()
+
+                val collectJob = backgroundScope.launch { vm.uiState.collect {} }
+                vm.setGroupId(testGroupId)
+
+                // Emit first batch (pending settlements → 3-step flow)
+                settlementsFlow.emit(emptyList())
+                advanceUntilIdle()
+                assertEquals(ArchiveWizardStep.SETTLEMENT_SUMMARY, vm.uiState.value.currentStep)
+
+                // User navigates to ACTION_REQUIRED
+                vm.onEvent(GroupSettlementOverviewUiEvent.WizardNextClicked)
+                advanceUntilIdle()
+                assertEquals(ArchiveWizardStep.ACTION_REQUIRED, vm.uiState.value.currentStep)
+
+                // Peer resolves settlement in real-time → mapper switches to 2-step flow
+                settlementsFlow.emit(emptyList())
+                advanceUntilIdle()
+
+                // ACTION_REQUIRED no longer in activeSteps; step must be clamped to CONFIRMATION
+                assertEquals(ArchiveWizardStep.CONFIRMATION, vm.uiState.value.currentStep)
+
+                // Back must now work (not silently no-op)
+                vm.onEvent(GroupSettlementOverviewUiEvent.WizardBackClicked)
+                advanceUntilIdle()
+                assertEquals(ArchiveWizardStep.SETTLEMENT_SUMMARY, vm.uiState.value.currentStep)
+
+                collectJob.cancel()
+            }
+    }
 }

@@ -19,6 +19,7 @@ import es.pedrazamiguez.splittrip.features.group.presentation.component.leave.Le
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveSettlementUiModel
 import kotlinx.collections.immutable.ImmutableList
 
+@Suppress("LongMethod")
 @Composable
 fun LeaveSettlementStep(
     settlements: ImmutableList<LeaveSettlementUiModel>,
@@ -52,15 +53,46 @@ fun LeaveSettlementStep(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         } else {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
-            ) {
-                settlements.forEach { settlement ->
-                    LeaveSettlementItemCard(
-                        settlement = settlement,
-                        onConfirmClicked = onConfirmSettlement
-                    )
+            val yourActionRequired = settlements.filter { it.canCurrentUserConfirm }
+            val waitingOnOthers = settlements.filter { !it.canCurrentUserConfirm }
+
+            if (yourActionRequired.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.leave_wizard_settlement_section_your_action),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
+                ) {
+                    yourActionRequired.forEach { settlement ->
+                        LeaveSettlementItemCard(
+                            settlement = settlement,
+                            onConfirmClicked = onConfirmSettlement
+                        )
+                    }
+                }
+            }
+
+            if (waitingOnOthers.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.leave_wizard_settlement_section_waiting),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
+                ) {
+                    waitingOnOthers.forEach { settlement ->
+                        LeaveSettlementItemCard(
+                            settlement = settlement,
+                            onConfirmClicked = onConfirmSettlement
+                        )
+                    }
                 }
             }
         }

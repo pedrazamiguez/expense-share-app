@@ -27,9 +27,9 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 :features:onboarding    → Onboarding wizard
 :features:profile       → User profile display + edit
 :features:settings      → App settings
+:features:settlements   → "Mi posición" / "My position" screen & settlement consensus sub-flow (standalone, non-tab)
 :features:subunits      → Subunit management lifecycle — CRUD (standalone, non-tab)
 :features:withdrawals   → Add cash withdrawal write-flow (standalone, non-tab)
-:features:activity-logging → (Planned) Activity log feature
 ```
 
 **Strict:** Features cannot see other features or `:data`. Features only depend on `:domain` interfaces and `:core`.
@@ -45,6 +45,7 @@ See the standalone rule files in `.agents/rules/` for detailed constraints:
 - `.agents/rules/enum-centralization.md`
 - `.agents/rules/single-composable-per-file.md`
 - `.agents/rules/feature-screen-pattern.md`
+- `.agents/rules/no-fqn-imports.md`
 
 ## Navigation
 
@@ -52,7 +53,7 @@ See the standalone rule files in `.agents/rules/` for detailed constraints:
 - Two nav controllers: `LocalRootNavController` (full-screen flows) and `LocalTabNavController` (within bottom tabs). Consumed via CompositionLocals in Feature layer only.
 - Notifications: `LocalTopPillController` — top pill notifications replace snackbars. Never use `Scaffold(snackbarHost=...)` in features.
 - **Tab features** register as bottom tabs via `NavigationProvider` interface + Koin `bind`. See `GroupsNavigationProviderImpl`.
-- **Non-tab features** (write-flows extracted into standalone modules) implement `TabGraphContributor` instead. The host tab's `NavigationProvider` injects all `TabGraphContributor` instances via Koin and calls `contributeGraph(builder)` inside `buildGraph()`. This allows runtime route merging without compile-time cross-feature dependencies. See `ContributionsTabGraphContributorImpl`, `WithdrawalsTabGraphContributorImpl`, `SubunitsTabGraphContributorImpl`.
+- **Non-tab features** (write-flows and sub-flows extracted into standalone modules) implement `TabGraphContributor` instead. The host tab's `NavigationProvider` injects all `TabGraphContributor` instances via Koin and calls `contributeGraph(builder)` inside `buildGraph()`. This allows runtime route merging without compile-time cross-feature dependencies. See `ContributionsTabGraphContributorImpl`, `WithdrawalsTabGraphContributorImpl`, `SubunitsTabGraphContributorImpl`, `SettlementsTabGraphContributorImpl`.
 - Tab screens define TopBar/MainAction via `ScreenUiProvider` implementations (not their own Scaffold).
 
 ## Offline-First Data Flow
@@ -96,6 +97,7 @@ groupsDomainModule + groupsDataModule + groupsUiModule → groupsFeatureModules
 subunitsDomainModule + subunitsDataModule + subunitsUiModule → subunitsFeatureModules
 contributionsDomainModule + contributionsUiModule → contributionsFeatureModules  (no dedicated contributions data module — relies on `ContributionRepository` impl from `balancesDataModule` in :data)
 withdrawalsDomainModule + withdrawalsUiModule → withdrawalsFeatureModules  (no dedicated withdrawals data module — relies on `CashWithdrawalRepository` impl from `balancesDataModule` in :data)
+settlementsUiModule → settlementsFeatureModules  (contributes `SettlementsTabGraphContributorImpl` for the "Mi posición" / "My position" sub-flow inside Balances tab)
 ```
 - **Tab features** UI modules declare: ViewModel, Mapper, `NavigationProvider` (factory + bind), `ScreenUiProvider` (single + bind).
 - **Non-tab features** UI modules declare: ViewModel, Mapper, `TabGraphContributor` (factory + bind). They typically do **not** implement `NavigationProvider` but still register a `ScreenUiProvider` when they need a top bar (e.g. write-flow screens).
@@ -142,6 +144,8 @@ When testing classes that launch background coroutines (e.g., Repositories with 
   - Release builds: `OER_APP_ID_RELEASE=your_key` (or set as an environment variable `OER_APP_ID_RELEASE` — env var takes precedence on CI)
 - Version managed in `version.properties` (major.minor.patch + snapshot flag).
 - `./gradlew test` — unit tests. `./gradlew connectedAndroidTest` — UI tests.
+- `make fast-check` — fast incremental quality check (uses Gradle daemon & build cache, ~15–30s).
+- `make check` — full cold quality check (single-pass Gradle execution, mirrors CI, ~1.5–2min).
 
 ## Static Analysis & Code Quality
 
@@ -150,6 +154,7 @@ When testing classes that launch background coroutines (e.g., Repositories with 
 - **JaCoCo** (code coverage) is configured for all subprojects. Per-module reports via `jacocoTestReport`, merged report via `jacocoMergedReport`.
 - **Konsist** (architecture rule enforcement) tests live in `:konsist-tests` module. Enforces naming conventions, dependency rules, and structural patterns from this manifesto.
 - Detekt config lives at `config/detekt/detekt.yml`. Ktlint rules are in `.editorconfig`.
+- Local verification uses `make fast-check` (rapid iterative check) and `make check` (single-pass cold quality gate).
 - CI runs static analysis via `.github/workflows/static-analysis.yml` (ktlint + detekt + CPD) — parallel to and independent of `build-and-test.yml`.
 - JaCoCo and Konsist run in a separate `.github/workflows/coverage-and-architecture.yml` workflow — also independent from `build-and-test.yml`.
 - Detekt uses `ignoreFailures = true` locally; gating is done by GitHub Code Scanning's "Code scanning results" check (only new alerts block PRs).
@@ -292,3 +297,56 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## Headroom Context Compression
+
+This project uses Headroom (`headroom proxy --port 8787`) to compress LLM prompt payloads, tool outputs, and context logs.
+
+Rules:
+- `opencode` sessions run wrapped via Headroom (`headroom wrap opencode`).
+- Output shaping (`HEADROOM_OUTPUT_SHAPER=1`) can be enabled for verbose sessions.
+- Run `headroom learn` after failed or complex sessions to extract failure patterns into `AGENTS.md`.
+
+
+<!-- headroom:rtk-instructions -->
+# RTK (Rust Token Killer) - Token-Optimized Commands
+
+When running shell commands, **always prefix with `rtk`**. This reduces context
+usage by 60-90% with zero behavior change. If rtk has no filter for a command,
+it passes through unchanged — so it is always safe to use.
+
+## Key Commands
+```bash
+# Git (59-80% savings)
+rtk git status          rtk git diff            rtk git log
+
+# Files & Search (60-75% savings)
+rtk ls <path>           rtk read <file>         rtk grep <pattern>
+rtk find <pattern>      rtk diff <file>
+
+# Test (90-99% savings) — shows failures only
+rtk pytest tests/       rtk cargo test          rtk test <cmd>
+
+# Build & Lint (80-90% savings) — shows errors only
+rtk tsc                 rtk lint                rtk cargo build
+rtk prettier --check    rtk mypy                rtk ruff check
+
+# Analysis (70-90% savings)
+rtk err <cmd>           rtk log <file>          rtk json <file>
+rtk summary <cmd>       rtk deps                rtk env
+
+# GitHub (26-87% savings)
+rtk gh pr view <n>      rtk gh run list         rtk gh issue list
+
+# Infrastructure (85% savings)
+rtk docker ps           rtk kubectl get         rtk docker logs <c>
+
+# Package managers (70-90% savings)
+rtk pip list            rtk pnpm install        rtk npm run <script>
+```
+
+## Rules
+- In command chains, prefix each segment: `rtk git add . && rtk git commit -m "msg"`
+- For debugging, use raw command without rtk prefix
+- `rtk proxy <cmd>` runs command without filtering but tracks usage
+<!-- /headroom:rtk-instructions -->

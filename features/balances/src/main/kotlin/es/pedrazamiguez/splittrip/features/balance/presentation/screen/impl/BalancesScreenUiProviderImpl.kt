@@ -4,9 +4,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChartArcs
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReportAnalytics
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalRootNavController
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.SharedElementKeys
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.MainAction
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.DynamicTopAppBar
@@ -37,9 +39,13 @@ class BalancesScreenUiProviderImpl(
 
     override val mainAction: MainAction?
         @Composable
-        get() = MainAction(
-            icon = TablerIcons.Outline.ChartArcs,
-            contentDescription = stringResource(R.string.balances_filter),
-            onClick = {} // TODO: open filter UI (out of scope)
-        )
+        get() {
+            val tabNavController = LocalTabNavController.current
+            return MainAction(
+                icon = TablerIcons.Outline.ReportAnalytics,
+                contentDescription = stringResource(R.string.balances_your_position_title),
+                onClick = { tabNavController.navigate(Routes.YOUR_POSITION) },
+                sharedTransitionKey = SharedElementKeys.YOUR_POSITION
+            )
+        }
 }

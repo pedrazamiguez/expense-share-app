@@ -49,6 +49,8 @@ class SplitTripMessagingService :
         private const val PREFERENCES_TIMEOUT_MS = 2000L
     }
 
+    // Suppress deprecation warning required by FirebaseMessagingService SDK onNewToken callback lifecycle
+    @Suppress("DEPRECATION", "kotlin:S1874")
     @Deprecated("Deprecated in parent class")
     override fun onNewToken(token: String) {
         super.onNewToken(token)

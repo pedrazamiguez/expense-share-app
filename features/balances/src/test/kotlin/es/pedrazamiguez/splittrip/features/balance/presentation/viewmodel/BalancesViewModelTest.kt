@@ -13,6 +13,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.DeleteContributionUseCa
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetMemberBalancesFlowUseCaseImpl
@@ -87,6 +88,7 @@ class BalancesViewModelTest {
     private lateinit var appConfigService: AppConfigService
     private lateinit var observeGroupUseCase: ObserveGroupUseCase
     private lateinit var getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase
+    private lateinit var getGroupSettlementsFlowUseCase: GetGroupSettlementsFlowUseCase
     private lateinit var viewModel: BalancesViewModel
 
     private val testGroupId = "group-123"
@@ -155,6 +157,7 @@ class BalancesViewModelTest {
         }
         observeGroupUseCase = mockk()
         getSettlementSuggestionsUseCase = mockk()
+        getGroupSettlementsFlowUseCase = mockk()
 
         // Default mock for getSettlementSuggestionsUseCase
         every { getSettlementSuggestionsUseCase(any()) } returns emptyList()
@@ -182,6 +185,9 @@ class BalancesViewModelTest {
 
         // Default mock for expenses flow (empty by default)
         every { getGroupExpensesFlowUseCase(any()) } returns flowOf(emptyList())
+
+        // Default mock for settlements flow (empty by default)
+        every { getGroupSettlementsFlowUseCase(any()) } returns flowOf(emptyList())
 
         every { balancesUiMapper.mapBalance(any(), any()) } returns testBalanceUiModel
         every { balancesUiMapper.mapExtrasBreakdown(any(), any(), any(), any(), any(), any()) } returns
@@ -779,7 +785,8 @@ class BalancesViewModelTest {
             deleteContributionUseCase = deleteContributionUseCase,
             deleteCashWithdrawalUseCase = deleteCashWithdrawalUseCase,
             observeGroupUseCase = observeGroupUseCase,
-            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase
+            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
+            getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase
         ),
         authenticationService = authenticationService,
         balancesUiMapper = balancesUiMapper,

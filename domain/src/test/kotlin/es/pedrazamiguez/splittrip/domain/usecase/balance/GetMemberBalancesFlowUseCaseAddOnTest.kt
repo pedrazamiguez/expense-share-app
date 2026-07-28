@@ -12,6 +12,7 @@ import es.pedrazamiguez.splittrip.domain.model.ExpenseSplit
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.impl.AddOnCalculationServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetMemberBalancesFlowUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
 import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -38,7 +39,16 @@ class GetMemberBalancesFlowUseCaseAddOnTest {
         subunits: List<Subunit> = emptyList(),
         memberIds: List<String> = groupMemberIds,
         groupCurrency: String = "EUR"
-    ) = useCase.computeMemberBalances(contributions, withdrawals, expenses, subunits, memberIds, groupCurrency)
+    ) = useCase.computeMemberBalances(
+        MemberBalanceCalculationInputs(
+            contributions = contributions,
+            withdrawals = withdrawals,
+            expenses = expenses,
+            subunits = subunits,
+            groupMemberIds = memberIds,
+            groupCurrency = groupCurrency
+        )
+    )
 
     @Nested
     @DisplayName("Add-on integration")

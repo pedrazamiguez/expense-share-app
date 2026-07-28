@@ -19,5 +19,5 @@ interface GetSettlementSuggestionsUseCase : UseCase {
      *
      * Called by [LeaveGroupUseCaseImpl] and [ArchiveGroupUseCaseImpl] before checking resolution.
      */
-    suspend fun persistForGroup(groupId: String): List<SettlementRecord>
+    suspend fun persistForGroup(groupId: String, leavingUserId: String? = null): List<SettlementRecord>
 }

@@ -9,8 +9,11 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsRes
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.StandardContributionAttributionStrategy
+import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.LeaveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
@@ -44,7 +47,8 @@ class GroupLeaveWizardEventHandlerImpl(
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
     private val confirmSettlementUseCase: ConfirmSettlementUseCase,
     private val leaveGroupUseCase: LeaveGroupUseCase,
-    private val leaveWizardUiMapper: LeaveWizardUiMapper
+    private val leaveWizardUiMapper: LeaveWizardUiMapper,
+    private val getGroupSettlementsFlowUseCase: GetGroupSettlementsFlowUseCase
 ) : GroupLeaveWizardEventHandler {
 
     private val _wizardState = MutableStateFlow(LeaveWizardUiState())
@@ -77,20 +81,25 @@ class GroupLeaveWizardEventHandlerImpl(
                 val contributions = getGroupContributionsFlowUseCase(groupId).firstOrNull() ?: emptyList()
                 val withdrawals = getCashWithdrawalsFlowUseCase(groupId).firstOrNull() ?: emptyList()
                 val subunits = getGroupSubunitsFlowUseCase(groupId).firstOrNull() ?: emptyList()
+                val settlementRecords = getGroupSettlementsFlowUseCase(groupId).firstOrNull() ?: emptyList()
 
                 val memberBalances = getMemberBalancesFlowUseCase.computeMemberBalances(
-                    contributions = contributions,
-                    withdrawals = withdrawals,
-                    expenses = expenses,
-                    subunits = subunits,
-                    groupMemberIds = group.members,
-                    groupCurrency = group.currency
+                    MemberBalanceCalculationInputs(
+                        contributions = contributions,
+                        withdrawals = withdrawals,
+                        expenses = expenses,
+                        subunits = subunits,
+                        groupMemberIds = group.members,
+                        groupCurrency = group.currency,
+                        settlements = settlementRecords,
+                        attributionStrategy = StandardContributionAttributionStrategy
+                    )
                 )
 
                 val myBalance = memberBalances.find { it.userId == currentUserId }
                     ?: MemberBalance(userId = currentUserId)
 
-                getSettlementSuggestionsUseCase.persistForGroup(groupId)
+                getSettlementSuggestionsUseCase.persistForGroup(groupId, currentUserId)
                 val unresolvedSettlements = areMemberSettlementsResolvedUseCase(groupId, currentUserId)
                 val memberProfiles = if (group.members.isNotEmpty()) {
                     getMemberProfilesUseCase(group.members)
@@ -112,7 +121,13 @@ class GroupLeaveWizardEventHandlerImpl(
                 }
                 activeSteps.add(LeaveWizardStep.CONFIRMATION)
 
-                val balanceSummary = leaveWizardUiMapper.toBalanceSummaryUiModel(myBalance, group.currency)
+                val balanceSummary = leaveWizardUiMapper.toBalanceSummaryUiModel(
+                    memberBalance = myBalance,
+                    memberBalances = memberBalances,
+                    currentUserId = currentUserId,
+                    memberProfiles = memberProfiles,
+                    currency = group.currency
+                )
                 val settlements = leaveWizardUiMapper.toSettlementUiModels(
                     unresolvedSettlements,
                     memberProfiles,
@@ -294,5 +309,11 @@ class GroupLeaveWizardEventHandlerImpl(
             )
         }
         onError(UiText.StringResource(R.string.leave_wizard_unresolved_settlements_error))
+    }
+
+    override fun handleJumpToStep(step: LeaveWizardStep) {
+        if (step in _wizardState.value.activeSteps) {
+            _wizardState.update { it.copy(currentStep = step) }
+        }
     }
 }

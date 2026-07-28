@@ -74,6 +74,7 @@
     <string name="self_identification_beneficiary">Para ti</string>
     <string name="self_identification_agent">Por ti</string>
     <string name="self_identification_recipient">A ti</string>
+    <string name="self_identification_prepositional">ti</string>
 
     <!-- User Fallback -->
     <string name="user_pending_fallback">Miembro pendiente</string>

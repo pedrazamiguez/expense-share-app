@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event
 
+import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardStep
+
 sealed interface GroupsUiEvent {
     data object LoadGroups : GroupsUiEvent
     data class ScrollPositionChanged(val index: Int, val offset: Int) : GroupsUiEvent
@@ -11,4 +13,5 @@ sealed interface GroupsUiEvent {
     data object WizardCancelled : GroupsUiEvent
     data class ConfirmSettlementClicked(val groupId: String, val settlementId: String) : GroupsUiEvent
     data class LeaveConfirmed(val groupId: String) : GroupsUiEvent
+    data class WizardJumpToStepClicked(val step: LeaveWizardStep) : GroupsUiEvent
 }

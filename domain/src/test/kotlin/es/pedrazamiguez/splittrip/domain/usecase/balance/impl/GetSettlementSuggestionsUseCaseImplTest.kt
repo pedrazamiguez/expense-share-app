@@ -62,7 +62,9 @@ class GetSettlementSuggestionsUseCaseImplTest {
         every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
         every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
         coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
-        coEvery { getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any()) } returns
+        coEvery {
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
+        } returns
             memberBalances
     }
 
@@ -222,6 +224,62 @@ class GetSettlementSuggestionsUseCaseImplTest {
     }
 
     @Test
+    fun `persistForGroup resets existing DISPUTED record when details changed`() = runTest {
+        val existingSettlement =
+            Settlement(
+                fromUserId = "1",
+                toUserId = "2",
+                amount = 1000L,
+                currency = "EUR",
+                sourcePocket = SettlementPocketType.CASH
+            )
+        val computedSettlement = existingSettlement.copy(amount = 1500L)
+        every { debtSimplificationService.simplifyByPocket(memberBalances, "EUR") } returns listOf(computedSettlement)
+        mockBaseFlowRepos()
+
+        val existingRecord =
+            SettlementRecord(
+                id = "existing-1",
+                groupId = groupId,
+                settlement = existingSettlement,
+                status = SettlementStatus.DISPUTED,
+                createdAt = LocalDateTime.now(),
+                disputedBy = "1",
+                disputeReason = "Wrong amount"
+            )
+        coEvery { settlementRepository.getGroupSettlements(groupId) } returnsMany listOf(
+            listOf(existingRecord),
+            listOf(
+                existingRecord.copy(
+                    settlement = computedSettlement,
+                    status = SettlementStatus.SUGGESTED,
+                    disputedBy = null,
+                    disputeReason = null
+                )
+            )
+        )
+        coEvery { settlementRepository.updateSettlement(any()) } returns Unit
+
+        val result = useCase.persistForGroup(groupId)
+
+        coVerify(exactly = 0) { settlementRepository.addSettlement(any()) }
+        coVerify(exactly = 1) {
+            settlementRepository.updateSettlement(
+                match {
+                    it.id == "existing-1" &&
+                        it.settlement.amount == 1500L &&
+                        it.status == SettlementStatus.SUGGESTED &&
+                        it.disputedBy == null &&
+                        it.disputeReason == null
+                }
+            )
+        }
+        assertEquals(1, result.size)
+        assertEquals(1500L, result.first().settlement.amount)
+        assertEquals(SettlementStatus.SUGGESTED, result.first().status)
+    }
+
+    @Test
     fun `persistForGroup skips existing SUGGESTED record when details did not change`() = runTest {
         val existingSettlement =
             Settlement(
@@ -326,5 +384,176 @@ class GetSettlementSuggestionsUseCaseImplTest {
 
         coVerify(exactly = 1) { settlementRepository.deleteSettlement(duplicateRecord) }
         assertEquals(1, result.size)
+    }
+
+    @Test
+    fun `persistForGroup with leavingUserId when leaving member is owed money`() = runTest {
+        val group = mockk<Group>(relaxed = true).apply {
+            every { members } returns listOf("leaving-user", "member-2", "member-3")
+            every { this@apply.currency } returns "EUR"
+        }
+        coEvery { groupRepository.getGroupById(groupId) } returns group
+        every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(emptyList())
+        every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
+        every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
+        coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
+
+        val balances = listOf(
+            MemberBalance(userId = "leaving-user", pocketBalance = 3000, cashInHand = 0), // Owed 30 EUR
+            MemberBalance(userId = "member-2", pocketBalance = -1500, cashInHand = 0),
+            MemberBalance(userId = "member-3", pocketBalance = -1500, cashInHand = 0)
+        )
+        coEvery {
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
+        } returns balances
+
+        coEvery { settlementRepository.getGroupSettlements(groupId) } returns emptyList()
+        coEvery { settlementRepository.addSettlement(any()) } returns Unit
+
+        useCase.persistForGroup(groupId, leavingUserId = "leaving-user")
+
+        coVerify {
+            settlementRepository.addSettlement(
+                match {
+                    it.settlement.fromUserId == "member-2" &&
+                        it.settlement.toUserId == "leaving-user" &&
+                        it.settlement.amount == 1500L &&
+                        it.settlement.sourcePocket == SettlementPocketType.POCKET
+                }
+            )
+            settlementRepository.addSettlement(
+                match {
+                    it.settlement.fromUserId == "member-3" &&
+                        it.settlement.toUserId == "leaving-user" &&
+                        it.settlement.amount == 1500L &&
+                        it.settlement.sourcePocket == SettlementPocketType.POCKET
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `persistForGroup with leavingUserId when leaving member owes money`() = runTest {
+        val group = mockk<Group>(relaxed = true).apply {
+            every { members } returns listOf("leaving-user", "member-2", "member-3")
+            every { this@apply.currency } returns "EUR"
+        }
+        coEvery { groupRepository.getGroupById(groupId) } returns group
+        every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(emptyList())
+        every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
+        every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
+        coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
+
+        val balances = listOf(
+            MemberBalance(userId = "leaving-user", pocketBalance = -3000, cashInHand = 0), // Owes 30 EUR
+            MemberBalance(userId = "member-2", pocketBalance = 1500, cashInHand = 0),
+            MemberBalance(userId = "member-3", pocketBalance = 1500, cashInHand = 0)
+        )
+        coEvery {
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
+        } returns balances
+
+        coEvery { settlementRepository.getGroupSettlements(groupId) } returns emptyList()
+        coEvery { settlementRepository.addSettlement(any()) } returns Unit
+
+        useCase.persistForGroup(groupId, leavingUserId = "leaving-user")
+
+        coVerify {
+            settlementRepository.addSettlement(
+                match {
+                    it.settlement.fromUserId == "leaving-user" &&
+                        it.settlement.toUserId == "member-2" &&
+                        it.settlement.amount == 1500L &&
+                        it.settlement.sourcePocket == SettlementPocketType.POCKET
+                }
+            )
+            settlementRepository.addSettlement(
+                match {
+                    it.settlement.fromUserId == "leaving-user" &&
+                        it.settlement.toUserId == "member-3" &&
+                        it.settlement.amount == 1500L &&
+                        it.settlement.sourcePocket == SettlementPocketType.POCKET
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `persistForGroup with leavingUserId when leaving member pocket balance is zero`() = runTest {
+        val group = mockk<Group>(relaxed = true).apply {
+            every { members } returns listOf("leaving-user", "member-2")
+            every { this@apply.currency } returns "EUR"
+        }
+        coEvery { groupRepository.getGroupById(groupId) } returns group
+        every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(emptyList())
+        every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
+        every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
+        coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
+
+        val balances = listOf(
+            MemberBalance(userId = "leaving-user", pocketBalance = 0, cashInHand = 0),
+            MemberBalance(userId = "member-2", pocketBalance = 0, cashInHand = 0)
+        )
+        coEvery {
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
+        } returns balances
+
+        coEvery { settlementRepository.getGroupSettlements(groupId) } returns emptyList()
+
+        useCase.persistForGroup(groupId, leavingUserId = "leaving-user")
+
+        coVerify(exactly = 0) { settlementRepository.addSettlement(any()) }
+    }
+
+    @Test
+    fun `persistForGroup with leavingUserId when leaving member is not in balances`() = runTest {
+        val group = mockk<Group>(relaxed = true).apply {
+            every { members } returns listOf("member-2")
+            every { this@apply.currency } returns "EUR"
+        }
+        coEvery { groupRepository.getGroupById(groupId) } returns group
+        every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(emptyList())
+        every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
+        every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
+        coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
+
+        val balances = listOf(
+            MemberBalance(userId = "member-2", pocketBalance = 1000, cashInHand = 0)
+        )
+        coEvery {
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
+        } returns balances
+
+        coEvery { settlementRepository.getGroupSettlements(groupId) } returns emptyList()
+
+        useCase.persistForGroup(groupId, leavingUserId = "non-existent")
+
+        coVerify(exactly = 0) { settlementRepository.addSettlement(any()) }
+    }
+
+    @Test
+    fun `persistForGroup with leavingUserId when there are no remaining members`() = runTest {
+        val group = mockk<Group>(relaxed = true).apply {
+            every { members } returns listOf("leaving-user")
+            every { this@apply.currency } returns "EUR"
+        }
+        coEvery { groupRepository.getGroupById(groupId) } returns group
+        every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(emptyList())
+        every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
+        every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
+        coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
+
+        val balances = listOf(
+            MemberBalance(userId = "leaving-user", pocketBalance = 1000, cashInHand = 0)
+        )
+        coEvery {
+            getMemberBalancesFlowUseCase.computeMemberBalances(any())
+        } returns balances
+
+        coEvery { settlementRepository.getGroupSettlements(groupId) } returns emptyList()
+
+        useCase.persistForGroup(groupId, leavingUserId = "leaving-user")
+
+        coVerify(exactly = 0) { settlementRepository.addSettlement(any()) }
     }
 }

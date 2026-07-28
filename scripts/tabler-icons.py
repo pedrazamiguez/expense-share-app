@@ -113,12 +113,16 @@ BACKGROUND_PATH = "M0 0h24v24H0z"
 # ─── SVG Download & Parsing ──────────────────────────────────────────────────
 
 
+from urllib.request import Request, urlopen
+
+
 def download_svg(tabler_name: str, style: str) -> str:
     """Download a Tabler SVG from GitHub."""
     url = TABLER_RAW_URL.format(style=style, name=tabler_name)
     print(f"  Downloading {url} …")
+    req = Request(url, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"})
     try:
-        with urlopen(url) as resp:
+        with urlopen(req) as resp:
             content = resp.read().decode("utf-8")
     except HTTPError as exc:
         if exc.code == 404:

@@ -4,7 +4,7 @@
 
 import * as admin from "firebase-admin";
 import { logger } from "firebase-functions/v2";
-import { GroupDoc, UserDoc } from "../types";
+import { GroupDoc, UserDoc, SettlementDoc } from "../types";
 
 const db = () => admin.firestore();
 
@@ -44,5 +44,33 @@ export async function getActorDisplayName(userId: string): Promise<string> {
   } catch (err) {
     logger.error("Error fetching user display name", { userId, err });
     return "Someone";
+  }
+}
+
+/**
+ * Reads a settlement document and returns its data.
+ * Returns null if the settlement doesn't exist.
+ */
+export async function getSettlementData(
+  groupId: string,
+  settlementId: string
+): Promise<SettlementDoc | null> {
+  try {
+    const settlementSnap = await db()
+      .collection("groups")
+      .doc(groupId)
+      .collection("settlements")
+      .doc(settlementId)
+      .get();
+
+    if (!settlementSnap.exists) {
+      logger.warn("Settlement document not found", { groupId, settlementId });
+      return null;
+    }
+
+    return settlementSnap.data() as SettlementDoc;
+  } catch (err) {
+    logger.error("Error fetching settlement document", { groupId, settlementId, err });
+    return null;
   }
 }

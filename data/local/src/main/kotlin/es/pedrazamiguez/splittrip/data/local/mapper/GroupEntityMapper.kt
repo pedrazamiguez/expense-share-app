@@ -22,7 +22,8 @@ fun GroupEntity.toDomain(): Group = Group(
     lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc(),
     syncStatus = SyncStatus.fromStringOrDefault(syncStatus),
     status = GroupStatus.fromStringOrDefault(status),
-    createdBy = createdBy
+    createdBy = createdBy,
+    lastArchiveEventId = lastArchiveEventId
 )
 
 /**
@@ -40,7 +41,8 @@ fun Group.toEntity(): GroupEntity = GroupEntity(
     lastUpdatedAtMillis = lastUpdatedAt?.toEpochMillisUtc(),
     syncStatus = syncStatus.name,
     status = status.name,
-    createdBy = createdBy
+    createdBy = createdBy,
+    lastArchiveEventId = lastArchiveEventId
 )
 
 /**

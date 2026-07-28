@@ -35,7 +35,8 @@ service cloud.firestore {
     // exist yet in the committed database state.
     function isGroupActiveOrNew(groupId) {
       return !exists(/databases/$(database)/documents/groups/$(groupId))
-             || get(/databases/$(database)/documents/groups/$(groupId)).data.status != "ARCHIVED";
+             || get(/databases/$(database)/documents/groups/$(groupId)).data.status != "ARCHIVED"
+             || get(/databases/$(database)/documents/groups/$(groupId)).data.deletionRequested == true;
     }
 
     // ---------------------------------------------------------------
@@ -83,42 +84,57 @@ service cloud.firestore {
       // (membership enforced at app level; rule allows read for now)
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
-      allow update, delete: if isMemberOrPending(resource.data.memberIds) && resource.data.status != "ARCHIVED";
+      allow update: if isMemberOrPending(resource.data.memberIds)
+                     && (resource.data.status != "ARCHIVED" || request.resource.data.deletionRequested == true);
+      allow delete: if isMemberOrPending(resource.data.memberIds);
 
       // Members subcollection
       match /members/{memberId} {
         allow read: if isAuthenticated();
-        allow write: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow create, update: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow delete: if isAuthenticated();
       }
 
       // Expenses subcollection
       match /expenses/{expenseId} {
         allow read: if isAuthenticated();
-        allow write: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow create, update: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow delete: if isAuthenticated();
       }
 
       // Contributions subcollection
       match /contributions/{contributionId} {
         allow read: if isAuthenticated();
-        allow write: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow create, update: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow delete: if isAuthenticated();
       }
 
       // Cash withdrawals subcollection
       match /cash_withdrawals/{withdrawalId} {
         allow read: if isAuthenticated();
-        allow write: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow create, update: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow delete: if isAuthenticated();
       }
 
       // Subunits subcollection
       match /subunits/{subunitId} {
         allow read: if isAuthenticated();
-        allow write: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow create, update: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow delete: if isAuthenticated();
       }
 
       // Settlements subcollection
       match /settlements/{settlementId} {
         allow read: if isAuthenticated();
-        allow write: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow create, update: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow delete: if isAuthenticated();
+      }
+
+      // Nudges subcollection
+      match /nudges/{nudgeId} {
+        allow read: if isAuthenticated();
+        allow create, update: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow delete: if isAuthenticated();
       }
     }
   }

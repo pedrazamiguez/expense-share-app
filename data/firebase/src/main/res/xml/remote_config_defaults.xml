@@ -20,4 +20,8 @@
         <key>support_email_address</key>
         <value>support@splittrip.com</value>
     </entry>
+    <entry>
+        <key>settlement_nudge_rate_limit_hours</key>
+        <value>24</value>
+    </entry>
 </defaultsMap>

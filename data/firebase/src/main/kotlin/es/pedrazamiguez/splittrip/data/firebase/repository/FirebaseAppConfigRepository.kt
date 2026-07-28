@@ -31,6 +31,9 @@ class FirebaseAppConfigRepository(
     private val _supportEmailAddress = MutableStateFlow(DEFAULT_SUPPORT_EMAIL)
     override val supportEmailAddress: StateFlow<String> = _supportEmailAddress.asStateFlow()
 
+    private val _settlementNudgeRateLimitHours = MutableStateFlow(DEFAULT_SETTLEMENT_NUDGE_RATE_LIMIT_HOURS)
+    override val settlementNudgeRateLimitHours: StateFlow<Long> = _settlementNudgeRateLimitHours.asStateFlow()
+
     init {
         remoteConfig.setDefaultsAsync(R.xml.remote_config_defaults)
         updateFlowsFromConfig()
@@ -80,6 +83,9 @@ class FirebaseAppConfigRepository(
             if (maxFutureDays > 0) maxFutureDays else DEFAULT_EXTRACTED_DATE_MAX_FUTURE_DAYS
         _supportEmailAddress.value =
             remoteConfig.getString("support_email_address").takeIf { it.isNotBlank() } ?: DEFAULT_SUPPORT_EMAIL
+        val nudgeLimitHours = remoteConfig.getLong("settlement_nudge_rate_limit_hours")
+        _settlementNudgeRateLimitHours.value =
+            if (nudgeLimitHours > 0) nudgeLimitHours else DEFAULT_SETTLEMENT_NUDGE_RATE_LIMIT_HOURS
     }
 
     companion object {
@@ -88,5 +94,6 @@ class FirebaseAppConfigRepository(
         private const val DEFAULT_MAX_MEMBERS_PER_GROUP = 20
         private const val DEFAULT_EXTRACTED_DATE_MAX_FUTURE_DAYS = 30
         private const val DEFAULT_SUPPORT_EMAIL = "support@splittrip.com"
+        private const val DEFAULT_SETTLEMENT_NUDGE_RATE_LIMIT_HOURS = 24L
     }
 }

@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.firebase.messaging.handler.impl
 
 import android.content.Context
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
+import es.pedrazamiguez.splittrip.data.firebase.R
 import es.pedrazamiguez.splittrip.domain.constant.NotificationChannelId
 import io.mockk.every
 import io.mockk.mockk
@@ -227,6 +228,63 @@ class NotificationHandlerContentTest {
 
             assertNotNull(content.body)
             assertNotNull(content.title)
+        }
+
+        @Test
+        fun `SettlementRequestHandler uses payerName and formatted amount in notification body`() {
+            val handler = SettlementRequestHandler(context, localeProvider)
+
+            handler.handle(baseData)
+
+            verify {
+                context.getString(
+                    R.string.notification_settlement_request_body,
+                    "John",
+                    "€50.00"
+                )
+            }
+        }
+
+        @Test
+        fun `SettlementRequestHandler uses localized fallback name when payerName is missing`() {
+            val handler = SettlementRequestHandler(context, localeProvider)
+            val dataWithoutName = baseData - "memberName" - "payerName" - "actorName"
+
+            handler.handle(dataWithoutName)
+
+            verify {
+                context.getString(R.string.notification_fallback_actor_name)
+            }
+        }
+
+        @Test
+        fun `SettlementConfirmedHandler uses actorName and formatted amount in notification body`() {
+            val handler = SettlementConfirmedHandler(context, localeProvider)
+
+            handler.handle(baseData)
+
+            verify {
+                context.getString(
+                    R.string.notification_settlement_confirmed_body,
+                    "John",
+                    "€50.00"
+                )
+            }
+        }
+
+        @Test
+        fun `SettlementDisputedHandler uses actorName and formatted amount in notification body`() {
+            val handler = SettlementDisputedHandler(context, localeProvider)
+
+            handler.handle(baseData)
+
+            verify {
+                context.getString(
+                    R.string.notification_settlement_disputed_body,
+                    "John",
+                    "€50.00"
+                )
+            }
         }
     }
 

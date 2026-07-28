@@ -2,11 +2,17 @@ package es.pedrazamiguez.splittrip.data.di
 
 import es.pedrazamiguez.splittrip.data.BuildConfig
 import es.pedrazamiguez.splittrip.data.local.database.AppDatabase
+import es.pedrazamiguez.splittrip.data.local.datastore.SettlementNudgePreferences
 import es.pedrazamiguez.splittrip.data.local.service.LocalDatabaseCleanerServiceImpl
 import es.pedrazamiguez.splittrip.data.repository.impl.CurrencyRepositoryImpl
+import es.pedrazamiguez.splittrip.data.repository.impl.SettlementNudgeRepositoryImpl
+import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudSettlementDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalCurrencyDataSource
+import es.pedrazamiguez.splittrip.domain.datasource.local.LocalSettlementDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.remote.RemoteCurrencyDataSource
 import es.pedrazamiguez.splittrip.domain.repository.CurrencyRepository
+import es.pedrazamiguez.splittrip.domain.repository.SettlementNudgeRepository
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.LocalDatabaseCleanerService
 import java.time.Duration
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +32,15 @@ val dataCommonModule = module {
         LocalDatabaseCleanerServiceImpl(
             appDatabase = get<AppDatabase>(),
             ioDispatcher = Dispatchers.IO
+        )
+    }
+
+    single<SettlementNudgeRepository> {
+        SettlementNudgeRepositoryImpl(
+            settlementNudgePreferences = get<SettlementNudgePreferences>(),
+            cloudSettlementDataSource = get<CloudSettlementDataSource>(),
+            localSettlementDataSource = get<LocalSettlementDataSource>(),
+            authenticationService = get<AuthenticationService>()
         )
     }
 }

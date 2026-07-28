@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
-import es.pedrazamiguez.splittrip.features.group.presentation.component.ArchiveConfirmationDialog
 import es.pedrazamiguez.splittrip.features.group.presentation.component.DeleteConfirmationDialog
 import es.pedrazamiguez.splittrip.features.group.presentation.component.GroupsScreenContent
 import es.pedrazamiguez.splittrip.features.group.presentation.component.GroupsScreenOverlays
@@ -19,6 +18,7 @@ import es.pedrazamiguez.splittrip.features.group.presentation.component.RestoreS
 import es.pedrazamiguez.splittrip.features.group.presentation.component.TrackScrollEffect
 import es.pedrazamiguez.splittrip.features.group.presentation.component.leave.GroupLeaveWizardSheet
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
+import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardStep
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupsUiState
 
 @Suppress("kotlin:S107", "LongMethod", "LongParameterList")
@@ -40,12 +40,12 @@ fun GroupsScreen(
     onWizardBackClicked: () -> Unit = {},
     onWizardCancelled: () -> Unit = {},
     onConfirmSettlement: (String, String) -> Unit = { _, _ -> },
-    onConfirmLeave: (String) -> Unit = {}
+    onConfirmLeave: (String) -> Unit = {},
+    onWizardJumpToStepClicked: (LeaveWizardStep) -> Unit = {}
 ) {
     val listState = rememberLazyListState()
     var selectedGroupForMenu by remember { mutableStateOf<GroupUiModel?>(null) }
     var groupToDelete by remember { mutableStateOf<GroupUiModel?>(null) }
-    var groupToArchive by remember { mutableStateOf<GroupUiModel?>(null) }
     var groupToLeave by remember { mutableStateOf<GroupUiModel?>(null) }
     val scrollBehavior = rememberConnectedScrollBehavior()
 
@@ -81,8 +81,8 @@ fun GroupsScreen(
             selectedGroupForMenu = null
         },
         onArchiveRequested = { group ->
-            groupToArchive = group
             selectedGroupForMenu = null
+            onArchiveGroup(group.id)
         },
         onLeaveRequested = { group ->
             groupToLeave = group
@@ -92,8 +92,6 @@ fun GroupsScreen(
     )
 
     DeleteConfirmationDialog(groupToDelete, onDeleteGroup) { groupToDelete = null }
-
-    ArchiveConfirmationDialog(groupToArchive, onArchiveGroup) { groupToArchive = null }
 
     val shouldClearGroupToLeave = !uiState.leaveWizardState.showSheet &&
         groupToLeave != null &&
@@ -111,7 +109,8 @@ fun GroupsScreen(
                 groupToLeave = null
             },
             onConfirmSettlement = { onConfirmSettlement(groupToLeave!!.id, it) },
-            onConfirmLeave = { onConfirmLeave(groupToLeave!!.id) }
+            onConfirmLeave = { onConfirmLeave(groupToLeave!!.id) },
+            onGoToSettlementsClicked = { onWizardJumpToStepClicked(LeaveWizardStep.SETTLEMENTS) }
         )
     } else if (shouldClearGroupToLeave) {
         // Clear groupToLeave when the sheet is closed and not loading

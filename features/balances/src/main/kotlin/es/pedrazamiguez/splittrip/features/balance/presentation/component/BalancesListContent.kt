@@ -40,8 +40,7 @@ internal fun BalancesListContent(
     onEvent: (BalancesUiEvent) -> Unit,
     onNavigateToContribution: () -> Unit,
     onNavigateToWithdrawal: () -> Unit,
-    onShowExtrasBreakdown: () -> Unit,
-    onSimplifyDebts: () -> Unit = {}
+    onShowExtrasBreakdown: () -> Unit
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -91,8 +90,7 @@ internal fun BalancesListContent(
                 onBalanceAnimationComplete = { onEvent(BalancesUiEvent.BalanceAnimationComplete) },
                 onAddMoney = onNavigateToContribution,
                 onWithdrawCash = onNavigateToWithdrawal,
-                onShowExtrasBreakdown = onShowExtrasBreakdown,
-                onSimplifyDebts = onSimplifyDebts
+                onShowExtrasBreakdown = onShowExtrasBreakdown
             )
         }
         memberBalancesSection(uiState.memberBalances)
@@ -137,7 +135,10 @@ private fun LazyListScope.activitySection(
         when (item) {
             is ActivityItemUiModel.ContributionItem -> ContributionHistoryItem(
                 contribution = item.contribution,
-                onLongClick = if (!item.contribution.isLinkedContribution && !isGroupArchived) {
+                onLongClick = if (!item.contribution.isLinkedContribution &&
+                    !item.contribution.isSettlementContribution &&
+                    !isGroupArchived
+                ) {
                     { onEvent(BalancesUiEvent.DeleteContributionRequested(item.contribution)) }
                 } else {
                     null

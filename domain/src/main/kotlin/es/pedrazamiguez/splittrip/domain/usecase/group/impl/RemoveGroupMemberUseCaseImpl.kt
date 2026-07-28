@@ -7,8 +7,11 @@ import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
+import es.pedrazamiguez.splittrip.domain.repository.SettlementRepository
 import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.StandardContributionAttributionStrategy
+import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.domain.usecase.group.RemoveGroupMemberUseCase
 import kotlinx.coroutines.flow.first
 
@@ -18,7 +21,8 @@ class RemoveGroupMemberUseCaseImpl(
     private val contributionRepository: ContributionRepository,
     private val cashWithdrawalRepository: CashWithdrawalRepository,
     private val subunitRepository: SubunitRepository,
-    private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase
+    private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase,
+    private val settlementRepository: SettlementRepository
 ) : RemoveGroupMemberUseCase {
 
     override suspend operator fun invoke(groupId: String, userId: String): Result<Unit> = runCatching {
@@ -34,14 +38,19 @@ class RemoveGroupMemberUseCaseImpl(
         val contributions = contributionRepository.getGroupContributionsFlow(groupId).first()
         val withdrawals = cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId).first()
         val subunits = subunitRepository.getGroupSubunits(groupId)
+        val settlements = settlementRepository.getGroupSettlements(groupId)
 
         val balances = getMemberBalancesFlowUseCase.computeMemberBalances(
-            contributions = contributions,
-            withdrawals = withdrawals,
-            expenses = expenses,
-            subunits = subunits,
-            groupMemberIds = group.members,
-            groupCurrency = group.currency
+            MemberBalanceCalculationInputs(
+                contributions = contributions,
+                withdrawals = withdrawals,
+                expenses = expenses,
+                subunits = subunits,
+                groupMemberIds = group.members,
+                groupCurrency = group.currency,
+                settlements = settlements,
+                attributionStrategy = StandardContributionAttributionStrategy
+            )
         )
 
         val memberBalance = balances.find { it.userId == userId }

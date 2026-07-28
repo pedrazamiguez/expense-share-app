@@ -118,21 +118,27 @@ private fun ownerActionsForGroup(
     onDeleteRequested: (GroupUiModel) -> Unit,
     onArchiveRequested: (GroupUiModel) -> Unit
 ): List<SheetAction> {
-    if (group.status != GroupStatus.ACTIVE || group.createdBy != currentUserId) return emptyList()
-    return listOf(
-        SheetAction(
-            text = endTripText,
-            icon = TablerIcons.Outline.Lock,
-            onClick = { onArchiveRequested(group) },
-            isDestructive = true
-        ),
-        SheetAction(
-            text = deleteGroupText,
-            icon = TablerIcons.Outline.Trash,
-            onClick = { onDeleteRequested(group) },
-            isDestructive = true
+    if (group.createdBy != currentUserId) return emptyList()
+    return buildList {
+        if (group.status == GroupStatus.ACTIVE) {
+            add(
+                SheetAction(
+                    text = endTripText,
+                    icon = TablerIcons.Outline.Lock,
+                    onClick = { onArchiveRequested(group) },
+                    isDestructive = true
+                )
+            )
+        }
+        add(
+            SheetAction(
+                text = deleteGroupText,
+                icon = TablerIcons.Outline.Trash,
+                onClick = { onDeleteRequested(group) },
+                isDestructive = true
+            )
         )
-    )
+    }
 }
 
 private fun leaveActionForGroup(

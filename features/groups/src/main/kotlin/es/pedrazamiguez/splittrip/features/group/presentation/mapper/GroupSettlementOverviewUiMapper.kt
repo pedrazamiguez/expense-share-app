@@ -8,6 +8,8 @@ interface GroupSettlementOverviewUiMapper {
     fun toUiState(
         settlements: List<SettlementRecord>,
         memberProfiles: Map<String, User>,
-        currentUserId: String
+        currentUserId: String,
+        groupCreatorId: String,
+        groupName: String
     ): GroupSettlementOverviewUiState
 }

@@ -18,7 +18,6 @@ import es.pedrazamiguez.splittrip.di.domain.profileDomainModule
 import es.pedrazamiguez.splittrip.di.domain.settingsDomainModule
 import es.pedrazamiguez.splittrip.di.domain.subunitsDomainModule
 import es.pedrazamiguez.splittrip.di.domain.withdrawalsDomainModule
-import es.pedrazamiguez.splittrip.features.activitylog.di.activityLoggingUiModule
 import es.pedrazamiguez.splittrip.features.authentication.di.authenticationUiModule
 import es.pedrazamiguez.splittrip.features.balance.di.balancesUiModule
 import es.pedrazamiguez.splittrip.features.contribution.di.contributionsUiModule
@@ -27,6 +26,7 @@ import es.pedrazamiguez.splittrip.features.group.di.groupsUiModule
 import es.pedrazamiguez.splittrip.features.onboarding.di.onboardingUiModule
 import es.pedrazamiguez.splittrip.features.profile.di.profileUiModule
 import es.pedrazamiguez.splittrip.features.settings.di.settingsUiModule
+import es.pedrazamiguez.splittrip.features.settlement.di.settlementsUiModule
 import es.pedrazamiguez.splittrip.features.subunit.di.subunitsUiModule
 import es.pedrazamiguez.splittrip.features.withdrawal.di.withdrawalsUiModule
 import org.koin.dsl.module
@@ -44,12 +44,6 @@ val balancesFeatureModules = module {
         balancesDomainModule,
         balancesDataModule,
         balancesUiModule
-    )
-}
-
-val activityLoggingFeatureModules = module {
-    includes(
-        activityLoggingUiModule
     )
 }
 
@@ -117,5 +111,11 @@ val withdrawalsFeatureModules = module {
 val onboardingFeatureModules = module {
     includes(
         onboardingUiModule
+    )
+}
+
+val settlementsFeatureModules = module {
+    includes(
+        settlementsUiModule
     )
 }

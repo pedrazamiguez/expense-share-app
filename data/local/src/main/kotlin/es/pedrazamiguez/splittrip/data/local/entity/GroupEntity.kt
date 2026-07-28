@@ -22,5 +22,6 @@ data class GroupEntity(
     val lastUpdatedAtMillis: Long?,
     val syncStatus: String = "SYNCED",
     val status: String = "ACTIVE",
-    val createdBy: String = ""
+    val createdBy: String = "",
+    val lastArchiveEventId: String? = null
 )

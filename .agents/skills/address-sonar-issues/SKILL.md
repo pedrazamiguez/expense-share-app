@@ -81,12 +81,16 @@ Implement code modifications and unit tests, adhering strictly to all project ar
 
 Ensure all local verification checks pass successfully:
 
-1. **Run Check Suite:**
+1. **Iterative Verification (`make fast-check`):** Run for rapid feedback during iterative edits (~15–30s):
    ```bash
-   make check
+   make fast-check > build.log 2>&1 && echo "Fast check passed" || (echo "Fast check failed. Last 100 lines:" && tail -n 100 build.log)
+   ```
+2. **Final Check Suite (`make check`):** Run before completing the task to ensure full cold CI parity:
+   ```bash
+   make check > build.log 2>&1 && echo "Check passed successfully" || (tail -n 100 build.log && exit 1)
    ```
    This verifies compilation, runs Konsist architecture tests, detekt, ktlint formatting checks, and all unit tests.
-2. **Verify Coverage:** Run the coverage suite to verify that overall and per-file coverage stays above the 80% threshold:
+3. **Verify Coverage:** Run the coverage suite to verify that overall and per-file coverage stays above the 80% threshold:
    ```bash
    make coverage
    ```

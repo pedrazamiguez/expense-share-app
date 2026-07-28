@@ -85,6 +85,9 @@ class UserUiMapper(
             )
             SelfIdentificationContext.AGENT -> resourceProvider.getString(R.string.self_identification_agent)
             SelfIdentificationContext.RECIPIENT -> resourceProvider.getString(R.string.self_identification_recipient)
+            SelfIdentificationContext.PREPOSITIONAL -> resourceProvider.getString(
+                R.string.self_identification_prepositional
+            )
         }
     }
 

@@ -9,9 +9,11 @@ import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.GroupPocketBalance
+import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.SettlementsUiMapper
@@ -92,9 +94,18 @@ class BalancesViewModel(
                         useCases.getGroupContributionsFlowUseCase(groupId),
                         useCases.getCashWithdrawalsFlowUseCase(groupId),
                         useCases.getGroupSubunitsFlowUseCase(groupId),
-                        useCases.getGroupExpensesFlowUseCase(groupId)
-                    ) { balance, contributions, withdrawals, subunits, expenses ->
-                        DataSnapshot(balance, contributions, withdrawals, subunits, expenses)
+                        useCases.getGroupExpensesFlowUseCase(groupId),
+                        useCases.getGroupSettlementsFlowUseCase(groupId)
+                    ) { array ->
+                        @Suppress("UNCHECKED_CAST")
+                        DataSnapshot(
+                            balance = array[0] as GroupPocketBalance,
+                            contributions = array[1] as List<Contribution>,
+                            withdrawals = array[2] as List<CashWithdrawal>,
+                            subunits = array[3] as List<Subunit>,
+                            expenses = array[4] as List<Expense>,
+                            settlements = array[5] as List<SettlementRecord>
+                        )
                     }
                         // Debounce absorbs rapid multi-table writes (e.g. Firestore reconciliation
                         // that updates expenses + splits + withdrawals in quick succession) so that
@@ -110,15 +121,19 @@ class BalancesViewModel(
                     val withdrawals = snapshot.withdrawals
                     val subunits = snapshot.subunits
                     val expenses = snapshot.expenses
+                    val settlements = snapshot.settlements
 
                     // Compute member balances from already-loaded data (pure computation)
                     val memberBalances = useCases.getMemberBalancesFlowUseCase.computeMemberBalances(
-                        contributions = contributions,
-                        withdrawals = withdrawals,
-                        expenses = expenses,
-                        subunits = subunits,
-                        groupMemberIds = groupMemberIds,
-                        groupCurrency = currency
+                        MemberBalanceCalculationInputs(
+                            contributions = contributions,
+                            withdrawals = withdrawals,
+                            expenses = expenses,
+                            subunits = subunits,
+                            groupMemberIds = groupMemberIds,
+                            groupCurrency = currency,
+                            settlements = settlements
+                        )
                     )
 
                     // Build subunit lookup map for mapper use
@@ -135,9 +150,9 @@ class BalancesViewModel(
                     }.toList()
                     val memberProfiles = useCases.getMemberProfilesUseCase(allUserIds)
 
-                    val settlements = useCases.getSettlementSuggestionsUseCase(memberBalances)
+                    val settlementSuggestions = useCases.getSettlementSuggestionsUseCase(memberBalances)
                     val mappedSettlements = settlementsUiMapper.mapSettlements(
-                        settlements = settlements,
+                        settlements = settlementSuggestions,
                         currency = currency,
                         currentUserId = currentUserId ?: "",
                         memberProfiles = memberProfiles
@@ -299,6 +314,7 @@ class BalancesViewModel(
         val contributions: List<Contribution>,
         val withdrawals: List<CashWithdrawal>,
         val subunits: List<Subunit>,
-        val expenses: List<Expense>
+        val expenses: List<Expense>,
+        val settlements: List<SettlementRecord>
     )
 }
