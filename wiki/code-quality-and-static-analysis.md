@@ -279,6 +279,8 @@ HTML/XML/SARIF reports are uploaded as build artifacts for deep-dive offline rev
 
 | Command | Purpose | Speed |
 |---|---|---|
+| `make fast-check` | Fast incremental quality check (daemon & build cache) | ~15–30s |
+| `make check` | Full cold-start quality gate (single-pass Gradle execution, mirrors CI) | ~1.5–2min |
 | `./gradlew ktlintCheck` | Check formatting (all modules) | ~15s |
 | `./gradlew ktlintFormat` | Auto-fix formatting (all modules) | ~15s |
 | `./gradlew detekt` | Run full static analysis | ~30-45s |

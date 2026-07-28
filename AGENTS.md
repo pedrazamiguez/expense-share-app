@@ -144,6 +144,8 @@ When testing classes that launch background coroutines (e.g., Repositories with 
   - Release builds: `OER_APP_ID_RELEASE=your_key` (or set as an environment variable `OER_APP_ID_RELEASE` — env var takes precedence on CI)
 - Version managed in `version.properties` (major.minor.patch + snapshot flag).
 - `./gradlew test` — unit tests. `./gradlew connectedAndroidTest` — UI tests.
+- `make fast-check` — fast incremental quality check (uses Gradle daemon & build cache, ~15–30s).
+- `make check` — full cold quality check (single-pass Gradle execution, mirrors CI, ~1.5–2min).
 
 ## Static Analysis & Code Quality
 
@@ -152,6 +154,7 @@ When testing classes that launch background coroutines (e.g., Repositories with 
 - **JaCoCo** (code coverage) is configured for all subprojects. Per-module reports via `jacocoTestReport`, merged report via `jacocoMergedReport`.
 - **Konsist** (architecture rule enforcement) tests live in `:konsist-tests` module. Enforces naming conventions, dependency rules, and structural patterns from this manifesto.
 - Detekt config lives at `config/detekt/detekt.yml`. Ktlint rules are in `.editorconfig`.
+- Local verification uses `make fast-check` (rapid iterative check) and `make check` (single-pass cold quality gate).
 - CI runs static analysis via `.github/workflows/static-analysis.yml` (ktlint + detekt + CPD) — parallel to and independent of `build-and-test.yml`.
 - JaCoCo and Konsist run in a separate `.github/workflows/coverage-and-architecture.yml` workflow — also independent from `build-and-test.yml`.
 - Detekt uses `ignoreFailures = true` locally; gating is done by GitHub Code Scanning's "Code scanning results" check (only new alerts block PRs).
