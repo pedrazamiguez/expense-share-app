@@ -19,22 +19,37 @@ internal fun ConsensusCardActions(
     onConfirm: () -> Unit,
     onDispute: () -> Unit,
     onNudge: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isOffline: Boolean = false
 ) {
     val disputeLabel = stringResource(R.string.your_position_settlement_dispute)
     val actions = buildList {
         if (item.canConfirm) {
-            add(ConsensusActionData(label = item.confirmLabel, isPrimary = true, isEnabled = true, onClick = onConfirm))
+            add(
+                ConsensusActionData(
+                    label = item.confirmLabel,
+                    isPrimary = true,
+                    isEnabled = !isOffline,
+                    onClick = onConfirm
+                )
+            )
         }
         if (item.canDispute) {
-            add(ConsensusActionData(label = disputeLabel, isPrimary = false, isEnabled = true, onClick = onDispute))
+            add(
+                ConsensusActionData(
+                    label = disputeLabel,
+                    isPrimary = false,
+                    isEnabled = !isOffline,
+                    onClick = onDispute
+                )
+            )
         }
         if (item.canNudge) {
             add(
                 ConsensusActionData(
                     label = item.nudgeButtonLabel,
                     isPrimary = false,
-                    isEnabled = !item.isNudgeRateLimited,
+                    isEnabled = !item.isNudgeRateLimited && !isOffline,
                     onClick = onNudge
                 )
             )
@@ -51,6 +66,7 @@ internal fun ConsensusCardActions(
                 GradientButton(
                     text = action.label,
                     onClick = action.onClick,
+                    enabled = action.isEnabled,
                     modifier = actionModifier
                 )
             } else {

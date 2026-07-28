@@ -10,8 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.InlineWarningBanner
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.CaptionText
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.splittrip.features.settlement.R
@@ -27,38 +29,40 @@ internal fun YourPositionContent(
     isCashBreakdownVisible: Boolean,
     settlementConsensus: ImmutableList<SettlementConsensusItemUiModel>,
     onEvent: (YourPositionUiEvent) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isOffline: Boolean = false
 ) {
     val bottomPadding = LocalBottomPadding.current
     val scrollBehavior = rememberConnectedScrollBehavior()
+    val spacing = MaterialTheme.spacing
 
     LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         contentPadding = PaddingValues(
-            start = MaterialTheme.spacing.Default,
-            end = MaterialTheme.spacing.Default,
-            top = MaterialTheme.spacing.Default,
-            bottom = bottomPadding + MaterialTheme.spacing.Default
+            start = spacing.Default,
+            end = spacing.Default,
+            top = spacing.Default,
+            bottom = bottomPadding + spacing.Default
         ),
-        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
+        verticalArrangement = Arrangement.spacedBy(spacing.Medium)
     ) {
+        if (isOffline) {
+            item(key = "offline_warning_banner") {
+                InlineWarningBanner(warning = UiText.StringResource(R.string.your_position_offline_warning))
+            }
+        }
         item(key = "hero_net_position") {
             YourPositionHeroBanner(personalPosition = personalPosition)
         }
-
         item(key = "pocket_cash_row") {
             YourPositionPocketCashRow(
                 personalPosition = personalPosition,
                 onShowCashBreakdown = { onEvent(YourPositionUiEvent.ShowCashBreakdown) }
             )
         }
-
         item(key = "activity_breakdown") {
             YourPositionActivityBreakdown(personalPosition = personalPosition)
         }
-
         if (personalPosition.hasNegativeCashInHand) {
             item(key = "negative_cash_hint") {
                 CaptionText(
@@ -67,13 +71,13 @@ internal fun YourPositionContent(
                 )
             }
         }
-
         item(key = "settlement_consensus") {
             SettlementConsensusSection(
                 settlements = settlementConsensus,
-                onConfirm = { id -> onEvent(YourPositionUiEvent.ConfirmSettlement(id)) },
-                onDispute = { id -> onEvent(YourPositionUiEvent.DisputeSettlement(id)) },
-                onNudge = { id -> onEvent(YourPositionUiEvent.NudgeDebtor(id)) }
+                isOffline = isOffline,
+                onConfirm = { onEvent(YourPositionUiEvent.ConfirmSettlement(it)) },
+                onDispute = { onEvent(YourPositionUiEvent.DisputeSettlement(it)) },
+                onNudge = { onEvent(YourPositionUiEvent.NudgeDebtor(it)) }
             )
         }
     }

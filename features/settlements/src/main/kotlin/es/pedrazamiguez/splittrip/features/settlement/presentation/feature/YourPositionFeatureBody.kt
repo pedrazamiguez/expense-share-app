@@ -19,6 +19,7 @@ internal fun YourPositionFeatureBody(
         personalPosition = personalPosition,
         isCashBreakdownVisible = uiState.isCashBreakdownVisible,
         settlementConsensus = uiState.settlementConsensus,
+        isOffline = uiState.isOffline,
         onEvent = onEvent,
         modifier = modifier.fillMaxSize()
     )
@@ -28,7 +29,8 @@ internal fun YourPositionFeatureBody(
             reason = uiState.disputeReasonInput,
             onReasonChanged = { reason -> onEvent(YourPositionUiEvent.DisputeReasonChanged(reason)) },
             onSubmit = { onEvent(YourPositionUiEvent.DisputeSubmitted) },
-            onDismiss = { onEvent(YourPositionUiEvent.DisputeCancelled) }
+            onDismiss = { onEvent(YourPositionUiEvent.DisputeCancelled) },
+            isOffline = uiState.isOffline
         )
     }
 }

@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
+import es.pedrazamiguez.splittrip.core.common.network.NetworkMonitor
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.Contribution
@@ -46,6 +47,7 @@ class YourPositionViewModel(
     private val yourPositionUiMapper: YourPositionUiMapper,
     private val settlementConsensusUiMapper: SettlementConsensusUiMapper,
     private val appConfigService: AppConfigService,
+    private val networkMonitor: NetworkMonitor,
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
@@ -169,8 +171,9 @@ class YourPositionViewModel(
                     )
                 }
 
-            combine(baseStateFlow, _localState) { baseState, localState ->
+            combine(baseStateFlow, _localState, networkMonitor.isOnline) { baseState, localState, isOnline ->
                 baseState.copy(
+                    isOffline = !isOnline,
                     activeDisputeSettlementId = localState.activeDisputeSettlementId,
                     disputeReasonInput = localState.disputeReasonInput
                 )
@@ -225,7 +228,22 @@ class YourPositionViewModel(
         }
     }
 
+    private fun checkOfflineAndEmitError(): Boolean {
+        if (uiState.value.isOffline) {
+            viewModelScope.launch {
+                _actions.send(
+                    YourPositionUiAction.ShowError(
+                        UiText.StringResource(R.string.your_position_offline_warning)
+                    )
+                )
+            }
+            return true
+        }
+        return false
+    }
+
     private fun handleConfirm(settlementId: String) {
+        if (checkOfflineAndEmitError()) return
         val groupId = _selectedGroupId.value ?: return
         viewModelScope.launch {
             useCases.confirmSettlementUseCase(groupId, settlementId).fold(
@@ -249,6 +267,7 @@ class YourPositionViewModel(
     }
 
     private fun handleNudgeDebtor(settlementId: String) {
+        if (checkOfflineAndEmitError()) return
         val groupId = _selectedGroupId.value ?: return
         viewModelScope.launch {
             useCases.nudgeDebtorUseCase(groupId, settlementId).fold(
@@ -272,6 +291,7 @@ class YourPositionViewModel(
     }
 
     private fun handleOpenDispute(settlementId: String) {
+        if (checkOfflineAndEmitError()) return
         _localState.update {
             it.copy(
                 activeDisputeSettlementId = settlementId,
@@ -281,6 +301,7 @@ class YourPositionViewModel(
     }
 
     private fun handleSubmitDispute() {
+        if (checkOfflineAndEmitError()) return
         val groupId = _selectedGroupId.value ?: return
         val settlementId = _localState.value.activeDisputeSettlementId ?: return
         val reason = _localState.value.disputeReasonInput.trim()

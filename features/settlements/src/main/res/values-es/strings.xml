@@ -54,4 +54,5 @@
     <string name="your_position_settlement_reminded">Recordado</string>
     <string name="your_position_nudge_success">Recordatorio enviado correctamente</string>
     <string name="your_position_nudge_error">No se pudo enviar el recordatorio. Inténtalo de nuevo.</string>
+    <string name="your_position_offline_warning">Modo sin conexión: La posición financiera y las acciones de consenso pendientes están guardadas localmente y se sincronizarán al conectarte</string>
 </resources>

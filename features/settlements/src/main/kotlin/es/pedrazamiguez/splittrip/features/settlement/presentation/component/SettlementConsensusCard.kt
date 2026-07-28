@@ -21,7 +21,8 @@ internal fun SettlementConsensusCard(
     onConfirm: () -> Unit,
     onDispute: () -> Unit,
     onNudge: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isOffline: Boolean = false
 ) {
     SectionCard(modifier = modifier.fillMaxWidth()) {
         Row(
@@ -70,7 +71,8 @@ internal fun SettlementConsensusCard(
                 item = item,
                 onConfirm = onConfirm,
                 onDispute = onDispute,
-                onNudge = onNudge
+                onNudge = onNudge,
+                isOffline = isOffline
             )
         }
     }

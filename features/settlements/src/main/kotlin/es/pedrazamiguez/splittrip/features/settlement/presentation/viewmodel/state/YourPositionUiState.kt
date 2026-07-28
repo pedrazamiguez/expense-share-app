@@ -7,6 +7,7 @@ import kotlinx.collections.immutable.persistentListOf
 
 data class YourPositionUiState(
     val isLoading: Boolean = true,
+    val isOffline: Boolean = false,
     val personalPosition: PersonalPositionUiModel? = null,
     val isCashBreakdownVisible: Boolean = false,
     val settlementConsensus: ImmutableList<SettlementConsensusItemUiModel> = persistentListOf(),

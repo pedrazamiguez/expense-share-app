@@ -54,4 +54,5 @@
     <string name="your_position_settlement_reminded">Reminded</string>
     <string name="your_position_nudge_success">Reminder sent successfully</string>
     <string name="your_position_nudge_error">Could not send reminder. Try again.</string>
+    <string name="your_position_offline_warning">Offline mode: Financial standing and pending consensus actions are cached locally and will sync when online</string>
 </resources>
