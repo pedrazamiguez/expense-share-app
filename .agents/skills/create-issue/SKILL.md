@@ -63,7 +63,7 @@ A checklist of verifiable conditions that define "done":
 - [ ] Criterion 1
 - [ ] Criterion 2
 - [ ] All existing tests pass; new tests added where behaviour changes.
-- [ ] `make check` passes with 0 failures (Konsist + unit tests + compilation).
+- [ ] `make check > build.log 2>&1 && echo "Check passed successfully" || (tail -n 100 build.log && exit 1)` passes with 0 failures.
 - [ ] No new detekt findings introduced.
 
 ### Out of Scope

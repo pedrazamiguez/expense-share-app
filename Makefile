@@ -9,7 +9,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Default Gradle flags for quality gates (cold run: no build cache, rerun all tasks, no daemon)
-GRADLE_FLAGS  := --no-build-cache --rerun-tasks --no-daemon
+GRADLE_FLAGS  := --no-build-cache --rerun-tasks --no-daemon --console=plain
 GRADLEW       := ./gradlew $(GRADLE_FLAGS)
 LOCAL_PROPS   := local.properties
 HOOK_SRC      := scripts/pre-commit

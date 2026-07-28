@@ -64,7 +64,7 @@ Ensure you adhere to the project quality and style standards, including detekt r
 Do not consider the comments addressed until ALL of the following pass locally:
 
 ```bash
-make check   # Konsist architecture rules + all unit tests + debug compilation — must show 0 failures
+make check > build.log 2>&1 && echo "Check passed successfully" || (tail -n 100 build.log && exit 1)
 ```
 
 If any check fails, fix it before finishing. Do not leave failures for CI to catch.
