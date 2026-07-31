@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
@@ -20,29 +19,28 @@ internal fun SecondaryBalancesRow(balance: GroupPocketBalanceUiModel) {
     val showScheduled = balance.formattedScheduledHoldAmount != null
     val showRefundable = balance.formattedRefundableHoldAmount != null
 
+    val items = buildList {
+        if (showAvailable) add(stringResource(R.string.balances_available) to balance.formattedAvailableBalance)
+        if (showScheduled) add(stringResource(R.string.balances_scheduled) to balance.formattedScheduledHoldAmount)
+        if (showRefundable) add(stringResource(R.string.balances_on_hold) to balance.formattedRefundableHoldAmount)
+    }
+
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
     ) {
-        if (showAvailable) {
+        items.forEachIndexed { index, (label, amount) ->
+            val alignment = when {
+                items.size == 1 -> androidx.compose.ui.Alignment.CenterHorizontally
+                index == 0 -> androidx.compose.ui.Alignment.Start
+                index == items.lastIndex -> androidx.compose.ui.Alignment.End
+                else -> androidx.compose.ui.Alignment.CenterHorizontally
+            }
             SecondaryBalanceColumn(
-                label = stringResource(R.string.balances_available),
-                amount = balance.formattedAvailableBalance!!
-            )
-        }
-
-        if (showScheduled) {
-            SecondaryBalanceColumn(
-                label = stringResource(R.string.balances_scheduled),
-                amount = balance.formattedScheduledHoldAmount!!
-            )
-        }
-
-        if (showRefundable) {
-            SecondaryBalanceColumn(
-                label = stringResource(R.string.balances_on_hold),
-                amount = balance.formattedRefundableHoldAmount!!
+                label = label,
+                amount = amount,
+                horizontalAlignment = alignment
             )
         }
     }

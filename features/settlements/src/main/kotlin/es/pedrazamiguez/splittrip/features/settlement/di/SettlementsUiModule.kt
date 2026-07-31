@@ -26,7 +26,7 @@ import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourPo
 import es.pedrazamiguez.splittrip.features.settlement.presentation.screen.impl.YourPositionScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourPositionUseCases
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourPositionViewModel
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
