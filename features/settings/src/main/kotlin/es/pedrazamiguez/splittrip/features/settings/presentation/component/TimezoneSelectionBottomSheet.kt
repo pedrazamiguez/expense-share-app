@@ -2,9 +2,11 @@ package es.pedrazamiguez.splittrip.features.settings.presentation.component
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,12 +51,13 @@ fun TimezoneSelectionBottomSheet(
             enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
         ),
         dragHandle = null,
-        containerColor = MaterialTheme.colorScheme.surface
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentWindowInsets = { WindowInsets.safeDrawing }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = MaterialTheme.spacing.Screen),
+                .padding(bottom = MaterialTheme.spacing.ExtraLarge),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             TimezoneSelectionHeader()

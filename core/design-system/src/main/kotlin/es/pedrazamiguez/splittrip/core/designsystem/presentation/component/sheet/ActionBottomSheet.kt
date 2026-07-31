@@ -8,8 +8,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,6 +22,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
@@ -71,15 +74,19 @@ fun ActionBottomSheet(
     modifier: Modifier = Modifier,
     icon: ImageVector = TablerIcons.Outline.DotsVertical
 ) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        sheetState = sheetState,
         dragHandle = null,
-        containerColor = MaterialTheme.colorScheme.surface
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentWindowInsets = { WindowInsets.safeDrawing }
     ) {
         Column(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(bottom = MaterialTheme.spacing.Screen), // Essential for gesture navigation spacing
+                .padding(bottom = MaterialTheme.spacing.ExtraLarge),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Header section matching CopyableTextSheet style
