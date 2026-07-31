@@ -54,4 +54,14 @@ object UiConstants {
      * Default maximum number of decimal places allowed for calculations/inputs.
      */
     const val DEFAULT_MAX_DECIMAL_PLACES = 6
+
+    /**
+     * Maximum width of content cards on large displays (tablets, monitors).
+     */
+    val MAX_CONTENT_WIDTH: Dp = 600.dp
+
+    /**
+     * Threshold for responsive narrow-screen scaling.
+     */
+    val NARROW_SCREEN_BREAKPOINT: Dp = 360.dp
 }
