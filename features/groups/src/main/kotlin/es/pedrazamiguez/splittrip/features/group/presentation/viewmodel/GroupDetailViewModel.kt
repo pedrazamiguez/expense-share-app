@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
@@ -200,6 +201,14 @@ class GroupDetailViewModel(
                 _localUiState.update { it.copy(isDeleting = false) }
                 _actions.send(
                     GroupDetailUiAction.DeleteSuccess(UiText.StringResource(R.string.group_deleted_successfully))
+                )
+            } catch (e: UnresolvedSettlementsException) {
+                Timber.w(e, "Cannot delete group with unresolved settlements: ${_groupId.value}")
+                _localUiState.update { it.copy(isDeleting = false) }
+                _actions.send(
+                    GroupDetailUiAction.ShowError(
+                        UiText.StringResource(R.string.error_group_delete_unresolved_settlements)
+                    )
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete group: ${_groupId.value}")

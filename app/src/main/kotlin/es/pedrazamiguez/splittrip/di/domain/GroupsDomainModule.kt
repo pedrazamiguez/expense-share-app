@@ -75,7 +75,10 @@ val groupsDomainModule = module {
     }
     factory<DeleteGroupUseCase> {
         createLoggingProxy<DeleteGroupUseCase>(
-            DeleteGroupUseCaseImpl(groupRepository = get<GroupRepository>()),
+            DeleteGroupUseCaseImpl(
+                groupRepository = get<GroupRepository>(),
+                areGroupSettlementsResolvedUseCase = get<AreGroupSettlementsResolvedUseCase>()
+            ),
             LogTag.USE_CASE
         )
     }

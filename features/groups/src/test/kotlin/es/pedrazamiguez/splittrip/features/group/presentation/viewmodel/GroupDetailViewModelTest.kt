@@ -22,6 +22,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.group.LeaveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
+import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.LeaveWizardUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
@@ -664,6 +665,34 @@ class GroupDetailViewModelTest {
             advanceUntilIdle()
 
             assertTrue(actions.any { it is GroupDetailUiAction.ShowError })
+
+            actionsJob.cancel()
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `DeleteConfirmed failure with UnresolvedSettlementsException emits specific ShowError action`() = runTest(
+            testDispatcher
+        ) {
+            coEvery { deleteGroupUseCase(testGroupId) } throws UnresolvedSettlementsException(testGroupId, emptyList())
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setGroupId(testGroupId)
+            advanceUntilIdle()
+
+            val actions = mutableListOf<GroupDetailUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            viewModel.onEvent(GroupDetailUiEvent.DeleteConfirmed)
+            advanceUntilIdle()
+
+            val showErrorAction = actions.find { it is GroupDetailUiAction.ShowError } as? GroupDetailUiAction.ShowError
+            assertNotNull(showErrorAction)
+            assertEquals(
+                R.string.error_group_delete_unresolved_settlements,
+                (showErrorAction?.message as? UiText.StringResource)?.resId
+            )
 
             actionsJob.cancel()
             collectJob.cancel()

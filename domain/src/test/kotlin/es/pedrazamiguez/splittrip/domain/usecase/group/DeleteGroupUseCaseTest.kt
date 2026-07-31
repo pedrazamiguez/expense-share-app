@@ -1,8 +1,11 @@
 package es.pedrazamiguez.splittrip.domain.usecase.group
 
 import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
+import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
 import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
+import es.pedrazamiguez.splittrip.domain.usecase.balance.AreGroupSettlementsResolvedUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.impl.DeleteGroupUseCaseImpl
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -19,12 +22,14 @@ import org.junit.jupiter.api.Test
 class DeleteGroupUseCaseTest {
 
     private lateinit var groupRepository: GroupRepository
+    private lateinit var areGroupSettlementsResolvedUseCase: AreGroupSettlementsResolvedUseCase
     private lateinit var useCase: DeleteGroupUseCase
 
     @BeforeEach
     fun setUp() {
         groupRepository = mockk()
-        useCase = DeleteGroupUseCaseImpl(groupRepository)
+        areGroupSettlementsResolvedUseCase = mockk()
+        useCase = DeleteGroupUseCaseImpl(groupRepository, areGroupSettlementsResolvedUseCase)
     }
 
     @Nested
@@ -36,6 +41,7 @@ class DeleteGroupUseCaseTest {
             val groupId = "group-123"
             val activeGroup = Group(id = groupId, name = "Test", currency = "EUR")
             coEvery { groupRepository.getGroupById(groupId) } returns activeGroup
+            coEvery { areGroupSettlementsResolvedUseCase(groupId) } returns emptyList()
             coEvery { groupRepository.deleteGroup(groupId) } just Runs
 
             // When
@@ -51,6 +57,7 @@ class DeleteGroupUseCaseTest {
             val groupId = "specific-group-id-456"
             val activeGroup = Group(id = groupId, name = "Test", currency = "EUR")
             coEvery { groupRepository.getGroupById(groupId) } returns activeGroup
+            coEvery { areGroupSettlementsResolvedUseCase(groupId) } returns emptyList()
             coEvery { groupRepository.deleteGroup(any()) } just Runs
 
             // When
@@ -66,6 +73,7 @@ class DeleteGroupUseCaseTest {
             val groupId = "group-123"
             val activeGroup = Group(id = groupId, name = "Test", currency = "EUR")
             coEvery { groupRepository.getGroupById(groupId) } returns activeGroup
+            coEvery { areGroupSettlementsResolvedUseCase(groupId) } returns emptyList()
             val exception = RuntimeException("Delete failed")
             coEvery { groupRepository.deleteGroup(groupId) } throws exception
 
@@ -76,6 +84,40 @@ class DeleteGroupUseCaseTest {
             } catch (e: RuntimeException) {
                 assertEquals("Delete failed", e.message)
             }
+        }
+
+        @Test
+        fun `throws UnresolvedSettlementsException when group has unresolved settlements`() = runTest {
+            // Given
+            val groupId = "group-123"
+            val activeGroup = Group(id = groupId, name = "Test", currency = "EUR")
+            coEvery { groupRepository.getGroupById(groupId) } returns activeGroup
+            val unresolvedSettlement = mockk<SettlementRecord>()
+            coEvery { areGroupSettlementsResolvedUseCase(groupId) } returns listOf(unresolvedSettlement)
+
+            // When/Then
+            try {
+                useCase(groupId)
+                fail("Expected exception to be thrown")
+            } catch (e: UnresolvedSettlementsException) {
+                assertEquals("Group $groupId has 1 unresolved settlement(s)", e.message)
+            }
+        }
+
+        @Test
+        fun `successful deletion when no unresolved settlements exist`() = runTest {
+            // Given
+            val groupId = "group-123"
+            val activeGroup = Group(id = groupId, name = "Test", currency = "EUR")
+            coEvery { groupRepository.getGroupById(groupId) } returns activeGroup
+            coEvery { areGroupSettlementsResolvedUseCase(groupId) } returns emptyList()
+            coEvery { groupRepository.deleteGroup(groupId) } just Runs
+
+            // When
+            useCase(groupId)
+
+            // Then
+            coVerify(exactly = 1) { groupRepository.deleteGroup(groupId) }
         }
     }
 
@@ -88,6 +130,7 @@ class DeleteGroupUseCaseTest {
             val groupId = "archived-group-id"
             val archivedGroup = Group(id = groupId, name = "Archived", currency = "EUR", status = GroupStatus.ARCHIVED)
             coEvery { groupRepository.getGroupById(groupId) } returns archivedGroup
+            coEvery { areGroupSettlementsResolvedUseCase(groupId) } returns emptyList()
             coEvery { groupRepository.deleteGroup(groupId) } just Runs
 
             // When
