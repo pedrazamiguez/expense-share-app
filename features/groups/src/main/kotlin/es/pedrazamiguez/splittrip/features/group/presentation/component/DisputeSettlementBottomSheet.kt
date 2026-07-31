@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -51,6 +53,7 @@ internal fun DisputeSettlementBottomSheet(
         sheetState = sheetState,
         dragHandle = null,
         containerColor = MaterialTheme.colorScheme.surface,
+        contentWindowInsets = { WindowInsets.safeDrawing },
         modifier = modifier
     ) {
         Column(
@@ -58,7 +61,7 @@ internal fun DisputeSettlementBottomSheet(
                 start = MaterialTheme.spacing.Default,
                 end = MaterialTheme.spacing.Default,
                 top = MaterialTheme.spacing.ExtraLarge,
-                bottom = MaterialTheme.spacing.Screen
+                bottom = MaterialTheme.spacing.ExtraLarge
             ),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)

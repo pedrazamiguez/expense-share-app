@@ -2,8 +2,10 @@ package es.pedrazamiguez.splittrip.features.group.presentation.component.leave
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -51,6 +53,7 @@ fun GroupLeaveWizardSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
         dragHandle = null,
+        contentWindowInsets = { WindowInsets.safeDrawing },
         modifier = modifier
     ) {
         val activeSteps = leaveWizardState.activeSteps
@@ -63,7 +66,10 @@ fun GroupLeaveWizardSheet(
             else -> true
         }
 
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
             if (activeSteps.isNotEmpty()) {
                 WizardStepIndicator(
                     stepLabels = activeSteps.map { stringResource(it.labelResId) },

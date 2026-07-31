@@ -8,8 +8,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -74,12 +76,13 @@ fun ActionBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         dragHandle = null,
-        containerColor = MaterialTheme.colorScheme.surface
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentWindowInsets = { WindowInsets.safeDrawing }
     ) {
         Column(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(bottom = MaterialTheme.spacing.Screen), // Essential for gesture navigation spacing
+                .padding(bottom = MaterialTheme.spacing.ExtraLarge),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Header section matching CopyableTextSheet style
