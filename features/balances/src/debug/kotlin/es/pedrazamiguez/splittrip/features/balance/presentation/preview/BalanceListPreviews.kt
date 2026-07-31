@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.balance.presentation.preview
 
 import androidx.compose.runtime.Composable
 import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewLocales
+import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewNarrowThemes
 import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewThemes
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.ContributionHistoryItem
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.GroupPocketBalanceCard
@@ -9,6 +10,14 @@ import es.pedrazamiguez.splittrip.features.balance.presentation.component.GroupP
 @PreviewThemes
 @Composable
 private fun GroupPocketBalanceCardPreview() {
+    BalanceCardPreviewHelper {
+        GroupPocketBalanceCard(balance = it)
+    }
+}
+
+@PreviewNarrowThemes
+@Composable
+private fun GroupPocketBalanceCardNarrowPreview() {
     BalanceCardPreviewHelper {
         GroupPocketBalanceCard(balance = it)
     }

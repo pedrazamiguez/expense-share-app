@@ -89,3 +89,13 @@ annotation class PreviewThemes
     showBackground = true
 )
 annotation class PreviewComplete
+
+/**
+ * Preview annotation that shows the component in narrow device configurations
+ * (e.g., small phones, 320dp width) in both light and dark themes.
+ *
+ * **Note:** Wrap your component in `PreviewThemeWrapper` to apply theme colors.
+ */
+@Preview(name = "Narrow - Light", widthDp = 320, uiMode = Configuration.UI_MODE_NIGHT_NO, showBackground = true)
+@Preview(name = "Narrow - Dark", widthDp = 320, uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+annotation class PreviewNarrowThemes
