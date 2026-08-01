@@ -22,7 +22,8 @@ Before writing any code or performing checks, verify your local Git state:
 1. Ensure you are on the correct branch for this task.
 2. If starting work on a new issue, ensure a branch has been created from `develop` following the branch naming convention.
 3. If this is a hotfix, ensure the branch has been created from `main`.
-4. Pull the latest changes from the remote repository to guarantee your branch is fully up-to-date with `develop` or `main`.
+4. **DO NOT START MODIFYING ANY CODE UNTIL YOU'VE MADE SURE WE HAVE THE LATEST CHANGES FROM THE BASE BRANCH** to avoid conflicts in the future. If you are working on a hotfix branch, you must run `git pull origin main`. For all other branches, you must run `git pull origin develop` to sync the branch first.
+5. **CRITICAL:** If getting the latest changes results in merge conflicts, **HALT IMMEDIATELY**. Do not attempt to resolve the merge conflicts manually using file editing tools. Inform the user that they must resolve the conflicts in their IDE before you can proceed.
 ---
 
 ## Step 1 — Load issue context
