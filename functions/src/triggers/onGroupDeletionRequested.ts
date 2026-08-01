@@ -190,16 +190,7 @@ export const onGroupDeletionRequested = onDocumentUpdated(
         nudges: nudgesDeleted,
       });
     } catch (err) {
-      logger.error("Cascading group deletion failed", {
-        groupId,
-        err,
-        expenses: expensesDeleted,
-        contributions: contributionsDeleted,
-        withdrawals: withdrawalsDeleted,
-        subunits: subunitsDeleted,
-        settlements: settlementsDeleted,
-        nudges: nudgesDeleted,
-      });
+      logger.error("Cascading group deletion failed", { groupId, err });
       throw err; // Let Cloud Functions retry
     }
   }
