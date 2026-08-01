@@ -263,8 +263,10 @@ Before creating any new service, utility, formatter, or UI component, **check th
 
 ## AI Agent Behavior Rules (CRITICAL)
 
+### 🛑 No Git Operations (STRICT)
+NEVER stage, commit, push, or create PRs autonomously. NEVER execute, propose, suggest, or ask for permission to run `git add`, `git commit`, or `git push`. Git operations are strictly under the user's manual control.
+
 See the standalone rule files in `.agents/rules/` for behavioral constraints:
-- `.agents/rules/no-git-operations.md`
 - `.agents/rules/no-pragmatic-patches.md`
 - `.agents/rules/make-check-gate.md`
 - `.agents/rules/commenting-policy.md`
