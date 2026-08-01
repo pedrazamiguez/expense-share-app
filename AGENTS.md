@@ -1,7 +1,7 @@
 # AGENTS.md — SplitTrip
 
 > [!IMPORTANT]
-> **Source of Truth:** This file is the single source of truth for architectural constraints and agent behaviors. Rules are broken out into `.agents/rules/`.
+> **Source of Truth:** This file is the single source of truth for architectural constraints and agent behaviors.
 
 ## Project Overview
 
@@ -36,17 +36,77 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 
 ## Architecture Constraints
 
-See the standalone rule files in `.agents/rules/` for detailed constraints:
-- `.agents/rules/viewmodel-rules.md`
-- `.agents/rules/mvi-triad.md`
-- `.agents/rules/formatting-in-mappers.md`
-- `.agents/rules/big-decimal-math.md`
-- `.agents/rules/file-size-limit.md`
-- `.agents/rules/enum-centralization.md`
-- `.agents/rules/single-composable-per-file.md`
-- `.agents/rules/feature-screen-pattern.md`
-- `.agents/rules/no-fqn-imports.md`
-- `.agents/rules/debounced-clicks.md`
+## ViewModel Rules
+
+ViewModels ONLY inject UseCases, Mappers, and Domain Services. NEVER inject `Context`, `LocaleProvider`, Repositories, or other ViewModels.
+
+## MVI Triad
+
+Every screen gets `UiState` (ImmutableList), `UiEvent` (sealed interface), and `UiAction` (side-effects via Channel/SharedFlow). Never put one-shot events in `UiState`.
+
+## Formatting in Mappers
+
+Formatting belongs in Mappers, not ViewModels and not Domain Services. Mappers receive `LocaleProvider`. Domain Services must NEVER contain `formatShareForInput()`, `formatAmountForDisplay()`, or any human-readable formatting method.
+
+## Big Decimal Math
+
+All decimal math MUST use `BigDecimal` with explicit scale + RoundingMode. `Double` or `Float` are strictly prohibited to prevent IEEE 754 precision loss. Boundary serialization at the Firestore document layer must use `String` (via `toPlainString()` / `toBigDecimalOrNull()`).
+
+## File Size Limit
+
+Production source files MUST NOT exceed 600 lines. This is enforced by a Konsist architecture test. Extract handlers/delegates/components before adding code if approaching the limit. Always check file sizes with `wc -l`.
+
+## Enum Centralization
+
+Domain enums (e.g., `AppLanguage`, `Currency`) must be the single source of truth for parsing codes, fallback defaults, and validation. Never duplicate string-matching logic or locale fallback checks in ViewModels or presentation layers.
+
+## Single Composable Per File
+
+Every production Kotlin file under feature `presentation` packages that contains a `@Composable` function must define exactly one top-level `@Composable` function. The name of the Composable function must match the file name.
+
+## Feature vs Screen Pattern
+
+`*Feature` (orchestrator composable) holds ViewModel, collects flows, consumes `LocalTopPillController`/`LocalTabNavController`. `*Screen` is stateless — takes `UiState` + event lambdas only.
+
+## No Fully Qualified Names (No FQN)
+
+NEVER use Fully Qualified Names (FQN) inside production or test source code (e.g., `java.util.UUID.randomUUID()`, `com.google.firebase.Timestamp.now()`, `kotlinx.coroutines.Dispatchers.IO`).
+ALWAYS import all classes, interfaces, objects, and types at the top of the file using standard `import` statements. This is strictly enforced by Konsist rule `Production code must not use Fully Qualified Names (FQN) for classes or objects`.
+
+# UI Clicks & Navigation — Debouncing
+
+> [!IMPORTANT]
+> **Always use debounced modifiers for UI navigation or expensive side-effects.**
+
+To prevent multiple rapid navigations or API calls from "double tapping" UI components:
+- NEVER use standard `Modifier.clickable` or `Modifier.combinedClickable` directly on list items, action buttons, or FABs.
+- ALWAYS use `Modifier.debouncedClickable` and `Modifier.debouncedCombinedClickable` from `es.pedrazamiguez.splittrip.core.designsystem.extension.ModifierExtensions`.
+
+**Why:** Compose can process multiple touch events before a navigation transition completes, pushing the destination route multiple times onto the back stack.
+
+### Examples
+
+```kotlin
+// ❌ BAD
+Modifier.clickable { navigate() }
+
+// ✅ GOOD
+Modifier.debouncedClickable { navigate() }
+```
+
+```kotlin
+// ❌ BAD
+Modifier.combinedClickable(
+    onClick = { navigateToDetail() },
+    onLongClick = { showOptions() }
+)
+
+// ✅ GOOD
+Modifier.debouncedCombinedClickable(
+    onClick = { navigateToDetail() },
+    onLongClick = { showOptions() }
+)
+```
 
 ## Navigation
 
@@ -264,13 +324,42 @@ Before creating any new service, utility, formatter, or UI component, **check th
 ## AI Agent Behavior Rules (CRITICAL)
 
 ### 🛑 No Git Operations (STRICT)
-NEVER stage, commit, push, or create PRs autonomously. NEVER execute, propose, suggest, or ask for permission to run `git add`, `git commit`, or `git push`. Git operations are strictly under the user's manual control.
+NEVER stage, commit, push, or create PRs autonomously. NEVER execute, propose, suggest, or ask for permission to run `git add`, `git commit`, or `git push`. Git operations are strictly under the user's manual control. `git fetch`, `git checkout`, and `git pull` are allowed for setup/automation (e.g., when running `start-issue`).
 
-See the standalone rule files in `.agents/rules/` for behavioral constraints:
-- `.agents/rules/no-pragmatic-patches.md`
-- `.agents/rules/make-check-gate.md`
-- `.agents/rules/commenting-policy.md`
-- `.agents/rules/agent-plan-strict-stop.md`
+## No Pragmatic Patches
+
+No quick hacks, temporary patches, or code that compromises Clean Architecture boundaries. Always write clean, production-ready code.
+
+## Make Check Gate
+
+Run `make check` locally before declaring any task done, completed, addressed, or accomplished. 0 failures are required. Never leave verification for CI/CD or the user to discover. Do NOT run `make check` or `make fast-check` before modifying code to verify the codebase state. It is redundant because `develop` is always compiling. Run `make check` locally ONLY *after* changes have been made.
+
+### Fast Iteration (`make fast-check`)
+During active development and rapid iteration, run `make fast-check` for fast incremental feedback using the Gradle daemon and build cache (~15–30s):
+```bash
+make fast-check > build.log 2>&1 && echo "Fast check passed" || (echo "Fast check failed. Last 100 lines:" && tail -n 100 build.log)
+```
+
+### Final Validation (`make check`)
+Before completing any task or PR, run `make check` to verify full cold-start CI parity (~1.5–2 min):
+```bash
+make check > build.log 2>&1 && echo "Check passed successfully" || (echo "Check failed. Last 100 lines:" && tail -n 100 build.log)
+```
+
+**CRITICAL (Context Window Optimization):**
+Do not run `make check` or `make fast-check` directly without output redirection, as the massive stdout/stderr will saturate your context window. Always buffer and filter the output as shown above.
+
+## Commenting Policy
+
+Comment the *why*, never the *what*. Delete redundant comments that merely restate what the code does.
+
+## Agent Plan Strict Stop
+
+Whenever a plan-only/planning-focused skill or command explicitly dictates that the task is completed after writing/posting the plan and that no codebase modifications should be performed, this instruction takes absolute precedence. The agent MUST NOT write code, create production files, or execute any modifications under those circumstances.
+
+## String Translations
+
+When adding new string resources (e.g. in `strings.xml`), you MUST always add the corresponding Spanish translations. Andaluz translations are not needed as they are generated automatically based on the Spanish ones.
 
 ## Workspace Resolution Protocol
 
