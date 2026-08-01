@@ -107,13 +107,14 @@ export const onGroupDeletionRequested = onDocumentUpdated(
       // 2. Delete all other subcollections in parallel.
       // These deletions won't cause notification spam because the existing triggers
       // check groupData.deletionRequested and skip notifications when true.
-      const [expensesDeleted, contributionsDeleted, withdrawalsDeleted, subunitsDeleted, settlementsDeleted] =
+      const [expensesDeleted, contributionsDeleted, withdrawalsDeleted, subunitsDeleted, settlementsDeleted, nudgesDeleted] =
         await Promise.all([
           deleteSubcollection(`groups/${groupId}/expenses`),
           deleteSubcollection(`groups/${groupId}/contributions`),
           deleteSubcollection(`groups/${groupId}/cash_withdrawals`),
           deleteSubcollection(`groups/${groupId}/subunits`),
           deleteSubcollection(`groups/${groupId}/settlements`),
+          deleteSubcollection(`groups/${groupId}/nudges`),
         ]);
 
       logger.info("Deleted all subcollections", {
@@ -123,6 +124,7 @@ export const onGroupDeletionRequested = onDocumentUpdated(
         withdrawals: withdrawalsDeleted,
         subunits: subunitsDeleted,
         settlements: settlementsDeleted,
+        nudges: nudgesDeleted,
       });
 
       // 3. Send a single GROUP_DELETED notification to all former members (except deleter).
@@ -185,9 +187,19 @@ export const onGroupDeletionRequested = onDocumentUpdated(
         withdrawals: withdrawalsDeleted,
         subunits: subunitsDeleted,
         settlements: settlementsDeleted,
+        nudges: nudgesDeleted,
       });
     } catch (err) {
-      logger.error("Cascading group deletion failed", { groupId, err });
+      logger.error("Cascading group deletion failed", {
+        groupId,
+        err,
+        expenses: expensesDeleted,
+        contributions: contributionsDeleted,
+        withdrawals: withdrawalsDeleted,
+        subunits: subunitsDeleted,
+        settlements: settlementsDeleted,
+        nudges: nudgesDeleted,
+      });
       throw err; // Let Cloud Functions retry
     }
   }
