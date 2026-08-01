@@ -5,6 +5,7 @@ import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatForDisplay
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatShortDate
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CashBreakdownItemUiModel
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
@@ -12,7 +13,6 @@ import es.pedrazamiguez.splittrip.domain.model.CurrencyAmount
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.features.settlement.R
-import es.pedrazamiguez.splittrip.features.settlement.presentation.model.CashBreakdownUiModel
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.CurrencyBreakdownUiModel
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.NetPositionStatus
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.PersonalPositionUiModel
@@ -79,7 +79,7 @@ class YourPositionUiMapper(
         groupMemberIds: List<String>,
         groupCurrencyCode: String,
         locale: Locale
-    ): ImmutableList<CashBreakdownUiModel> {
+    ): ImmutableList<CashBreakdownItemUiModel> {
         if (isNegativeCash) return persistentListOf()
         return mapCashBreakdown(
             userId = memberBalance.userId,
@@ -96,7 +96,7 @@ class YourPositionUiMapper(
         groupCurrencyCode: String,
         isNegativeCash: Boolean,
         formattedTotalFees: String?,
-        cashBreakdown: ImmutableList<CashBreakdownUiModel>,
+        cashBreakdown: ImmutableList<CashBreakdownItemUiModel>,
         locale: Locale
     ): PersonalPositionUiModel {
         val formattedCashInHand = if (isNegativeCash) {
@@ -178,7 +178,7 @@ class YourPositionUiMapper(
         groupMemberIds: List<String>,
         groupCurrency: String,
         locale: Locale
-    ): ImmutableList<CashBreakdownUiModel> {
+    ): ImmutableList<CashBreakdownItemUiModel> {
         val scopeOrder = mapOf(PayerType.GROUP to 0, PayerType.SUBUNIT to 1, PayerType.USER to 2)
         return withdrawals
             .sortedWith(
@@ -210,7 +210,7 @@ class YourPositionUiMapper(
         groupCurrency: String,
         locale: Locale,
         subunitsMap: Map<String, Subunit>
-    ): CashBreakdownUiModel {
+    ): CashBreakdownItemUiModel {
         val groupEquivalent = BigDecimal(nativeShare)
             .multiply(BigDecimal(withdrawal.deductedBaseAmount))
             .divide(BigDecimal(withdrawal.amountWithdrawn), 0, RoundingMode.HALF_UP)
@@ -222,7 +222,7 @@ class YourPositionUiMapper(
         } else {
             withdrawal.title ?: ""
         }
-        return CashBreakdownUiModel(
+        return CashBreakdownItemUiModel(
             withdrawalLabel = label,
             dateText = dateText,
             formattedRate = if (isForeign) {

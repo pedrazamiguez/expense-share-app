@@ -14,6 +14,7 @@ import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.InlineWarningBanner
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.sheet.CashBreakdownBottomSheet
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.CaptionText
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.splittrip.features.settlement.R
@@ -83,10 +84,12 @@ internal fun YourPositionContent(
     }
 
     if (isCashBreakdownVisible) {
+        val breakdownItems = personalPosition.cashBreakdown
         CashBreakdownBottomSheet(
-            breakdown = personalPosition.cashBreakdown,
+            memberName = stringResource(R.string.your_position_title),
+            breakdown = breakdownItems,
             formattedTotal = personalPosition.formattedCashInHand,
-            formattedTotalFees = personalPosition.formattedTotalFees,
+            formattedTotalFees = personalPosition.formattedTotalFees ?: "",
             onDismiss = { onEvent(YourPositionUiEvent.DismissCashBreakdown) }
         )
     }

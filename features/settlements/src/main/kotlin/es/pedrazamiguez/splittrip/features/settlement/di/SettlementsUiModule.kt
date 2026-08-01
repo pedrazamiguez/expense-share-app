@@ -4,6 +4,8 @@ import es.pedrazamiguez.splittrip.core.common.network.NetworkMonitor
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.TabGraphContributor
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
@@ -15,15 +17,21 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlow
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.settlement.GetNudgeTimestampsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.settlement.NudgeDebtorUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.settlement.navigation.impl.SettlementsTabGraphContributorImpl
+import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.GroupSettlementOverviewUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.SettlementConsensusUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourPositionUiMapper
+import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.impl.GroupSettlementOverviewUiMapperImpl
+import es.pedrazamiguez.splittrip.features.settlement.presentation.screen.impl.GroupSettlementOverviewScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settlement.presentation.screen.impl.YourPositionScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.GroupSettlementOverviewViewModel
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourPositionUseCases
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourPositionViewModel
 import org.koin.core.module.dsl.viewModel
@@ -31,6 +39,39 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val settlementsUiModule = module {
+    single<GroupSettlementOverviewUiMapper> {
+        val formattingHelper = get<FormattingHelper>()
+        val resourceProvider = get<ResourceProvider>()
+        GroupSettlementOverviewUiMapperImpl(
+            formattingHelper = formattingHelper,
+            resourceProvider = resourceProvider,
+            userUiMapper = get<UserUiMapper>()
+        )
+    }
+
+    viewModel {
+        val getGroupSettlementsFlowUseCase = get<GetGroupSettlementsFlowUseCase>()
+        val getMemberProfilesUseCase = get<GetMemberProfilesUseCase>()
+        val observeGroupUseCase = get<ObserveGroupUseCase>()
+        val groupSettlementOverviewUiMapper = get<GroupSettlementOverviewUiMapper>()
+        val authenticationService = get<AuthenticationService>()
+        val confirmSettlementUseCase = get<ConfirmSettlementUseCase>()
+        val disputeSettlementUseCase = get<DisputeSettlementUseCase>()
+        val archiveGroupUseCase = get<ArchiveGroupUseCase>()
+        val getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>()
+        GroupSettlementOverviewViewModel(
+            getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
+            getMemberProfilesUseCase = getMemberProfilesUseCase,
+            observeGroupUseCase = observeGroupUseCase,
+            groupSettlementOverviewUiMapper = groupSettlementOverviewUiMapper,
+            authenticationService = authenticationService,
+            confirmSettlementUseCase = confirmSettlementUseCase,
+            disputeSettlementUseCase = disputeSettlementUseCase,
+            archiveGroupUseCase = archiveGroupUseCase,
+            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase
+        )
+    }
+
     viewModel {
         val getGroupByIdUseCase = get<GetGroupByIdUseCase>()
         val getGroupContributionsFlowUseCase = get<GetGroupContributionsFlowUseCase>()
@@ -88,4 +129,5 @@ val settlementsUiModule = module {
     }
     factory { SettlementsTabGraphContributorImpl() } bind TabGraphContributor::class
     single { YourPositionScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { GroupSettlementOverviewScreenUiProviderImpl() } bind ScreenUiProvider::class
 }

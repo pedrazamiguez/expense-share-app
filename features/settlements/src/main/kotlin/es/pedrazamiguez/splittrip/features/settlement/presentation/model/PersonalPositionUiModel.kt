@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.settlement.presentation.model
 
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CashBreakdownItemUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -20,7 +21,7 @@ data class PersonalPositionUiModel(
     val cashSpentByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf(),
     val nonCashSpentByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf(),
     val refundableSpentByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf(),
-    val cashBreakdown: ImmutableList<CashBreakdownUiModel> = persistentListOf()
+    val cashBreakdown: ImmutableList<CashBreakdownItemUiModel> = persistentListOf()
 )
 
 enum class NetPositionStatus {

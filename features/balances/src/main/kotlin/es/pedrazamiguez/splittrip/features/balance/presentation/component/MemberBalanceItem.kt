@@ -14,9 +14,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.sheet.CashBreakdownBottomSheet
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CashBreakdownItemUiModel
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.MemberBalanceUiModel
+import kotlinx.collections.immutable.toImmutableList
 
 @Composable
 fun MemberBalanceItem(memberBalance: MemberBalanceUiModel, modifier: Modifier = Modifier) {
@@ -74,9 +77,23 @@ fun MemberBalanceItem(memberBalance: MemberBalanceUiModel, modifier: Modifier = 
     }
 
     if (showCashBreakdown) {
+        val breakdownItems = remember(memberBalance.cashBreakdown) {
+            memberBalance.cashBreakdown.map {
+                CashBreakdownItemUiModel(
+                    withdrawalLabel = it.withdrawalLabel,
+                    dateText = it.dateText,
+                    formattedRate = it.formattedRate,
+                    formattedNativeRemaining = it.formattedNativeRemaining,
+                    formattedEquivalent = it.formattedEquivalent,
+                    scopeLabel = it.scopeLabel,
+                    isEstimatedShare = it.isEstimatedShare,
+                    formattedAddOns = it.formattedAddOns
+                )
+            }.toImmutableList()
+        }
         CashBreakdownBottomSheet(
             memberName = displayName,
-            breakdown = memberBalance.cashBreakdown,
+            breakdown = breakdownItems,
             formattedTotal = memberBalance.formattedCashInHand,
             formattedTotalFees = memberBalance.formattedTotalFees,
             onDismiss = { showCashBreakdown = false }
