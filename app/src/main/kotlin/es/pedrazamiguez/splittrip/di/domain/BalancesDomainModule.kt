@@ -140,4 +140,25 @@ val balancesDomainModule = module {
             settlementRepository = get<SettlementRepository>()
         )
     }
+
+    factory<es.pedrazamiguez.splittrip.domain.datasource.GroupDashboardDataSource> {
+        es.pedrazamiguez.splittrip.data.datasource.GroupDashboardDataSourceImpl(
+            groupRepository = get<GroupRepository>(),
+            contributionRepository = get<ContributionRepository>(),
+            withdrawalRepository = get<CashWithdrawalRepository>(),
+            expenseRepository = get<ExpenseRepository>(),
+            settlementRepository = get<SettlementRepository>(),
+            subunitRepository = get<SubunitRepository>()
+        )
+    }
+
+    factory<es.pedrazamiguez.splittrip.domain.usecase.balance.GetBalancesDashboardFlowUseCase> {
+        es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetBalancesDashboardFlowUseCaseImpl(
+            groupDashboardDataSource = get<es.pedrazamiguez.splittrip.domain.datasource.GroupDashboardDataSource>(),
+            getGroupPocketBalanceFlowUseCase = get<GetGroupPocketBalanceFlowUseCase>(),
+            getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>(),
+            getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>(),
+            getMemberProfilesUseCase = get<es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase>()
+        )
+    }
 }

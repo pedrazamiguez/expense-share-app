@@ -5,11 +5,6 @@ import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
-import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
-import es.pedrazamiguez.splittrip.domain.model.Contribution
-import es.pedrazamiguez.splittrip.domain.model.Expense
-import es.pedrazamiguez.splittrip.domain.model.GroupPocketBalance
-import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.features.balance.R
@@ -33,7 +28,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -44,7 +38,12 @@ import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class BalancesViewModel(
-    private val useCases: BalancesUseCases,
+    private val getBalancesDashboardFlowUseCase:
+    es.pedrazamiguez.splittrip.domain.usecase.balance.GetBalancesDashboardFlowUseCase,
+    private val getLastSeenBalanceUseCase: es.pedrazamiguez.splittrip.domain.usecase.setting.GetLastSeenBalanceUseCase,
+    private val setLastSeenBalanceUseCase: es.pedrazamiguez.splittrip.domain.usecase.setting.SetLastSeenBalanceUseCase,
+    private val getGroupByIdUseCase: es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase,
+    private val observeGroupUseCase: es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase,
     private val authenticationService: AuthenticationService,
     private val balancesUiMapper: BalancesUiMapper,
     private val settlementsUiMapper: SettlementsUiMapper,
@@ -73,69 +72,33 @@ class BalancesViewModel(
         _selectedGroupId
             .filterNotNull()
             .flatMapLatest { groupId ->
-                val groupFlow = useCases.observeGroupUseCase(groupId)
-                val group = useCases.getGroupByIdUseCase(groupId)
+                val groupFlow = observeGroupUseCase(groupId)
+                val group = getGroupByIdUseCase(groupId)
                 val currency = group?.currency ?: appConfigService.defaultCurrencyCode.value
                 val groupName = group?.name ?: ""
                 val currentUserId = authenticationService.currentUserId()
                 val groupMemberIds = group?.members ?: emptyList()
 
                 // Seed the in-memory cache from DataStore once per group switch
-                _lastSeenBalance.value = useCases.getLastSeenBalanceUseCase(groupId).first()
+                _lastSeenBalance.value = getLastSeenBalanceUseCase(groupId).first()
 
-                // Nested combine: inner combines 5 data flows into DataSnapshot (debounced
-                // to absorb rapid Firestore reconciliation bursts), outer pairs with
-                // lastSeenBalance for balance animation logic.
                 combine(
-                    combine(
-                        useCases.getGroupPocketBalanceFlowUseCase(groupId, currency),
-                        useCases.getGroupContributionsFlowUseCase(groupId),
-                        useCases.getCashWithdrawalsFlowUseCase(groupId),
-                        useCases.getGroupSubunitsFlowUseCase(groupId),
-                        useCases.getGroupExpensesFlowUseCase(groupId)
-                    ) { balance, contributions, withdrawals, subunits, expenses ->
-                        DataSnapshot(balance, contributions, withdrawals, subunits, expenses)
-                    }
-                        // Debounce absorbs rapid multi-table writes (e.g. Firestore reconciliation
-                        // that updates expenses + splits + withdrawals in quick succession) so that
-                        // the CPU-bound computeMemberBalances() runs once per logical batch rather
-                        // than once per individual table write.
-                        .debounce { appConfigService.balanceComputationDebounceMs.value },
+                    getBalancesDashboardFlowUseCase(groupId, currency, groupMemberIds),
                     _lastSeenBalance,
                     groupFlow
-                ) { snapshot, lastSeen, reactiveGroup ->
+                ) { domainModel, lastSeen, reactiveGroup ->
                     val isArchived = reactiveGroup?.status == GroupStatus.ARCHIVED
-                    val balance = snapshot.balance
-                    val contributions = snapshot.contributions
-                    val withdrawals = snapshot.withdrawals
-                    val subunits = snapshot.subunits
-                    val expenses = snapshot.expenses
-
-                    // Compute member balances from already-loaded data (pure computation)
-                    val memberBalances = useCases.getMemberBalancesFlowUseCase.computeMemberBalances(
-                        contributions = contributions,
-                        withdrawals = withdrawals,
-                        expenses = expenses,
-                        subunits = subunits,
-                        groupMemberIds = groupMemberIds,
-                        groupCurrency = currency
-                    )
+                    val balance = domainModel.balance
+                    val contributions = domainModel.contributions
+                    val withdrawals = domainModel.withdrawals
+                    val subunits = domainModel.subunits
+                    val expenses = domainModel.expenses
+                    val memberBalances = domainModel.memberBalances
+                    val memberProfiles = domainModel.memberProfiles
+                    val settlements = domainModel.settlementSuggestions
 
                     // Build subunit lookup map for mapper use
                     val subunitsMap = subunits.associateBy { it.id }
-
-                    // Collect ALL unique user IDs from the data being displayed,
-                    // not just group.members — contributions/withdrawals may reference
-                    // users not yet in the group members list (e.g. manually-added data).
-                    val allUserIds = buildSet {
-                        addAll(groupMemberIds)
-                        contributions.forEach { add(it.userId) }
-                        withdrawals.forEach { add(it.withdrawnBy) }
-                        memberBalances.forEach { add(it.userId) }
-                    }.toList()
-                    val memberProfiles = useCases.getMemberProfilesUseCase(allUserIds)
-
-                    val settlements = useCases.getSettlementSuggestionsUseCase(memberBalances)
                     val mappedSettlements = settlementsUiMapper.mapSettlements(
                         settlements = settlements,
                         currency = currency,
@@ -287,18 +250,9 @@ class BalancesViewModel(
             // Update in-memory immediately → combine re-emits with shouldAnimateBalance = false
             _lastSeenBalance.value = formattedBalance
             _lastSeenBalanceCents.value = _currentBalanceCents
-            // Persist to DataStore for next app launch
             viewModelScope.launch {
-                useCases.setLastSeenBalanceUseCase(groupId, formattedBalance)
+                setLastSeenBalanceUseCase(groupId, formattedBalance)
             }
         }
     }
-
-    private data class DataSnapshot(
-        val balance: GroupPocketBalance,
-        val contributions: List<Contribution>,
-        val withdrawals: List<CashWithdrawal>,
-        val subunits: List<Subunit>,
-        val expenses: List<Expense>
-    )
 }

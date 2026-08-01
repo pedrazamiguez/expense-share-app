@@ -45,3 +45,5 @@ functions/lib/
 # AI Code Intelligence tools — Graphify output artifacts
 graphify-out/
 
+# Serena AI agent
+.serena/
