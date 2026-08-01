@@ -204,13 +204,15 @@ doctor: ## Check that required files and tools are present
 # ─── Quality gates (mirrors CI) ───────────────────────────────────────────────
 fast-check: andaluz-lenient ## Fast incremental check using Gradle daemon & build cache (for rapid iteration)
 	@printf "$(YELLOW)⏳  Running fast incremental quality checks...$(NC)\n"
-	@$(FAST_GRADLEW) ktlintCheck detekt lintDebug :konsist-tests:test jacocoMergedReport --continue
+	@$(FAST_GRADLEW) ktlintCheck detekt lintDebug :konsist-tests:test --continue
+	@$(FAST_GRADLEW) jacocoMergedReport --continue
 	@printf "$(YELLOW)⏳  Checking LINE coverage gates (overall + per-file, ≥ 80%%)...$(NC)\n"
 	@python3 scripts/check_coverage.py
 
 check: clean andaluz-lenient ## Run all local quality gates from a 100% cold state before pushing (single-pass Gradle execution, mirrors CI)
 	@printf "$(YELLOW)⏳  Running full cold quality gates (single-pass Gradle execution)...$(NC)\n"
-	@$(GRADLEW) ktlintFormat ktlintCheck detekt lintDebug :konsist-tests:test jacocoMergedReport --continue
+	@$(GRADLEW) ktlintFormat ktlintCheck detekt lintDebug :konsist-tests:test --continue
+	@$(GRADLEW) jacocoMergedReport --continue
 	@printf "$(YELLOW)⏳  Checking LINE coverage gates (overall + per-file, ≥ 80%%)...$(NC)\n"
 	@python3 scripts/check_coverage.py
 
