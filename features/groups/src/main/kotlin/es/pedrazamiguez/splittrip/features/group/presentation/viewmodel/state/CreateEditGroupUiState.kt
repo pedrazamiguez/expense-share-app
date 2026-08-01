@@ -25,6 +25,7 @@ data class CreateEditGroupUiState(
     val memberSearchResults: ImmutableList<User> = persistentListOf(),
     val selectedMembers: ImmutableList<User> = persistentListOf(),
     val isSearchingMembers: Boolean = false,
+    val currentUserEmail: String? = null,
 
     // Errors
     val error: UiText? = null,

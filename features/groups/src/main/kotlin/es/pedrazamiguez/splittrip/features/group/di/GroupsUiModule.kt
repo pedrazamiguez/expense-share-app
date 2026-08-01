@@ -130,6 +130,7 @@ val groupsUiModule = module {
         val groupUiMapper = get<GroupUiMapper>()
         val featureGateService = get<FeatureGateService>()
         val appConfigService = get<AppConfigService>()
+        val authenticationService = get<AuthenticationService>()
 
         CreateEditGroupViewModel(
             navigationEventHandler = navigationEventHandler,
@@ -143,7 +144,8 @@ val groupsUiModule = module {
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             groupUiMapper = groupUiMapper,
             featureGateService = featureGateService,
-            appConfigService = appConfigService
+            appConfigService = appConfigService,
+            authenticationService = authenticationService
         )
     }
 
