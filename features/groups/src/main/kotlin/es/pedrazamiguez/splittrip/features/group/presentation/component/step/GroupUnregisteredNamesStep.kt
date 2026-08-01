@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.group.presentation.component.step
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,7 +48,7 @@ fun GroupUnregisteredNamesStep(
             )
         }
 
-        unregisteredMembers.forEach { member ->
+        unregisteredMembers.forEachIndexed { index, member ->
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.ExtraSmall)
@@ -65,7 +66,8 @@ fun GroupUnregisteredNamesStep(
                     },
                     label = stringResource(R.string.group_review_name),
                     keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next,
+                    imeAction = if (index == unregisteredMembers.lastIndex) ImeAction.Done else ImeAction.Next,
+                    keyboardActions = KeyboardActions(onDone = { onEvent(CreateEditGroupUiEvent.NextStep) }),
                     capitalization = KeyboardCapitalization.Words,
                     modifier = Modifier.fillMaxWidth()
                 )
