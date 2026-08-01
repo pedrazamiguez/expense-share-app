@@ -17,7 +17,6 @@ import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
 import es.pedrazamiguez.splittrip.domain.usecase.auth.IsUserAnonymousUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.DisputeSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
@@ -40,22 +39,17 @@ import es.pedrazamiguez.splittrip.domain.usecase.setting.SetSelectedGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.SearchUsersByEmailUseCase
-import es.pedrazamiguez.splittrip.features.group.navigation.impl.GroupSettlementTabGraphContributorImpl
 import es.pedrazamiguez.splittrip.features.group.navigation.impl.GroupsNavigationProviderImpl
-import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupSettlementOverviewUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.LeaveWizardUiMapper
-import es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl.GroupSettlementOverviewUiMapperImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl.GroupUiMapperImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl.LeaveWizardUiMapperImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.screen.impl.CreateGroupScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.screen.impl.EditGroupScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.screen.impl.GroupDetailScreenUiProviderImpl
-import es.pedrazamiguez.splittrip.features.group.presentation.screen.impl.GroupSettlementOverviewScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.screen.impl.GroupsScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.CreateEditGroupViewModel
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.GroupDetailViewModel
-import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.GroupSettlementOverviewViewModel
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.GroupsViewModel
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.CreateEditGroupImageEventHandler
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.CreateEditGroupImageEventHandlerImpl
@@ -235,41 +229,6 @@ val groupsUiModule = module {
         )
     }
 
-    single<GroupSettlementOverviewUiMapper> {
-        val formattingHelper = get<FormattingHelper>()
-        val resourceProvider = get<ResourceProvider>()
-        GroupSettlementOverviewUiMapperImpl(
-            formattingHelper = formattingHelper,
-            resourceProvider = resourceProvider,
-            userUiMapper = get<UserUiMapper>()
-        )
-    }
-
-    viewModel {
-        val getGroupSettlementsFlowUseCase = get<GetGroupSettlementsFlowUseCase>()
-        val getMemberProfilesUseCase = get<GetMemberProfilesUseCase>()
-        val observeGroupUseCase = get<ObserveGroupUseCase>()
-        val groupSettlementOverviewUiMapper = get<GroupSettlementOverviewUiMapper>()
-        val authenticationService = get<AuthenticationService>()
-        val confirmSettlementUseCase = get<ConfirmSettlementUseCase>()
-        val disputeSettlementUseCase = get<DisputeSettlementUseCase>()
-        val archiveGroupUseCase = get<ArchiveGroupUseCase>()
-        val getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>()
-        GroupSettlementOverviewViewModel(
-            getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
-            getMemberProfilesUseCase = getMemberProfilesUseCase,
-            observeGroupUseCase = observeGroupUseCase,
-            groupSettlementOverviewUiMapper = groupSettlementOverviewUiMapper,
-            authenticationService = authenticationService,
-            confirmSettlementUseCase = confirmSettlementUseCase,
-            disputeSettlementUseCase = disputeSettlementUseCase,
-            archiveGroupUseCase = archiveGroupUseCase,
-            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase
-        )
-    }
-
-    factory { GroupSettlementTabGraphContributorImpl() } bind TabGraphContributor::class
-
     factory {
         GroupsNavigationProviderImpl(
             graphContributors = getAll<TabGraphContributor>()
@@ -282,5 +241,4 @@ val groupsUiModule = module {
     single { CreateGroupScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { GroupDetailScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { EditGroupScreenUiProviderImpl() } bind ScreenUiProvider::class
-    single { GroupSettlementOverviewScreenUiProviderImpl() } bind ScreenUiProvider::class
 }
