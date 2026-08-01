@@ -1,7 +1,6 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -21,6 +20,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.extension.debouncedClickable
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 
 private val DESTRUCTIVE_BUTTON_HEIGHT = 56.dp
@@ -90,7 +90,7 @@ fun DestructiveButton(
             )
             .clip(CircleShape)
             .background(color = containerColor, shape = CircleShape)
-            .clickable(
+            .debouncedClickable(
                 interactionSource = interactionSource,
                 indication = ripple(color = contentColor),
                 enabled = interactable,

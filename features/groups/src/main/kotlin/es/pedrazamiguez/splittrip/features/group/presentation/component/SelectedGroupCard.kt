@@ -2,7 +2,6 @@ package es.pedrazamiguez.splittrip.features.group.presentation.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +20,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.extension.debouncedCombinedClickable
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.AlignJustified
@@ -51,7 +51,7 @@ fun SelectedGroupCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(cardShape)
-                .combinedClickable(
+                .debouncedCombinedClickable(
                     onClick = { onClick(groupUiModel.id, groupUiModel.name, groupUiModel.currency) },
                     onLongClick = {
                         haptics.performHapticFeedback(HapticFeedbackType.LongPress)

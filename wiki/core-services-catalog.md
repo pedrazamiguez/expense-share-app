@@ -195,6 +195,8 @@ All components are `@Composable` functions following Material 3 design. They acc
 | `Currency.getNameRes()` | `extension/CurrencyExtensions.kt` | Maps domain `Currency` enum to a string resource ID for the currency's display name. |
 | `NavGraphBuilder.sharedComposable()` | `extension/NavGraphExtensions.kt` | Extension for declaring composable destinations with shared-element transition support. |
 | `Modifier.sharedElementAnimation()` | `extension/SharedTransitionExtensions.kt` | Modifier extension for applying shared-element animation to a composable. |
+| `Modifier.debouncedClickable()` | `extension/ModifierExtensions.kt` | Prevents rapid double navigations/clicks (300ms window). Mandatory for action items. |
+| `Modifier.debouncedCombinedClickable()`| `extension/ModifierExtensions.kt` | Prevents rapid double clicks on primary action for list items. Mandatory for items. |
 | `NotificationPermissionEffect` | `permission/NotificationPermissionEffect.kt` | Composable side-effect that requests notification permission on Android 13+. |
 
 ### B.6 Models & Constants
