@@ -134,7 +134,6 @@ class BalancesViewModelTest {
             every { balanceComputationDebounceMs } returns MutableStateFlow(300L)
         }
         observeGroupUseCase = mockk()
-
         val defaultDashboard = BalancesDashboardDomainModel(
             balance = testBalance,
             contributions = emptyList(),

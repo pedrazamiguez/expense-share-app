@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.GetBalancesDashboardFlo
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import kotlinx.coroutines.flow.Flow
 
@@ -26,12 +27,15 @@ class GetBalancesDashboardFlowUseCaseImpl(
             getGroupPocketBalanceFlowUseCase(groupId, currency)
         ) { snapshot, balance ->
             val memberBalances = getMemberBalancesFlowUseCase.computeMemberBalances(
-                contributions = snapshot.contributions,
-                withdrawals = snapshot.withdrawals,
-                expenses = snapshot.expenses,
-                subunits = snapshot.subunits,
-                groupMemberIds = groupMemberIds,
-                groupCurrency = currency
+                MemberBalanceCalculationInputs(
+                    contributions = snapshot.contributions,
+                    withdrawals = snapshot.withdrawals,
+                    expenses = snapshot.expenses,
+                    subunits = snapshot.subunits,
+                    groupMemberIds = groupMemberIds,
+                    groupCurrency = currency,
+                    settlements = snapshot.settlements
+                )
             )
 
             val allUserIds = buildSet {

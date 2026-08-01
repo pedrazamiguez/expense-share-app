@@ -70,7 +70,7 @@ class GetBalancesDashboardFlowUseCaseImplTest {
             kotlinx.coroutines.flow.flowOf(
                 GroupPocketBalance(0L, 0L, 0L, "EUR", emptyMap(), emptyMap(), 0L, 0L, 0L, 0L)
             )
-        every { getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any()) } returns
+        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns
             memberBalances
         coEvery { getMemberProfilesUseCase(any()) } returns profiles
         every { getSettlementSuggestionsUseCase(any()) } returns settlementSuggestions
@@ -107,7 +107,7 @@ class GetBalancesDashboardFlowUseCaseImplTest {
             kotlinx.coroutines.flow.flowOf(
                 GroupPocketBalance(0L, 0L, 0L, "EUR", emptyMap(), emptyMap(), 0L, 0L, 0L, 0L)
             )
-        every { getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any()) } returns
+        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns
             memberBalances
         coEvery { getMemberProfilesUseCase(any()) } returns profiles
         every { getSettlementSuggestionsUseCase(any()) } returns settlementSuggestions
@@ -137,7 +137,7 @@ class GetBalancesDashboardFlowUseCaseImplTest {
             kotlinx.coroutines.flow.flowOf(
                 GroupPocketBalance(0L, 0L, 0L, "EUR", emptyMap(), emptyMap(), 0L, 0L, 0L, 0L)
             )
-        every { getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any()) } returns
+        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns
             memberBalances
         coEvery { getMemberProfilesUseCase(any()) } returns profiles
         every { getSettlementSuggestionsUseCase(memberBalances) } returns settlements
@@ -170,7 +170,7 @@ class GetBalancesDashboardFlowUseCaseImplTest {
             kotlinx.coroutines.flow.flowOf(
                 GroupPocketBalance(0L, 0L, 0L, "EUR", emptyMap(), emptyMap(), 0L, 0L, 0L, 0L)
             )
-        every { getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any()) } returns
+        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns
             emptyList()
         coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
         every { getSettlementSuggestionsUseCase(any()) } returns emptyList()

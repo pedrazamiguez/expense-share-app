@@ -7,6 +7,11 @@ import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetBalancesDashboardFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetLastSeenBalanceUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.SetLastSeenBalanceUseCase
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.SettlementsUiMapper
@@ -28,6 +33,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -84,7 +90,9 @@ class BalancesViewModel(
                 _lastSeenBalance.value = getLastSeenBalanceUseCase(groupId).first()
 
                 combine(
-                    getBalancesDashboardFlowUseCase(groupId, currency, groupMemberIds),
+                    getBalancesDashboardFlowUseCase(groupId, currency, groupMemberIds)
+                        // Debounce absorbs rapid multi-table writes
+                        .debounce { appConfigService.balanceComputationDebounceMs.value },
                     _lastSeenBalance,
                     groupFlow
                 ) { domainModel, lastSeen, reactiveGroup ->
@@ -96,12 +104,12 @@ class BalancesViewModel(
                     val expenses = domainModel.expenses
                     val memberBalances = domainModel.memberBalances
                     val memberProfiles = domainModel.memberProfiles
-                    val settlements = domainModel.settlementSuggestions
+                    val settlementSuggestions = domainModel.settlementSuggestions
 
                     // Build subunit lookup map for mapper use
                     val subunitsMap = subunits.associateBy { it.id }
                     val mappedSettlements = settlementsUiMapper.mapSettlements(
-                        settlements = settlements,
+                        settlements = settlementSuggestions,
                         currency = currency,
                         currentUserId = currentUserId ?: "",
                         memberProfiles = memberProfiles
