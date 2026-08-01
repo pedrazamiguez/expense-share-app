@@ -67,7 +67,7 @@
     <string name="settlement_overview_confirm">Confirm</string>
     <string name="settlement_overview_dispute">Dispute</string>
     <string name="settlement_overview_dispute_title">Dispute Settlement</string>
-    <string name="settlement_overview_dispute_reason_hint">Describe why you're disputing this settlement</string>
+    <string name="settlement_overview_dispute_reason_hint">Describe why you\'re disputing this settlement</string>
     <string name="settlement_overview_dispute_submit">Submit Dispute</string>
     <string name="settlement_overview_dispute_cancel">Cancel</string>
     <string name="settlement_overview_dispute_success">Settlement disputed successfully</string>
@@ -78,7 +78,7 @@
     <string name="settlement_overview_error_confirm">Failed to confirm settlement. Please try again</string>
     <string name="settlement_overview_error_dispute">Failed to dispute settlement. Please try again</string>
     <string name="settlement_overview_error_archive">Failed to close the trip. Please try again</string>
-    <string name="settlement_overview_error_loading">Couldn't load settlement data. Please try again</string>
+    <string name="settlement_overview_error_loading">Couldn\'t load settlement data. Please try again</string>
     <string name="settlement_overview_status_suggested">Pending</string>
     <string name="settlement_overview_status_confirmed_by_payer">Awaiting Payee</string>
     <string name="settlement_overview_status_disputed">Disputed</string>
