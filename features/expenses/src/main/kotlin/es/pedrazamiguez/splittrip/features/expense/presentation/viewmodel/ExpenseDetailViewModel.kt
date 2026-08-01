@@ -356,8 +356,10 @@ class ExpenseDetailViewModel(
                 val updatedSplits = domainExpense.splits.mapIndexed { index, split ->
                     split.copy(amountCents = newAmounts[index])
                 }
+                val originalExpectedAmount = domainExpense.expectedGroupAmount ?: domainExpense.groupAmount
                 val updatedExpense = domainExpense.copy(
                     groupAmount = actualGroupAmountCents,
+                    expectedGroupAmount = originalExpectedAmount,
                     exchangeRate = newRate,
                     paymentStatus = PaymentStatus.FINISHED,
                     splits = updatedSplits

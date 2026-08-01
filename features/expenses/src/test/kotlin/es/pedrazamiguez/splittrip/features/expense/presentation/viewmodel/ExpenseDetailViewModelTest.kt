@@ -743,7 +743,47 @@ class ExpenseDetailViewModelTest {
                         groupId = testGroupId,
                         expense = match {
                             it.paymentStatus == PaymentStatus.FINISHED &&
-                                it.groupAmount == 1300L
+                                it.groupAmount == 1300L &&
+                                it.expectedGroupAmount == 1200L
+                        },
+                        pairedContributionScope = PayerType.USER,
+                        pairedSubunitId = null
+                    )
+                }
+
+                collectJob.cancel()
+            }
+
+        @Test
+        fun `ConfirmPayment handles legacy expense with null expectedGroupAmount`() =
+            runTest(testDispatcher) {
+                // Given
+                val legacyExpense = testExpense.copy(
+                    paymentStatus = PaymentStatus.SCHEDULED,
+                    groupAmount = 1200L,
+                    expectedGroupAmount = null,
+                    splits = listOf(
+                        es.pedrazamiguez.splittrip.domain.model.ExpenseSplit(userId = testUserId, amountCents = 1200L)
+                    )
+                )
+                every { getExpenseByIdFlowUseCase(testExpenseId) } returns flowOf(legacyExpense)
+                every { exchangeRateCalculationService.calculateImpliedRate(any(), any()) } returns BigDecimal.ONE
+                every { remainderDistributionService.rescaleAmounts(any(), any(), any(), any()) } returns listOf(1300L)
+                coEvery { updateExpenseUseCase(any(), any(), any(), any()) } returns Result.success(Unit)
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+                viewModel.setExpenseId(testExpenseId)
+                advanceUntilIdle()
+
+                // When
+                viewModel.onEvent(ExpenseDetailUiEvent.ConfirmPayment(actualGroupAmountCents = 1300L))
+                advanceUntilIdle()
+
+                // Then
+                coVerify(exactly = 1) {
+                    updateExpenseUseCase(
+                        groupId = testGroupId,
+                        expense = match {
+                            it.groupAmount == 1300L && it.expectedGroupAmount == 1200L
                         },
                         pairedContributionScope = PayerType.USER,
                         pairedSubunitId = null
