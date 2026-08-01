@@ -45,6 +45,7 @@
     <string name="group_delete_warning">¿Çeguro que quierê eliminâh \"%1$s\"? Çe borrarán tôh lô gâttô y no podrâh deçaçêl-lo.</string>
     <string name="group_deleted_successfully">Grupo eliminao corrêttamente</string>
     <string name="error_deleting_group">Errôh al eliminâh er grupo. Por fabôh, inténtalo de nuebo</string>
+    <string name="error_group_delete_unresolved_settlements">¡Er grupo no çe puede eliminâh âtta que çe ayan reçuerto tôh lô çardô!</string>
     <string name="group_actions_title">Grupo \"%1$s\"</string>
     <string name="action_edit_group">Editâh grupo</string>
     <string name="action_delete_group">Eliminâh grupo</string>
@@ -174,6 +175,26 @@
     <string name="leave_wizard_settlement_other_owes">%1$s debe a %2$s</string>
     <string name="leave_wizard_settlement_waiting_other">Êpperando a %1$s</string>
     <string name="leave_wizard_settlement_action_required">Âççión requerida por ti</string>
-    <string name="leave_wizard_settlement_warning_banner">Debê reçorbêh o êpperâh la confirmaçión de toâ lâ liquidaçionê pendientê pa podêh çalîh der grupo.</string>
+    <string name="leave_wizard_settlement_warning_banner">Debê reçorbêh toâ lâ liquidaçionê pendientê antê de çalîh der grupo.</string>
     <string name="leave_wizard_unresolved_settlements_error">Tienê liquidaçionê pendientê que deben reçorberçe antê de podêh çalîh.</string>
+    <string name="leave_wizard_settlement_section_your_action">Tu âççión requerida</string>
+    <string name="leave_wizard_settlement_section_waiting">Êpperando a otrô</string>
+    <string name="leave_wizard_balances_with_members">Çardô con otrô biaherô</string>
+    <string name="leave_wizard_go_to_settlements">Îh a Liquidaçionê</string>
+    <string name="archive_wizard_step_summary">Reçumen</string>
+    <string name="archive_wizard_step_action">Âççión requerida</string>
+    <string name="archive_wizard_step_confirm">Confirmâh</string>
+    <string name="archive_wizard_summary_title">Reçumen der biahe</string>
+    <string name="archive_wizard_summary_subtitle">Rebiça el êttao de lâ liquidaçionê de êtte grupo antê de finaliçâh er biahe.</string>
+    <string name="archive_wizard_summary_ready_title">Lîtto pa arxibâh</string>
+    <string name="archive_wizard_summary_ready_desc">Toâ lâ liquidaçionê çe an reçuerto corrêttamente. Puedê proçedêh dirêttamente a arxibâh er grupo y finaliçâh er biahe.</string>
+    <string name="archive_wizard_summary_unresolved_title">Liquidaçionê pendientê</string>
+    <string name="archive_wizard_summary_unresolved_desc">Ay liquidaçionê pendientê o dîpputâh. Debê reçorbêl-lâ antê de podêh çerrâh er biahe.</string>
+    <string name="archive_wizard_action_title">Âççionê de conçenço</string>
+    <string name="archive_wizard_action_subtitle">Rebiça y âttúa çobre lâ liquidaçionê pendientê pa yegâh a un conçenço.</string>
+    <string name="archive_wizard_confirm_title">Finaliçâh biahe</string>
+    <string name="archive_wizard_confirm_subtitle">¿Êttâh çeguro de que quierê finaliçâh er biahe pa %1$s?</string>
+    <string name="archive_wizard_confirm_warning_banner">Toâ lâ liquidaçionê deben êttâh reçuertâ antê de podêh arxibâh êtte grupo.</string>
+    <string name="archive_wizard_confirm_desc">Arxibâh êtte grupo conhelará tôh lô çardô y marcará er grupo como inâttibo. Êtta âççión êh permanente y no çe puede deçaçêh.</string>
+    <string name="archive_wizard_go_to_settlements">Îh a Liquidaçionê</string>
 </resources>

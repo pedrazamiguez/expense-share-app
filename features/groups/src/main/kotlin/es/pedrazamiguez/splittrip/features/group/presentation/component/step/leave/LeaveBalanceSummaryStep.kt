@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.AnimatedAmount
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SectionCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.BodyText
@@ -39,6 +40,35 @@ fun LeaveBalanceSummaryStep(
             text = stringResource(R.string.leave_wizard_balance_subtitle),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        if (balanceSummary.perPersonNetPositions.isNotEmpty()) {
+            SectionCard(
+                title = stringResource(R.string.leave_wizard_balances_with_members),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                balanceSummary.perPersonNetPositions.forEach { position ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        LabelText(text = position.memberName)
+                        val color = if (position.isPositive) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        }
+                        AnimatedAmount(
+                            formattedAmount = position.amountFormatted,
+                            shouldAnimate = false,
+                            color = color,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
 
         Column(
             modifier = Modifier.fillMaxWidth(),

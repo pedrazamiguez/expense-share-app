@@ -99,9 +99,14 @@ If the result exceeds 600 lines, refactor immediately — do not move on.
 
 ## Step 6 — Local Verification Gate (run BEFORE declaring done)
 
-Do not consider the work complete until ALL of the following pass locally:
+Use `make fast-check` for fast feedback during iterative development (~15–30s):
 ```bash
-make check   # Konsist architecture rules + all unit tests + debug compilation — must show 0 failures
+make fast-check > build.log 2>&1 && echo "Fast check passed" || (echo "Fast check failed. Last 100 lines:" && tail -n 100 build.log)
+```
+
+Do not consider the work complete until `make check` passes locally (full cold verification):
+```bash
+make check > build.log 2>&1 && echo "Check passed successfully" || (tail -n 100 build.log && exit 1)
 ```
 
 If any check fails, fix it before finishing. Do not leave the user to discover failures in CI.

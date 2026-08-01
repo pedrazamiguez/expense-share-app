@@ -1,5 +1,24 @@
 package es.pedrazamiguez.splittrip.domain.usecase.balance.support
 
+import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
+import es.pedrazamiguez.splittrip.domain.model.Contribution
+import es.pedrazamiguez.splittrip.domain.model.Expense
+import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
+import es.pedrazamiguez.splittrip.domain.model.Subunit
+import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.ContributionAttributionStrategy
+import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.StandardContributionAttributionStrategy
+
+data class MemberBalanceCalculationInputs(
+    val contributions: List<Contribution> = emptyList(),
+    val withdrawals: List<CashWithdrawal> = emptyList(),
+    val expenses: List<Expense> = emptyList(),
+    val subunits: List<Subunit> = emptyList(),
+    val groupMemberIds: List<String> = emptyList(),
+    val groupCurrency: String = "",
+    val settlements: List<SettlementRecord> = emptyList(),
+    val attributionStrategy: ContributionAttributionStrategy = StandardContributionAttributionStrategy
+)
+
 /** Per-currency withdrawal attribution for a single member in a single currency. */
 internal data class WithdrawalCurrencyAttribution(
     val nativeAmount: Long,

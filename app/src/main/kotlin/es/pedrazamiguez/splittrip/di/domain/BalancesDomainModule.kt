@@ -4,9 +4,11 @@ import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
+import es.pedrazamiguez.splittrip.domain.repository.SettlementNudgeRepository
 import es.pedrazamiguez.splittrip.domain.repository.SettlementRepository
 import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.service.AddOnCalculationService
+import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.DebtSimplificationService
 import es.pedrazamiguez.splittrip.domain.service.GroupMembershipService
@@ -37,6 +39,10 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetGroupPocketBala
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetGroupSettlementsFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetMemberBalancesFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetSettlementSuggestionsUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.settlement.GetNudgeTimestampsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.settlement.NudgeDebtorUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.settlement.impl.GetNudgeTimestampsFlowUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.settlement.impl.NudgeDebtorUseCaseImpl
 import org.koin.dsl.module
 
 val balancesDomainModule = module {
@@ -112,7 +118,8 @@ val balancesDomainModule = module {
         ConfirmSettlementUseCaseImpl(
             settlementRepository = get<SettlementRepository>(),
             authenticationService = get<AuthenticationService>(),
-            groupRepository = get<GroupRepository>()
+            groupRepository = get<GroupRepository>(),
+            contributionRepository = get<ContributionRepository>()
         )
     }
 
@@ -159,6 +166,21 @@ val balancesDomainModule = module {
             getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>(),
             getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>(),
             getMemberProfilesUseCase = get<es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase>()
+        )
+    }
+
+    factory<GetNudgeTimestampsFlowUseCase> {
+        GetNudgeTimestampsFlowUseCaseImpl(
+            settlementNudgeRepository = get<SettlementNudgeRepository>()
+        )
+    }
+
+    factory<NudgeDebtorUseCase> {
+        NudgeDebtorUseCaseImpl(
+            settlementRepository = get<SettlementRepository>(),
+            settlementNudgeRepository = get<SettlementNudgeRepository>(),
+            appConfigService = get<AppConfigService>(),
+            authenticationService = get<AuthenticationService>()
         )
     }
 }

@@ -42,8 +42,10 @@ google-services.json
 functions/node_modules/
 functions/lib/
 
-# AI Code Intelligence tools — Graphify output artifacts
+# AI Code Intelligence tools — Graphify & Headroom output artifacts
 graphify-out/
+.serena/
+.headroom/
 
 # Serena AI agent
 .serena/

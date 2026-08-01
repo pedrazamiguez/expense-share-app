@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.extension.debouncedClickable
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 
 private val GRADIENT_BUTTON_HEIGHT = 56.dp
@@ -168,7 +169,7 @@ fun GradientButton(
             )
             .clip(CircleShape)
             .then(backgroundModifier)
-            .clickable(
+            .debouncedClickable(
                 interactionSource = interactionSource,
                 indication = ripple(color = colors.contentColor),
                 enabled = interactable,

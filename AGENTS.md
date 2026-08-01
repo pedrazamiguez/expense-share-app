@@ -1,7 +1,7 @@
 # AGENTS.md — SplitTrip
 
 > [!IMPORTANT]
-> **Source of Truth:** This file is the single source of truth for architectural constraints and agent behaviors. Rules are broken out into `.agents/rules/`.
+> **Source of Truth:** This file is the single source of truth for architectural constraints and agent behaviors.
 
 ## Project Overview
 
@@ -27,24 +27,86 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 :features:onboarding    → Onboarding wizard
 :features:profile       → User profile display + edit
 :features:settings      → App settings
+:features:settlements   → "Mi posición" / "My position" screen & settlement consensus sub-flow (standalone, non-tab)
 :features:subunits      → Subunit management lifecycle — CRUD (standalone, non-tab)
 :features:withdrawals   → Add cash withdrawal write-flow (standalone, non-tab)
-:features:activity-logging → (Planned) Activity log feature
 ```
 
 **Strict:** Features cannot see other features or `:data`. Features only depend on `:domain` interfaces and `:core`.
 
 ## Architecture Constraints
 
-See the standalone rule files in `.agents/rules/` for detailed constraints:
-- `.agents/rules/viewmodel-rules.md`
-- `.agents/rules/mvi-triad.md`
-- `.agents/rules/formatting-in-mappers.md`
-- `.agents/rules/big-decimal-math.md`
-- `.agents/rules/file-size-limit.md`
-- `.agents/rules/enum-centralization.md`
-- `.agents/rules/single-composable-per-file.md`
-- `.agents/rules/feature-screen-pattern.md`
+## ViewModel Rules
+
+ViewModels ONLY inject UseCases, Mappers, and Domain Services. NEVER inject `Context`, `LocaleProvider`, Repositories, or other ViewModels.
+
+## MVI Triad
+
+Every screen gets `UiState` (ImmutableList), `UiEvent` (sealed interface), and `UiAction` (side-effects via Channel/SharedFlow). Never put one-shot events in `UiState`.
+
+## Formatting in Mappers
+
+Formatting belongs in Mappers, not ViewModels and not Domain Services. Mappers receive `LocaleProvider`. Domain Services must NEVER contain `formatShareForInput()`, `formatAmountForDisplay()`, or any human-readable formatting method.
+
+## Big Decimal Math
+
+All decimal math MUST use `BigDecimal` with explicit scale + RoundingMode. `Double` or `Float` are strictly prohibited to prevent IEEE 754 precision loss. Boundary serialization at the Firestore document layer must use `String` (via `toPlainString()` / `toBigDecimalOrNull()`).
+
+## File Size Limit
+
+Production source files MUST NOT exceed 600 lines. This is enforced by a Konsist architecture test. Extract handlers/delegates/components before adding code if approaching the limit. Always check file sizes with `wc -l`.
+
+## Enum Centralization
+
+Domain enums (e.g., `AppLanguage`, `Currency`) must be the single source of truth for parsing codes, fallback defaults, and validation. Never duplicate string-matching logic or locale fallback checks in ViewModels or presentation layers.
+
+## Single Composable Per File
+
+Every production Kotlin file under feature `presentation` packages that contains a `@Composable` function must define exactly one top-level `@Composable` function. The name of the Composable function must match the file name.
+
+## Feature vs Screen Pattern
+
+`*Feature` (orchestrator composable) holds ViewModel, collects flows, consumes `LocalTopPillController`/`LocalTabNavController`. `*Screen` is stateless — takes `UiState` + event lambdas only.
+
+## No Fully Qualified Names (No FQN)
+
+NEVER use Fully Qualified Names (FQN) inside production or test source code (e.g., `java.util.UUID.randomUUID()`, `com.google.firebase.Timestamp.now()`, `kotlinx.coroutines.Dispatchers.IO`).
+ALWAYS import all classes, interfaces, objects, and types at the top of the file using standard `import` statements. This is strictly enforced by Konsist rule `Production code must not use Fully Qualified Names (FQN) for classes or objects`.
+
+# UI Clicks & Navigation — Debouncing
+
+> [!IMPORTANT]
+> **Always use debounced modifiers for UI navigation or expensive side-effects.**
+
+To prevent multiple rapid navigations or API calls from "double tapping" UI components:
+- NEVER use standard `Modifier.clickable` or `Modifier.combinedClickable` directly on list items, action buttons, or FABs.
+- ALWAYS use `Modifier.debouncedClickable` and `Modifier.debouncedCombinedClickable` from `es.pedrazamiguez.splittrip.core.designsystem.extension.ModifierExtensions`.
+
+**Why:** Compose can process multiple touch events before a navigation transition completes, pushing the destination route multiple times onto the back stack.
+
+### Examples
+
+```kotlin
+// ❌ BAD
+Modifier.clickable { navigate() }
+
+// ✅ GOOD
+Modifier.debouncedClickable { navigate() }
+```
+
+```kotlin
+// ❌ BAD
+Modifier.combinedClickable(
+    onClick = { navigateToDetail() },
+    onLongClick = { showOptions() }
+)
+
+// ✅ GOOD
+Modifier.debouncedCombinedClickable(
+    onClick = { navigateToDetail() },
+    onLongClick = { showOptions() }
+)
+```
 
 ## Navigation
 
@@ -52,7 +114,7 @@ See the standalone rule files in `.agents/rules/` for detailed constraints:
 - Two nav controllers: `LocalRootNavController` (full-screen flows) and `LocalTabNavController` (within bottom tabs). Consumed via CompositionLocals in Feature layer only.
 - Notifications: `LocalTopPillController` — top pill notifications replace snackbars. Never use `Scaffold(snackbarHost=...)` in features.
 - **Tab features** register as bottom tabs via `NavigationProvider` interface + Koin `bind`. See `GroupsNavigationProviderImpl`.
-- **Non-tab features** (write-flows extracted into standalone modules) implement `TabGraphContributor` instead. The host tab's `NavigationProvider` injects all `TabGraphContributor` instances via Koin and calls `contributeGraph(builder)` inside `buildGraph()`. This allows runtime route merging without compile-time cross-feature dependencies. See `ContributionsTabGraphContributorImpl`, `WithdrawalsTabGraphContributorImpl`, `SubunitsTabGraphContributorImpl`.
+- **Non-tab features** (write-flows and sub-flows extracted into standalone modules) implement `TabGraphContributor` instead. The host tab's `NavigationProvider` injects all `TabGraphContributor` instances via Koin and calls `contributeGraph(builder)` inside `buildGraph()`. This allows runtime route merging without compile-time cross-feature dependencies. See `ContributionsTabGraphContributorImpl`, `WithdrawalsTabGraphContributorImpl`, `SubunitsTabGraphContributorImpl`, `SettlementsTabGraphContributorImpl`.
 - Tab screens define TopBar/MainAction via `ScreenUiProvider` implementations (not their own Scaffold).
 
 ## Offline-First Data Flow
@@ -96,6 +158,7 @@ groupsDomainModule + groupsDataModule + groupsUiModule → groupsFeatureModules
 subunitsDomainModule + subunitsDataModule + subunitsUiModule → subunitsFeatureModules
 contributionsDomainModule + contributionsUiModule → contributionsFeatureModules  (no dedicated contributions data module — relies on `ContributionRepository` impl from `balancesDataModule` in :data)
 withdrawalsDomainModule + withdrawalsUiModule → withdrawalsFeatureModules  (no dedicated withdrawals data module — relies on `CashWithdrawalRepository` impl from `balancesDataModule` in :data)
+settlementsUiModule → settlementsFeatureModules  (contributes `SettlementsTabGraphContributorImpl` for the "Mi posición" / "My position" sub-flow inside Balances tab)
 ```
 - **Tab features** UI modules declare: ViewModel, Mapper, `NavigationProvider` (factory + bind), `ScreenUiProvider` (single + bind).
 - **Non-tab features** UI modules declare: ViewModel, Mapper, `TabGraphContributor` (factory + bind). They typically do **not** implement `NavigationProvider` but still register a `ScreenUiProvider` when they need a top bar (e.g. write-flow screens).
@@ -142,6 +205,8 @@ When testing classes that launch background coroutines (e.g., Repositories with 
   - Release builds: `OER_APP_ID_RELEASE=your_key` (or set as an environment variable `OER_APP_ID_RELEASE` — env var takes precedence on CI)
 - Version managed in `version.properties` (major.minor.patch + snapshot flag).
 - `./gradlew test` — unit tests. `./gradlew connectedAndroidTest` — UI tests.
+- `make fast-check` — fast incremental quality check (uses Gradle daemon & build cache, ~15–30s).
+- `make check` — full cold quality check (single-pass Gradle execution, mirrors CI, ~1.5–2min).
 
 ## Static Analysis & Code Quality
 
@@ -150,6 +215,7 @@ When testing classes that launch background coroutines (e.g., Repositories with 
 - **JaCoCo** (code coverage) is configured for all subprojects. Per-module reports via `jacocoTestReport`, merged report via `jacocoMergedReport`.
 - **Konsist** (architecture rule enforcement) tests live in `:konsist-tests` module. Enforces naming conventions, dependency rules, and structural patterns from this manifesto.
 - Detekt config lives at `config/detekt/detekt.yml`. Ktlint rules are in `.editorconfig`.
+- Local verification uses `make fast-check` (rapid iterative check) and `make check` (single-pass cold quality gate).
 - CI runs static analysis via `.github/workflows/static-analysis.yml` (ktlint + detekt + CPD) — parallel to and independent of `build-and-test.yml`.
 - JaCoCo and Konsist run in a separate `.github/workflows/coverage-and-architecture.yml` workflow — also independent from `build-and-test.yml`.
 - Detekt uses `ignoreFailures = true` locally; gating is done by GitHub Code Scanning's "Code scanning results" check (only new alerts block PRs).
@@ -257,12 +323,43 @@ Before creating any new service, utility, formatter, or UI component, **check th
 
 ## AI Agent Behavior Rules (CRITICAL)
 
-See the standalone rule files in `.agents/rules/` for behavioral constraints:
-- `.agents/rules/no-git-operations.md`
-- `.agents/rules/no-pragmatic-patches.md`
-- `.agents/rules/make-check-gate.md`
-- `.agents/rules/commenting-policy.md`
-- `.agents/rules/agent-plan-strict-stop.md`
+### 🛑 No Git Operations (STRICT)
+NEVER stage, commit, push, or create PRs autonomously. NEVER execute, propose, suggest, or ask for permission to run `git add`, `git commit`, or `git push`. Git operations are strictly under the user's manual control. `git fetch`, `git checkout`, and `git pull` are allowed for setup/automation (e.g., when running `start-issue`).
+
+## No Pragmatic Patches
+
+No quick hacks, temporary patches, or code that compromises Clean Architecture boundaries. Always write clean, production-ready code.
+
+## Make Check Gate
+
+Run `make check` locally before declaring any task done, completed, addressed, or accomplished. 0 failures are required. Never leave verification for CI/CD or the user to discover. Do NOT run `make check` or `make fast-check` before modifying code to verify the codebase state. It is redundant because `develop` is always compiling. Run `make check` locally ONLY *after* changes have been made.
+
+### Fast Iteration (`make fast-check`)
+During active development and rapid iteration, run `make fast-check` for fast incremental feedback using the Gradle daemon and build cache (~15–30s):
+```bash
+make fast-check > build.log 2>&1 && echo "Fast check passed" || (echo "Fast check failed. Last 100 lines:" && tail -n 100 build.log)
+```
+
+### Final Validation (`make check`)
+Before completing any task or PR, run `make check` to verify full cold-start CI parity (~1.5–2 min):
+```bash
+make check > build.log 2>&1 && echo "Check passed successfully" || (echo "Check failed. Last 100 lines:" && tail -n 100 build.log)
+```
+
+**CRITICAL (Context Window Optimization):**
+Do not run `make check` or `make fast-check` directly without output redirection, as the massive stdout/stderr will saturate your context window. Always buffer and filter the output as shown above.
+
+## Commenting Policy
+
+Comment the *why*, never the *what*. Delete redundant comments that merely restate what the code does.
+
+## Agent Plan Strict Stop
+
+Whenever a plan-only/planning-focused skill or command explicitly dictates that the task is completed after writing/posting the plan and that no codebase modifications should be performed, this instruction takes absolute precedence. The agent MUST NOT write code, create production files, or execute any modifications under those circumstances.
+
+## String Translations
+
+When adding new string resources (e.g. in `strings.xml`), you MUST always add the corresponding Spanish translations. Andaluz translations are not needed as they are generated automatically based on the Spanish ones.
 
 ## Workspace Resolution Protocol
 
@@ -292,3 +389,56 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## Headroom Context Compression
+
+This project uses Headroom (`headroom proxy --port 8787`) to compress LLM prompt payloads, tool outputs, and context logs.
+
+Rules:
+- `opencode` sessions run wrapped via Headroom (`headroom wrap opencode`).
+- Output shaping (`HEADROOM_OUTPUT_SHAPER=1`) can be enabled for verbose sessions.
+- Run `headroom learn` after failed or complex sessions to extract failure patterns into `AGENTS.md`.
+
+
+<!-- headroom:rtk-instructions -->
+# RTK (Rust Token Killer) - Token-Optimized Commands
+
+When running shell commands, **always prefix with `rtk`**. This reduces context
+usage by 60-90% with zero behavior change. If rtk has no filter for a command,
+it passes through unchanged — so it is always safe to use.
+
+## Key Commands
+```bash
+# Git (59-80% savings)
+rtk git status          rtk git diff            rtk git log
+
+# Files & Search (60-75% savings)
+rtk ls <path>           rtk read <file>         rtk grep <pattern>
+rtk find <pattern>      rtk diff <file>
+
+# Test (90-99% savings) — shows failures only
+rtk pytest tests/       rtk cargo test          rtk test <cmd>
+
+# Build & Lint (80-90% savings) — shows errors only
+rtk tsc                 rtk lint                rtk cargo build
+rtk prettier --check    rtk mypy                rtk ruff check
+
+# Analysis (70-90% savings)
+rtk err <cmd>           rtk log <file>          rtk json <file>
+rtk summary <cmd>       rtk deps                rtk env
+
+# GitHub (26-87% savings)
+rtk gh pr view <n>      rtk gh run list         rtk gh issue list
+
+# Infrastructure (85% savings)
+rtk docker ps           rtk kubectl get         rtk docker logs <c>
+
+# Package managers (70-90% savings)
+rtk pip list            rtk pnpm install        rtk npm run <script>
+```
+
+## Rules
+- In command chains, prefix each segment: `rtk git add . && rtk git commit -m "msg"`
+- For debugging, use raw command without rtk prefix
+- `rtk proxy <cmd>` runs command without filtering but tracks usage
+<!-- /headroom:rtk-instructions -->

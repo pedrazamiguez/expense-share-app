@@ -14,7 +14,6 @@ import es.pedrazamiguez.splittrip.features.balance.presentation.component.Balanc
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.BalancesScreenOverlays
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.ContributionDeleteDialog
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.ExtrasBreakdownBottomSheet
-import es.pedrazamiguez.splittrip.features.balance.presentation.component.SettlementsBottomSheet
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.WithdrawalDeleteDialog
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.ContributionUiModel
@@ -35,7 +34,6 @@ fun BalancesScreen(
     var contributionPendingDelete by remember { mutableStateOf<ContributionUiModel?>(null) }
     var withdrawalPendingDelete by remember { mutableStateOf<CashWithdrawalUiModel?>(null) }
     var showExtrasBreakdown by remember { mutableStateOf(false) }
-    var showSettlementsBottomSheet by remember { mutableStateOf(false) }
 
     BalancesBodyContent(
         uiState = uiState,
@@ -44,7 +42,6 @@ fun BalancesScreen(
         onNavigateToContribution = onNavigateToContribution,
         onNavigateToWithdrawal = onNavigateToWithdrawal,
         onShowExtrasBreakdown = { showExtrasBreakdown = true },
-        onSimplifyDebts = { showSettlementsBottomSheet = true },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     )
 
@@ -54,13 +51,6 @@ fun BalancesScreen(
         onContributionDeleteRequested = { contributionPendingDelete = it },
         onWithdrawalDeleteRequested = { withdrawalPendingDelete = it }
     )
-
-    if (showSettlementsBottomSheet) {
-        SettlementsBottomSheet(
-            settlements = uiState.settlements,
-            onDismiss = { showSettlementsBottomSheet = false }
-        )
-    }
 
     if (showExtrasBreakdown) {
         ExtrasBreakdownBottomSheet(

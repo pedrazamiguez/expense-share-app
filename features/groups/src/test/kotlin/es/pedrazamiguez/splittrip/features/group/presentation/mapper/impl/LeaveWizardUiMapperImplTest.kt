@@ -12,6 +12,7 @@ import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.model.User
+import es.pedrazamiguez.splittrip.domain.service.DebtSimplificationService
 import es.pedrazamiguez.splittrip.features.group.R
 import io.mockk.every
 import io.mockk.mockk
@@ -30,6 +31,7 @@ class LeaveWizardUiMapperImplTest {
     private lateinit var resourceProvider: ResourceProvider
     private lateinit var formattingHelper: FormattingHelper
     private lateinit var userUiMapper: UserUiMapper
+    private lateinit var debtSimplificationService: DebtSimplificationService
     private lateinit var mapper: LeaveWizardUiMapperImpl
 
     private val testLocale = Locale.US
@@ -45,7 +47,8 @@ class LeaveWizardUiMapperImplTest {
         every { resourceProvider.getString(DesignSystemR.string.user_pending_fallback) } returns "Pending member"
         formattingHelper = FormattingHelper(localeProvider)
         userUiMapper = UserUiMapper(resourceProvider)
-        mapper = LeaveWizardUiMapperImpl(formattingHelper, resourceProvider, userUiMapper)
+        debtSimplificationService = mockk()
+        mapper = LeaveWizardUiMapperImpl(formattingHelper, resourceProvider, userUiMapper, debtSimplificationService)
     }
 
     @Test
@@ -55,12 +58,66 @@ class LeaveWizardUiMapperImplTest {
             pocketBalance = 2500L,
             cashInHand = 1500L
         )
+        every { debtSimplificationService.simplify(any()) } returns emptyList()
 
-        val result = mapper.toBalanceSummaryUiModel(memberBalance, "EUR")
+        val result = mapper.toBalanceSummaryUiModel(
+            memberBalance = memberBalance,
+            memberBalances = listOf(memberBalance),
+            currentUserId = currentUserId,
+            memberProfiles = emptyMap(),
+            currency = "EUR"
+        )
 
         assertEquals("€25.00", result.pocketBalanceFormatted)
         assertEquals("€15.00", result.cashInHandFormatted)
         assertEquals("€40.00", result.totalBalanceFormatted)
+        assertTrue(result.perPersonNetPositions.isEmpty())
+    }
+
+    @Test
+    fun `toBalanceSummaryUiModel computes perPersonNetPositions correctly`() {
+        val memberBalance = MemberBalance(
+            userId = currentUserId,
+            pocketBalance = 2500L,
+            cashInHand = 1500L
+        )
+        val otherBalances = listOf(
+            memberBalance,
+            MemberBalance(userId = "user-2", pocketBalance = -1000L),
+            MemberBalance(userId = "user-3", pocketBalance = -1500L)
+        )
+        val settlements = listOf(
+            Settlement(fromUserId = "user-2", toUserId = currentUserId, amount = 1000L),
+            Settlement(fromUserId = currentUserId, toUserId = "user-3", amount = 1500L)
+        )
+        every { debtSimplificationService.simplify(otherBalances) } returns settlements
+        every { resourceProvider.getString(DesignSystemR.string.balance_you) } returns "You"
+
+        val profiles = mapOf(
+            "user-1" to User(userId = "user-1", email = "a@b.com", displayName = "Alice"),
+            "user-2" to User(userId = "user-2", email = "c@d.com", displayName = "Bob"),
+            "user-3" to User(userId = "user-3", email = "e@f.com", displayName = "Charlie")
+        )
+
+        val result = mapper.toBalanceSummaryUiModel(
+            memberBalance = memberBalance,
+            memberBalances = otherBalances,
+            currentUserId = currentUserId,
+            memberProfiles = profiles,
+            currency = "EUR"
+        )
+
+        assertEquals(2, result.perPersonNetPositions.size)
+
+        val pos1 = result.perPersonNetPositions.find { it.memberName == "Bob" }
+        assertEquals("€10.00", pos1?.amountFormatted)
+        assertTrue(pos1?.isPositive == true)
+        assertTrue(pos1?.isNegative == false)
+
+        val pos2 = result.perPersonNetPositions.find { it.memberName == "Charlie" }
+        assertEquals("€15.00", pos2?.amountFormatted)
+        assertTrue(pos2?.isPositive == false)
+        assertTrue(pos2?.isNegative == true)
     }
 
     @Test

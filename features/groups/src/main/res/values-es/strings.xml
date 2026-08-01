@@ -48,6 +48,7 @@
     <string name="group_delete_warning">¿Seguro que quieres eliminar \"%1$s\"? Se borrarán todos los gastos y no podrás deshacerlo.</string>
     <string name="group_deleted_successfully">Grupo eliminado correctamente</string>
     <string name="error_deleting_group">Error al eliminar el grupo. Por favor, inténtalo de nuevo</string>
+    <string name="error_group_delete_unresolved_settlements">¡El grupo no se puede eliminar hasta que se hayan resuelto todos los saldos!</string>
     <string name="group_actions_title">Grupo \"%1$s\"</string>
     <string name="action_edit_group">Editar grupo</string>
     <string name="action_delete_group">Eliminar grupo</string>
@@ -202,6 +203,28 @@
     <string name="leave_wizard_settlement_other_owes">%1$s debe a %2$s</string>
     <string name="leave_wizard_settlement_waiting_other">Esperando a %1$s</string>
     <string name="leave_wizard_settlement_action_required">Acción requerida por ti</string>
-    <string name="leave_wizard_settlement_warning_banner">Debes resolver o esperar la confirmación de todas las liquidaciones pendientes para poder salir del grupo.</string>
+    <string name="leave_wizard_settlement_warning_banner">Debes resolver todas las liquidaciones pendientes antes de salir del grupo.</string>
     <string name="leave_wizard_unresolved_settlements_error">Tienes liquidaciones pendientes que deben resolverse antes de poder salir.</string>
+    <string name="leave_wizard_settlement_section_your_action">Tu acción requerida</string>
+    <string name="leave_wizard_settlement_section_waiting">Esperando a otros</string>
+    <string name="leave_wizard_balances_with_members">Saldos con otros viajeros</string>
+    <string name="leave_wizard_go_to_settlements">Ir a Liquidaciones</string>
+
+    <!-- Archive Group Wizard -->
+    <string name="archive_wizard_step_summary">Resumen</string>
+    <string name="archive_wizard_step_action">Acción requerida</string>
+    <string name="archive_wizard_step_confirm">Confirmar</string>
+    <string name="archive_wizard_summary_title">Resumen del viaje</string>
+    <string name="archive_wizard_summary_subtitle">Revisa el estado de las liquidaciones de este grupo antes de finalizar el viaje.</string>
+    <string name="archive_wizard_summary_ready_title">Listo para archivar</string>
+    <string name="archive_wizard_summary_ready_desc">Todas las liquidaciones se han resuelto correctamente. Puedes proceder directamente a archivar el grupo y finalizar el viaje.</string>
+    <string name="archive_wizard_summary_unresolved_title">Liquidaciones pendientes</string>
+    <string name="archive_wizard_summary_unresolved_desc">Hay liquidaciones pendientes o disputadas. Debes resolverlas antes de poder cerrar el viaje.</string>
+    <string name="archive_wizard_action_title">Acciones de consenso</string>
+    <string name="archive_wizard_action_subtitle">Revisa y actúa sobre las liquidaciones pendientes para llegar a un consenso.</string>
+    <string name="archive_wizard_confirm_title">Finalizar viaje</string>
+    <string name="archive_wizard_confirm_subtitle">¿Estás seguro de que quieres finalizar el viaje para %1$s?</string>
+    <string name="archive_wizard_confirm_warning_banner">Todas las liquidaciones deben estar resueltas antes de poder archivar este grupo.</string>
+    <string name="archive_wizard_confirm_desc">Archivar este grupo congelará todos los saldos y marcará el grupo como inactivo. Esta acción es permanente y no se puede deshacer.</string>
+    <string name="archive_wizard_go_to_settlements">Ir a Liquidaciones</string>
 </resources>

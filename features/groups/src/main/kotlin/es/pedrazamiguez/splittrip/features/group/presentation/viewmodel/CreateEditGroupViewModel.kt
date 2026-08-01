@@ -9,6 +9,7 @@ import es.pedrazamiguez.splittrip.core.logging.sanitizer.maskEmail
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.EmailValidationService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedFeature
@@ -58,6 +59,7 @@ class CreateEditGroupViewModel(
     private val groupUiMapper: GroupUiMapper,
     private val featureGateService: FeatureGateService,
     private val appConfigService: AppConfigService,
+    private val authenticationService: AuthenticationService,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
@@ -90,6 +92,10 @@ class CreateEditGroupViewModel(
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
+            val email = authenticationService.currentUserEmail()
+            if (email != null) {
+                _uiState.update { it.copy(currentUserEmail = email) }
+            }
             loadCurrencies(groupId)
         }
     }
@@ -207,19 +213,7 @@ class CreateEditGroupViewModel(
             searchUsersByEmailUseCase(query).onSuccess { users ->
                 val selectedIds = _uiState.value.selectedMembers.map { it.userId }.toSet()
                 val results = if (users.isEmpty()) {
-                    val normalizedEmail = User.normalizeEmail(query)
-                    val pendingUserId = User.generatePendingUserId(normalizedEmail)
-                    if (pendingUserId !in selectedIds) {
-                        listOf(
-                            User(
-                                userId = pendingUserId,
-                                email = normalizedEmail,
-                                isPending = true
-                            )
-                        )
-                    } else {
-                        emptyList()
-                    }
+                    getPendingUserResults(query, selectedIds)
                 } else {
                     users.filter { u -> u.userId !in selectedIds }
                 }
@@ -348,6 +342,20 @@ class CreateEditGroupViewModel(
             }.onFailure { e ->
                 Timber.e(e, "Failed to load profile for scanned user $userId")
             }
+        }
+    }
+
+    private fun getPendingUserResults(query: String, selectedIds: Set<String>): List<User> {
+        val normalizedEmail = User.normalizeEmail(query)
+        val normalizedCurrentUserEmail = _uiState.value.currentUserEmail?.let { User.normalizeEmail(it) }
+
+        if (normalizedEmail == normalizedCurrentUserEmail) return emptyList()
+
+        val pendingUserId = User.generatePendingUserId(normalizedEmail)
+        return if (pendingUserId !in selectedIds) {
+            listOf(User(userId = pendingUserId, email = normalizedEmail, isPending = true))
+        } else {
+            emptyList()
         }
     }
 

@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 
 import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.data.sync.KeyedSubscriptionTracker
+import es.pedrazamiguez.splittrip.data.sync.SyncReconciliationParams
 import es.pedrazamiguez.splittrip.data.sync.subscribeAndReconcile
 import es.pedrazamiguez.splittrip.data.sync.syncCreateToCloud
 import es.pedrazamiguez.splittrip.data.sync.syncDeletionToCloud
@@ -32,24 +33,26 @@ class SettlementRepositoryImpl(
                 subscriptionTracker.cancelAndRelaunch(groupId, syncScope) {
                     subscribeAndReconcile(
                         cloudFlow = cloudSettlementDataSource.getSettlementsByGroupIdFlow(groupId),
-                        reconcileLocal = { remoteRecords ->
-                            localSettlementDataSource.replaceSettlementsForGroup(
-                                groupId,
-                                remoteRecords
-                            )
-                        },
-                        getPendingIds = {
-                            localSettlementDataSource.getPendingSyncSettlementIds(groupId)
-                        },
-                        verifyOnServer = { id ->
-                            cloudSettlementDataSource.verifySettlementOnServer(groupId, id)
-                        },
-                        markSynced = { id ->
-                            localSettlementDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
-                        },
-                        entityLabel = ENTITY_LABEL,
-                        logContext = "for group $groupId",
-                        performanceMonitor = performanceMonitor
+                        params = SyncReconciliationParams(
+                            reconcileLocal = { remoteRecords ->
+                                localSettlementDataSource.replaceSettlementsForGroup(
+                                    groupId,
+                                    remoteRecords
+                                )
+                            },
+                            getPendingIds = {
+                                localSettlementDataSource.getPendingSyncSettlementIds(groupId)
+                            },
+                            verifyOnServer = { id ->
+                                cloudSettlementDataSource.verifySettlementOnServer(groupId, id)
+                            },
+                            markSynced = { id ->
+                                localSettlementDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
+                            },
+                            entityLabel = ENTITY_LABEL,
+                            logContext = "for group $groupId",
+                            performanceMonitor = performanceMonitor
+                        )
                     )
                 }
             }

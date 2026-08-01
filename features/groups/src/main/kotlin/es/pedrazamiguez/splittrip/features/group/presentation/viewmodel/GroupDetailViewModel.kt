@@ -4,12 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
-import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
@@ -57,7 +55,6 @@ class GroupDetailViewModel(
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
     private val groupUiMapper: GroupUiMapper,
     private val authenticationService: AuthenticationService,
-    private val archiveGroupUseCase: ArchiveGroupUseCase,
     private val deleteGroupUseCase: DeleteGroupUseCase,
     private val getGroupSettlementsFlowUseCase: GetGroupSettlementsFlowUseCase,
     private val leaveWizardUiMapper: LeaveWizardUiMapper,
@@ -136,9 +133,7 @@ class GroupDetailViewModel(
                             isLoading = false,
                             subunitsCount = subunits.size,
                             isOnlyGroup = userGroups.size == 1,
-                            showArchiveConfirmation = localState.showArchiveConfirmation,
                             isUserAdmin = group.createdBy == currentUserId,
-                            isArchiving = localState.isArchiving,
                             showDeleteConfirmation = localState.showDeleteConfirmation,
                             isDeleting = localState.isDeleting,
                             isLeaving = wizardState.isLeaving,
@@ -177,9 +172,11 @@ class GroupDetailViewModel(
 
     fun onEvent(event: GroupDetailUiEvent) {
         when (event) {
-            GroupDetailUiEvent.ArchiveClicked -> _localUiState.update { it.copy(showArchiveConfirmation = true) }
-            GroupDetailUiEvent.ArchiveCancelled -> _localUiState.update { it.copy(showArchiveConfirmation = false) }
-            GroupDetailUiEvent.ArchiveConfirmed -> handleArchive()
+            GroupDetailUiEvent.ArchiveClicked -> {
+                viewModelScope.launch {
+                    _actions.send(GroupDetailUiAction.NavigateToSettlementOverview(_groupId.value))
+                }
+            }
             GroupDetailUiEvent.DeleteClicked -> _localUiState.update { it.copy(showDeleteConfirmation = true) }
             GroupDetailUiEvent.DeleteCancelled -> _localUiState.update { it.copy(showDeleteConfirmation = false) }
             GroupDetailUiEvent.DeleteConfirmed -> handleDelete()
@@ -191,35 +188,8 @@ class GroupDetailViewModel(
             GroupDetailUiEvent.WizardBackClicked -> leaveWizardEventHandler.handleWizardBack()
             is GroupDetailUiEvent.ConfirmSettlementClicked ->
                 leaveWizardEventHandler.handleConfirmSettlement(_groupId.value, event.settlementId)
-        }
-    }
-
-    private fun handleArchive() {
-        _localUiState.update { it.copy(showArchiveConfirmation = false, isArchiving = true) }
-        viewModelScope.launch {
-            archiveGroupUseCase(_groupId.value).fold(
-                onSuccess = {
-                    _localUiState.update { it.copy(isArchiving = false) }
-                    _actions.send(
-                        GroupDetailUiAction.ArchiveSuccess(
-                            UiText.StringResource(R.string.group_archived_successfully)
-                        )
-                    )
-                },
-                onFailure = { e ->
-                    _localUiState.update { it.copy(isArchiving = false) }
-                    when (e) {
-                        is UnresolvedSettlementsException ->
-                            _actions.send(GroupDetailUiAction.NavigateToSettlementOverview(_groupId.value))
-                        else ->
-                            _actions.send(
-                                GroupDetailUiAction.ShowError(
-                                    UiText.StringResource(DesignSystemR.string.group_error_archiving_failed)
-                                )
-                            )
-                    }
-                }
-            )
+            is GroupDetailUiEvent.WizardJumpToStepClicked ->
+                leaveWizardEventHandler.handleJumpToStep(event.step)
         }
     }
 
@@ -231,6 +201,14 @@ class GroupDetailViewModel(
                 _localUiState.update { it.copy(isDeleting = false) }
                 _actions.send(
                     GroupDetailUiAction.DeleteSuccess(UiText.StringResource(R.string.group_deleted_successfully))
+                )
+            } catch (e: UnresolvedSettlementsException) {
+                Timber.w(e, "Cannot delete group with unresolved settlements: ${_groupId.value}")
+                _localUiState.update { it.copy(isDeleting = false) }
+                _actions.send(
+                    GroupDetailUiAction.ShowError(
+                        UiText.StringResource(R.string.error_group_delete_unresolved_settlements)
+                    )
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete group: ${_groupId.value}")

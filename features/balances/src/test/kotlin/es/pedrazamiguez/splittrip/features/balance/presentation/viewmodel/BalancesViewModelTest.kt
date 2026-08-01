@@ -72,6 +72,7 @@ class BalancesViewModelTest {
     private lateinit var deleteCashWithdrawalUseCase: DeleteCashWithdrawalUseCase
     private lateinit var appConfigService: AppConfigService
     private lateinit var observeGroupUseCase: ObserveGroupUseCase
+
     private lateinit var viewModel: BalancesViewModel
 
     private val testGroupId = "group-123"

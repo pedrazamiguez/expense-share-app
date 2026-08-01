@@ -22,6 +22,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.group.LeaveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
+import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.LeaveWizardUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
@@ -134,6 +135,7 @@ class GroupDetailViewModelTest {
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             confirmSettlementUseCase = confirmSettlementUseCase,
             leaveGroupUseCase = leaveGroupUseCase,
+            getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
             leaveWizardUiMapper = leaveWizardUiMapper
         )
 
@@ -165,7 +167,6 @@ class GroupDetailViewModelTest {
         getMemberProfilesUseCase = getMemberProfilesUseCase,
         groupUiMapper = groupUiMapper,
         authenticationService = authenticationService,
-        archiveGroupUseCase = archiveGroupUseCase,
         deleteGroupUseCase = deleteGroupUseCase,
         getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
         leaveWizardUiMapper = leaveWizardUiMapper,
@@ -236,11 +237,18 @@ class GroupDetailViewModelTest {
             )
             every { getGroupSubunitsFlowUseCase(testGroupId) } returns flowOf(listOf(subunit))
             every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns
                 listOf(memberBalance)
-            every { leaveWizardUiMapper.toBalanceSummaryUiModel(any(), any()) } returns
-                LeaveBalanceSummaryUiModel("€25.00", "€10.00", "€35.00")
+            every {
+                leaveWizardUiMapper.toBalanceSummaryUiModel(
+                    memberBalance = any(),
+                    memberBalances = any(),
+                    currentUserId = any(),
+                    memberProfiles = any(),
+                    currency = any()
+                )
+            } returns LeaveBalanceSummaryUiModel("€25.00", "€10.00", "€35.00")
             every { leaveWizardUiMapper.toCashResolutionUiModel(any(), any()) } returns
                 LeaveCashResolutionUiModel(requiresDeposit = true, formattedAmount = "€10.00")
             every { leaveWizardUiMapper.toSubunitImpactUiModel(any()) } returns
@@ -269,7 +277,7 @@ class GroupDetailViewModelTest {
         ) {
             val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 0L, cashInHand = 0L)
             every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns
                 listOf(memberBalance)
             coEvery { areMemberSettlementsResolvedUseCase(any(), any()) } returns emptyList()
@@ -295,7 +303,7 @@ class GroupDetailViewModelTest {
         ) {
             val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 0L, cashInHand = 0L)
             every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns listOf(memberBalance)
             coEvery { areMemberSettlementsResolvedUseCase(any(), any()) } returns listOf(mockk())
             every { leaveWizardUiMapper.toSettlementUiModels(any(), any(), any()) } returns listOf(mockk())
@@ -328,7 +336,7 @@ class GroupDetailViewModelTest {
             advanceUntilIdle()
 
             every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } throws
                 RuntimeException("Calculation failed")
 
@@ -350,7 +358,7 @@ class GroupDetailViewModelTest {
         fun `on WizardNextClicked advances currentStep through activeSteps sequence`() = runTest(testDispatcher) {
             val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 0L)
             every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns
                 listOf(memberBalance)
 
@@ -381,7 +389,7 @@ class GroupDetailViewModelTest {
         fun `on WizardBackClicked moves currentStep backward or closes sheet`() = runTest(testDispatcher) {
             val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 0L)
             every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns
                 listOf(memberBalance)
 
@@ -411,7 +419,7 @@ class GroupDetailViewModelTest {
         fun `on WizardCancelled or LeaveCancelled closes leave wizard sheet`() = runTest(testDispatcher) {
             val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 0L)
             every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
+                getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns listOf(memberBalance)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
@@ -575,82 +583,25 @@ class GroupDetailViewModelTest {
     inner class ArchiveFlow {
 
         @Test
-        fun `ArchiveClicked and ArchiveCancelled update showArchiveConfirmation state`() = runTest(testDispatcher) {
+        fun `ArchiveClicked emits NavigateToSettlementOverview action`() = runTest(testDispatcher) {
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.setGroupId(testGroupId)
             advanceUntilIdle()
+
+            val actions = mutableListOf<GroupDetailUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
 
             viewModel.onEvent(GroupDetailUiEvent.ArchiveClicked)
             advanceUntilIdle()
-            assertTrue(viewModel.uiState.value.showArchiveConfirmation)
 
-            viewModel.onEvent(GroupDetailUiEvent.ArchiveCancelled)
-            advanceUntilIdle()
-            assertFalse(viewModel.uiState.value.showArchiveConfirmation)
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `ArchiveConfirmed success emits ArchiveSuccess action`() = runTest(testDispatcher) {
-            coEvery { archiveGroupUseCase(testGroupId) } returns Result.success(Unit)
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setGroupId(testGroupId)
-            advanceUntilIdle()
-
-            val actions = mutableListOf<GroupDetailUiAction>()
-            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.actions.collect { actions.add(it) }
-            }
-
-            viewModel.onEvent(GroupDetailUiEvent.ArchiveConfirmed)
-            advanceUntilIdle()
-
-            assertTrue(actions.any { it is GroupDetailUiAction.ArchiveSuccess })
-
-            actionsJob.cancel()
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `ArchiveConfirmed with UnresolvedSettlementsException emits NavigateToSettlementOverview action`() =
-            runTest(testDispatcher) {
-                val ex = UnresolvedSettlementsException(testGroupId, emptyList())
-                coEvery { archiveGroupUseCase(testGroupId) } returns Result.failure(ex)
-                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-                viewModel.setGroupId(testGroupId)
-                advanceUntilIdle()
-
-                val actions = mutableListOf<GroupDetailUiAction>()
-                val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                    viewModel.actions.collect { actions.add(it) }
+            assertTrue(
+                actions.any {
+                    it is GroupDetailUiAction.NavigateToSettlementOverview &&
+                        (it as GroupDetailUiAction.NavigateToSettlementOverview).groupId == testGroupId
                 }
-
-                viewModel.onEvent(GroupDetailUiEvent.ArchiveConfirmed)
-                advanceUntilIdle()
-
-                assertTrue(actions.any { it is GroupDetailUiAction.NavigateToSettlementOverview })
-
-                actionsJob.cancel()
-                collectJob.cancel()
-            }
-
-        @Test
-        fun `ArchiveConfirmed with general failure emits ShowError action`() = runTest(testDispatcher) {
-            coEvery { archiveGroupUseCase(testGroupId) } returns Result.failure(Exception("Archive failed"))
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setGroupId(testGroupId)
-            advanceUntilIdle()
-
-            val actions = mutableListOf<GroupDetailUiAction>()
-            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.actions.collect { actions.add(it) }
-            }
-
-            viewModel.onEvent(GroupDetailUiEvent.ArchiveConfirmed)
-            advanceUntilIdle()
-
-            assertTrue(actions.any { it is GroupDetailUiAction.ShowError })
+            )
 
             actionsJob.cancel()
             collectJob.cancel()
@@ -714,6 +665,34 @@ class GroupDetailViewModelTest {
             advanceUntilIdle()
 
             assertTrue(actions.any { it is GroupDetailUiAction.ShowError })
+
+            actionsJob.cancel()
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `DeleteConfirmed failure with UnresolvedSettlementsException emits specific ShowError action`() = runTest(
+            testDispatcher
+        ) {
+            coEvery { deleteGroupUseCase(testGroupId) } throws UnresolvedSettlementsException(testGroupId, emptyList())
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setGroupId(testGroupId)
+            advanceUntilIdle()
+
+            val actions = mutableListOf<GroupDetailUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            viewModel.onEvent(GroupDetailUiEvent.DeleteConfirmed)
+            advanceUntilIdle()
+
+            val showErrorAction = actions.find { it is GroupDetailUiAction.ShowError } as? GroupDetailUiAction.ShowError
+            assertNotNull(showErrorAction)
+            assertEquals(
+                R.string.error_group_delete_unresolved_settlements,
+                (showErrorAction?.message as? UiText.StringResource)?.resId
+            )
 
             actionsJob.cancel()
             collectJob.cancel()

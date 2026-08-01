@@ -74,6 +74,7 @@
     <string name="self_identification_beneficiary">For you</string>
     <string name="self_identification_agent">By you</string>
     <string name="self_identification_recipient">To you</string>
+    <string name="self_identification_prepositional">you</string>
 
     <!-- User Fallback -->
     <string name="user_pending_fallback">Pending member</string>
@@ -146,6 +147,28 @@
     <string name="settlement_status_awaiting_confirmation">Awaiting confirmation</string>
     <string name="settlement_status_confirmed">Confirmed</string>
     <string name="settlement_status_disputed">Disputed</string>
+
+    <!-- Cash Breakdown Bottom Sheet -->
+    <string name="core_cash_breakdown_title">Cash breakdown</string>
+    <string name="core_cash_breakdown_group_scope">Group cash (est. share)</string>
+    <string name="core_cash_breakdown_personal_scope">Personal cash</string>
+    <string name="core_cash_breakdown_total_label">Total</string>
+    <string name="core_cash_breakdown_estimated_hint">Estimated · your proportional share of group cash</string>
+    <string name="core_cash_breakdown_empty">No active withdrawals</string>
+    <!-- %1$s = formatted rate, %2$s = group currency, %3$s = source currency; e.g. "@ 0.027 EUR/THB" -->
+    <string name="core_cash_breakdown_rate">@ %1$s %2$s/%3$s</string>
+    <!-- Fallback label when a withdrawal has no title; %1$s = short date -->
+    <string name="core_cash_breakdown_atm_fallback">ATM — %1$s</string>
+    <string name="core_cash_breakdown_view_cd">View cash breakdown</string>
+    <!-- Fallback when the subunit referenced by a withdrawal is no longer found (data integrity edge case) -->
+    <string name="core_cash_breakdown_unknown_subunit">Unknown subunit</string>
+
+    <!-- Cash Breakdown Add-ons -->
+    <string name="core_cash_breakdown_fee_tip">%1$s: %2$s</string>
+    <string name="core_cash_breakdown_add_on_tip">Tip</string>
+    <string name="core_cash_breakdown_add_on_fee">Fee</string>
+    <string name="core_cash_breakdown_add_on_surcharge">Surcharge</string>
+    <string name="core_cash_breakdown_total_fees_label">Fees</string>
 
     <!-- App Name -->
     <string name="app_name" translatable="false">SplitTrip</string>

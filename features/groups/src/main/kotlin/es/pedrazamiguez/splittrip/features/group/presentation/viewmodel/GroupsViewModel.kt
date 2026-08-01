@@ -189,6 +189,7 @@ class GroupsViewModel(
                 event.settlementId
             )
             is GroupsUiEvent.LeaveConfirmed -> leaveWizardEventHandler.handleLeave(event.groupId)
+            is GroupsUiEvent.WizardJumpToStepClicked -> leaveWizardEventHandler.handleJumpToStep(event.step)
         }
     }
 
@@ -199,6 +200,13 @@ class GroupsViewModel(
                 _actions.send(
                     GroupsUiAction.ShowDeleteSuccess(
                         UiText.StringResource(R.string.group_deleted_successfully)
+                    )
+                )
+            } catch (e: UnresolvedSettlementsException) {
+                Timber.w(e, "Cannot delete group with unresolved settlements: $groupId")
+                _actions.send(
+                    GroupsUiAction.ShowDeleteError(
+                        UiText.StringResource(R.string.error_group_delete_unresolved_settlements)
                     )
                 )
             } catch (e: Exception) {

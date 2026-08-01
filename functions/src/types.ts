@@ -21,6 +21,8 @@ export enum NotificationType {
   GROUP_DELETED = "GROUP_DELETED",
   GROUP_INVITE = "GROUP_INVITE",
   SETTLEMENT_REQUEST = "SETTLEMENT_REQUEST",
+  SETTLEMENT_CONFIRMED = "SETTLEMENT_CONFIRMED",
+  SETTLEMENT_DISPUTED = "SETTLEMENT_DISPUTED",
   DEFAULT = "DEFAULT",
 }
 
@@ -102,6 +104,29 @@ export interface DeviceDoc {
   model: string;
 }
 
+export interface SettlementDoc {
+  id: string;
+  groupId: string;
+  fromUserId: string;
+  toUserId: string;
+  amountCents?: string | number;
+  currency?: string;
+  status?: string;
+  disputedBy?: string;
+}
+
+export interface NudgeDoc {
+  id: string;
+  settlementId: string;
+  groupId: string;
+  fromUserId: string;
+  toUserId: string;
+  amountCents?: string | number;
+  currencyCode?: string;
+  currency?: string;
+  createdAt: unknown;
+}
+
 // ---------------------------------------------------------------------------
 // Android notification channel IDs
 // Must stay in sync with NotificationChannelId.kt on the Android side
@@ -129,6 +154,7 @@ export interface FcmDataPayload {
   currencyCode?: string;
   expenseTitle?: string;
   actorName?: string;
+  payerName?: string;
 }
 
 // ---------------------------------------------------------------------------

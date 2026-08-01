@@ -120,23 +120,23 @@ class ExpressionCalculatorServiceImpl : ExpressionCalculatorService {
         for (token in rpn) {
             when (token) {
                 "+" -> {
-                    val b = stack.removeLastOrNull() ?: throw IllegalArgumentException("Malformed expression")
-                    val a = stack.removeLastOrNull() ?: throw IllegalArgumentException("Malformed expression")
+                    val b = stack.popOperand()
+                    val a = stack.popOperand()
                     stack.addLast(a.add(b, mathContext))
                 }
                 "-" -> {
-                    val b = stack.removeLastOrNull() ?: throw IllegalArgumentException("Malformed expression")
-                    val a = stack.removeLastOrNull() ?: throw IllegalArgumentException("Malformed expression")
+                    val b = stack.popOperand()
+                    val a = stack.popOperand()
                     stack.addLast(a.subtract(b, mathContext))
                 }
                 "*" -> {
-                    val b = stack.removeLastOrNull() ?: throw IllegalArgumentException("Malformed expression")
-                    val a = stack.removeLastOrNull() ?: throw IllegalArgumentException("Malformed expression")
+                    val b = stack.popOperand()
+                    val a = stack.popOperand()
                     stack.addLast(a.multiply(b, mathContext))
                 }
                 "/" -> {
-                    val b = stack.removeLastOrNull() ?: throw IllegalArgumentException("Malformed expression")
-                    val a = stack.removeLastOrNull() ?: throw IllegalArgumentException("Malformed expression")
+                    val b = stack.popOperand()
+                    val a = stack.popOperand()
                     if (b.compareTo(BigDecimal.ZERO) == 0) throw ArithmeticException("Division by zero")
                     stack.addLast(a.divide(b, 10, RoundingMode.HALF_UP))
                 }
@@ -150,4 +150,7 @@ class ExpressionCalculatorServiceImpl : ExpressionCalculatorService {
         if (stack.size != 1) throw IllegalArgumentException("Malformed expression")
         return stack.first()
     }
+
+    private fun ArrayDeque<BigDecimal>.popOperand(): BigDecimal =
+        removeLastOrNull() ?: throw IllegalArgumentException("Malformed expression")
 }

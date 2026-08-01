@@ -91,6 +91,7 @@ object JacocoExclusions {
         "**/logging/**",
         // Context-dependent provider implementations (require Android Context)
         "**/provider/impl/**",
+        "**/network/impl/**",
         // ── WorkManager — requires Android runtime ──────────────────────────────
         "**/worker/**",
         // ── Firebase cloud infra — suspend functions use Tasks.await() which requires
@@ -185,7 +186,9 @@ object JacocoExclusions {
         "**/features/authentication/presentation/model/AuthenticationUiEvent*.*",
         // ── Repository & datasource interfaces ───────────────────────────────────
         "**/domain/repository/CurrencyRepository*.*",
+        "**/domain/repository/SettlementNudgeRepository*.*",
         "**/domain/datasource/cloud/CloudUserDataSource*.*",
+        "**/domain/datasource/cloud/CloudSettlementDataSource*.*",
         // ── UseCase implementations returning inline class Result ────────────────
         // JaCoCo instruments compiler-generated Result boxing/unboxing boilerplate
         // as uncovered bytecode. The underlying code is 100% covered.

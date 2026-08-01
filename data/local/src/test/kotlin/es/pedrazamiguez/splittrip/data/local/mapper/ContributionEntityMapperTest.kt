@@ -72,10 +72,20 @@ class ContributionEntityMapperTest {
         }
 
         @Test
+        fun `maps linkedSettlementId correctly when present`() {
+            val entityWithLinkedSettlement = fullEntity.copy(linkedSettlementId = "settlement-303")
+
+            val contribution = entityWithLinkedSettlement.toDomain()
+
+            assertEquals("settlement-303", contribution.linkedSettlementId)
+        }
+
+        @Test
         fun `maps null linkedExpenseId correctly`() {
             val contribution = fullEntity.toDomain()
 
             assertNull(contribution.linkedExpenseId)
+            assertNull(contribution.linkedSettlementId)
         }
 
         @Test
@@ -197,10 +207,20 @@ class ContributionEntityMapperTest {
         }
 
         @Test
+        fun `maps linkedSettlementId correctly when present`() {
+            val contributionWithLinkedSettlement = fullContribution.copy(linkedSettlementId = "settlement-303")
+
+            val entity = contributionWithLinkedSettlement.toEntity()
+
+            assertEquals("settlement-303", entity.linkedSettlementId)
+        }
+
+        @Test
         fun `maps null linkedExpenseId correctly`() {
             val entity = fullContribution.toEntity()
 
             assertNull(entity.linkedExpenseId)
+            assertNull(entity.linkedSettlementId)
         }
 
         @Test

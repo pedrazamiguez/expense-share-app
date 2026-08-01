@@ -7,6 +7,7 @@ import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
 import es.pedrazamiguez.splittrip.domain.repository.GroupPreferenceRepository
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
+import es.pedrazamiguez.splittrip.domain.repository.SettlementRepository
 import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.repository.UserRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
@@ -74,7 +75,10 @@ val groupsDomainModule = module {
     }
     factory<DeleteGroupUseCase> {
         createLoggingProxy<DeleteGroupUseCase>(
-            DeleteGroupUseCaseImpl(groupRepository = get<GroupRepository>()),
+            DeleteGroupUseCaseImpl(
+                groupRepository = get<GroupRepository>(),
+                areGroupSettlementsResolvedUseCase = get<AreGroupSettlementsResolvedUseCase>()
+            ),
             LogTag.USE_CASE
         )
     }
@@ -139,6 +143,7 @@ val groupsDomainModule = module {
                 contributionRepository = get<ContributionRepository>(),
                 cashWithdrawalRepository = get<CashWithdrawalRepository>(),
                 subunitRepository = get<SubunitRepository>(),
+                settlementRepository = get<SettlementRepository>(),
                 getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
             ),
             LogTag.USE_CASE
@@ -166,6 +171,7 @@ val groupsDomainModule = module {
                 contributionRepository = get<ContributionRepository>(),
                 cashWithdrawalRepository = get<CashWithdrawalRepository>(),
                 subunitRepository = get<SubunitRepository>(),
+                settlementRepository = get<SettlementRepository>(),
                 getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>(),
                 resolveCashOnLeaveUseCase = get<ResolveCashOnLeaveUseCase>()
             ),

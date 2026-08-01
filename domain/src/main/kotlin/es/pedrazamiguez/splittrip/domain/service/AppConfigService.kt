@@ -8,4 +8,5 @@ interface AppConfigService {
     val maxMembersPerGroup: StateFlow<Int>
     val extractedDateMaxFutureDays: StateFlow<Int>
     val supportEmailAddress: StateFlow<String>
+    val settlementNudgeRateLimitHours: StateFlow<Long>
 }

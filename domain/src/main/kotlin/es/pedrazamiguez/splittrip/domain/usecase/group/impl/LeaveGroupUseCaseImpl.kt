@@ -8,12 +8,15 @@ import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
+import es.pedrazamiguez.splittrip.domain.repository.SettlementRepository
 import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ResolveCashOnLeaveUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.StandardContributionAttributionStrategy
+import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.domain.usecase.group.LeaveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.ReassignSubunitSharesUseCase
 import kotlinx.coroutines.flow.first
@@ -30,7 +33,8 @@ class LeaveGroupUseCaseImpl(
     private val cashWithdrawalRepository: CashWithdrawalRepository,
     private val subunitRepository: SubunitRepository,
     private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase,
-    private val resolveCashOnLeaveUseCase: ResolveCashOnLeaveUseCase
+    private val resolveCashOnLeaveUseCase: ResolveCashOnLeaveUseCase,
+    private val settlementRepository: SettlementRepository
 ) : LeaveGroupUseCase {
 
     override suspend operator fun invoke(groupId: String): Result<Unit> = runCatching {
@@ -50,7 +54,7 @@ class LeaveGroupUseCaseImpl(
             throw CannotLeaveGroupException(CannotLeaveGroupException.Reason.IS_CREATOR)
         }
 
-        getSettlementSuggestionsUseCase.persistForGroup(groupId)
+        getSettlementSuggestionsUseCase.persistForGroup(groupId, currentUserId)
 
         val unresolvedSettlements = areMemberSettlementsResolvedUseCase(groupId, currentUserId)
         if (unresolvedSettlements.isNotEmpty()) {
@@ -63,14 +67,19 @@ class LeaveGroupUseCaseImpl(
         val contributions = contributionRepository.getGroupContributionsFlow(groupId).first()
         val withdrawals = cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId).first()
         val subunits = subunitRepository.getGroupSubunits(groupId)
+        val settlements = settlementRepository.getGroupSettlements(groupId)
 
         val balances = getMemberBalancesFlowUseCase.computeMemberBalances(
-            contributions = contributions,
-            withdrawals = withdrawals,
-            expenses = expenses,
-            subunits = subunits,
-            groupMemberIds = group.members,
-            groupCurrency = group.currency
+            MemberBalanceCalculationInputs(
+                contributions = contributions,
+                withdrawals = withdrawals,
+                expenses = expenses,
+                subunits = subunits,
+                groupMemberIds = group.members,
+                groupCurrency = group.currency,
+                settlements = settlements,
+                attributionStrategy = StandardContributionAttributionStrategy
+            )
         )
 
         val userBalance = balances.find { it.userId == currentUserId }

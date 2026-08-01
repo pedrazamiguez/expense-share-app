@@ -15,11 +15,12 @@ import androidx.compose.ui.unit.dp
 internal fun SecondaryBalanceColumn(
     label: String,
     amount: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally
 ) {
     Column(
         modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = horizontalAlignment
     ) {
         Text(
             text = label,

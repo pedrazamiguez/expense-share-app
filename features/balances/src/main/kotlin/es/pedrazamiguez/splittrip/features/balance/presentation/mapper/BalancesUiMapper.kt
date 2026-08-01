@@ -150,6 +150,7 @@ class BalancesUiMapper(
                 isGroupContribution = isGroup,
                 createdByDisplayName = createdByDisplayName,
                 isLinkedContribution = contribution.linkedExpenseId != null,
+                isSettlementContribution = contribution.linkedSettlementId != null,
                 syncStatus = contribution.syncStatus
             )
         }.toImmutableList()
@@ -550,7 +551,7 @@ class BalancesUiMapper(
             user = user,
             fallbackUserId = createdBy,
             currentUserId = currentUserId,
-            selfIdentificationContext = if (currentUserId != null) SelfIdentificationContext.NOMINATIVE else null
+            selfIdentificationContext = if (currentUserId != null) SelfIdentificationContext.PREPOSITIONAL else null
         )
     }
 }

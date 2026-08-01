@@ -37,6 +37,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+@Suppress("LongParameterList")
 class BalancesViewModel(
     private val getBalancesDashboardFlowUseCase:
     es.pedrazamiguez.splittrip.domain.usecase.balance.GetBalancesDashboardFlowUseCase,

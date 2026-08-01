@@ -49,6 +49,7 @@ import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.component.MemberAvatarStack
 import es.pedrazamiguez.splittrip.features.group.presentation.component.SelectedGroupCoverImage
 import es.pedrazamiguez.splittrip.features.group.presentation.component.leave.GroupLeaveWizardSheet
+import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardStep
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupDetailUiEvent
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupDetailUiState
 
@@ -80,16 +81,6 @@ fun GroupDetailScreen(
         else -> {
             val group = uiState.group
 
-            if (uiState.showArchiveConfirmation) {
-                DestructiveConfirmationDialog(
-                    title = stringResource(DesignSystemR.string.group_detail_end_trip_title),
-                    text = stringResource(DesignSystemR.string.group_detail_end_trip_message),
-                    onConfirm = { onEvent(GroupDetailUiEvent.ArchiveConfirmed) },
-                    onDismiss = { onEvent(GroupDetailUiEvent.ArchiveCancelled) },
-                    confirmLabel = stringResource(DesignSystemR.string.group_detail_end_trip_confirm)
-                )
-            }
-
             if (uiState.showDeleteConfirmation) {
                 DestructiveConfirmationDialog(
                     title = stringResource(R.string.group_delete_title),
@@ -109,7 +100,10 @@ fun GroupDetailScreen(
                     onConfirmSettlement = { settlementId ->
                         onEvent(GroupDetailUiEvent.ConfirmSettlementClicked(settlementId))
                     },
-                    onConfirmLeave = { onEvent(GroupDetailUiEvent.LeaveConfirmed) }
+                    onConfirmLeave = { onEvent(GroupDetailUiEvent.LeaveConfirmed) },
+                    onGoToSettlementsClicked = {
+                        onEvent(GroupDetailUiEvent.WizardJumpToStepClicked(LeaveWizardStep.SETTLEMENTS))
+                    }
                 )
             }
 
@@ -277,8 +271,7 @@ fun GroupDetailScreen(
                                 text = stringResource(DesignSystemR.string.group_detail_end_trip),
                                 onClick = { onEvent(GroupDetailUiEvent.ArchiveClicked) },
                                 leadingIcon = TablerIcons.Outline.Lock,
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = !uiState.isArchiving
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                         if (group.status == GroupStatus.ACTIVE && !uiState.isUserAdmin) {

@@ -87,7 +87,9 @@ fun GroupsFeature(
         onManageSubunits = { groupId ->
             navController.navigate(Routes.manageSubunitsRoute(groupId))
         },
-        onArchiveGroup = { groupsViewModel.onEvent(GroupsUiEvent.ArchiveGroup(it)) },
+        onArchiveGroup = { groupId ->
+            navController.navigate(Routes.groupSettlementOverviewRoute(groupId))
+        },
         onLeaveGroup = { groupsViewModel.onEvent(GroupsUiEvent.LeaveGroup(it)) },
         onWizardNextClicked = { groupsViewModel.onEvent(GroupsUiEvent.WizardNextClicked(it)) },
         onWizardBackClicked = { groupsViewModel.onEvent(GroupsUiEvent.WizardBackClicked) },
@@ -95,6 +97,7 @@ fun GroupsFeature(
         onConfirmSettlement = { groupId, settlementId ->
             groupsViewModel.onEvent(GroupsUiEvent.ConfirmSettlementClicked(groupId, settlementId))
         },
-        onConfirmLeave = { groupsViewModel.onEvent(GroupsUiEvent.LeaveConfirmed(it)) }
+        onConfirmLeave = { groupsViewModel.onEvent(GroupsUiEvent.LeaveConfirmed(it)) },
+        onWizardJumpToStepClicked = { groupsViewModel.onEvent(GroupsUiEvent.WizardJumpToStepClicked(it)) }
     )
 }

@@ -67,6 +67,11 @@ class BalancesUiMapperTest {
                 es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_recipient
             )
         } returns "To you"
+        every {
+            resourceProvider.getString(
+                es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_prepositional
+            )
+        } returns "you"
         mapper = BalancesUiMapper(localeProvider, resourceProvider, UserUiMapper(resourceProvider))
     }
 
@@ -966,6 +971,29 @@ class BalancesUiMapperTest {
             assertEquals(2, result.size)
             assertFalse(result[0].isLinkedContribution)
             assertTrue(result[1].isLinkedContribution)
+        }
+
+        @Test
+        fun `isSettlementContribution is true when linkedSettlementId is non-null`() {
+            val settlementContribution = Contribution(
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
+                contributionScope = PayerType.USER,
+                amount = 10000,
+                currency = "EUR",
+                linkedSettlementId = "set-1",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(settlementContribution),
+                currentUserId = "u1"
+            )
+
+            assertEquals(1, result.size)
+            assertTrue(result[0].isSettlementContribution)
+            assertFalse(result[0].isLinkedContribution)
         }
     }
 

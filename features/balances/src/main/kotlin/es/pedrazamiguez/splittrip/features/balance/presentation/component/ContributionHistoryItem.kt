@@ -1,7 +1,6 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -18,8 +17,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import es.pedrazamiguez.splittrip.core.designsystem.extension.debouncedCombinedClickable
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.BasketUp
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CreditCardPay
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Wallet
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
@@ -37,12 +38,13 @@ fun ContributionHistoryItem(
 ) {
     val haptics = LocalHapticFeedback.current
     val isLinked = contribution.isLinkedContribution
+    val isSettlement = contribution.isSettlementContribution
 
     val cardModifier = if (onLongClick != null) {
         Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
-            .combinedClickable(
+            .debouncedCombinedClickable(
                 onClick = {},
                 onLongClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -66,7 +68,11 @@ fun ContributionHistoryItem(
                 horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
             ) {
                 Icon(
-                    imageVector = if (isLinked) TablerIcons.Outline.CreditCardPay else TablerIcons.Outline.Wallet,
+                    imageVector = when {
+                        isSettlement -> TablerIcons.Outline.BasketUp
+                        isLinked -> TablerIcons.Outline.CreditCardPay
+                        else -> TablerIcons.Outline.Wallet
+                    },
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
