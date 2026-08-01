@@ -23,6 +23,7 @@ import es.pedrazamiguez.splittrip.features.settlement.presentation.model.Settlem
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourPositionUiEvent
 import kotlinx.collections.immutable.ImmutableList
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun YourPositionContent(

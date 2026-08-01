@@ -21,6 +21,7 @@ import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.MemberBalanceUiModel
 import kotlinx.collections.immutable.toImmutableList
 
+@Suppress("LongMethod")
 @Composable
 fun MemberBalanceItem(memberBalance: MemberBalanceUiModel, modifier: Modifier = Modifier) {
     var isExpanded by remember { mutableStateOf(false) }
