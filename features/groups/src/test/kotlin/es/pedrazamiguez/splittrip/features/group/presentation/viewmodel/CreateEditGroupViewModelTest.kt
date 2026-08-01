@@ -5,6 +5,7 @@ import es.pedrazamiguez.splittrip.core.logging.TelemetryTracker
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.EmailValidationService
 import es.pedrazamiguez.splittrip.domain.service.GroupImageStorageService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
@@ -73,6 +74,7 @@ class CreateEditGroupViewModelTest {
     private lateinit var groupImageStorageService: GroupImageStorageService
     private lateinit var telemetryTracker: TelemetryTracker
     private lateinit var appConfigService: AppConfigService
+    private lateinit var authenticationService: AuthenticationService
     private lateinit var viewModel: CreateEditGroupViewModel
 
     private val testUser1 = User(userId = "user-1", email = "alice@example.com", displayName = "Alice")
@@ -112,6 +114,8 @@ class CreateEditGroupViewModelTest {
         appConfigService = mockk(relaxed = true) {
             every { defaultCurrencyCode } returns MutableStateFlow("EUR")
         }
+        authenticationService = mockk(relaxed = true)
+        every { authenticationService.currentUserEmail() } returns testUser1.email
 
         every { getUserDefaultCurrencyUseCase() } returns flowOf("EUR")
         every { getUserGroupsFlowUseCase() } returns flowOf(emptyList())
@@ -152,6 +156,7 @@ class CreateEditGroupViewModelTest {
             groupUiMapper = groupUiMapper,
             featureGateService = featureGateService,
             appConfigService = appConfigService,
+            authenticationService = authenticationService,
             defaultDispatcher = testDispatcher
         )
     }
@@ -475,6 +480,19 @@ class CreateEditGroupViewModelTest {
             advanceUntilIdle()
 
             assertTrue(viewModel.uiState.value.memberSearchResults.isEmpty())
+        }
+
+        @Test
+        fun `MemberSearchQueryChanged with matching current user email returns empty list`() = runTest(
+            testDispatcher
+        ) {
+            coEvery { searchUsersByEmailUseCase(testUser1.email) } returns Result.success(emptyList())
+
+            onEvent(CreateEditGroupUiEvent.MemberSearchQueryChanged(testUser1.email))
+            advanceUntilIdle()
+
+            val results = viewModel.uiState.value.memberSearchResults
+            assertTrue(results.isEmpty())
         }
 
         @Test
