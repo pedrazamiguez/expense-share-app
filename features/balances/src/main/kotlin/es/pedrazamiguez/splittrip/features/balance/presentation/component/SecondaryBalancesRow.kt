@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
@@ -32,10 +33,10 @@ internal fun SecondaryBalancesRow(balance: GroupPocketBalanceUiModel) {
     ) {
         items.forEachIndexed { index, (label, amount) ->
             val alignment = when {
-                items.size == 1 -> androidx.compose.ui.Alignment.CenterHorizontally
-                index == 0 -> androidx.compose.ui.Alignment.Start
-                index == items.lastIndex -> androidx.compose.ui.Alignment.End
-                else -> androidx.compose.ui.Alignment.CenterHorizontally
+                items.size == 1 -> Alignment.CenterHorizontally
+                index == 0 -> Alignment.Start
+                index == items.lastIndex -> Alignment.End
+                else -> Alignment.CenterHorizontally
             }
             SecondaryBalanceColumn(
                 label = label,

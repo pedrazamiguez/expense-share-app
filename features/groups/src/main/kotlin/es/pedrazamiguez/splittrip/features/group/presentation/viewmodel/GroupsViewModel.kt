@@ -202,6 +202,13 @@ class GroupsViewModel(
                         UiText.StringResource(R.string.group_deleted_successfully)
                     )
                 )
+            } catch (e: UnresolvedSettlementsException) {
+                Timber.w(e, "Cannot delete group with unresolved settlements: $groupId")
+                _actions.send(
+                    GroupsUiAction.ShowDeleteError(
+                        UiText.StringResource(R.string.error_group_delete_unresolved_settlements)
+                    )
+                )
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete group: $groupId")
                 _actions.send(

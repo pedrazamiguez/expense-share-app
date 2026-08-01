@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel
 
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.auth.IsUserAnonymousUseCase
@@ -8,6 +9,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
+import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardUiState
@@ -41,6 +43,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -435,6 +438,41 @@ class GroupsViewModelTest {
             assertTrue(
                 actions.any { it is GroupsUiAction.ShowDeleteSuccess },
                 "Expected ShowDeleteSuccess action"
+            )
+            actionsJob.cancel()
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `DeleteGroup event emits UnresolvedSettlementsException error action`() = runTest(testDispatcher) {
+            // Given
+            every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1))
+            val exception = UnresolvedSettlementsException("group-1", emptyList())
+            coEvery { deleteGroupUseCase(any()) } throws exception
+            viewModel = createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            // Collect actions in background
+            val actions = mutableListOf<GroupsUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            // When
+            viewModel.onEvent(GroupsUiEvent.DeleteGroup("group-1"))
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 1) { deleteGroupUseCase("group-1") }
+            val showErrorAction = actions.find {
+                it is GroupsUiAction.ShowDeleteError
+            } as? GroupsUiAction.ShowDeleteError
+            assertNotNull(showErrorAction)
+            assertEquals(
+                R.string.error_group_delete_unresolved_settlements,
+                (showErrorAction?.message as? UiText.StringResource)?.resId
             )
 
             actionsJob.cancel()
