@@ -8,6 +8,11 @@ object UiConstants {
     const val SCROLL_POSITION_DEBOUNCE_MS = 300L
 
     /**
+     * Default debounce delay for rapid clicks to prevent double navigation.
+     */
+    const val DEFAULT_DEBOUNCE_MS = 300L
+
+    /**
      * Height reserved for the [WizardNavigationBar] overlay.
      *
      * Calculated from GradientButton height (56 dp) + vertical padding (12 dp × 2).
