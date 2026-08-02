@@ -495,7 +495,7 @@
             "fieldPath": "linkedSettlementId",
             "columnName": "linkedSettlementId",
             "affinity": "TEXT",
-            "defaultValue": "NULL"
+            "defaultValue": "null"
           },
           {
             "fieldPath": "amount",
@@ -513,13 +513,13 @@
             "fieldPath": "equivalentBaseAmount",
             "columnName": "equivalentBaseAmount",
             "affinity": "INTEGER",
-            "defaultValue": "NULL"
+            "defaultValue": "null"
           },
           {
             "fieldPath": "exchangeRate",
             "columnName": "exchangeRate",
             "affinity": "TEXT",
-            "defaultValue": "NULL"
+            "defaultValue": "null"
           },
           {
             "fieldPath": "createdAtMillis",

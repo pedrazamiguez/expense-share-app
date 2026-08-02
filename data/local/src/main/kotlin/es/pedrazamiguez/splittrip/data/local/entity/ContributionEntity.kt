@@ -31,13 +31,13 @@ data class ContributionEntity(
     val contributionScope: String = "USER",
     val subunitId: String? = null,
     val linkedExpenseId: String? = null,
-    @ColumnInfo(defaultValue = "NULL")
+    @ColumnInfo(defaultValue = "null")
     val linkedSettlementId: String? = null,
     val amount: Long,
     val currency: String,
-    @ColumnInfo(defaultValue = "NULL")
+    @ColumnInfo(defaultValue = "null")
     val equivalentBaseAmount: Long? = null,
-    @ColumnInfo(defaultValue = "NULL")
+    @ColumnInfo(defaultValue = "null")
     val exchangeRate: String? = null,
     val createdAtMillis: Long?,
     val lastUpdatedAtMillis: Long?,

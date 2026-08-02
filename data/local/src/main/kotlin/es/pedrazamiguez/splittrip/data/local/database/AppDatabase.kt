@@ -53,8 +53,7 @@ import es.pedrazamiguez.splittrip.data.local.entity.UserEntity
         AutoMigration(from = 34, to = 35),
         AutoMigration(from = 35, to = 36),
         AutoMigration(from = 36, to = 37),
-        AutoMigration(from = 37, to = 38),
-        AutoMigration(from = 38, to = 39)
+        AutoMigration(from = 37, to = 38)
     ]
 )
 @TypeConverters(

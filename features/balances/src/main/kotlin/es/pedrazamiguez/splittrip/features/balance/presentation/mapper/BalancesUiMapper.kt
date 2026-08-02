@@ -60,40 +60,16 @@ class BalancesUiMapper(
             formattedTotalSpent = formatCurrencyAmount(balance.totalExpenses, balance.currency, locale),
             currency = balance.currency,
             cashBalances = cashBalanceUiModels,
-            formattedTotalCashEquivalent = if (balance.totalCashEquivalent >
-                0
-            ) {
-                formatCurrencyAmount(balance.totalCashEquivalent, balance.currency, locale)
-            } else {
-                ""
-            },
+            formattedTotalCashEquivalent = formatIfPos(balance.totalCashEquivalent, balance.currency, locale) ?: "",
             formattedAvailableBalance = if (balance.scheduledHoldAmount > 0 || balance.refundableHoldAmount > 0) {
                 val available = balance.virtualBalance - balance.scheduledHoldAmount
                 formatCurrencyAmount(available, balance.currency, locale)
             } else {
                 null
             },
-            formattedScheduledHoldAmount = if (balance.scheduledHoldAmount >
-                0
-            ) {
-                formatCurrencyAmount(balance.scheduledHoldAmount, balance.currency, locale)
-            } else {
-                null
-            },
-            formattedRefundableHoldAmount = if (balance.refundableHoldAmount >
-                0
-            ) {
-                formatCurrencyAmount(balance.refundableHoldAmount, balance.currency, locale)
-            } else {
-                null
-            },
-            formattedTotalExtras = if (balance.totalExtras >
-                0
-            ) {
-                formatCurrencyAmount(balance.totalExtras, balance.currency, locale)
-            } else {
-                null
-            }
+            formattedScheduledHoldAmount = formatIfPos(balance.scheduledHoldAmount, balance.currency, locale),
+            formattedRefundableHoldAmount = formatIfPos(balance.refundableHoldAmount, balance.currency, locale),
+            formattedTotalExtras = formatIfPos(balance.totalExtras, balance.currency, locale)
         )
     }
 
@@ -608,3 +584,6 @@ private fun mapCashBalances(
             }
         )
     }.toImmutableList()
+
+private fun formatIfPos(amount: Long, currency: String, locale: Locale): String? =
+    if (amount > 0) formatCurrencyAmount(amount, currency, locale) else null
