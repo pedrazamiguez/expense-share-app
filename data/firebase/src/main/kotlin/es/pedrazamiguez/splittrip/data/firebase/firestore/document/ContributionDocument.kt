@@ -14,6 +14,8 @@ data class ContributionDocument(
     val linkedSettlementId: String? = null,
     val amountCents: Long = 0L,
     val currency: String = "EUR",
+    val equivalentBaseAmountCents: Long? = null,
+    val exchangeRate: String? = null,
     val createdBy: String = "",
     val createdByRef: DocumentReference? = null,
     var createdAt: Timestamp? = null,

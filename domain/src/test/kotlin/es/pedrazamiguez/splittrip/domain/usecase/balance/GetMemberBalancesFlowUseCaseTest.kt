@@ -1107,9 +1107,9 @@ class GetMemberBalancesFlowUseCaseTest {
             assertEquals(10000L, balanceMap["user-2"]!!.contributed)
             assertEquals(0L, balanceMap["user-2"]!!.pocketBalance)
 
-            // Creditor user-1: withdrawn remains 0, pocketBalance retains full 10000 position
-            assertEquals(0L, balanceMap["user-1"]!!.withdrawn)
-            assertEquals(10000L, balanceMap["user-1"]!!.pocketBalance)
+            // Creditor user-1: withdrawn increases by 10000, pocketBalance decreases by 10000 (from 10000 to 0)
+            assertEquals(10000L, balanceMap["user-1"]!!.withdrawn)
+            assertEquals(0L, balanceMap["user-1"]!!.pocketBalance)
         }
 
         @Test

@@ -103,7 +103,7 @@ class GetMemberBalancesFlowUseCaseImpl(
 
         when (settlement.sourcePocket) {
             SettlementPocketType.POCKET, SettlementPocketType.NET -> {
-                applyPocketSettlement(balanceMap, settlement, fromUser)
+                applyPocketSettlement(balanceMap, settlement, fromUser, toUser)
             }
             SettlementPocketType.CASH -> {
                 applyCashSettlement(balanceMap, settlement, fromUser, toUser, groupCurrency)
@@ -114,7 +114,8 @@ class GetMemberBalancesFlowUseCaseImpl(
     private fun applyPocketSettlement(
         balanceMap: MutableMap<String, MemberBalance>,
         settlement: Settlement,
-        fromUser: MemberBalance
+        fromUser: MemberBalance,
+        toUser: MemberBalance
     ) {
         val isAlreadyMaterialized = fromUser.contributed >= settlement.amount
         if (!isAlreadyMaterialized) {
@@ -123,6 +124,11 @@ class GetMemberBalancesFlowUseCaseImpl(
                 pocketBalance = fromUser.pocketBalance + settlement.amount
             )
         }
+
+        balanceMap[settlement.toUserId] = toUser.copy(
+            withdrawn = toUser.withdrawn + settlement.amount,
+            pocketBalance = toUser.pocketBalance - settlement.amount
+        )
     }
 
     private fun applyCashSettlement(
@@ -138,48 +144,74 @@ class GetMemberBalancesFlowUseCaseImpl(
         val fromUserEquiv = getEquivalentCents(amount, currency, fromUser, groupCurrency)
         val toUserEquiv = getEquivalentCents(amount, currency, toUser, groupCurrency)
 
-        val fromCashInHandByCurrency = fromUser.cashInHandByCurrency.map {
-            if (it.currency == currency) {
-                it.copy(
-                    amountCents = it.amountCents - amount,
-                    equivalentCents = it.equivalentCents - fromUserEquiv
-                )
-            } else {
-                it
-            }
-        }
+        val fromCashInHandByCurrency = updateCurrencyAmountList(
+            list = fromUser.cashInHandByCurrency,
+            currency = currency,
+            amount = -amount,
+            equivalent = -fromUserEquiv,
+            addIfMissing = false
+        )
+        val fromCashSpentByCurrency = updateCurrencyAmountList(
+            list = fromUser.cashSpentByCurrency,
+            currency = currency,
+            amount = amount,
+            equivalent = fromUserEquiv,
+            addIfMissing = true
+        )
+
         balanceMap[settlement.fromUserId] = fromUser.copy(
             cashSpent = fromUser.cashSpent + fromUserEquiv,
             cashInHand = fromUser.cashInHand - fromUserEquiv,
-            cashInHandByCurrency = fromCashInHandByCurrency
+            cashInHandByCurrency = fromCashInHandByCurrency,
+            cashSpentByCurrency = fromCashSpentByCurrency
         )
 
-        val toCashInHandByCurrency = toUser.cashInHandByCurrency.map {
-            if (it.currency == currency) {
-                it.copy(
-                    amountCents = it.amountCents + amount,
-                    equivalentCents = it.equivalentCents + toUserEquiv
-                )
-            } else {
-                it
-            }
-        }
-        val finalToCashInHandByCurrency = if (toUser.cashInHandByCurrency.none { it.currency == currency }) {
-            toUser.cashInHandByCurrency + CurrencyAmount(
-                currency = currency,
-                amountCents = amount,
-                equivalentCents = toUserEquiv
-            )
-        } else {
-            toCashInHandByCurrency
-        }
+        val finalToCashInHandByCurrency = updateCurrencyAmountList(
+            list = toUser.cashInHandByCurrency,
+            currency = currency,
+            amount = amount,
+            equivalent = toUserEquiv,
+            addIfMissing = true
+        )
+        val toWithdrawnByCurrency = updateCurrencyAmountList(
+            list = toUser.withdrawnByCurrency,
+            currency = currency,
+            amount = amount,
+            equivalent = toUserEquiv,
+            addIfMissing = true
+        )
 
         balanceMap[settlement.toUserId] = toUser.copy(
             contributed = toUser.contributed + toUserEquiv,
             withdrawn = toUser.withdrawn + toUserEquiv,
             cashInHand = toUser.cashInHand + toUserEquiv,
-            cashInHandByCurrency = finalToCashInHandByCurrency
+            cashInHandByCurrency = finalToCashInHandByCurrency,
+            withdrawnByCurrency = toWithdrawnByCurrency
         )
+    }
+
+    private fun updateCurrencyAmountList(
+        list: List<CurrencyAmount>,
+        currency: String,
+        amount: Long,
+        equivalent: Long,
+        addIfMissing: Boolean
+    ): List<CurrencyAmount> {
+        val updated = list.map {
+            if (it.currency == currency) {
+                it.copy(
+                    amountCents = it.amountCents + amount,
+                    equivalentCents = it.equivalentCents + equivalent
+                )
+            } else {
+                it
+            }
+        }
+        return if (addIfMissing && updated.none { it.currency == currency }) {
+            updated + CurrencyAmount(currency, amount, equivalent)
+        } else {
+            updated
+        }
     }
 
     private fun getEquivalentCents(

@@ -421,6 +421,7 @@ class BalancesUiMapperTest {
             )
 
             val result = mapper.mapContributions(
+                groupCurrency = "EUR",
                 contributions = listOf(contribution),
                 currentUserId = "u1",
                 subunits = subunitsMap
@@ -447,6 +448,7 @@ class BalancesUiMapperTest {
             )
 
             val result = mapper.mapContributions(
+                groupCurrency = "EUR",
                 contributions = listOf(contribution),
                 currentUserId = "u1",
                 subunits = subunitsMap
@@ -473,6 +475,7 @@ class BalancesUiMapperTest {
             )
 
             val result = mapper.mapContributions(
+                groupCurrency = "EUR",
                 contributions = listOf(contribution),
                 currentUserId = "u1",
                 subunits = subunitsMap
@@ -499,6 +502,7 @@ class BalancesUiMapperTest {
             )
 
             val result = mapper.mapContributions(
+                groupCurrency = "EUR",
                 contributions = listOf(contribution),
                 currentUserId = "u1",
                 subunits = subunitsMap
@@ -719,6 +723,7 @@ class BalancesUiMapperTest {
             )
 
             val result = mapper.mapContributions(
+                groupCurrency = "EUR",
                 contributions = listOf(contribution),
                 currentUserId = "actor-id",
                 memberProfiles = memberProfiles
@@ -740,6 +745,7 @@ class BalancesUiMapperTest {
             )
 
             val result = mapper.mapContributions(
+                groupCurrency = "EUR",
                 contributions = listOf(contribution),
                 currentUserId = "target-user",
                 memberProfiles = memberProfiles
@@ -761,6 +767,7 @@ class BalancesUiMapperTest {
             )
 
             val result = mapper.mapContributions(
+                groupCurrency = "EUR",
                 contributions = listOf(contribution),
                 currentUserId = "target-user",
                 memberProfiles = memberProfiles
@@ -782,6 +789,7 @@ class BalancesUiMapperTest {
             )
 
             val result = mapper.mapContributions(
+                groupCurrency = "EUR",
                 contributions = listOf(contribution),
                 currentUserId = "target-user",
                 memberProfiles = memberProfiles
@@ -885,6 +893,7 @@ class BalancesUiMapperTest {
             )
 
             val result = mapper.mapContributions(
+                groupCurrency = "EUR",
                 contributions = listOf(contribution),
                 currentUserId = "u1"
             )
@@ -907,6 +916,7 @@ class BalancesUiMapperTest {
             )
 
             val result = mapper.mapContributions(
+                groupCurrency = "EUR",
                 contributions = listOf(contribution),
                 currentUserId = "u1"
             )
@@ -964,6 +974,7 @@ class BalancesUiMapperTest {
             )
 
             val result = mapper.mapContributions(
+                groupCurrency = "EUR",
                 contributions = listOf(manual, linked),
                 currentUserId = "u1"
             )
@@ -987,6 +998,7 @@ class BalancesUiMapperTest {
             )
 
             val result = mapper.mapContributions(
+                groupCurrency = "EUR",
                 contributions = listOf(settlementContribution),
                 currentUserId = "u1"
             )
@@ -1068,6 +1080,7 @@ class BalancesUiMapperTest {
             )
 
             val result = mapper.mapContributions(
+                groupCurrency = "EUR",
                 contributions = listOf(contribution),
                 currentUserId = "u1",
                 subunits = emptyMap()
@@ -1085,6 +1098,7 @@ class BalancesUiMapperTest {
             )
 
             val result = mapper.mapContributions(
+                groupCurrency = "EUR",
                 contributions = listOf(contribution),
                 currentUserId = "u1",
                 subunits = emptyMap()
@@ -1455,6 +1469,7 @@ class BalancesUiMapperTest {
             )
 
             val result = mapper.mapContributions(
+                groupCurrency = "EUR",
                 contributions = listOf(contributionActive, contributionFormer),
                 currentUserId = "u_active",
                 memberProfiles = memberProfiles,

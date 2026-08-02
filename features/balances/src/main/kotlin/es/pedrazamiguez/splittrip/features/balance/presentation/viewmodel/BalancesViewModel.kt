@@ -129,7 +129,8 @@ class BalancesViewModel(
                             currentUserId = currentUserId,
                             memberProfiles = memberProfiles,
                             subunits = subunitsMap,
-                            groupMemberIds = groupMemberIds
+                            groupMemberIds = groupMemberIds,
+                            groupCurrency = currency
                         ),
                         cashWithdrawals = balancesUiMapper.mapCashWithdrawals(
                             withdrawals = withdrawals,

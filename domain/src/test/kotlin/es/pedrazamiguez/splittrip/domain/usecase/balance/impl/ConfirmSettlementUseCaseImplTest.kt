@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.usecase.balance.impl
 
+import es.pedrazamiguez.splittrip.domain.datasource.GroupDashboardDataSource
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
@@ -9,6 +10,7 @@ import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
 import es.pedrazamiguez.splittrip.domain.repository.SettlementRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -27,6 +29,8 @@ class ConfirmSettlementUseCaseImplTest {
     private val authenticationService = mockk<AuthenticationService>()
     private val groupRepository = mockk<GroupRepository>()
     private val contributionRepository = mockk<ContributionRepository>()
+    private val groupDashboardDataSource = mockk<GroupDashboardDataSource>()
+    private val getMemberBalancesFlowUseCase = mockk<GetMemberBalancesFlowUseCase>()
     private lateinit var useCase: ConfirmSettlementUseCaseImpl
 
     private val groupId = "group-123"
@@ -56,7 +60,9 @@ class ConfirmSettlementUseCaseImplTest {
             settlementRepository = settlementRepository,
             authenticationService = authenticationService,
             groupRepository = groupRepository,
-            contributionRepository = contributionRepository
+            contributionRepository = contributionRepository,
+            groupDashboardDataSource = groupDashboardDataSource,
+            getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase
         )
     }
 
@@ -191,6 +197,12 @@ class ConfirmSettlementUseCaseImplTest {
         assertNotNull(updated.confirmedByPayeeAt)
         assertNotNull(updated.resolvedAt)
         coVerify(exactly = 1) { settlementRepository.updateSettlement(any()) }
+        coVerify(exactly = 1) {
+            contributionRepository.addContribution(
+                groupId,
+                match { it.linkedSettlementId == settlementId }
+            )
+        }
     }
 
     @Test
@@ -217,6 +229,12 @@ class ConfirmSettlementUseCaseImplTest {
         assertNotNull(updated.confirmedByPayeeAt)
         assertNotNull(updated.resolvedAt)
         coVerify(exactly = 1) { settlementRepository.updateSettlement(any()) }
+        coVerify(exactly = 1) {
+            contributionRepository.addContribution(
+                groupId,
+                match { it.linkedSettlementId == settlementId }
+            )
+        }
     }
 
     @Test
@@ -272,6 +290,12 @@ class ConfirmSettlementUseCaseImplTest {
         assertNotNull(updated.confirmedByPayerAt)
         assertNotNull(updated.resolvedAt)
         coVerify(exactly = 1) { settlementRepository.updateSettlement(any()) }
+        coVerify(exactly = 1) {
+            contributionRepository.addContribution(
+                groupId,
+                match { it.linkedSettlementId == settlementId }
+            )
+        }
     }
 
     @Test
@@ -295,6 +319,12 @@ class ConfirmSettlementUseCaseImplTest {
         assertNotNull(updated.confirmedByPayeeAt)
         assertNotNull(updated.resolvedAt)
         coVerify(exactly = 1) { settlementRepository.updateSettlement(any()) }
+        coVerify(exactly = 1) {
+            contributionRepository.addContribution(
+                groupId,
+                match { it.linkedSettlementId == settlementId }
+            )
+        }
     }
 
     @Test
@@ -319,6 +349,12 @@ class ConfirmSettlementUseCaseImplTest {
         assertNotNull(updated.confirmedByPayerAt)
         assertNotNull(updated.resolvedAt)
         coVerify(exactly = 1) { settlementRepository.updateSettlement(any()) }
+        coVerify(exactly = 1) {
+            contributionRepository.addContribution(
+                groupId,
+                match { it.linkedSettlementId == settlementId }
+            )
+        }
     }
 
     @Test
@@ -343,6 +379,12 @@ class ConfirmSettlementUseCaseImplTest {
         assertNotNull(updated.confirmedByPayeeAt)
         assertNotNull(updated.resolvedAt)
         coVerify(exactly = 1) { settlementRepository.updateSettlement(any()) }
+        coVerify(exactly = 1) {
+            contributionRepository.addContribution(
+                groupId,
+                match { it.linkedSettlementId == settlementId }
+            )
+        }
     }
 
     @Test
@@ -438,6 +480,12 @@ class ConfirmSettlementUseCaseImplTest {
         assertNotNull(updated.confirmedByPayeeAt)
         assertNotNull(updated.resolvedAt)
         coVerify(exactly = 1) { settlementRepository.updateSettlement(any()) }
+        coVerify(exactly = 1) {
+            contributionRepository.addContribution(
+                groupId,
+                match { it.linkedSettlementId == settlementId }
+            )
+        }
     }
 
     @Test
@@ -457,5 +505,64 @@ class ConfirmSettlementUseCaseImplTest {
 
         assertTrue(result.isFailure)
         assertTrue(result.exceptionOrNull() is IllegalStateException)
+    }
+
+    @Test
+    fun `payee confirms CONFIRMED_BY_PAYER with foreign currency calculates equivalentBaseAmount`() = runTest {
+        every { authenticationService.requireUserId() } returns payeeId
+
+        val foreignSettlement = baseSettlement.copy(currency = "USD", amount = 1100L)
+        val record = SettlementRecord(
+            id = settlementId,
+            groupId = groupId,
+            settlement = foreignSettlement,
+            status = SettlementStatus.CONFIRMED_BY_PAYER,
+            createdAt = LocalDateTime.now(),
+            confirmedByPayerAt = LocalDateTime.now()
+        )
+
+        val snapshot = es.pedrazamiguez.splittrip.domain.model.GroupDashboardReadModel(
+            group = baseGroup,
+            contributions = emptyList(),
+            withdrawals = emptyList(),
+            expenses = emptyList(),
+            subunits = emptyList(),
+            settlements = emptyList()
+        )
+        val memberBalance = es.pedrazamiguez.splittrip.domain.model.MemberBalance(
+            userId = payerId,
+            cashInHandByCurrency = listOf(
+                es.pedrazamiguez.splittrip.domain.model.CurrencyAmount(
+                    currency = "USD",
+                    amountCents = 1100L,
+                    equivalentCents = 1000L
+                )
+            )
+        )
+
+        coEvery { settlementRepository.getSettlementById(settlementId) } returns record
+        coEvery { groupRepository.getGroupById(groupId) } returns baseGroup.copy(currency = "EUR")
+        coEvery { settlementRepository.updateSettlement(any()) } returns Unit
+        coEvery { groupDashboardDataSource.getDashboardSnapshotFlow(groupId) } returns
+            kotlinx.coroutines.flow.flowOf(snapshot)
+        coEvery { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns listOf(memberBalance)
+
+        val result = useCase(groupId, settlementId)
+
+        assertTrue(result.isSuccess)
+        val updated = result.getOrThrow()
+        assertEquals(SettlementStatus.RESOLVED, updated.status)
+
+        coVerify(exactly = 1) {
+            contributionRepository.addContribution(
+                groupId,
+                match {
+                    it.linkedSettlementId == settlementId &&
+                        it.currency == "USD" &&
+                        it.amount == 1100L &&
+                        it.equivalentBaseAmount == 1000L
+                }
+            )
+        }
     }
 }

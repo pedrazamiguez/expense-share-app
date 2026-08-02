@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.data.local.entity.ContributionEntity
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Contribution
+import java.math.BigDecimal
 
 fun ContributionEntity.toDomain(): Contribution = Contribution(
     id = id,
@@ -18,6 +19,8 @@ fun ContributionEntity.toDomain(): Contribution = Contribution(
     linkedSettlementId = linkedSettlementId,
     amount = amount,
     currency = currency,
+    equivalentBaseAmount = equivalentBaseAmount,
+    exchangeRate = exchangeRate?.let { runCatching { BigDecimal(it) }.getOrNull() },
     createdAt = createdAtMillis?.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc(),
     syncStatus = SyncStatus.fromStringOrDefault(syncStatus)
@@ -38,6 +41,8 @@ fun Contribution.toEntity(): ContributionEntity {
         linkedSettlementId = linkedSettlementId,
         amount = amount,
         currency = currency,
+        equivalentBaseAmount = equivalentBaseAmount,
+        exchangeRate = exchangeRate?.toPlainString(),
         createdAtMillis = effectiveCreatedAtMillis,
         lastUpdatedAtMillis = effectiveLastUpdatedAtMillis,
         syncStatus = syncStatus.name

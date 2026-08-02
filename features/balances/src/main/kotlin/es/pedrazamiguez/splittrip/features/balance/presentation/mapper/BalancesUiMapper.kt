@@ -60,7 +60,9 @@ class BalancesUiMapper(
             formattedTotalSpent = formatCurrencyAmount(balance.totalExpenses, balance.currency, locale),
             currency = balance.currency,
             cashBalances = cashBalanceUiModels,
-            formattedTotalCashEquivalent = if (balance.totalCashEquivalent > 0) {
+            formattedTotalCashEquivalent = if (balance.totalCashEquivalent >
+                0
+            ) {
                 formatCurrencyAmount(balance.totalCashEquivalent, balance.currency, locale)
             } else {
                 ""
@@ -71,17 +73,23 @@ class BalancesUiMapper(
             } else {
                 null
             },
-            formattedScheduledHoldAmount = if (balance.scheduledHoldAmount > 0) {
+            formattedScheduledHoldAmount = if (balance.scheduledHoldAmount >
+                0
+            ) {
                 formatCurrencyAmount(balance.scheduledHoldAmount, balance.currency, locale)
             } else {
                 null
             },
-            formattedRefundableHoldAmount = if (balance.refundableHoldAmount > 0) {
+            formattedRefundableHoldAmount = if (balance.refundableHoldAmount >
+                0
+            ) {
                 formatCurrencyAmount(balance.refundableHoldAmount, balance.currency, locale)
             } else {
                 null
             },
-            formattedTotalExtras = if (balance.totalExtras > 0) {
+            formattedTotalExtras = if (balance.totalExtras >
+                0
+            ) {
                 formatCurrencyAmount(balance.totalExtras, balance.currency, locale)
             } else {
                 null
@@ -110,6 +118,7 @@ class BalancesUiMapper(
 
     fun mapContributions(
         contributions: List<Contribution>,
+        groupCurrency: String,
         currentUserId: String?,
         memberProfiles: Map<String, User> = emptyMap(),
         subunits: Map<String, Subunit> = emptyMap(),
@@ -138,11 +147,18 @@ class BalancesUiMapper(
                 memberProfiles = memberProfiles,
                 currentUserId = currentUserId
             )
+            val isForeign = contribution.currency != groupCurrency
             ContributionUiModel(
                 id = contribution.id,
                 memberDisplay = memberDisplay,
                 isCurrentUser = contribution.userId == currentUserId,
                 formattedAmount = formatCurrencyAmount(contribution.amount, contribution.currency, locale),
+                formattedEquivalentAmount = if (isForeign && contribution.equivalentBaseAmount != null) {
+                    formatCurrencyAmount(contribution.equivalentBaseAmount!!, groupCurrency, locale)
+                } else {
+                    ""
+                },
+                isForeignCurrency = isForeign,
                 dateText = contribution.createdAt?.formatShortDate(locale) ?: "",
                 scopeLabel = scopeLabel,
                 isSubunitContribution = isSubunit,
@@ -232,6 +248,7 @@ class BalancesUiMapper(
     ): ImmutableList<ActivityItemUiModel> {
         val contributionUiModels = mapContributions(
             contributions = contributions,
+            groupCurrency = groupCurrency,
             currentUserId = currentUserId,
             memberProfiles = memberProfiles,
             subunits = subunits,

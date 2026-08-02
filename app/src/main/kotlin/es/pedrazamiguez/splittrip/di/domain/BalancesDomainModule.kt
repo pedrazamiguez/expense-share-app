@@ -135,7 +135,9 @@ val balancesDomainModule = module {
             settlementRepository = get<SettlementRepository>(),
             authenticationService = get<AuthenticationService>(),
             groupRepository = get<GroupRepository>(),
-            contributionRepository = get<ContributionRepository>()
+            contributionRepository = get<ContributionRepository>(),
+            groupDashboardDataSource = get<GroupDashboardDataSource>(),
+            getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
         )
     }
 
