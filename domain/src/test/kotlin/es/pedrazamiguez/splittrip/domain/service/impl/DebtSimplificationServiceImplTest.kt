@@ -9,7 +9,9 @@ import org.junit.jupiter.api.Test
 
 class DebtSimplificationServiceImplTest {
 
-    private val service = DebtSimplificationServiceImpl(RemainderDistributionServiceImpl())
+    private val service = DebtSimplificationServiceImpl(
+        CashDebtScalingServiceImpl(RemainderDistributionServiceImpl())
+    )
 
     @Test
     fun `simplify with empty list returns empty settlements`() {
@@ -160,7 +162,9 @@ class DebtSimplificationServiceImplTest {
     }
 
     class SimplifyByPocket {
-        private val service = DebtSimplificationServiceImpl(RemainderDistributionServiceImpl())
+        private val service = DebtSimplificationServiceImpl(
+            CashDebtScalingServiceImpl(RemainderDistributionServiceImpl())
+        )
 
         @Test
         fun `pocket creditor and cash debtor with opposite signs produce separate settlements`() {
