@@ -45,12 +45,11 @@ import timber.log.Timber
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @Suppress("LongParameterList")
 class BalancesViewModel(
-    private val getBalancesDashboardFlowUseCase:
-    es.pedrazamiguez.splittrip.domain.usecase.balance.GetBalancesDashboardFlowUseCase,
-    private val getLastSeenBalanceUseCase: es.pedrazamiguez.splittrip.domain.usecase.setting.GetLastSeenBalanceUseCase,
-    private val setLastSeenBalanceUseCase: es.pedrazamiguez.splittrip.domain.usecase.setting.SetLastSeenBalanceUseCase,
-    private val getGroupByIdUseCase: es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase,
-    private val observeGroupUseCase: es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase,
+    private val getBalancesDashboardFlowUseCase: GetBalancesDashboardFlowUseCase,
+    private val getLastSeenBalanceUseCase: GetLastSeenBalanceUseCase,
+    private val setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase,
+    private val getGroupByIdUseCase: GetGroupByIdUseCase,
+    private val observeGroupUseCase: ObserveGroupUseCase,
     private val authenticationService: AuthenticationService,
     private val balancesUiMapper: BalancesUiMapper,
     private val settlementsUiMapper: SettlementsUiMapper,
