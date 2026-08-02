@@ -10,6 +10,7 @@ import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.User
+import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
@@ -18,6 +19,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
@@ -34,15 +36,19 @@ class GetBalancesDashboardFlowUseCaseImplTest {
     private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase = mockk()
     private val getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase = mockk()
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase = mockk()
+    private val appConfigService: AppConfigService = mockk()
 
     @BeforeEach
     fun setup() {
+        every { appConfigService.balanceComputationDebounceMs } returns MutableStateFlow(0L)
+
         useCase = GetBalancesDashboardFlowUseCaseImpl(
             groupDashboardDataSource,
             getGroupPocketBalanceFlowUseCase,
             getMemberBalancesFlowUseCase,
             getSettlementSuggestionsUseCase,
-            getMemberProfilesUseCase
+            getMemberProfilesUseCase,
+            appConfigService
         )
     }
 
@@ -67,7 +73,7 @@ class GetBalancesDashboardFlowUseCaseImplTest {
 
         every { groupDashboardDataSource.getDashboardSnapshotFlow("1") } returns flowOf(snapshot)
         every { getGroupPocketBalanceFlowUseCase("1", "EUR") } returns
-            kotlinx.coroutines.flow.flowOf(
+            flowOf(
                 GroupPocketBalance(0L, 0L, 0L, "EUR", emptyMap(), emptyMap(), 0L, 0L, 0L, 0L)
             )
         every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns
@@ -104,7 +110,7 @@ class GetBalancesDashboardFlowUseCaseImplTest {
 
         every { groupDashboardDataSource.getDashboardSnapshotFlow("1") } returns flowOf(snapshot)
         every { getGroupPocketBalanceFlowUseCase("1", "EUR") } returns
-            kotlinx.coroutines.flow.flowOf(
+            flowOf(
                 GroupPocketBalance(0L, 0L, 0L, "EUR", emptyMap(), emptyMap(), 0L, 0L, 0L, 0L)
             )
         every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns
@@ -134,7 +140,7 @@ class GetBalancesDashboardFlowUseCaseImplTest {
 
         every { groupDashboardDataSource.getDashboardSnapshotFlow("1") } returns flowOf(snapshot)
         every { getGroupPocketBalanceFlowUseCase("1", "EUR") } returns
-            kotlinx.coroutines.flow.flowOf(
+            flowOf(
                 GroupPocketBalance(0L, 0L, 0L, "EUR", emptyMap(), emptyMap(), 0L, 0L, 0L, 0L)
             )
         every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns
@@ -167,7 +173,7 @@ class GetBalancesDashboardFlowUseCaseImplTest {
 
         every { groupDashboardDataSource.getDashboardSnapshotFlow("1") } returns flowOf(snapshot1, snapshot2)
         every { getGroupPocketBalanceFlowUseCase("1", "EUR") } returns
-            kotlinx.coroutines.flow.flowOf(
+            flowOf(
                 GroupPocketBalance(0L, 0L, 0L, "EUR", emptyMap(), emptyMap(), 0L, 0L, 0L, 0L)
             )
         every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns

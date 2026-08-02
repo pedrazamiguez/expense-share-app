@@ -33,7 +33,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -89,9 +88,7 @@ class BalancesViewModel(
                 _lastSeenBalance.value = getLastSeenBalanceUseCase(groupId).first()
 
                 combine(
-                    getBalancesDashboardFlowUseCase(groupId, currency, groupMemberIds)
-                        // Debounce absorbs rapid multi-table writes
-                        .debounce { appConfigService.balanceComputationDebounceMs.value },
+                    getBalancesDashboardFlowUseCase(groupId, currency, groupMemberIds),
                     _lastSeenBalance,
                     groupFlow
                 ) { domainModel, lastSeen, reactiveGroup ->

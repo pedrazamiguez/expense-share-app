@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.di.domain
 
+import es.pedrazamiguez.splittrip.data.datasource.GroupDashboardDataSourceImpl
+import es.pedrazamiguez.splittrip.domain.datasource.GroupDashboardDataSource
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
@@ -19,6 +21,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCas
 import es.pedrazamiguez.splittrip.domain.usecase.balance.DeleteCashWithdrawalUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.DeleteContributionUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.DisputeSettlementUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetBalancesDashboardFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetContributionByExpenseIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
@@ -32,6 +35,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.ConfirmSettlementU
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.DeleteCashWithdrawalUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.DeleteContributionUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.DisputeSettlementUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetBalancesDashboardFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetCashWithdrawalsFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetContributionByExpenseIdUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetGroupContributionsFlowUseCaseImpl
@@ -43,6 +47,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.settlement.GetNudgeTimestampsFl
 import es.pedrazamiguez.splittrip.domain.usecase.settlement.NudgeDebtorUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.settlement.impl.GetNudgeTimestampsFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.settlement.impl.NudgeDebtorUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import org.koin.dsl.module
 
 val balancesDomainModule = module {
@@ -148,8 +153,8 @@ val balancesDomainModule = module {
         )
     }
 
-    factory<es.pedrazamiguez.splittrip.domain.datasource.GroupDashboardDataSource> {
-        es.pedrazamiguez.splittrip.data.datasource.GroupDashboardDataSourceImpl(
+    factory<GroupDashboardDataSource> {
+        GroupDashboardDataSourceImpl(
             groupRepository = get<GroupRepository>(),
             contributionRepository = get<ContributionRepository>(),
             withdrawalRepository = get<CashWithdrawalRepository>(),
@@ -159,13 +164,14 @@ val balancesDomainModule = module {
         )
     }
 
-    factory<es.pedrazamiguez.splittrip.domain.usecase.balance.GetBalancesDashboardFlowUseCase> {
-        es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetBalancesDashboardFlowUseCaseImpl(
-            groupDashboardDataSource = get<es.pedrazamiguez.splittrip.domain.datasource.GroupDashboardDataSource>(),
+    factory<GetBalancesDashboardFlowUseCase> {
+        GetBalancesDashboardFlowUseCaseImpl(
+            groupDashboardDataSource = get<GroupDashboardDataSource>(),
             getGroupPocketBalanceFlowUseCase = get<GetGroupPocketBalanceFlowUseCase>(),
             getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>(),
             getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>(),
-            getMemberProfilesUseCase = get<es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase>()
+            getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
+            appConfigService = get<AppConfigService>()
         )
     }
 
