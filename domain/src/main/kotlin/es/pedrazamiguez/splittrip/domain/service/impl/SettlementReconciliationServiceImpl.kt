@@ -5,8 +5,8 @@ import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.service.SettlementReconciliationService
-import es.pedrazamiguez.splittrip.domain.service.impl.strategy.CashSettlementReconciliationStrategy
-import es.pedrazamiguez.splittrip.domain.service.impl.strategy.PocketSettlementReconciliationStrategy
+import es.pedrazamiguez.splittrip.domain.service.settlement.CashSettlementReconciliationStrategy
+import es.pedrazamiguez.splittrip.domain.service.settlement.PocketSettlementReconciliationStrategy
 
 class SettlementReconciliationServiceImpl : SettlementReconciliationService {
 

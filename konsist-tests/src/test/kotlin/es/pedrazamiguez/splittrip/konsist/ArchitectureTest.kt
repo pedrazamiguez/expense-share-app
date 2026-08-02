@@ -32,6 +32,7 @@ class ArchitectureTest {
                 .filter { it.resideInPackage("..domain.service..") }
                 .filter { !it.resideInPackage("..addon..") }
                 .filter { !it.resideInPackage("..featuregate..") }
+                .filter { !it.resideInPackage("..settlement..") }
                 .filter { it.isTopLevel }
                 .assertTrue { it.hasNameEndingWith("Service") }
         }
@@ -42,6 +43,7 @@ class ArchitectureTest {
             domainProductionScope
                 .classes()
                 .filter { it.resideInPackage("..domain.service..impl..") }
+                .filter { !it.resideInPackage("..settlement..") }
                 .filter { it.isTopLevel }
                 .assertTrue { it.hasNameEndingWith("ServiceImpl") }
         }

@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.domain.usecase.balance.impl
 
 import es.pedrazamiguez.splittrip.domain.datasource.GroupDashboardDataSource
+import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
@@ -56,7 +57,7 @@ class ConfirmSettlementUseCaseImpl(
     private suspend fun handleResolvedSettlement(
         record: SettlementRecord,
         updated: SettlementRecord,
-        group: es.pedrazamiguez.splittrip.domain.model.Group,
+        group: Group,
         groupId: String,
         currentUserId: String
     ) {

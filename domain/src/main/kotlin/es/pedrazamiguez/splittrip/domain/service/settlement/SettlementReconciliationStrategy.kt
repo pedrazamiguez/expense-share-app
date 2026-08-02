@@ -1,4 +1,4 @@
-package es.pedrazamiguez.splittrip.domain.service.impl.strategy
+package es.pedrazamiguez.splittrip.domain.service.settlement
 
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.Settlement
