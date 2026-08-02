@@ -49,56 +49,76 @@ class ConfirmSettlementUseCaseImpl(
         settlementRepository.updateSettlement(updated)
 
         if (updated.status == SettlementStatus.RESOLVED) {
-            var equivalentBaseAmount: Long? = null
-            var exchangeRate: BigDecimal? = null
-
-            if (record.settlement.currency != group.currency) {
-                val dashboardData = groupDashboardDataSource.getDashboardSnapshotFlow(groupId).first()
-                val inputs = MemberBalanceCalculationInputs(
-                    contributions = dashboardData.contributions,
-                    withdrawals = dashboardData.withdrawals,
-                    expenses = dashboardData.expenses,
-                    subunits = dashboardData.subunits,
-                    groupMemberIds = group.members,
-                    groupCurrency = group.currency,
-                    settlements = dashboardData.settlements,
-                    attributionStrategy = StandardContributionAttributionStrategy
-                )
-                val balances = getMemberBalancesFlowUseCase.computeMemberBalances(inputs)
-
-                val payerBalance = balances.find { it.userId == record.settlement.fromUserId }
-                val currencyAmount = payerBalance?.cashInHandByCurrency?.find {
-                    it.currency == record.settlement.currency
-                }
-                if (currencyAmount != null && currencyAmount.equivalentCents > 0L) {
-                    val rate = BigDecimal(currencyAmount.amountCents).divide(
-                        BigDecimal(currencyAmount.equivalentCents),
-                        MathContext.DECIMAL128
-                    )
-                    exchangeRate = rate
-                    equivalentBaseAmount = BigDecimal(record.settlement.amount)
-                        .divide(rate, MathContext.DECIMAL128)
-                        .setScale(0, RoundingMode.HALF_UP)
-                        .toLong()
-                }
-            }
-
-            val settlementContribution = Contribution(
-                id = UUID.randomUUID().toString(),
+            handleResolvedSettlement(
+                record = record,
+                updated = updated,
+                group = group,
                 groupId = groupId,
-                userId = record.settlement.fromUserId,
-                createdBy = currentUserId,
-                contributionScope = PayerType.USER,
-                amount = record.settlement.amount,
-                currency = record.settlement.currency,
-                equivalentBaseAmount = equivalentBaseAmount,
-                exchangeRate = exchangeRate,
-                linkedSettlementId = record.id,
-                createdAt = updated.resolvedAt ?: LocalDateTime.now()
+                currentUserId = currentUserId
             )
-            contributionRepository.addContribution(groupId, settlementContribution)
         }
 
         updated
+    }
+
+    private suspend fun handleResolvedSettlement(
+        record: SettlementRecord,
+        updated: SettlementRecord,
+        group: es.pedrazamiguez.splittrip.domain.model.Group,
+        groupId: String,
+        currentUserId: String
+    ) {
+        if (record.settlement.sourcePocket == es.pedrazamiguez.splittrip.domain.model.SettlementPocketType.CASH) {
+            return
+        }
+
+        var equivalentBaseAmount: Long? = null
+        var exchangeRate: BigDecimal? = null
+
+        if (record.settlement.currency != group.currency) {
+            val dashboardData = groupDashboardDataSource.getDashboardSnapshotFlow(groupId).first()
+            val inputs = MemberBalanceCalculationInputs(
+                contributions = dashboardData.contributions,
+                withdrawals = dashboardData.withdrawals,
+                expenses = dashboardData.expenses,
+                subunits = dashboardData.subunits,
+                groupMemberIds = group.members,
+                groupCurrency = group.currency,
+                settlements = dashboardData.settlements,
+                attributionStrategy = StandardContributionAttributionStrategy
+            )
+            val balances = getMemberBalancesFlowUseCase.computeMemberBalances(inputs)
+
+            val payerBalance = balances.find { it.userId == record.settlement.fromUserId }
+            val currencyAmount = payerBalance?.cashInHandByCurrency?.find {
+                it.currency == record.settlement.currency
+            }
+            if (currencyAmount != null && currencyAmount.equivalentCents > 0L) {
+                val rate = BigDecimal(currencyAmount.amountCents).divide(
+                    BigDecimal(currencyAmount.equivalentCents),
+                    MathContext.DECIMAL128
+                )
+                exchangeRate = rate
+                equivalentBaseAmount = BigDecimal(record.settlement.amount)
+                    .divide(rate, MathContext.DECIMAL128)
+                    .setScale(0, RoundingMode.HALF_UP)
+                    .toLong()
+            }
+        }
+
+        val settlementContribution = Contribution(
+            id = UUID.randomUUID().toString(),
+            groupId = groupId,
+            userId = record.settlement.fromUserId,
+            createdBy = currentUserId,
+            contributionScope = PayerType.USER,
+            amount = record.settlement.amount,
+            currency = record.settlement.currency,
+            equivalentBaseAmount = equivalentBaseAmount,
+            exchangeRate = exchangeRate,
+            linkedSettlementId = record.id,
+            createdAt = updated.resolvedAt ?: LocalDateTime.now()
+        )
+        contributionRepository.addContribution(groupId, settlementContribution)
     }
 }
