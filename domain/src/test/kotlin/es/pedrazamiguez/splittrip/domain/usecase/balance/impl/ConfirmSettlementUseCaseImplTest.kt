@@ -51,6 +51,7 @@ class ConfirmSettlementUseCaseImplTest {
     @BeforeEach
     fun setUp() {
         coEvery { contributionRepository.addContribution(any(), any()) } returns Unit
+        coEvery { groupRepository.getGroupById(any()) } returns baseGroup
         useCase = ConfirmSettlementUseCaseImpl(
             settlementRepository = settlementRepository,
             authenticationService = authenticationService,
@@ -248,5 +249,213 @@ class ConfirmSettlementUseCaseImplTest {
 
         assertTrue(result.isFailure)
         assertTrue(result.exceptionOrNull() is IllegalArgumentException)
+    }
+
+    @Test
+    fun `payer confirms SUGGESTED when payee is unregistered transitions to RESOLVED`() = runTest {
+        every { authenticationService.requireUserId() } returns payerId
+        val record = SettlementRecord(
+            id = settlementId,
+            groupId = groupId,
+            settlement = baseSettlement.copy(toUserId = "pending_payee"),
+            status = SettlementStatus.SUGGESTED,
+            createdAt = LocalDateTime.now()
+        )
+        coEvery { settlementRepository.getSettlementById(settlementId) } returns record
+        coEvery { settlementRepository.updateSettlement(any()) } returns Unit
+
+        val result = useCase(groupId, settlementId)
+
+        assertTrue(result.isSuccess)
+        val updated = result.getOrThrow()
+        assertEquals(SettlementStatus.RESOLVED, updated.status)
+        assertNotNull(updated.confirmedByPayerAt)
+        assertNotNull(updated.resolvedAt)
+        coVerify(exactly = 1) { settlementRepository.updateSettlement(any()) }
+    }
+
+    @Test
+    fun `payee confirms SUGGESTED when payer is unregistered transitions to RESOLVED`() = runTest {
+        every { authenticationService.requireUserId() } returns payeeId
+        val record = SettlementRecord(
+            id = settlementId,
+            groupId = groupId,
+            settlement = baseSettlement.copy(fromUserId = "pending_payer"),
+            status = SettlementStatus.SUGGESTED,
+            createdAt = LocalDateTime.now()
+        )
+        coEvery { settlementRepository.getSettlementById(settlementId) } returns record
+        coEvery { settlementRepository.updateSettlement(any()) } returns Unit
+
+        val result = useCase(groupId, settlementId)
+
+        assertTrue(result.isSuccess)
+        val updated = result.getOrThrow()
+        assertEquals(SettlementStatus.RESOLVED, updated.status)
+        assertNotNull(updated.confirmedByPayeeAt)
+        assertNotNull(updated.resolvedAt)
+        coVerify(exactly = 1) { settlementRepository.updateSettlement(any()) }
+    }
+
+    @Test
+    fun `payer confirms CONFIRMED_BY_PAYER when payee is unregistered transitions to RESOLVED`() = runTest {
+        every { authenticationService.requireUserId() } returns payerId
+        val record = SettlementRecord(
+            id = settlementId,
+            groupId = groupId,
+            settlement = baseSettlement.copy(toUserId = "pending_payee"),
+            status = SettlementStatus.CONFIRMED_BY_PAYER,
+            createdAt = LocalDateTime.now(),
+            confirmedByPayerAt = LocalDateTime.now()
+        )
+        coEvery { settlementRepository.getSettlementById(settlementId) } returns record
+        coEvery { settlementRepository.updateSettlement(any()) } returns Unit
+
+        val result = useCase(groupId, settlementId)
+
+        assertTrue(result.isSuccess)
+        val updated = result.getOrThrow()
+        assertEquals(SettlementStatus.RESOLVED, updated.status)
+        assertNotNull(updated.confirmedByPayerAt)
+        assertNotNull(updated.resolvedAt)
+        coVerify(exactly = 1) { settlementRepository.updateSettlement(any()) }
+    }
+
+    @Test
+    fun `payee confirms CONFIRMED_BY_PAYER when payer is unregistered transitions to RESOLVED`() = runTest {
+        every { authenticationService.requireUserId() } returns payeeId
+        val record = SettlementRecord(
+            id = settlementId,
+            groupId = groupId,
+            settlement = baseSettlement.copy(fromUserId = "pending_payer"),
+            status = SettlementStatus.CONFIRMED_BY_PAYER,
+            createdAt = LocalDateTime.now(),
+            confirmedByPayerAt = LocalDateTime.now()
+        )
+        coEvery { settlementRepository.getSettlementById(settlementId) } returns record
+        coEvery { settlementRepository.updateSettlement(any()) } returns Unit
+
+        val result = useCase(groupId, settlementId)
+
+        assertTrue(result.isSuccess)
+        val updated = result.getOrThrow()
+        assertEquals(SettlementStatus.RESOLVED, updated.status)
+        assertNotNull(updated.confirmedByPayeeAt)
+        assertNotNull(updated.resolvedAt)
+        coVerify(exactly = 1) { settlementRepository.updateSettlement(any()) }
+    }
+
+    @Test
+    fun `wrong party confirms SUGGESTED when payee is unregistered throws`() = runTest {
+        every { authenticationService.requireUserId() } returns payeeId // payee trying to confirm but only payer can
+        val record = SettlementRecord(
+            id = settlementId,
+            groupId = groupId,
+            settlement = baseSettlement.copy(toUserId = "pending_payee"),
+            status = SettlementStatus.SUGGESTED,
+            createdAt = LocalDateTime.now()
+        )
+        coEvery { settlementRepository.getSettlementById(settlementId) } returns record
+
+        val result = useCase(groupId, settlementId)
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is IllegalArgumentException)
+    }
+
+    @Test
+    fun `wrong party confirms SUGGESTED when payer is unregistered throws`() = runTest {
+        every { authenticationService.requireUserId() } returns payerId // payer trying to confirm but only payee can
+        val record = SettlementRecord(
+            id = settlementId,
+            groupId = groupId,
+            settlement = baseSettlement.copy(fromUserId = "pending_payer"),
+            status = SettlementStatus.SUGGESTED,
+            createdAt = LocalDateTime.now()
+        )
+        coEvery { settlementRepository.getSettlementById(settlementId) } returns record
+
+        val result = useCase(groupId, settlementId)
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is IllegalArgumentException)
+    }
+
+    @Test
+    fun `wrong party confirms CONFIRMED_BY_PAYER when payee is unregistered throws`() = runTest {
+        every { authenticationService.requireUserId() } returns payeeId // payee trying to confirm but only payer can
+        val record = SettlementRecord(
+            id = settlementId,
+            groupId = groupId,
+            settlement = baseSettlement.copy(toUserId = "pending_payee"),
+            status = SettlementStatus.CONFIRMED_BY_PAYER,
+            createdAt = LocalDateTime.now(),
+            confirmedByPayerAt = LocalDateTime.now()
+        )
+        coEvery { settlementRepository.getSettlementById(settlementId) } returns record
+
+        val result = useCase(groupId, settlementId)
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is IllegalArgumentException)
+    }
+
+    @Test
+    fun `wrong party confirms CONFIRMED_BY_PAYER when payer is unregistered throws`() = runTest {
+        every { authenticationService.requireUserId() } returns payerId // payer trying to confirm but only payee can
+        val record = SettlementRecord(
+            id = settlementId,
+            groupId = groupId,
+            settlement = baseSettlement.copy(fromUserId = "pending_payer"),
+            status = SettlementStatus.CONFIRMED_BY_PAYER,
+            createdAt = LocalDateTime.now(),
+            confirmedByPayerAt = LocalDateTime.now()
+        )
+        coEvery { settlementRepository.getSettlementById(settlementId) } returns record
+
+        val result = useCase(groupId, settlementId)
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is IllegalArgumentException)
+    }
+
+    @Test
+    fun `payee confirms DISPUTED when payer is unregistered transitions to RESOLVED`() = runTest {
+        every { authenticationService.requireUserId() } returns payeeId
+        val record = SettlementRecord(
+            id = settlementId,
+            groupId = groupId,
+            settlement = baseSettlement.copy(fromUserId = "pending_payer"),
+            status = SettlementStatus.DISPUTED,
+            createdAt = LocalDateTime.now(),
+            disputedBy = payerId,
+            disputeReason = "Amount incorrect"
+        )
+        coEvery { settlementRepository.getSettlementById(settlementId) } returns record
+        coEvery { settlementRepository.updateSettlement(any()) } returns Unit
+
+        val result = useCase(groupId, settlementId)
+
+        assertTrue(result.isSuccess)
+        val updated = result.getOrThrow()
+        assertEquals(SettlementStatus.RESOLVED, updated.status)
+        assertNotNull(updated.confirmedByPayeeAt)
+        assertNotNull(updated.resolvedAt)
+        coVerify(exactly = 1) { settlementRepository.updateSettlement(any()) }
+    }
+
+    @Test
+    fun `confirming RESOLVED when payee is unregistered throws`() = runTest {
+        every { authenticationService.requireUserId() } returns payerId
+        val record = SettlementRecord(
+            id = settlementId,
+            groupId = groupId,
+            settlement = baseSettlement.copy(toUserId = "pending_payee"),
+            status = SettlementStatus.RESOLVED,
+            createdAt = LocalDateTime.now(),
+            resolvedAt = LocalDateTime.now()
+        )
+        coEvery { settlementRepository.getSettlementById(settlementId) } returns record
+
+        val result = useCase(groupId, settlementId)
+
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is IllegalStateException)
     }
 }

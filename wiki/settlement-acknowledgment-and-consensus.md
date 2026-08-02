@@ -150,7 +150,16 @@ Before archiving a group:
 
 ---
 
-## 6. Offline-First Architecture & Data Flow
+## 6. Unregistered Members & Unilateral Resolution
+
+Unregistered members (users whose IDs start with the `pending_` prefix) cannot log in and therefore cannot participate in the mutual consensus flow. To prevent deadlocks during group teardown, the state machine supports two unilateral resolution exceptions when one party is an unregistered member:
+
+1. **Unregistered Payee (Auto-Resolve)**: When the registered payer confirms a `SUGGESTED` or `CONFIRMED_BY_PAYER` settlement, it bypasses the mutual consensus requirements and transitions directly to `RESOLVED`.
+2. **Unregistered Payer (Force-Resolve)**: When the registered payee confirms a `SUGGESTED` or `CONFIRMED_BY_PAYER` settlement, it force-resolves the settlement directly to `RESOLVED`.
+
+---
+
+## 7. Offline-First Architecture & Data Flow
 
 `SettlementRepositoryImpl` strictly follows the project's offline-first sync pattern:
 
@@ -160,7 +169,7 @@ Before archiving a group:
 
 ---
 
-## 7. Cloud Functions & FCM Notifications
+## 8. Cloud Functions & FCM Notifications
 
 When a `SettlementRecord` status changes in Firestore:
 1. The `onSettlementStatusUpdated` Cloud Function is triggered.
@@ -171,6 +180,6 @@ When a `SettlementRecord` status changes in Firestore:
 
 ---
 
-## 8. Future Integrations
+## 9. Future Integrations
 
 - **Auto-Contribution Materialization (#1310)**: When a `POCKET` or `NET` settlement reaches `RESOLVED` status, an automated `Contribution` record will be created to formally increase the payee's contribution pool (deferred to #1310).

@@ -9,6 +9,7 @@ import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
 import es.pedrazamiguez.splittrip.domain.repository.SettlementRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.strategy.SettlementConfirmationStrategyFactory
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -27,43 +28,12 @@ class ConfirmSettlementUseCaseImpl(
         val record = settlementRepository.getSettlementById(settlementId)
             ?: throw IllegalArgumentException("Settlement not found: $settlementId")
 
-        val updated = when (record.status) {
-            SettlementStatus.SUGGESTED -> {
-                val fromUserId = record.settlement.fromUserId
-                require(currentUserId == fromUserId) { "Only payer can confirm in SUGGESTED state" }
-                val now = LocalDateTime.now()
-                record.copy(
-                    status = SettlementStatus.CONFIRMED_BY_PAYER,
-                    confirmedByPayerAt = now
-                )
-            }
-            SettlementStatus.CONFIRMED_BY_PAYER -> {
-                val toUserId = record.settlement.toUserId
-                require(currentUserId == toUserId) { "Only payee can confirm in CONFIRMED_BY_PAYER state" }
-                val now = LocalDateTime.now()
-                record.copy(
-                    status = SettlementStatus.RESOLVED,
-                    confirmedByPayeeAt = now,
-                    resolvedAt = now
-                )
-            }
-            SettlementStatus.DISPUTED -> {
-                val group = groupRepository.getGroupById(groupId)
-                    ?: throw IllegalArgumentException("Group not found: $groupId")
-                val isPayee = record.settlement.toUserId == currentUserId
-                val isCreator = group.createdBy == currentUserId
-                require(isPayee || isCreator) { "Only payee or group creator can confirm in DISPUTED state" }
-                val now = LocalDateTime.now()
-                record.copy(
-                    status = SettlementStatus.RESOLVED,
-                    confirmedByPayeeAt = now,
-                    resolvedAt = now
-                )
-            }
-            SettlementStatus.RESOLVED -> {
-                error("Settlement already resolved: $settlementId")
-            }
-        }
+        val group = groupRepository.getGroupById(groupId)
+            ?: throw IllegalArgumentException("Group not found: $groupId")
+        val isCreator = group.createdBy == currentUserId
+
+        val strategy = SettlementConfirmationStrategyFactory.getStrategy(record)
+        val updated = strategy.confirm(record, currentUserId, isCreator)
 
         settlementRepository.updateSettlement(updated)
 
