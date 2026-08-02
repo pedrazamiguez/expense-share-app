@@ -12,8 +12,11 @@ import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.service.AddOnCalculationService
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.service.CashDebtScalingService
 import es.pedrazamiguez.splittrip.domain.service.DebtSimplificationService
 import es.pedrazamiguez.splittrip.domain.service.GroupMembershipService
+import es.pedrazamiguez.splittrip.domain.service.RemainderDistributionService
+import es.pedrazamiguez.splittrip.domain.service.impl.CashDebtScalingServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.DebtSimplificationServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreGroupSettlementsResolvedUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
@@ -102,8 +105,16 @@ val balancesDomainModule = module {
         )
     }
 
+    factory<CashDebtScalingService> {
+        CashDebtScalingServiceImpl(
+            remainderDistributionService = get<RemainderDistributionService>()
+        )
+    }
+
     factory<DebtSimplificationService> {
-        DebtSimplificationServiceImpl()
+        DebtSimplificationServiceImpl(
+            cashDebtScalingService = get<CashDebtScalingService>()
+        )
     }
 
     factory<GetSettlementSuggestionsUseCase> {
