@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.enums.SplitType
+import es.pedrazamiguez.splittrip.domain.model.CashTranche
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Expense
@@ -14,6 +15,7 @@ import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.impl.AddOnCalculationServiceImpl
+import es.pedrazamiguez.splittrip.domain.service.impl.SettlementReconciliationServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetMemberBalancesFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.ContributionAttributionStrategy
 import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.StandardContributionAttributionStrategy
@@ -36,7 +38,10 @@ class GetMemberBalancesFlowUseCaseTest {
 
     @BeforeEach
     fun setUp() {
-        useCase = GetMemberBalancesFlowUseCaseImpl(AddOnCalculationServiceImpl())
+        useCase = GetMemberBalancesFlowUseCaseImpl(
+            addOnCalculationService = AddOnCalculationServiceImpl(),
+            settlementReconciliationService = SettlementReconciliationServiceImpl()
+        )
     }
     private fun compute(
         contributions: List<Contribution> = emptyList(),
@@ -1113,17 +1118,33 @@ class GetMemberBalancesFlowUseCaseTest {
         }
 
         @Test
-        fun `resolved cash settlement adjusts cashSpent, cashInHand, and contributed`() {
+        fun `resolved cash settlement adjusts withdrawn and contributed without altering cashInHand`() {
             // user-1 withdrew 10000 cash (has 10000 cash in hand).
-            // user-2 has 0 cash in hand.
-            // Resolved cash settlement of 6000 cash from user-1 to user-2.
+            // user-2 spent 6000 cash.
+            // Resolved cash settlement of 6000 cash from user-2 to user-1.
             val withdrawals = listOf(
                 CashWithdrawal(
+                    id = "wd-1",
                     withdrawnBy = "user-1",
                     withdrawalScope = PayerType.USER,
                     amountWithdrawn = 10000L,
-                    remainingAmount = 10000L,
+                    remainingAmount = 4000L, // 6000 was consumed by the expense
                     deductedBaseAmount = 10000L
+                )
+            )
+            val expenses = listOf(
+                Expense(
+                    id = "exp-1",
+                    groupId = groupId,
+                    payerId = "user-2",
+                    payerType = PayerType.USER,
+                    paymentMethod = PaymentMethod.CASH,
+                    sourceAmount = 6000L,
+                    sourceCurrency = "EUR",
+                    groupAmount = 6000L,
+                    groupCurrency = "EUR",
+                    expectedGroupAmount = 6000L,
+                    cashTranches = listOf(CashTranche("wd-1", 6000L))
                 )
             )
             val settlements = listOf(
@@ -1131,8 +1152,8 @@ class GetMemberBalancesFlowUseCaseTest {
                     id = "settlement-2",
                     groupId = groupId,
                     settlement = Settlement(
-                        fromUserId = "user-1",
-                        toUserId = "user-2",
+                        fromUserId = "user-2", // user-2 owes user-1
+                        toUserId = "user-1",
                         amount = 6000L,
                         currency = "EUR",
                         sourcePocket = SettlementPocketType.CASH
@@ -1142,17 +1163,26 @@ class GetMemberBalancesFlowUseCaseTest {
                 )
             )
 
-            val result = compute(withdrawals = withdrawals, settlements = settlements)
+            val result = compute(withdrawals = withdrawals, expenses = expenses, settlements = settlements)
             val balanceMap = result.associateBy { it.userId }
 
-            // Payer user-1: cashSpent increases by 6000, cashInHand decreases by 6000 (from 10000 to 4000)
-            assertEquals(6000L, balanceMap["user-1"]!!.cashSpent)
-            assertEquals(4000L, balanceMap["user-1"]!!.cashInHand)
+            // Payer user-2: spent 6000. Pays 6000 cash to user-1.
+            // Withdrawn remains 0 (Service no longer incorrectly increases it).
+            // Contributed naturally increased by 6000 (from the paired contribution, if it were in the test list).
+            // But since this test does not supply a contribution, contributed remains 0.
+            // cashInHand becomes -6000 because they paid cash they technically didn't hold from a group withdrawal.
+            assertEquals(0L, balanceMap["user-2"]!!.cashSpent)
+            assertEquals(-6000L, balanceMap["user-2"]!!.withdrawn) // Decreased by 6000
+            assertEquals(6000L, balanceMap["user-2"]!!.pocketBalance) // Increased by 6000
+            assertEquals(0L, balanceMap["user-2"]!!.contributed)
+            assertEquals(-6000L, balanceMap["user-2"]!!.cashInHand)
 
-            // Creditor user-2: contributed increases by 6000, withdrawn increases by 6000, cashInHand increases by 6000 (from 0 to 6000)
-            assertEquals(6000L, balanceMap["user-2"]!!.contributed)
-            assertEquals(6000L, balanceMap["user-2"]!!.withdrawn)
-            assertEquals(6000L, balanceMap["user-2"]!!.cashInHand)
+            // Creditor user-1: withdrew 10000. Receives 6000 cash from user-2.
+            // Withdrawn (Long) increases by 6000 (reflecting the cash received). Contributed stays 0.
+            // cashInHand increases to 10000 (4000 + 6000).
+            assertEquals(16000L, balanceMap["user-1"]!!.withdrawn)
+            assertEquals(0L, balanceMap["user-1"]!!.contributed)
+            assertEquals(10000L, balanceMap["user-1"]!!.cashInHand)
         }
     }
 }

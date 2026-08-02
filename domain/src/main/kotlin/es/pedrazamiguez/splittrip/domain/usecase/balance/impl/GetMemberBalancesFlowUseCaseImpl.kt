@@ -1,12 +1,8 @@
 package es.pedrazamiguez.splittrip.domain.usecase.balance.impl
 
-import es.pedrazamiguez.splittrip.domain.model.CurrencyAmount
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
-import es.pedrazamiguez.splittrip.domain.model.Settlement
-import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
-import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
-import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.service.AddOnCalculationService
+import es.pedrazamiguez.splittrip.domain.service.SettlementReconciliationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.ExpenseResult
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
@@ -21,10 +17,9 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.support.buildCashInHand
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.buildCurrencyAmountList
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.buildWithdrawnByCurrency
 import java.math.BigDecimal
-import java.math.RoundingMode
-
 class GetMemberBalancesFlowUseCaseImpl(
-    private val addOnCalculationService: AddOnCalculationService
+    private val addOnCalculationService: AddOnCalculationService,
+    private val settlementReconciliationService: SettlementReconciliationService
 ) : GetMemberBalancesFlowUseCase {
 
     override fun computeMemberBalances(
@@ -73,165 +68,11 @@ class GetMemberBalancesFlowUseCaseImpl(
             )
         }
 
-        return applyResolvedSettlements(rawBalances, inputs.settlements, inputs.groupCurrency)
-    }
-
-    private fun applyResolvedSettlements(
-        balances: List<MemberBalance>,
-        settlements: List<SettlementRecord>,
-        groupCurrency: String
-    ): List<MemberBalance> {
-        val resolvedSettlements = settlements.filter { it.status == SettlementStatus.RESOLVED }
-        if (resolvedSettlements.isEmpty()) return balances
-
-        val balanceMap = balances.associateBy { it.userId }.toMutableMap()
-
-        for (record in resolvedSettlements) {
-            applySettlementRecord(balanceMap, record.settlement, groupCurrency)
-        }
-
-        return balances.map { balanceMap[it.userId]!! }
-    }
-
-    private fun applySettlementRecord(
-        balanceMap: MutableMap<String, MemberBalance>,
-        settlement: Settlement,
-        groupCurrency: String
-    ) {
-        val fromUser = balanceMap[settlement.fromUserId] ?: return
-        val toUser = balanceMap[settlement.toUserId] ?: return
-
-        when (settlement.sourcePocket) {
-            SettlementPocketType.POCKET, SettlementPocketType.NET -> {
-                applyPocketSettlement(balanceMap, settlement, fromUser, toUser)
-            }
-            SettlementPocketType.CASH -> {
-                applyCashSettlement(balanceMap, settlement, fromUser, toUser, groupCurrency)
-            }
-        }
-    }
-
-    private fun applyPocketSettlement(
-        balanceMap: MutableMap<String, MemberBalance>,
-        settlement: Settlement,
-        fromUser: MemberBalance,
-        toUser: MemberBalance
-    ) {
-        val isAlreadyMaterialized = fromUser.contributed >= settlement.amount
-        if (!isAlreadyMaterialized) {
-            balanceMap[settlement.fromUserId] = fromUser.copy(
-                contributed = fromUser.contributed + settlement.amount,
-                pocketBalance = fromUser.pocketBalance + settlement.amount
-            )
-        }
-
-        balanceMap[settlement.toUserId] = toUser.copy(
-            withdrawn = toUser.withdrawn + settlement.amount,
-            pocketBalance = toUser.pocketBalance - settlement.amount
+        return settlementReconciliationService.applyResolvedSettlements(
+            balances = rawBalances,
+            settlements = inputs.settlements,
+            groupCurrency = inputs.groupCurrency
         )
-    }
-
-    private fun applyCashSettlement(
-        balanceMap: MutableMap<String, MemberBalance>,
-        settlement: Settlement,
-        fromUser: MemberBalance,
-        toUser: MemberBalance,
-        groupCurrency: String
-    ) {
-        val amount = settlement.amount
-        val currency = settlement.currency
-
-        val fromUserEquiv = getEquivalentCents(amount, currency, fromUser, groupCurrency)
-        val toUserEquiv = getEquivalentCents(amount, currency, toUser, groupCurrency)
-
-        val fromCashInHandByCurrency = updateCurrencyAmountList(
-            list = fromUser.cashInHandByCurrency,
-            currency = currency,
-            amount = -amount,
-            equivalent = -fromUserEquiv,
-            addIfMissing = false
-        )
-        val fromCashSpentByCurrency = updateCurrencyAmountList(
-            list = fromUser.cashSpentByCurrency,
-            currency = currency,
-            amount = amount,
-            equivalent = fromUserEquiv,
-            addIfMissing = true
-        )
-
-        balanceMap[settlement.fromUserId] = fromUser.copy(
-            cashSpent = fromUser.cashSpent + fromUserEquiv,
-            cashInHand = fromUser.cashInHand - fromUserEquiv,
-            cashInHandByCurrency = fromCashInHandByCurrency,
-            cashSpentByCurrency = fromCashSpentByCurrency
-        )
-
-        val finalToCashInHandByCurrency = updateCurrencyAmountList(
-            list = toUser.cashInHandByCurrency,
-            currency = currency,
-            amount = amount,
-            equivalent = toUserEquiv,
-            addIfMissing = true
-        )
-        val toWithdrawnByCurrency = updateCurrencyAmountList(
-            list = toUser.withdrawnByCurrency,
-            currency = currency,
-            amount = amount,
-            equivalent = toUserEquiv,
-            addIfMissing = true
-        )
-
-        balanceMap[settlement.toUserId] = toUser.copy(
-            contributed = toUser.contributed + toUserEquiv,
-            withdrawn = toUser.withdrawn + toUserEquiv,
-            cashInHand = toUser.cashInHand + toUserEquiv,
-            cashInHandByCurrency = finalToCashInHandByCurrency,
-            withdrawnByCurrency = toWithdrawnByCurrency
-        )
-    }
-
-    private fun updateCurrencyAmountList(
-        list: List<CurrencyAmount>,
-        currency: String,
-        amount: Long,
-        equivalent: Long,
-        addIfMissing: Boolean
-    ): List<CurrencyAmount> {
-        val updated = list.map {
-            if (it.currency == currency) {
-                it.copy(
-                    amountCents = it.amountCents + amount,
-                    equivalentCents = it.equivalentCents + equivalent
-                )
-            } else {
-                it
-            }
-        }
-        return if (addIfMissing && updated.none { it.currency == currency }) {
-            updated + CurrencyAmount(currency, amount, equivalent)
-        } else {
-            updated
-        }
-    }
-
-    private fun getEquivalentCents(
-        amount: Long,
-        currency: String,
-        user: MemberBalance,
-        groupCurrency: String
-    ): Long {
-        if (currency == groupCurrency || currency.isEmpty()) {
-            return amount
-        }
-        val currencyAttr = user.cashInHandByCurrency.find { it.currency == currency }
-        return if (currencyAttr != null && currencyAttr.amountCents != 0L) {
-            BigDecimal(amount)
-                .multiply(BigDecimal(currencyAttr.equivalentCents))
-                .divide(BigDecimal(currencyAttr.amountCents), 0, RoundingMode.HALF_UP)
-                .toLong()
-        } else {
-            amount
-        }
     }
 
     private fun buildMemberBalance(

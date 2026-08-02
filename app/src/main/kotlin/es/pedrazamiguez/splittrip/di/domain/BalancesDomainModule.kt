@@ -16,8 +16,10 @@ import es.pedrazamiguez.splittrip.domain.service.CashDebtScalingService
 import es.pedrazamiguez.splittrip.domain.service.DebtSimplificationService
 import es.pedrazamiguez.splittrip.domain.service.GroupMembershipService
 import es.pedrazamiguez.splittrip.domain.service.RemainderDistributionService
+import es.pedrazamiguez.splittrip.domain.service.SettlementReconciliationService
 import es.pedrazamiguez.splittrip.domain.service.impl.CashDebtScalingServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.DebtSimplificationServiceImpl
+import es.pedrazamiguez.splittrip.domain.service.impl.SettlementReconciliationServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreGroupSettlementsResolvedUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
@@ -76,9 +78,14 @@ val balancesDomainModule = module {
         )
     }
 
+    factory<SettlementReconciliationService> {
+        SettlementReconciliationServiceImpl()
+    }
+
     factory<GetMemberBalancesFlowUseCase> {
         GetMemberBalancesFlowUseCaseImpl(
-            addOnCalculationService = get<AddOnCalculationService>()
+            addOnCalculationService = get<AddOnCalculationService>(),
+            settlementReconciliationService = get<SettlementReconciliationService>()
         )
     }
 
