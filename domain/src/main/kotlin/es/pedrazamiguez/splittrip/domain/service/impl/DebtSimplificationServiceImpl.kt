@@ -4,9 +4,12 @@ import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 import es.pedrazamiguez.splittrip.domain.service.DebtSimplificationService
+import es.pedrazamiguez.splittrip.domain.service.RemainderDistributionService
 import kotlin.math.min
 
-class DebtSimplificationServiceImpl : DebtSimplificationService {
+class DebtSimplificationServiceImpl(
+    private val remainderDistributionService: RemainderDistributionService
+) : DebtSimplificationService {
     override fun simplify(memberBalances: List<MemberBalance>): List<Settlement> =
         runGreedyAlgorithm(
             balances = memberBalances.map { it.userId to it.totalBalance },
@@ -37,28 +40,54 @@ class DebtSimplificationServiceImpl : DebtSimplificationService {
             .distinct()
 
         return if (cashCurrencies.isEmpty()) {
+            val balances = memberBalances.map { mb ->
+                mb.userId to (mb.withdrawn - mb.cashSpent)
+            }
             runGreedyAlgorithm(
-                balances = memberBalances.map { mb ->
-                    mb.userId to (mb.withdrawn - mb.cashSpent)
-                },
+                balances = scaleBalancesForCash(balances),
                 sourcePocket = SettlementPocketType.CASH,
                 currency = groupCurrency
             )
         } else {
             cashCurrencies.flatMap { currencyCode ->
+                val balances = memberBalances.map { mb ->
+                    val withdrawn = mb.withdrawnByCurrency
+                        .find { it.currency == currencyCode }?.amountCents ?: 0L
+                    val spent = mb.cashSpentByCurrency
+                        .find { it.currency == currencyCode }?.amountCents ?: 0L
+                    mb.userId to (withdrawn - spent)
+                }
                 runGreedyAlgorithm(
-                    balances = memberBalances.map { mb ->
-                        val withdrawn = mb.withdrawnByCurrency
-                            .find { it.currency == currencyCode }?.amountCents ?: 0L
-                        val spent = mb.cashSpentByCurrency
-                            .find { it.currency == currencyCode }?.amountCents ?: 0L
-                        mb.userId to (withdrawn - spent)
-                    },
+                    balances = scaleBalancesForCash(balances),
                     sourcePocket = SettlementPocketType.CASH,
                     currency = currencyCode
                 )
             }
         }
+    }
+
+    private fun scaleBalancesForCash(balances: List<Pair<String, Long>>): List<Pair<String, Long>> {
+        val debtors = balances.filter { it.second < 0L }
+        val creditors = balances.filter { it.second > 0L }
+
+        val totalDebt = debtors.sumOf { -it.second }
+        val totalCredit = creditors.sumOf { it.second }
+
+        if (totalDebt == 0L || totalCredit == 0L) {
+            return balances
+        }
+
+        val scaledCreditAmounts = remainderDistributionService.rescaleAmounts(
+            originalTotal = totalCredit,
+            newTotal = totalDebt,
+            amounts = creditors.map { it.second }
+        )
+
+        val scaledCreditors = creditors.mapIndexed { index, pair ->
+            pair.first to scaledCreditAmounts[index]
+        }
+
+        return debtors + scaledCreditors
     }
 
     private fun runGreedyAlgorithm(

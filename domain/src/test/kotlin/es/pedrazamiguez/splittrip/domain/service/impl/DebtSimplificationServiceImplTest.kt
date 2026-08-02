@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 
 class DebtSimplificationServiceImplTest {
 
-    private val service = DebtSimplificationServiceImpl()
+    private val service = DebtSimplificationServiceImpl(RemainderDistributionServiceImpl())
 
     @Test
     fun `simplify with empty list returns empty settlements`() {
@@ -160,7 +160,7 @@ class DebtSimplificationServiceImplTest {
     }
 
     class SimplifyByPocket {
-        private val service = DebtSimplificationServiceImpl()
+        private val service = DebtSimplificationServiceImpl(RemainderDistributionServiceImpl())
 
         @Test
         fun `pocket creditor and cash debtor with opposite signs produce separate settlements`() {
@@ -275,6 +275,26 @@ class DebtSimplificationServiceImplTest {
             assertEquals("Antonio", cashSettlement.toUserId)
             assertEquals(300L, cashSettlement.amount)
             assertEquals("EUR", cashSettlement.currency)
+        }
+
+        @Test
+        fun `group cash pool overspending is distributed proportionally among members with remaining cash shares`() {
+            val balances = listOf(
+                MemberBalance(userId = "Antonio", withdrawn = 166667, cashSpent = 300000),
+                MemberBalance(userId = "Andres", withdrawn = 166667, cashSpent = 0),
+                MemberBalance(userId = "Pepe", withdrawn = 166666, cashSpent = 0)
+            )
+            val result = service.simplifyByPocket(balances, "EUR")
+            val cashSettlements = result.filter { it.sourcePocket == SettlementPocketType.CASH }
+            assertEquals(2, cashSettlements.size)
+
+            val antonioToAndres = cashSettlements.find { it.toUserId == "Andres" }!!
+            assertEquals("Antonio", antonioToAndres.fromUserId)
+            assertEquals(66667L, antonioToAndres.amount)
+
+            val antonioToPepe = cashSettlements.find { it.toUserId == "Pepe" }!!
+            assertEquals("Antonio", antonioToPepe.fromUserId)
+            assertEquals(66666L, antonioToPepe.amount)
         }
 
         @Test
