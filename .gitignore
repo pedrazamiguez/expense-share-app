@@ -47,3 +47,5 @@ graphify-out/
 .serena/
 .headroom/
 
+# Serena AI agent
+.serena/

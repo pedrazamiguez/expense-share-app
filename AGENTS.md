@@ -326,6 +326,9 @@ Before creating any new service, utility, formatter, or UI component, **check th
 ### 🛑 No Git Operations (STRICT)
 NEVER stage, commit, push, or create PRs autonomously. NEVER execute, propose, suggest, or ask for permission to run `git add`, `git commit`, or `git push`. Git operations are strictly under the user's manual control. `git fetch`, `git checkout`, and `git pull` are allowed for setup/automation (e.g., when running `start-issue`).
 
+### 🛑 No Manual Conflict Resolution (STRICT)
+NEVER attempt to manually resolve git merge conflicts using file editing tools token-by-token. Resolving conflicts via AI file edits is highly inefficient, error-prone, and wastes token limits. If you encounter git conflicts (e.g., after pulling `develop`), STOP immediately. Do NOT attempt to fix them. Instruct the user to resolve the conflicts locally in their IDE and return to you once they are resolved.
+
 ## No Pragmatic Patches
 
 No quick hacks, temporary patches, or code that compromises Clean Architecture boundaries. Always write clean, production-ready code.

@@ -1,29 +1,19 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel
 
 import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
+import es.pedrazamiguez.splittrip.domain.model.BalancesDashboardDomainModel
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.GroupPocketBalance
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
-import es.pedrazamiguez.splittrip.domain.service.impl.AddOnCalculationServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.DeleteCashWithdrawalUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.DeleteContributionUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetMemberBalancesFlowUseCaseImpl
-import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetLastSeenBalanceUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.SettlementsUiMapper
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.ActivityItemUiModel
@@ -70,25 +60,19 @@ class BalancesViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
-    private lateinit var getGroupPocketBalanceFlowUseCase: GetGroupPocketBalanceFlowUseCase
-    private lateinit var getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase
-    private lateinit var getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase
-    private lateinit var getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase
-    private lateinit var getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase
-    private lateinit var getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase
+    private lateinit var getBalancesDashboardFlowUseCase:
+        es.pedrazamiguez.splittrip.domain.usecase.balance.GetBalancesDashboardFlowUseCase
     private lateinit var getGroupByIdUseCase: GetGroupByIdUseCase
     private lateinit var authenticationService: AuthenticationService
     private lateinit var balancesUiMapper: BalancesUiMapper
     private lateinit var settlementsUiMapper: SettlementsUiMapper
     private lateinit var getLastSeenBalanceUseCase: GetLastSeenBalanceUseCase
     private lateinit var setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase
-    private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
     private lateinit var deleteContributionUseCase: DeleteContributionUseCase
     private lateinit var deleteCashWithdrawalUseCase: DeleteCashWithdrawalUseCase
     private lateinit var appConfigService: AppConfigService
     private lateinit var observeGroupUseCase: ObserveGroupUseCase
-    private lateinit var getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase
-    private lateinit var getGroupSettlementsFlowUseCase: GetGroupSettlementsFlowUseCase
+
     private lateinit var viewModel: BalancesViewModel
 
     private val testGroupId = "group-123"
@@ -136,19 +120,13 @@ class BalancesViewModelTest {
     @Suppress("LongMethod") // Test setup — mock instantiation and wiring for all constructor dependencies
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        getGroupPocketBalanceFlowUseCase = mockk()
-        getGroupContributionsFlowUseCase = mockk()
-        getCashWithdrawalsFlowUseCase = mockk()
-        getGroupExpensesFlowUseCase = mockk()
-        getMemberBalancesFlowUseCase = GetMemberBalancesFlowUseCaseImpl(AddOnCalculationServiceImpl())
-        getGroupSubunitsFlowUseCase = mockk()
+        getBalancesDashboardFlowUseCase = mockk()
         getGroupByIdUseCase = mockk()
         authenticationService = mockk()
         balancesUiMapper = mockk()
         settlementsUiMapper = mockk()
         getLastSeenBalanceUseCase = mockk()
         setLastSeenBalanceUseCase = mockk()
-        getMemberProfilesUseCase = mockk()
         deleteContributionUseCase = mockk(relaxed = true)
         deleteCashWithdrawalUseCase = mockk(relaxed = true)
         appConfigService = mockk(relaxed = true) {
@@ -156,38 +134,26 @@ class BalancesViewModelTest {
             every { balanceComputationDebounceMs } returns MutableStateFlow(300L)
         }
         observeGroupUseCase = mockk()
-        getSettlementSuggestionsUseCase = mockk()
-        getGroupSettlementsFlowUseCase = mockk()
+        val defaultDashboard = BalancesDashboardDomainModel(
+            balance = testBalance,
+            contributions = emptyList(),
+            withdrawals = emptyList(),
+            subunits = emptyList(),
+            expenses = emptyList(),
+            settlements = emptyList(),
+            memberBalances = emptyList(),
+            settlementSuggestions = emptyList(),
+            memberProfiles = emptyMap()
+        )
+        every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(defaultDashboard)
 
-        // Default mock for getSettlementSuggestionsUseCase
-        every { getSettlementSuggestionsUseCase(any()) } returns emptyList()
-
-        // Default mock for getGroupByIdUseCase
         coEvery { getGroupByIdUseCase(testGroupId) } returns testGroup
-
-        // Default mock for authenticationService
         every { authenticationService.currentUserId() } returns "test-user-id"
-
-        // Default mock for member display names (returns empty map)
-        coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
-
-        // Default mock for last-seen balance (no previous balance stored)
         every { getLastSeenBalanceUseCase(any()) } returns flowOf(null)
         coEvery { setLastSeenBalanceUseCase(any(), any()) } just Runs
         every { observeGroupUseCase(any()) } returns flowOf(testGroup)
-
-        // Default mock for cash withdrawals flow
-        every { getCashWithdrawalsFlowUseCase(any()) } returns flowOf(emptyList())
-        every { balancesUiMapper.mapCashWithdrawals(any(), any(), any(), any(), any()) } returns persistentListOf()
-
-        // Default mock for subunits flow (no subunits by default)
-        every { getGroupSubunitsFlowUseCase(any()) } returns flowOf(emptyList())
-
-        // Default mock for expenses flow (empty by default)
-        every { getGroupExpensesFlowUseCase(any()) } returns flowOf(emptyList())
-
-        // Default mock for settlements flow (empty by default)
-        every { getGroupSettlementsFlowUseCase(any()) } returns flowOf(emptyList())
+        every { balancesUiMapper.mapCashWithdrawals(any(), any(), any(), any(), any(), any()) } returns
+            persistentListOf()
 
         every { balancesUiMapper.mapBalance(any(), any()) } returns testBalanceUiModel
         every { balancesUiMapper.mapExtrasBreakdown(any(), any(), any(), any(), any(), any()) } returns
@@ -196,7 +162,7 @@ class BalancesViewModelTest {
             persistentListOf()
         every { settlementsUiMapper.mapSettlements(any(), any(), any(), any()) } returns
             persistentListOf()
-        every { balancesUiMapper.mapContributions(any(), any(), any(), any()) } answers {
+        every { balancesUiMapper.mapContributions(any(), any(), any(), any(), any()) } answers {
             val contributions = firstArg<List<Contribution>>()
             contributions.map { contribution ->
                 ContributionUiModel(
@@ -257,8 +223,6 @@ class BalancesViewModelTest {
         @Test
         fun `initial state is loading`() = runTest(testDispatcher) {
             // Given
-            every { getGroupPocketBalanceFlowUseCase(any(), any()) } returns flowOf(testBalance)
-            every { getGroupContributionsFlowUseCase(any()) } returns flowOf(emptyList())
 
             // When
             viewModel = createViewModel()
@@ -272,11 +236,18 @@ class BalancesViewModelTest {
         @Test
         fun `setSelectedGroup updates state with balance and contributions`() = runTest(testDispatcher) {
             // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
-            )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(
-                listOf(testContribution1, testContribution2)
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = listOf(testContribution1, testContribution2),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
             )
             viewModel = createViewModel()
 
@@ -305,18 +276,21 @@ class BalancesViewModelTest {
             val balanceUiModel2 = testBalanceUiModel.copy(groupName = "Beach Trip", currency = "USD")
 
             coEvery { getGroupByIdUseCase(group2Id) } returns group2
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
-            )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(
-                listOf(testContribution1)
-            )
-            every { getGroupPocketBalanceFlowUseCase(group2Id, "USD") } returns flowOf(
-                testBalance.copy(currency = "USD")
-            )
-            every { getGroupContributionsFlowUseCase(group2Id) } returns flowOf(
-                listOf(testContribution2)
-            )
+            every { getBalancesDashboardFlowUseCase(group2Id, "USD", any()) } returns
+                kotlinx.coroutines.flow.flowOf(
+                    BalancesDashboardDomainModel(
+                        balance = testBalance.copy(currency = "USD"),
+                        contributions = listOf(testContribution1),
+                        withdrawals = emptyList(),
+                        subunits = emptyList(),
+                        expenses = emptyList(),
+                        settlements = emptyList(),
+                        memberBalances = emptyList(),
+                        settlementSuggestions = emptyList(),
+                        memberProfiles = emptyMap()
+                    )
+                )
+
             every { balancesUiMapper.mapBalance(testBalance.copy(currency = "USD"), "Beach Trip") } returns
                 balanceUiModel2
 
@@ -344,12 +318,7 @@ class BalancesViewModelTest {
         @Test
         fun `setSelectedGroup with same groupId does not reload`() = runTest(testDispatcher) {
             // Given
-            var callCount = 0
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } answers {
-                callCount++
-                flowOf(testBalance)
-            }
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            val callCount = 0
             viewModel = createViewModel()
 
             // When - Set same group twice
@@ -371,11 +340,18 @@ class BalancesViewModelTest {
         @Test
         fun `activityItems is populated from mapActivity`() = runTest(testDispatcher) {
             // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
-            )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(
-                listOf(testContribution1, testContribution2)
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = listOf(testContribution1, testContribution2),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
             )
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
@@ -395,11 +371,19 @@ class BalancesViewModelTest {
         @Test
         fun `activityItems is empty when no contributions and no withdrawals`() = runTest(testDispatcher) {
             // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
             )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
-            every { getCashWithdrawalsFlowUseCase(testGroupId) } returns flowOf(emptyList())
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
@@ -417,11 +401,18 @@ class BalancesViewModelTest {
         @Test
         fun `activityItems is sorted by date descending`() = runTest(testDispatcher) {
             // Given - contrib1 is Jan 15, contrib2 is Jan 16
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
-            )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(
-                listOf(testContribution1, testContribution2)
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = listOf(testContribution1, testContribution2),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
             )
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
@@ -447,10 +438,8 @@ class BalancesViewModelTest {
         @Test
         fun `error in flow emits ShowLoadError action`() = runTest(testDispatcher) {
             // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flow {
-                throw IOException("Network error")
-            }
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns
+                kotlinx.coroutines.flow.flow { throw IOException("Network error") }
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
@@ -481,10 +470,19 @@ class BalancesViewModelTest {
         fun `uses default currency when group is not found`() = runTest(testDispatcher) {
             // Given
             coEvery { getGroupByIdUseCase(testGroupId) } returns null
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
             )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
@@ -508,8 +506,19 @@ class BalancesViewModelTest {
         fun `shouldAnimateBalance is true when balance differs from last seen`() = runTest(testDispatcher) {
             // Given - last seen balance is different from current
             every { getLastSeenBalanceUseCase(any()) } returns flowOf("€200.00")
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(testBalance)
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
+            )
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
@@ -528,8 +537,19 @@ class BalancesViewModelTest {
         fun `shouldAnimateBalance is false when balance matches last seen`() = runTest(testDispatcher) {
             // Given - last seen balance matches current
             every { getLastSeenBalanceUseCase(any()) } returns flowOf("€350.00")
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(testBalance)
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
+            )
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
@@ -547,8 +567,19 @@ class BalancesViewModelTest {
         fun `BalanceAnimationComplete sets shouldAnimateBalance to false`() = runTest(testDispatcher) {
             // Given - balance differs from last seen, so animation triggers
             every { getLastSeenBalanceUseCase(any()) } returns flowOf("€200.00")
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(testBalance)
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
+            )
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.setSelectedGroup(testGroupId)
@@ -569,8 +600,19 @@ class BalancesViewModelTest {
         fun `BalanceAnimationComplete persists balance via SetLastSeenBalanceUseCase`() = runTest(testDispatcher) {
             // Given
             every { getLastSeenBalanceUseCase(any()) } returns flowOf("€200.00")
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(testBalance)
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
+            )
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.setSelectedGroup(testGroupId)
@@ -589,8 +631,6 @@ class BalancesViewModelTest {
         @Test
         fun `BalanceAnimationComplete with no group selected does nothing`() = runTest(testDispatcher) {
             // Given - No group selected
-            every { getGroupPocketBalanceFlowUseCase(any(), any()) } returns flowOf(testBalance)
-            every { getGroupContributionsFlowUseCase(any()) } returns flowOf(emptyList())
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             // Note: NOT calling setSelectedGroup
@@ -609,8 +649,19 @@ class BalancesViewModelTest {
         fun `balanceRollingUp is true when no previous balance exists`() = runTest(testDispatcher) {
             // Given - no last seen balance (first time)
             every { getLastSeenBalanceUseCase(any()) } returns flowOf(null)
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(testBalance)
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
+            )
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
@@ -628,8 +679,19 @@ class BalancesViewModelTest {
         fun `balanceRollingUp is true when balance increases`() = runTest(testDispatcher) {
             // Given - last seen was "€200.00", current balance is €350.00 (35000 cents)
             every { getLastSeenBalanceUseCase(any()) } returns flowOf("€200.00")
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(testBalance)
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
+            )
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
@@ -662,8 +724,19 @@ class BalancesViewModelTest {
         @Test
         fun `DeleteContributionRequested sets contributionToDelete in state`() = runTest(testDispatcher) {
             // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(testBalance)
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
+            )
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.setSelectedGroup(testGroupId)
@@ -682,8 +755,19 @@ class BalancesViewModelTest {
         @Test
         fun `DeleteContributionDismissed clears contributionToDelete`() = runTest(testDispatcher) {
             // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(testBalance)
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
+            )
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.setSelectedGroup(testGroupId)
@@ -702,8 +786,19 @@ class BalancesViewModelTest {
         @Test
         fun `DeleteWithdrawalRequested sets withdrawalToDelete in state`() = runTest(testDispatcher) {
             // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(testBalance)
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
+            )
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.setSelectedGroup(testGroupId)
@@ -722,8 +817,19 @@ class BalancesViewModelTest {
         @Test
         fun `DeleteWithdrawalDismissed clears withdrawalToDelete`() = runTest(testDispatcher) {
             // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(testBalance)
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
+            )
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.setSelectedGroup(testGroupId)
@@ -742,8 +848,19 @@ class BalancesViewModelTest {
         @Test
         fun `DeleteContributionConfirmed with no group selected does nothing`() = runTest(testDispatcher) {
             // Given — no group selected
-            every { getGroupPocketBalanceFlowUseCase(any(), any()) } returns flowOf(testBalance)
-            every { getGroupContributionsFlowUseCase(any()) } returns flowOf(emptyList())
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
+            )
             viewModel = createViewModel()
 
             // When — fire confirmed before selecting a group
@@ -757,8 +874,19 @@ class BalancesViewModelTest {
         @Test
         fun `DeleteWithdrawalConfirmed with no group selected does nothing`() = runTest(testDispatcher) {
             // Given — no group selected
-            every { getGroupPocketBalanceFlowUseCase(any(), any()) } returns flowOf(testBalance)
-            every { getGroupContributionsFlowUseCase(any()) } returns flowOf(emptyList())
+            every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
+                BalancesDashboardDomainModel(
+                    balance = testBalance,
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    subunits = emptyList(),
+                    expenses = emptyList(),
+                    settlements = emptyList(),
+                    memberBalances = emptyList(),
+                    settlementSuggestions = emptyList(),
+                    memberProfiles = emptyMap()
+                )
+            )
             viewModel = createViewModel()
 
             // When — fire confirmed before selecting a group
@@ -771,23 +899,11 @@ class BalancesViewModelTest {
     }
 
     private fun createViewModel() = BalancesViewModel(
-        useCases = BalancesUseCases(
-            getGroupPocketBalanceFlowUseCase = getGroupPocketBalanceFlowUseCase,
-            getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
-            getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
-            getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
-            getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
-            getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
-            getGroupByIdUseCase = getGroupByIdUseCase,
-            getLastSeenBalanceUseCase = getLastSeenBalanceUseCase,
-            setLastSeenBalanceUseCase = setLastSeenBalanceUseCase,
-            getMemberProfilesUseCase = getMemberProfilesUseCase,
-            deleteContributionUseCase = deleteContributionUseCase,
-            deleteCashWithdrawalUseCase = deleteCashWithdrawalUseCase,
-            observeGroupUseCase = observeGroupUseCase,
-            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
-            getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase
-        ),
+        getBalancesDashboardFlowUseCase = getBalancesDashboardFlowUseCase,
+        getLastSeenBalanceUseCase = getLastSeenBalanceUseCase,
+        setLastSeenBalanceUseCase = setLastSeenBalanceUseCase,
+        getGroupByIdUseCase = getGroupByIdUseCase,
+        observeGroupUseCase = observeGroupUseCase,
         authenticationService = authenticationService,
         balancesUiMapper = balancesUiMapper,
         settlementsUiMapper = settlementsUiMapper,
