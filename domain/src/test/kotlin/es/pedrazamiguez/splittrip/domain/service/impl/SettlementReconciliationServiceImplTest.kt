@@ -91,20 +91,24 @@ class SettlementReconciliationServiceImplTest {
         }
 
         @Test
-        fun `applies cash settlement correctly without altering cashInHand`() {
+        fun `applies cash settlement correctly adjusting withdrawn and cashInHand`() {
             val balances = listOf(
                 MemberBalance(
-                    userId = "user-1", // Withdrew 10000 cash, 4000 left
+                    userId = "user-1", // Creditor: withdrew 10000, 4000 left in hand
                     withdrawn = 10000L,
                     contributed = 6000L,
+                    pocketBalance = -4000L, // contributed - withdrawn - nonCashSpent = 6000 - 10000 - 0
+                    cashSpent = 6000L,
                     cashInHand = 4000L,
                     cashInHandByCurrency = listOf(CurrencyAmount("EUR", 4000L, 4000L)),
                     withdrawnByCurrency = listOf(CurrencyAmount("EUR", 10000L, 10000L))
                 ),
                 MemberBalance(
-                    userId = "user-2", // Spent 6000 cash (owes user-1 6000)
+                    userId = "user-2", // Debtor: spent 6000 cash without withdrawing
                     withdrawn = 0L,
                     contributed = 0L,
+                    pocketBalance = 0L,
+                    cashSpent = 6000L,
                     cashInHand = 0L,
                     cashInHandByCurrency = emptyList(),
                     withdrawnByCurrency = emptyList()
@@ -114,7 +118,7 @@ class SettlementReconciliationServiceImplTest {
                 SettlementRecord(
                     id = "settlement-2",
                     groupId = "group-1",
-                    settlement = Settlement("user-2", "user-1", 6000L, "EUR", SettlementPocketType.CASH),
+                    settlement = Settlement("user-2", "user-1", 4000L, "EUR", SettlementPocketType.CASH),
                     status = SettlementStatus.RESOLVED,
                     createdAt = LocalDateTime.now()
                 )
@@ -126,21 +130,82 @@ class SettlementReconciliationServiceImplTest {
             val user1 = balanceMap["user-1"]!!
             val user2 = balanceMap["user-2"]!!
 
-            // user-2 pays 6000 cash to user-1.
-            assertEquals(0L, user2.contributed) // Service no longer touches contributed
-            assertEquals(-6000L, user2.withdrawn) // Decreases by 6000
-            assertEquals(6000L, user2.pocketBalance) // Increases by 6000
-            assertEquals(-6000L, user2.cashInHand) // Decreases by 6000
+            // user-2 (debtor) pays 4000 cash to user-1.
+            // withdrawn INCREASES to offset cash debt (withdrawn - cashSpent → 0)
+            assertEquals(4000L, user2.withdrawn)
+            // pocketBalance is UNCHANGED — cash transfers don't affect the virtual pocket
+            assertEquals(0L, user2.pocketBalance)
+            // cashInHand DECREASES — they gave physical cash away
+            assertEquals(-4000L, user2.cashInHand)
             val user2Eur = user2.withdrawnByCurrency.find { it.currency == "EUR" }
-            assertEquals(-6000L, user2Eur?.amountCents) // Decreases by 6000
+            assertEquals(4000L, user2Eur?.amountCents)
 
-            // user-1 receives 6000 cash from user-2.
-            assertEquals(6000L, user1.contributed) // Service no longer touches contributed
-            assertEquals(16000L, user1.withdrawn) // Service INCREASES withdrawn to reflect cash received
-            assertEquals(-6000L, user1.pocketBalance) // Service DECREASES pocketBalance because debt is paid off
-            assertEquals(10000L, user1.cashInHand) // Increased (4000 + 6000)
+            // user-1 (creditor) receives 4000 cash from user-2.
+            // withdrawn DECREASES to offset cash surplus (withdrawn - cashSpent → 0)
+            assertEquals(6000L, user1.withdrawn) // 10000 - 4000
+            // pocketBalance is UNCHANGED — cash transfers don't affect the virtual pocket
+            assertEquals(-4000L, user1.pocketBalance)
+            // cashInHand INCREASES — they received physical cash
+            assertEquals(8000L, user1.cashInHand) // 4000 + 4000
             val user1Eur = user1.withdrawnByCurrency.find { it.currency == "EUR" }
-            assertEquals(16000L, user1Eur?.amountCents)
+            assertEquals(6000L, user1Eur?.amountCents) // 10000 - 4000
+        }
+
+        @Test
+        fun `resolved cash settlement zeroes out cash debt and prevents feedback loop`() {
+            // Regression test: after reconciliation, buildCashSettlements
+            // should produce ZERO new settlements for the resolved pair.
+            val balances = listOf(
+                MemberBalance(
+                    userId = "creditor",
+                    withdrawn = 300L,
+                    cashSpent = 0L,
+                    pocketBalance = 0L,
+                    cashInHand = 300L,
+                    cashInHandByCurrency = listOf(CurrencyAmount("EUR", 300L, 300L)),
+                    withdrawnByCurrency = listOf(CurrencyAmount("EUR", 300L, 300L))
+                ),
+                MemberBalance(
+                    userId = "debtor",
+                    withdrawn = 0L,
+                    cashSpent = 300L,
+                    pocketBalance = 0L,
+                    cashInHand = 0L,
+                    cashInHandByCurrency = emptyList(),
+                    withdrawnByCurrency = emptyList()
+                )
+            )
+            val settlements = listOf(
+                SettlementRecord(
+                    id = "cash-settlement-1",
+                    groupId = "group-1",
+                    settlement = Settlement("debtor", "creditor", 300L, "EUR", SettlementPocketType.CASH),
+                    status = SettlementStatus.RESOLVED,
+                    createdAt = LocalDateTime.now()
+                )
+            )
+
+            val reconciled = service.applyResolvedSettlements(balances, settlements, "EUR")
+            val reconciledMap = reconciled.associateBy { it.userId }
+
+            // After reconciliation, cash debt should be zero for both
+            val creditorBalance = reconciledMap["creditor"]!!
+            val debtorBalance = reconciledMap["debtor"]!!
+
+            // creditor: withdrawn - cashSpent = (300-300) - 0 = 0
+            assertEquals(0L, creditorBalance.withdrawn - creditorBalance.cashSpent)
+            // debtor: withdrawn - cashSpent = (0+300) - 300 = 0
+            assertEquals(0L, debtorBalance.withdrawn - debtorBalance.cashSpent)
+
+            // Verify no new cash settlements would be generated
+            val simplificationService = DebtSimplificationServiceImpl(
+                CashDebtScalingServiceImpl(RemainderDistributionServiceImpl())
+            )
+            val newSettlements = simplificationService.simplifyByPocket(reconciled, "EUR")
+            val cashSettlements = newSettlements.filter {
+                it.sourcePocket == SettlementPocketType.CASH
+            }
+            assertEquals(0, cashSettlements.size, "No new cash settlements should be generated after reconciliation")
         }
     }
 }

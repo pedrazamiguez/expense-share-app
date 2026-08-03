@@ -37,14 +37,13 @@ class CashSettlementReconciliationStrategy : SettlementReconciliationStrategy {
         val fromWithdrawnByCurrency = updateCurrencyAmountList(
             list = fromUser.withdrawnByCurrency,
             currency = currency,
-            amount = -amount,
-            equivalent = -fromUserEquiv,
+            amount = amount,
+            equivalent = fromUserEquiv,
             addIfMissing = true
         )
 
         balanceMap[settlement.fromUserId] = fromUser.copy(
-            withdrawn = fromUser.withdrawn - fromUserEquiv,
-            pocketBalance = fromUser.pocketBalance + fromUserEquiv,
+            withdrawn = fromUser.withdrawn + fromUserEquiv,
             cashInHand = fromUser.cashInHand - fromUserEquiv,
             withdrawnByCurrency = fromWithdrawnByCurrency,
             cashInHandByCurrency = fromCashInHandByCurrency
@@ -60,14 +59,13 @@ class CashSettlementReconciliationStrategy : SettlementReconciliationStrategy {
         val toWithdrawnByCurrency = updateCurrencyAmountList(
             list = toUser.withdrawnByCurrency,
             currency = currency,
-            amount = amount,
-            equivalent = toUserEquiv,
+            amount = -amount,
+            equivalent = -toUserEquiv,
             addIfMissing = true
         )
 
         balanceMap[settlement.toUserId] = toUser.copy(
-            withdrawn = toUser.withdrawn + toUserEquiv,
-            pocketBalance = toUser.pocketBalance - toUserEquiv,
+            withdrawn = toUser.withdrawn - toUserEquiv,
             cashInHand = toUser.cashInHand + toUserEquiv,
             cashInHandByCurrency = finalToCashInHandByCurrency,
             withdrawnByCurrency = toWithdrawnByCurrency

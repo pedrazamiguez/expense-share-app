@@ -1166,23 +1166,23 @@ class GetMemberBalancesFlowUseCaseTest {
             val result = compute(withdrawals = withdrawals, expenses = expenses, settlements = settlements)
             val balanceMap = result.associateBy { it.userId }
 
-            // Payer user-2: spent 6000. Pays 6000 cash to user-1.
-            // Withdrawn remains 0 (Service no longer incorrectly increases it).
-            // Contributed naturally increased by 6000 (from the paired contribution, if it were in the test list).
-            // But since this test does not supply a contribution, contributed remains 0.
-            // cashInHand becomes -6000 because they paid cash they technically didn't hold from a group withdrawal.
+            // Payer user-2: spent 0 (no splits in expense). Pays 6000 cash to user-1.
+            // withdrawn INCREASES by 6000 to offset cash debt.
+            // pocketBalance is UNCHANGED (cash settlements don't affect virtual pocket).
+            // cashInHand DECREASES by 6000 (gave physical cash away).
             assertEquals(0L, balanceMap["user-2"]!!.cashSpent)
-            assertEquals(-6000L, balanceMap["user-2"]!!.withdrawn) // Decreased by 6000
-            assertEquals(6000L, balanceMap["user-2"]!!.pocketBalance) // Increased by 6000
+            assertEquals(6000L, balanceMap["user-2"]!!.withdrawn) // Increased by 6000
+            assertEquals(0L, balanceMap["user-2"]!!.pocketBalance) // Unchanged (no pocket impact)
             assertEquals(0L, balanceMap["user-2"]!!.contributed)
             assertEquals(-6000L, balanceMap["user-2"]!!.cashInHand)
 
             // Creditor user-1: withdrew 10000. Receives 6000 cash from user-2.
-            // Withdrawn (Long) increases by 6000 (reflecting the cash received). Contributed stays 0.
-            // cashInHand increases to 10000 (4000 + 6000).
-            assertEquals(16000L, balanceMap["user-1"]!!.withdrawn)
+            // withdrawn DECREASES by 6000 to offset cash surplus.
+            // pocketBalance is UNCHANGED (cash settlements don't affect virtual pocket).
+            // cashInHand INCREASES by 6000 (received physical cash).
+            assertEquals(4000L, balanceMap["user-1"]!!.withdrawn) // 10000 - 6000
             assertEquals(0L, balanceMap["user-1"]!!.contributed)
-            assertEquals(10000L, balanceMap["user-1"]!!.cashInHand)
+            assertEquals(10000L, balanceMap["user-1"]!!.cashInHand) // 4000 + 6000
         }
     }
 }
