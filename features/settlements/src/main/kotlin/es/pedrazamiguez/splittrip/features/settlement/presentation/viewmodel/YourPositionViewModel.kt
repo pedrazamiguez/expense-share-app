@@ -14,6 +14,7 @@ import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.features.settlement.R
+import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.MemberSpendingChartUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.SettlementConsensusUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourPositionUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.action.YourPositionUiAction
@@ -46,6 +47,7 @@ class YourPositionViewModel(
     private val authenticationService: AuthenticationService,
     private val yourPositionUiMapper: YourPositionUiMapper,
     private val settlementConsensusUiMapper: SettlementConsensusUiMapper,
+    private val memberSpendingChartUiMapper: MemberSpendingChartUiMapper,
     private val appConfigService: AppConfigService,
     private val networkMonitor: NetworkMonitor,
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default
@@ -53,6 +55,7 @@ class YourPositionViewModel(
 
     private val _selectedGroupId = MutableStateFlow<String?>(null)
     private val _isCashBreakdownVisible = MutableStateFlow(false)
+    private val _isChartCashOnly = MutableStateFlow(true)
     private val _localState = MutableStateFlow(LocalUiState())
 
     private val _actions = Channel<YourPositionUiAction>(Channel.BUFFERED)
@@ -115,6 +118,9 @@ class YourPositionViewModel(
                 }
                 .debounce { appConfigService.balanceComputationDebounceMs.value }
                 .combine(_isCashBreakdownVisible) { snapshot, isCashBreakdownVisible ->
+                    Pair(snapshot, isCashBreakdownVisible)
+                }
+                .combine(_isChartCashOnly) { (snapshot, isCashBreakdownVisible), isChartCashOnly ->
                     val memberBalances = useCases.getMemberBalancesFlowUseCase.computeMemberBalances(
                         MemberBalanceCalculationInputs(
                             contributions = snapshot.contributions,
@@ -163,11 +169,21 @@ class YourPositionViewModel(
                         rateLimitHours = snapshot.rateLimitHours
                     )
 
+                    val spendingChart = memberSpendingChartUiMapper.toChartUiModel(
+                        memberBalances = memberBalances,
+                        cashOnly = isChartCashOnly,
+                        currentUserId = currentUserId,
+                        memberProfiles = memberProfiles,
+                        groupCurrencyCode = currency
+                    )
+
                     YourPositionUiState(
                         isLoading = false,
                         personalPosition = personalPosition,
                         isCashBreakdownVisible = isCashBreakdownVisible,
-                        settlementConsensus = settlementConsensus
+                        settlementConsensus = settlementConsensus,
+                        spendingChart = spendingChart,
+                        isChartCashOnly = isChartCashOnly
                     )
                 }
 
@@ -225,6 +241,7 @@ class YourPositionViewModel(
             YourPositionUiEvent.DisputeSubmitted -> handleSubmitDispute()
             YourPositionUiEvent.DisputeCancelled -> handleCancelDispute()
             is YourPositionUiEvent.NudgeDebtor -> handleNudgeDebtor(event.settlementId)
+            is YourPositionUiEvent.ChartModeToggled -> _isChartCashOnly.value = event.cashOnly
         }
     }
 

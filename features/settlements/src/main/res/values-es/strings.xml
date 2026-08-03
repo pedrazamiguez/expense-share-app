@@ -49,7 +49,12 @@
     <string name="your_position_confirm_success">Liquidación confirmada correctamente</string>
     <string name="your_position_confirm_error">No se pudo confirmar la liquidación. Inténtalo de nuevo.</string>
     <string name="your_position_dispute_success">Liquidación disputada correctamente</string>
-    <string name="your_position_dispute_error">No se pudo disputar la liquidación. Inténtalo de nuevo.</string>
+    <string name="your_position_dispute_error">Error al disputar la liquidación</string>
+
+    <string name="your_position_chart_toggle_cash_only">Solo efectivo</string>
+    <string name="your_position_chart_toggle_all_expenses">Todos los gastos</string>
+    <string name="your_position_chart_section_title">Uso de efectivo por miembro</string>
+
     <string name="your_position_settlement_remind">Recordar</string>
     <string name="your_position_settlement_reminded">Recordado</string>
     <string name="your_position_nudge_success">Recordatorio enviado correctamente</string>

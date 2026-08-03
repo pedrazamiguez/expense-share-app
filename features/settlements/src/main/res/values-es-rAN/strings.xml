@@ -48,7 +48,10 @@
     <string name="your_position_confirm_success">Liquidaçión confirmá corrêttamente</string>
     <string name="your_position_confirm_error">No çe pudo confirmâh la liquidaçión. Inténtalo de nuebo.</string>
     <string name="your_position_dispute_success">Liquidaçión dîpputá corrêttamente</string>
-    <string name="your_position_dispute_error">No çe pudo dîpputâh la liquidaçión. Inténtalo de nuebo.</string>
+    <string name="your_position_dispute_error">Errôh ar dîpputâh la liquidaçión</string>
+    <string name="your_position_chart_toggle_cash_only">Çolo efêttibo</string>
+    <string name="your_position_chart_toggle_all_expenses">Tôh lô gâttô</string>
+    <string name="your_position_chart_section_title">Uço de efêttibo por miembro</string>
     <string name="your_position_settlement_remind">Recordâh</string>
     <string name="your_position_settlement_reminded">Recordao</string>
     <string name="your_position_nudge_success">Recordatorio embiao corrêttamente</string>
