@@ -71,6 +71,7 @@ class GetMemberBalancesFlowUseCaseImpl(
         return settlementReconciliationService.applyResolvedSettlements(
             balances = rawBalances,
             settlements = inputs.settlements,
+            cashTransfers = inputs.cashTransfers,
             groupCurrency = inputs.groupCurrency
         )
     }

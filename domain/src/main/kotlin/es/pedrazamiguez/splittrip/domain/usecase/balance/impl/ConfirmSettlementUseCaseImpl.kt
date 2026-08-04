@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.domain.datasource.GroupDashboardDataSource
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
+import es.pedrazamiguez.splittrip.domain.repository.CashTransferRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
 import es.pedrazamiguez.splittrip.domain.repository.SettlementRepository
@@ -19,6 +20,7 @@ class ConfirmSettlementUseCaseImpl(
     private val authenticationService: AuthenticationService,
     private val groupRepository: GroupRepository,
     private val contributionRepository: ContributionRepository,
+    private val cashTransferRepository: CashTransferRepository,
     private val groupDashboardDataSource: GroupDashboardDataSource,
     private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase
 ) : ConfirmSettlementUseCase {
@@ -67,7 +69,9 @@ class ConfirmSettlementUseCaseImpl(
                 groupDashboardDataSource = groupDashboardDataSource,
                 getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase
             ),
-            CashSettlementPaymentStrategy()
+            CashSettlementPaymentStrategy(
+                cashTransferRepository = cashTransferRepository
+            )
         )
 
         val strategy = strategies.firstOrNull { it.appliesTo(record.settlement.sourcePocket) }

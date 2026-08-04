@@ -11,6 +11,7 @@ import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
+import es.pedrazamiguez.splittrip.domain.repository.CashTransferRepository
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
@@ -32,6 +33,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import java.time.LocalDateTime
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -50,6 +52,7 @@ class LeaveGroupUseCaseTest {
     private lateinit var contributionRepository: ContributionRepository
     private lateinit var cashWithdrawalRepository: CashWithdrawalRepository
     private lateinit var subunitRepository: SubunitRepository
+    private lateinit var cashTransferRepository: CashTransferRepository
     private lateinit var getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase
     private lateinit var resolveCashOnLeaveUseCase: ResolveCashOnLeaveUseCase
     private lateinit var settlementRepository: SettlementRepository
@@ -81,6 +84,7 @@ class LeaveGroupUseCaseTest {
         contributionRepository = mockk()
         cashWithdrawalRepository = mockk()
         subunitRepository = mockk()
+        cashTransferRepository = mockk()
         getMemberBalancesFlowUseCase = mockk()
         resolveCashOnLeaveUseCase = mockk()
         settlementRepository = mockk()
@@ -95,6 +99,7 @@ class LeaveGroupUseCaseTest {
             contributionRepository = contributionRepository,
             cashWithdrawalRepository = cashWithdrawalRepository,
             subunitRepository = subunitRepository,
+            cashTransferRepository = cashTransferRepository,
             getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
             resolveCashOnLeaveUseCase = resolveCashOnLeaveUseCase,
             settlementRepository = settlementRepository
@@ -106,13 +111,12 @@ class LeaveGroupUseCaseTest {
         coEvery { groupRepository.leaveGroup(any()) } just Runs
 
         // Set default behaviors for new dependencies to keep existing tests passing
-        coEvery { expenseRepository.getGroupExpensesFlow(any()) } returns kotlinx.coroutines.flow.flowOf(emptyList())
-        coEvery { contributionRepository.getGroupContributionsFlow(any()) } returns
-            kotlinx.coroutines.flow.flowOf(emptyList())
-        coEvery { cashWithdrawalRepository.getGroupWithdrawalsFlow(any()) } returns
-            kotlinx.coroutines.flow.flowOf(emptyList())
-        coEvery { subunitRepository.getGroupSubunits(any()) } returns emptyList()
-        coEvery { settlementRepository.getGroupSettlements(any()) } returns emptyList()
+        coEvery { expenseRepository.getGroupExpensesFlow(any()) } returns flowOf(emptyList())
+        coEvery { contributionRepository.getGroupContributionsFlow(any()) } returns flowOf(emptyList())
+        every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
+        coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
+        every { cashTransferRepository.observeGroupCashTransfers(groupId) } returns flowOf(emptyList())
+        coEvery { settlementRepository.getGroupSettlements(groupId) } returns emptyList()
         coEvery {
             getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns listOf(

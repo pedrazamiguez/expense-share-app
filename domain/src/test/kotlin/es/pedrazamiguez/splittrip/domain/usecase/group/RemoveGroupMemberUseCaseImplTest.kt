@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
 import es.pedrazamiguez.splittrip.domain.exception.CannotRemoveMemberException
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
+import es.pedrazamiguez.splittrip.domain.repository.CashTransferRepository
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
@@ -12,8 +13,10 @@ import es.pedrazamiguez.splittrip.domain.repository.SettlementRepository
 import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.impl.RemoveGroupMemberUseCaseImpl
+import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -28,6 +31,7 @@ class RemoveGroupMemberUseCaseImplTest {
     private lateinit var contributionRepository: ContributionRepository
     private lateinit var cashWithdrawalRepository: CashWithdrawalRepository
     private lateinit var subunitRepository: SubunitRepository
+    private lateinit var cashTransferRepository: CashTransferRepository
     private lateinit var getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase
     private lateinit var settlementRepository: SettlementRepository
     private lateinit var useCase: RemoveGroupMemberUseCase
@@ -52,6 +56,7 @@ class RemoveGroupMemberUseCaseImplTest {
         contributionRepository = mockk()
         cashWithdrawalRepository = mockk()
         subunitRepository = mockk()
+        cashTransferRepository = mockk()
         getMemberBalancesFlowUseCase = mockk()
         settlementRepository = mockk()
 
@@ -61,17 +66,21 @@ class RemoveGroupMemberUseCaseImplTest {
             contributionRepository = contributionRepository,
             cashWithdrawalRepository = cashWithdrawalRepository,
             subunitRepository = subunitRepository,
+            cashTransferRepository = cashTransferRepository,
             getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
             settlementRepository = settlementRepository
         )
 
         coEvery { groupRepository.getGroupById(groupId) } returns testGroup
-        coEvery { groupRepository.removeMember(any(), any()) } returns Unit
-        coEvery { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(emptyList())
-        coEvery { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
-        coEvery { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
-        coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
-        coEvery { settlementRepository.getGroupSettlements(groupId) } returns emptyList()
+        coEvery { groupRepository.removeMember(any(), any()) } just Runs
+
+        // Set default behaviors for new dependencies to keep existing tests passing
+        coEvery { expenseRepository.getGroupExpensesFlow(any()) } returns flowOf(emptyList())
+        coEvery { contributionRepository.getGroupContributionsFlow(any()) } returns flowOf(emptyList())
+        coEvery { cashWithdrawalRepository.getGroupWithdrawalsFlow(any()) } returns flowOf(emptyList())
+        coEvery { subunitRepository.getGroupSubunits(any()) } returns emptyList()
+        coEvery { settlementRepository.getGroupSettlements(any()) } returns emptyList()
+        coEvery { cashTransferRepository.observeGroupCashTransfers(any()) } returns flowOf(emptyList())
     }
 
     @Test

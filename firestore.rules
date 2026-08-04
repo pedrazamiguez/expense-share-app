@@ -136,6 +136,13 @@ service cloud.firestore {
         allow create, update: if isAuthenticated() && isGroupActiveOrNew(groupId);
         allow delete: if isAuthenticated();
       }
+
+      // Cash transfers subcollection
+      match /cash_transfers/{transferId} {
+        allow read: if isAuthenticated();
+        allow create, update: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow delete: if isAuthenticated();
+      }
     }
   }
 }

@@ -1,9 +1,12 @@
 package es.pedrazamiguez.splittrip.data.di
 
 import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
+import es.pedrazamiguez.splittrip.data.local.dao.CashTransferDao
+import es.pedrazamiguez.splittrip.data.repository.impl.CashTransferRepositoryImpl
 import es.pedrazamiguez.splittrip.data.repository.impl.CashWithdrawalRepositoryImpl
 import es.pedrazamiguez.splittrip.data.repository.impl.ContributionRepositoryImpl
 import es.pedrazamiguez.splittrip.data.repository.impl.SettlementRepositoryImpl
+import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudCashTransferDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudCashWithdrawalDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudContributionDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudSettlementDataSource
@@ -11,6 +14,7 @@ import es.pedrazamiguez.splittrip.domain.datasource.local.LocalCashWithdrawalQue
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalCashWithdrawalWriteDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalContributionDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalSettlementDataSource
+import es.pedrazamiguez.splittrip.domain.repository.CashTransferRepository
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.SettlementRepository
@@ -43,6 +47,15 @@ val balancesDataModule = module {
         SettlementRepositoryImpl(
             cloudSettlementDataSource = get<CloudSettlementDataSource>(),
             localSettlementDataSource = get<LocalSettlementDataSource>(),
+            performanceMonitor = get<PerformanceMonitor>(),
+            ioDispatcher = Dispatchers.IO
+        )
+    }
+
+    single<CashTransferRepository> {
+        CashTransferRepositoryImpl(
+            cashTransferDao = get<CashTransferDao>(),
+            cloudCashTransferDataSource = get<CloudCashTransferDataSource>(),
             performanceMonitor = get<PerformanceMonitor>(),
             ioDispatcher = Dispatchers.IO
         )

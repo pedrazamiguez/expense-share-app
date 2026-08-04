@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.usecase.balance.support
 
+import es.pedrazamiguez.splittrip.domain.model.CashTransfer
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Expense
@@ -12,6 +13,7 @@ data class MemberBalanceCalculationInputs(
     val contributions: List<Contribution> = emptyList(),
     val withdrawals: List<CashWithdrawal> = emptyList(),
     val expenses: List<Expense> = emptyList(),
+    val cashTransfers: List<CashTransfer> = emptyList(),
     val subunits: List<Subunit> = emptyList(),
     val groupMemberIds: List<String> = emptyList(),
     val groupCurrency: String = "",

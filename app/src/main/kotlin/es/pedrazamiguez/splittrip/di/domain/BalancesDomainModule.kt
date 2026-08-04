@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.di.domain
 
 import es.pedrazamiguez.splittrip.data.datasource.GroupDashboardDataSourceImpl
 import es.pedrazamiguez.splittrip.domain.datasource.GroupDashboardDataSource
+import es.pedrazamiguez.splittrip.domain.repository.CashTransferRepository
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
@@ -133,6 +134,7 @@ val balancesDomainModule = module {
             contributionRepository = get<ContributionRepository>(),
             cashWithdrawalRepository = get<CashWithdrawalRepository>(),
             subunitRepository = get<SubunitRepository>(),
+            cashTransferRepository = get<CashTransferRepository>(),
             getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
         )
     }
@@ -143,6 +145,7 @@ val balancesDomainModule = module {
             authenticationService = get<AuthenticationService>(),
             groupRepository = get<GroupRepository>(),
             contributionRepository = get<ContributionRepository>(),
+            cashTransferRepository = get<CashTransferRepository>(),
             groupDashboardDataSource = get<GroupDashboardDataSource>(),
             getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
         )
@@ -180,7 +183,8 @@ val balancesDomainModule = module {
             withdrawalRepository = get<CashWithdrawalRepository>(),
             expenseRepository = get<ExpenseRepository>(),
             settlementRepository = get<SettlementRepository>(),
-            subunitRepository = get<SubunitRepository>()
+            subunitRepository = get<SubunitRepository>(),
+            cashTransferRepository = get<CashTransferRepository>()
         )
     }
 

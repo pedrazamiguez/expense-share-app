@@ -5,6 +5,7 @@ import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.enums.SplitType
 import es.pedrazamiguez.splittrip.domain.model.CashTranche
+import es.pedrazamiguez.splittrip.domain.model.CashTransfer
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Expense
@@ -47,6 +48,7 @@ class GetMemberBalancesFlowUseCaseTest {
         contributions: List<Contribution> = emptyList(),
         withdrawals: List<CashWithdrawal> = emptyList(),
         expenses: List<Expense> = emptyList(),
+        cashTransfers: List<CashTransfer> = emptyList(),
         subunits: List<Subunit> = emptyList(),
         memberIds: List<String> = groupMemberIds,
         groupCurrency: String = "EUR",
@@ -57,6 +59,7 @@ class GetMemberBalancesFlowUseCaseTest {
             contributions = contributions,
             withdrawals = withdrawals,
             expenses = expenses,
+            cashTransfers = cashTransfers,
             subunits = subunits,
             groupMemberIds = memberIds,
             groupCurrency = groupCurrency,
@@ -1147,23 +1150,20 @@ class GetMemberBalancesFlowUseCaseTest {
                     cashTranches = listOf(CashTranche("wd-1", 6000L))
                 )
             )
-            val settlements = listOf(
-                SettlementRecord(
-                    id = "settlement-2",
+            val cashTransfers = listOf(
+                CashTransfer(
+                    id = "cash-transfer-1",
                     groupId = groupId,
-                    settlement = Settlement(
-                        fromUserId = "user-2", // user-2 owes user-1
-                        toUserId = "user-1",
-                        amount = 6000L,
-                        currency = "EUR",
-                        sourcePocket = SettlementPocketType.CASH
-                    ),
-                    status = SettlementStatus.RESOLVED,
-                    createdAt = LocalDateTime.now()
+                    fromUserId = "user-2", // user-2 pays user-1
+                    toUserId = "user-1",
+                    amountCents = 6000L,
+                    currency = "EUR",
+                    equivalentBaseAmountCents = 6000L,
+                    createdAt = System.currentTimeMillis()
                 )
             )
 
-            val result = compute(withdrawals = withdrawals, expenses = expenses, settlements = settlements)
+            val result = compute(withdrawals = withdrawals, expenses = expenses, cashTransfers = cashTransfers)
             val balanceMap = result.associateBy { it.userId }
 
             // Payer user-2: spent 0 (no splits in expense). Pays 6000 cash to user-1.

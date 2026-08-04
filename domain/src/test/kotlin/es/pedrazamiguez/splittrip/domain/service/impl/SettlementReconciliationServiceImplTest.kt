@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.service.impl
 
+import es.pedrazamiguez.splittrip.domain.model.CashTransfer
 import es.pedrazamiguez.splittrip.domain.model.CurrencyAmount
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.Settlement
@@ -43,7 +44,7 @@ class SettlementReconciliationServiceImplTest {
                 )
             )
 
-            val result = service.applyResolvedSettlements(balances, settlements, "EUR")
+            val result = service.applyResolvedSettlements(balances, settlements, emptyList(), "EUR")
 
             assertEquals(balances, result)
         }
@@ -74,7 +75,7 @@ class SettlementReconciliationServiceImplTest {
                 )
             )
 
-            val result = service.applyResolvedSettlements(balances, settlements, "EUR")
+            val result = service.applyResolvedSettlements(balances, settlements, emptyList(), "EUR")
             val balanceMap = result.associateBy { it.userId }
 
             val user1 = balanceMap["user-1"]!!
@@ -114,17 +115,20 @@ class SettlementReconciliationServiceImplTest {
                     withdrawnByCurrency = emptyList()
                 )
             )
-            val settlements = listOf(
-                SettlementRecord(
-                    id = "settlement-2",
+            val cashTransfers = listOf(
+                CashTransfer(
+                    id = "cash-transfer-1",
                     groupId = "group-1",
-                    settlement = Settlement("user-2", "user-1", 4000L, "EUR", SettlementPocketType.CASH),
-                    status = SettlementStatus.RESOLVED,
-                    createdAt = LocalDateTime.now()
+                    fromUserId = "user-2",
+                    toUserId = "user-1",
+                    amountCents = 4000L,
+                    currency = "EUR",
+                    equivalentBaseAmountCents = 4000L,
+                    createdAt = System.currentTimeMillis()
                 )
             )
 
-            val result = service.applyResolvedSettlements(balances, settlements, "EUR")
+            val result = service.applyResolvedSettlements(balances, emptyList(), cashTransfers, "EUR")
             val balanceMap = result.associateBy { it.userId }
 
             val user1 = balanceMap["user-1"]!!
@@ -175,17 +179,20 @@ class SettlementReconciliationServiceImplTest {
                     withdrawnByCurrency = emptyList()
                 )
             )
-            val settlements = listOf(
-                SettlementRecord(
-                    id = "cash-settlement-1",
+            val cashTransfers = listOf(
+                CashTransfer(
+                    id = "cash-transfer-1",
                     groupId = "group-1",
-                    settlement = Settlement("debtor", "creditor", 300L, "EUR", SettlementPocketType.CASH),
-                    status = SettlementStatus.RESOLVED,
-                    createdAt = LocalDateTime.now()
+                    fromUserId = "debtor",
+                    toUserId = "creditor",
+                    amountCents = 300L,
+                    currency = "EUR",
+                    equivalentBaseAmountCents = 300L,
+                    createdAt = System.currentTimeMillis()
                 )
             )
 
-            val reconciled = service.applyResolvedSettlements(balances, settlements, "EUR")
+            val reconciled = service.applyResolvedSettlements(balances, emptyList(), cashTransfers, "EUR")
             val reconciledMap = reconciled.associateBy { it.userId }
 
             // After reconciliation, cash debt should be zero for both
