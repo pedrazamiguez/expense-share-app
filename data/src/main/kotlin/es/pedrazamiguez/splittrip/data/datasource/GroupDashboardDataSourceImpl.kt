@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.datasource
 
 import es.pedrazamiguez.splittrip.domain.datasource.GroupDashboardDataSource
 import es.pedrazamiguez.splittrip.domain.model.GroupDashboardReadModel
+import es.pedrazamiguez.splittrip.domain.repository.CashTransferRepository
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
@@ -18,7 +19,8 @@ class GroupDashboardDataSourceImpl(
     private val withdrawalRepository: CashWithdrawalRepository,
     private val expenseRepository: ExpenseRepository,
     private val settlementRepository: SettlementRepository,
-    private val subunitRepository: SubunitRepository
+    private val subunitRepository: SubunitRepository,
+    private val cashTransferRepository: CashTransferRepository
 ) : GroupDashboardDataSource {
     override fun getDashboardSnapshotFlow(groupId: String): Flow<GroupDashboardReadModel> {
         return combine(
@@ -30,17 +32,21 @@ class GroupDashboardDataSourceImpl(
             combine(
                 subunitRepository.getGroupSubunitsFlow(groupId),
                 expenseRepository.getGroupExpensesFlow(groupId),
-                settlementRepository.getGroupSettlementsFlow(groupId)
-            ) { s, e, set -> Triple(s, e, set) }
-        ) { (group, contributions, withdrawals), (subunits, expenses, settlements) ->
+                settlementRepository.getGroupSettlementsFlow(groupId),
+                cashTransferRepository.observeGroupCashTransfers(groupId)
+            ) { s, e, set, ct -> Tuple4(s, e, set, ct) }
+        ) { (group, contributions, withdrawals), other ->
             GroupDashboardReadModel(
                 group = group,
                 contributions = contributions,
                 withdrawals = withdrawals,
-                subunits = subunits,
-                expenses = expenses,
-                settlements = settlements
+                subunits = other.t1,
+                expenses = other.t2,
+                settlements = other.t3,
+                cashTransfers = other.t4
             )
         }
     }
 }
+
+internal data class Tuple4<T1, T2, T3, T4>(val t1: T1, val t2: T2, val t3: T3, val t4: T4)

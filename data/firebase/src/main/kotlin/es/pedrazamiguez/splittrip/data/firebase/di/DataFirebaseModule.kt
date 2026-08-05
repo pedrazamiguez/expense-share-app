@@ -11,6 +11,7 @@ import es.pedrazamiguez.splittrip.core.common.provider.AppMetadataProvider
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.data.firebase.auth.service.impl.AuthenticationServiceImpl
+import es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl.FirestoreCashTransferDataSourceImpl
 import es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl.FirestoreCashWithdrawalDataSourceImpl
 import es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl.FirestoreContributionDataSourceImpl
 import es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl.FirestoreExpenseDataSourceImpl
@@ -24,6 +25,7 @@ import es.pedrazamiguez.splittrip.data.firebase.messaging.handler.factory.Notifi
 import es.pedrazamiguez.splittrip.data.firebase.messaging.repository.impl.FirebaseDeviceRepositoryImpl
 import es.pedrazamiguez.splittrip.data.firebase.repository.FirebaseAppConfigRepository
 import es.pedrazamiguez.splittrip.data.firebase.storage.CloudStorageDataSourceImpl
+import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudCashTransferDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudCashWithdrawalDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudContributionDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudExpenseDataSource
@@ -108,6 +110,12 @@ val dataFirebaseModule = module {
 
     single<CloudSettlementDataSource> {
         FirestoreSettlementDataSourceImpl(
+            firestore = get<FirebaseFirestore>()
+        )
+    }
+
+    single<CloudCashTransferDataSource> {
+        FirestoreCashTransferDataSourceImpl(
             firestore = get<FirebaseFirestore>()
         )
     }

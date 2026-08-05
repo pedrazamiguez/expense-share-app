@@ -103,7 +103,7 @@ class SettlementConsensusUiMapperTest {
     }
 
     @Test
-    fun `payer in SUGGESTED can confirm and dispute`() {
+    fun `payer in SUGGESTED can confirm and dispute for NET`() {
         val record = createRecord("s1", "user1", "user2", status = SettlementStatus.SUGGESTED)
 
         val result = mapper.toConsensusItems(listOf(record), "user1", "creator1", emptyMap())
@@ -114,6 +114,29 @@ class SettlementConsensusUiMapperTest {
         assertTrue(item.canConfirm)
         assertEquals("Mark as paid", item.confirmLabel)
         assertTrue(item.canDispute)
+    }
+
+    @Test
+    fun `payer in SUGGESTED cannot confirm or dispute for CASH`() {
+        val record = createRecord("s1", "user1", "user2", status = SettlementStatus.SUGGESTED)
+            .copy(
+                settlement = Settlement(
+                    fromUserId = "user1",
+                    toUserId = "user2",
+                    amount = 2500L,
+                    currency = "EUR",
+                    sourcePocket = SettlementPocketType.CASH
+                )
+            )
+
+        val result = mapper.toConsensusItems(listOf(record), "user1", "creator1", emptyMap())
+
+        assertEquals(1, result.size)
+        val item = result[0]
+        assertTrue(item.isCurrentUserPayer)
+        assertFalse(item.canConfirm)
+        assertEquals("", item.confirmLabel)
+        assertFalse(item.canDispute)
     }
 
     @Test
@@ -296,5 +319,30 @@ class SettlementConsensusUiMapperTest {
 
         val item = result[0]
         assertFalse(item.canNudge)
+    }
+
+    @Test
+    fun `toConsensusItems_whenPocketIsCash_setsCanNudgeFalseAndNoLabel`() {
+        val record = createRecord("s1", "debtor1", "creditor1").copy(
+            settlement = Settlement(
+                fromUserId = "debtor1",
+                toUserId = "creditor1",
+                amount = 2500L,
+                currency = "EUR",
+                sourcePocket = SettlementPocketType.CASH
+            )
+        )
+
+        val result = mapper.toConsensusItems(
+            settlements = listOf(record),
+            currentUserId = "creditor1",
+            groupCreatorId = "creator1",
+            memberProfiles = emptyMap()
+        )
+
+        val item = result[0]
+        assertFalse(item.canNudge)
+        assertTrue(item.isNudgeRateLimited)
+        assertEquals("", item.nudgeButtonLabel)
     }
 }

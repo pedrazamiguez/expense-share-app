@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.di.domain
 
 import es.pedrazamiguez.splittrip.core.logging.LogTag
 import es.pedrazamiguez.splittrip.core.logging.createLoggingProxy
+import es.pedrazamiguez.splittrip.domain.repository.CashTransferRepository
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
@@ -144,6 +145,7 @@ val groupsDomainModule = module {
                 cashWithdrawalRepository = get<CashWithdrawalRepository>(),
                 subunitRepository = get<SubunitRepository>(),
                 settlementRepository = get<SettlementRepository>(),
+                cashTransferRepository = get<CashTransferRepository>(),
                 getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
             ),
             LogTag.USE_CASE
@@ -172,6 +174,7 @@ val groupsDomainModule = module {
                 cashWithdrawalRepository = get<CashWithdrawalRepository>(),
                 subunitRepository = get<SubunitRepository>(),
                 settlementRepository = get<SettlementRepository>(),
+                cashTransferRepository = get<CashTransferRepository>(),
                 getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>(),
                 resolveCashOnLeaveUseCase = get<ResolveCashOnLeaveUseCase>()
             ),

@@ -61,18 +61,37 @@ interface SettlementRecordDao {
         val unsyncedStatuses = getUnsyncedSettlementStatuses(groupId)
         val unsyncedIds = unsyncedStatuses.map { it.id }.toSet()
 
+        val localEntities = getByGroupId(groupId).associateBy { it.id }
         val remoteIds = entities.map { it.id }.toSet()
-        val localIds = getSettlementIdsByGroupId(groupId)
 
-        entities.forEach { upsert(it) }
-
-        for (entry in unsyncedStatuses) {
-            updateSyncStatus(entry.id, entry.syncStatus)
+        val mergedEntities = entities.map { remote ->
+            val local = localEntities[remote.id]
+            if (local != null) {
+                // If local is not synced, preserve local modifications but take remote fields
+                // that aren't user-editable (e.g. metadata)
+                if (local.syncStatus != "SYNCED") {
+                    remote.copy(
+                        status = local.status,
+                        confirmedByPayerAt = local.confirmedByPayerAt,
+                        confirmedByPayeeAt = local.confirmedByPayeeAt,
+                        resolvedAt = local.resolvedAt,
+                        disputedBy = local.disputedBy,
+                        disputeReason = local.disputeReason,
+                        syncStatus = local.syncStatus
+                    )
+                } else {
+                    remote.copy(syncStatus = "SYNCED")
+                }
+            } else {
+                remote
+            }
         }
 
-        val staleIds = localIds.filter { it !in remoteIds && it !in unsyncedIds }
+        mergedEntities.forEach { upsert(it) }
+
+        val staleIds = localEntities.keys.filter { it !in remoteIds && it !in unsyncedIds }
         if (staleIds.isNotEmpty()) {
-            deleteSettlementsByIds(staleIds)
+            deleteSettlementsByIds(staleIds.toList())
         }
     }
 }

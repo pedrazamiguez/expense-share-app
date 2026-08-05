@@ -4,6 +4,8 @@ import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.enums.SplitType
+import es.pedrazamiguez.splittrip.domain.model.CashTranche
+import es.pedrazamiguez.splittrip.domain.model.CashTransfer
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Expense
@@ -14,6 +16,7 @@ import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.impl.AddOnCalculationServiceImpl
+import es.pedrazamiguez.splittrip.domain.service.impl.SettlementReconciliationServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetMemberBalancesFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.ContributionAttributionStrategy
 import es.pedrazamiguez.splittrip.domain.usecase.balance.strategy.StandardContributionAttributionStrategy
@@ -36,12 +39,16 @@ class GetMemberBalancesFlowUseCaseTest {
 
     @BeforeEach
     fun setUp() {
-        useCase = GetMemberBalancesFlowUseCaseImpl(AddOnCalculationServiceImpl())
+        useCase = GetMemberBalancesFlowUseCaseImpl(
+            addOnCalculationService = AddOnCalculationServiceImpl(),
+            settlementReconciliationService = SettlementReconciliationServiceImpl()
+        )
     }
     private fun compute(
         contributions: List<Contribution> = emptyList(),
         withdrawals: List<CashWithdrawal> = emptyList(),
         expenses: List<Expense> = emptyList(),
+        cashTransfers: List<CashTransfer> = emptyList(),
         subunits: List<Subunit> = emptyList(),
         memberIds: List<String> = groupMemberIds,
         groupCurrency: String = "EUR",
@@ -52,6 +59,7 @@ class GetMemberBalancesFlowUseCaseTest {
             contributions = contributions,
             withdrawals = withdrawals,
             expenses = expenses,
+            cashTransfers = cashTransfers,
             subunits = subunits,
             groupMemberIds = memberIds,
             groupCurrency = groupCurrency,
@@ -1107,52 +1115,74 @@ class GetMemberBalancesFlowUseCaseTest {
             assertEquals(10000L, balanceMap["user-2"]!!.contributed)
             assertEquals(0L, balanceMap["user-2"]!!.pocketBalance)
 
-            // Creditor user-1: withdrawn remains 0, pocketBalance retains full 10000 position
-            assertEquals(0L, balanceMap["user-1"]!!.withdrawn)
-            assertEquals(10000L, balanceMap["user-1"]!!.pocketBalance)
+            // Creditor user-1: withdrawn increases by 10000, pocketBalance decreases by 10000 (from 10000 to 0)
+            assertEquals(10000L, balanceMap["user-1"]!!.withdrawn)
+            assertEquals(0L, balanceMap["user-1"]!!.pocketBalance)
         }
 
         @Test
-        fun `resolved cash settlement adjusts cashSpent, cashInHand, and contributed`() {
+        fun `resolved cash settlement adjusts withdrawn and contributed without altering cashInHand`() {
             // user-1 withdrew 10000 cash (has 10000 cash in hand).
-            // user-2 has 0 cash in hand.
-            // Resolved cash settlement of 6000 cash from user-1 to user-2.
+            // user-2 spent 6000 cash.
+            // Resolved cash settlement of 6000 cash from user-2 to user-1.
             val withdrawals = listOf(
                 CashWithdrawal(
+                    id = "wd-1",
                     withdrawnBy = "user-1",
                     withdrawalScope = PayerType.USER,
                     amountWithdrawn = 10000L,
-                    remainingAmount = 10000L,
+                    remainingAmount = 4000L, // 6000 was consumed by the expense
                     deductedBaseAmount = 10000L
                 )
             )
-            val settlements = listOf(
-                SettlementRecord(
-                    id = "settlement-2",
+            val expenses = listOf(
+                Expense(
+                    id = "exp-1",
                     groupId = groupId,
-                    settlement = Settlement(
-                        fromUserId = "user-1",
-                        toUserId = "user-2",
-                        amount = 6000L,
-                        currency = "EUR",
-                        sourcePocket = SettlementPocketType.CASH
-                    ),
-                    status = SettlementStatus.RESOLVED,
-                    createdAt = LocalDateTime.now()
+                    payerId = "user-2",
+                    payerType = PayerType.USER,
+                    paymentMethod = PaymentMethod.CASH,
+                    sourceAmount = 6000L,
+                    sourceCurrency = "EUR",
+                    groupAmount = 6000L,
+                    groupCurrency = "EUR",
+                    expectedGroupAmount = 6000L,
+                    cashTranches = listOf(CashTranche("wd-1", 6000L))
+                )
+            )
+            val cashTransfers = listOf(
+                CashTransfer(
+                    id = "cash-transfer-1",
+                    groupId = groupId,
+                    fromUserId = "user-2", // user-2 pays user-1
+                    toUserId = "user-1",
+                    amountCents = 6000L,
+                    currency = "EUR",
+                    equivalentBaseAmountCents = 6000L,
+                    createdAt = System.currentTimeMillis()
                 )
             )
 
-            val result = compute(withdrawals = withdrawals, settlements = settlements)
+            val result = compute(withdrawals = withdrawals, expenses = expenses, cashTransfers = cashTransfers)
             val balanceMap = result.associateBy { it.userId }
 
-            // Payer user-1: cashSpent increases by 6000, cashInHand decreases by 6000 (from 10000 to 4000)
-            assertEquals(6000L, balanceMap["user-1"]!!.cashSpent)
-            assertEquals(4000L, balanceMap["user-1"]!!.cashInHand)
+            // Payer user-2: spent 0 (no splits in expense). Pays 6000 cash to user-1.
+            // withdrawn INCREASES by 6000 to offset cash debt.
+            // pocketBalance is UNCHANGED (cash settlements don't affect virtual pocket).
+            // cashInHand DECREASES by 6000 (gave physical cash away).
+            assertEquals(0L, balanceMap["user-2"]!!.cashSpent)
+            assertEquals(6000L, balanceMap["user-2"]!!.withdrawn) // Increased by 6000
+            assertEquals(0L, balanceMap["user-2"]!!.pocketBalance) // Unchanged (no pocket impact)
+            assertEquals(0L, balanceMap["user-2"]!!.contributed)
+            assertEquals(-6000L, balanceMap["user-2"]!!.cashInHand)
 
-            // Creditor user-2: contributed increases by 6000, withdrawn increases by 6000, cashInHand increases by 6000 (from 0 to 6000)
-            assertEquals(6000L, balanceMap["user-2"]!!.contributed)
-            assertEquals(6000L, balanceMap["user-2"]!!.withdrawn)
-            assertEquals(6000L, balanceMap["user-2"]!!.cashInHand)
+            // Creditor user-1: withdrew 10000. Receives 6000 cash from user-2.
+            // withdrawn DECREASES by 6000 to offset cash surplus.
+            // pocketBalance is UNCHANGED (cash settlements don't affect virtual pocket).
+            // cashInHand INCREASES by 6000 (received physical cash).
+            assertEquals(4000L, balanceMap["user-1"]!!.withdrawn) // 10000 - 6000
+            assertEquals(0L, balanceMap["user-1"]!!.contributed)
+            assertEquals(10000L, balanceMap["user-1"]!!.cashInHand) // 4000 + 6000
         }
     }
 }

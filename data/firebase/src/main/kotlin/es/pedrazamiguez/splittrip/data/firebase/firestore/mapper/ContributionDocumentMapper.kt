@@ -4,6 +4,7 @@ import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.ContributionDocument
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.model.Contribution
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 fun Contribution.toDocument(contributionId: String, groupId: String, groupDocRef: DocumentReference, userId: String) =
@@ -18,6 +19,8 @@ fun Contribution.toDocument(contributionId: String, groupId: String, groupDocRef
         linkedSettlementId = linkedSettlementId,
         amountCents = amount,
         currency = currency,
+        equivalentBaseAmountCents = equivalentBaseAmount,
+        exchangeRate = exchangeRate?.toPlainString(),
         createdBy = this.createdBy.ifBlank { userId },
         createdAt = (createdAt ?: LocalDateTime.now()).toTimestampUtc(),
         lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc()
@@ -34,6 +37,8 @@ fun ContributionDocument.toDomain() = Contribution(
     linkedSettlementId = linkedSettlementId,
     amount = amountCents,
     currency = currency,
+    equivalentBaseAmount = equivalentBaseAmountCents,
+    exchangeRate = exchangeRate?.let { runCatching { BigDecimal(it) }.getOrNull() },
     createdAt = createdAt.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()
 )

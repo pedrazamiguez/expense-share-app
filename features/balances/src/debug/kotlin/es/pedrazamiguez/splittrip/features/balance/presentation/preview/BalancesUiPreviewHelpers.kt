@@ -51,7 +51,8 @@ fun ContributionItemPreviewHelper(
             mapper.mapContributions(
                 listOf(domain),
                 currentUserId = null,
-                memberProfiles = memberProfiles
+                memberProfiles = memberProfiles,
+                groupCurrency = "EUR"
             ).first()
         },
         content = content
@@ -73,7 +74,8 @@ fun ContributionListPreviewHelper(
             mapper.mapContributions(
                 domain,
                 currentUserId = null,
-                memberProfiles = memberProfiles
+                memberProfiles = memberProfiles,
+                groupCurrency = "EUR"
             )
         },
         content = content

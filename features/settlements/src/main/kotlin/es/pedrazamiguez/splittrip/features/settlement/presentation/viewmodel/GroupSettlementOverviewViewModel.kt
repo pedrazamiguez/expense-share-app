@@ -188,25 +188,35 @@ class GroupSettlementOverviewViewModel(
         }
     }
 
-    private fun handleConfirm(settlementId: String) {
+    private fun handleConfirm(settlementIdString: String) {
+        val groupId = _groupId.value
+        val settlementIds = settlementIdString.split(",")
+
         viewModelScope.launch {
-            confirmSettlementUseCase(_groupId.value, settlementId).fold(
-                onSuccess = {
-                    _actions.send(
-                        GroupSettlementOverviewUiAction.ShowSuccess(
-                            UiText.StringResource(R.string.settlement_overview_confirm_success)
-                        )
+            var hasError = false
+            for (id in settlementIds) {
+                confirmSettlementUseCase(groupId, id).fold(
+                    onSuccess = { /* continue */ },
+                    onFailure = { e ->
+                        Timber.w(e, "Failed to confirm settlement $id")
+                        hasError = true
+                    }
+                )
+            }
+
+            if (hasError) {
+                _actions.send(
+                    GroupSettlementOverviewUiAction.ShowError(
+                        UiText.StringResource(R.string.settlement_overview_error_confirm)
                     )
-                },
-                onFailure = { e ->
-                    Timber.w(e, "Failed to confirm settlement $settlementId")
-                    _actions.send(
-                        GroupSettlementOverviewUiAction.ShowError(
-                            UiText.StringResource(R.string.settlement_overview_error_confirm)
-                        )
+                )
+            } else {
+                _actions.send(
+                    GroupSettlementOverviewUiAction.ShowSuccess(
+                        UiText.StringResource(R.string.settlement_overview_confirm_success)
                     )
-                }
-            )
+                )
+            }
         }
     }
 

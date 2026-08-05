@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.domain.usecase.group.impl
 import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
 import es.pedrazamiguez.splittrip.domain.exception.CannotRemoveMemberException
 import es.pedrazamiguez.splittrip.domain.exception.GroupArchivedException
+import es.pedrazamiguez.splittrip.domain.repository.CashTransferRepository
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
@@ -21,6 +22,7 @@ class RemoveGroupMemberUseCaseImpl(
     private val contributionRepository: ContributionRepository,
     private val cashWithdrawalRepository: CashWithdrawalRepository,
     private val subunitRepository: SubunitRepository,
+    private val cashTransferRepository: CashTransferRepository,
     private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase,
     private val settlementRepository: SettlementRepository
 ) : RemoveGroupMemberUseCase {
@@ -38,6 +40,7 @@ class RemoveGroupMemberUseCaseImpl(
         val contributions = contributionRepository.getGroupContributionsFlow(groupId).first()
         val withdrawals = cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId).first()
         val subunits = subunitRepository.getGroupSubunits(groupId)
+        val cashTransfers = cashTransferRepository.observeGroupCashTransfers(groupId).first()
         val settlements = settlementRepository.getGroupSettlements(groupId)
 
         val balances = getMemberBalancesFlowUseCase.computeMemberBalances(
@@ -45,6 +48,7 @@ class RemoveGroupMemberUseCaseImpl(
                 contributions = contributions,
                 withdrawals = withdrawals,
                 expenses = expenses,
+                cashTransfers = cashTransfers,
                 subunits = subunits,
                 groupMemberIds = group.members,
                 groupCurrency = group.currency,

@@ -259,27 +259,36 @@ class YourPositionViewModel(
         return false
     }
 
-    private fun handleConfirm(settlementId: String) {
+    private fun handleConfirm(settlementIdString: String) {
         if (checkOfflineAndEmitError()) return
         val groupId = _selectedGroupId.value ?: return
+        val settlementIds = settlementIdString.split(",")
+
         viewModelScope.launch {
-            useCases.confirmSettlementUseCase(groupId, settlementId).fold(
-                onSuccess = {
-                    _actions.send(
-                        YourPositionUiAction.ShowSuccess(
-                            UiText.StringResource(R.string.your_position_confirm_success)
-                        )
+            var hasError = false
+            for (id in settlementIds) {
+                useCases.confirmSettlementUseCase(groupId, id).fold(
+                    onSuccess = { /* continue */ },
+                    onFailure = { e ->
+                        Timber.w(e, "Failed to confirm settlement $id")
+                        hasError = true
+                    }
+                )
+            }
+
+            if (hasError) {
+                _actions.send(
+                    YourPositionUiAction.ShowError(
+                        UiText.StringResource(R.string.your_position_confirm_error)
                     )
-                },
-                onFailure = { e ->
-                    Timber.w(e, "Failed to confirm settlement $settlementId")
-                    _actions.send(
-                        YourPositionUiAction.ShowError(
-                            UiText.StringResource(R.string.your_position_confirm_error)
-                        )
+                )
+            } else {
+                _actions.send(
+                    YourPositionUiAction.ShowSuccess(
+                        UiText.StringResource(R.string.your_position_confirm_success)
                     )
-                }
-            )
+                )
+            }
         }
     }
 

@@ -6,5 +6,6 @@ data class GroupDashboardReadModel(
     val withdrawals: List<CashWithdrawal>,
     val subunits: List<Subunit>,
     val expenses: List<Expense>,
-    val settlements: List<SettlementRecord>
+    val settlements: List<SettlementRecord>,
+    val cashTransfers: List<CashTransfer> = emptyList()
 )

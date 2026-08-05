@@ -38,6 +38,7 @@ class GetBalancesDashboardFlowUseCaseImpl(
                     contributions = snapshot.contributions,
                     withdrawals = snapshot.withdrawals,
                     expenses = snapshot.expenses,
+                    cashTransfers = snapshot.cashTransfers,
                     subunits = snapshot.subunits,
                     groupMemberIds = groupMemberIds,
                     groupCurrency = currency,

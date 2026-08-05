@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
+import es.pedrazamiguez.splittrip.domain.repository.CashTransferRepository
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
@@ -34,6 +35,7 @@ class GetSettlementSuggestionsUseCaseImplTest {
     private val contributionRepository = mockk<ContributionRepository>()
     private val cashWithdrawalRepository = mockk<CashWithdrawalRepository>()
     private val subunitRepository = mockk<SubunitRepository>()
+    private val cashTransferRepository = mockk<CashTransferRepository>()
     private val getMemberBalancesFlowUseCase = mockk<GetMemberBalancesFlowUseCase>()
     private val useCase = GetSettlementSuggestionsUseCaseImpl(
         debtSimplificationService = debtSimplificationService,
@@ -43,6 +45,7 @@ class GetSettlementSuggestionsUseCaseImplTest {
         contributionRepository = contributionRepository,
         cashWithdrawalRepository = cashWithdrawalRepository,
         subunitRepository = subunitRepository,
+        cashTransferRepository = cashTransferRepository,
         getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase
     )
 
@@ -62,6 +65,7 @@ class GetSettlementSuggestionsUseCaseImplTest {
         every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
         every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
         coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
+        every { cashTransferRepository.observeGroupCashTransfers(groupId) } returns flowOf(emptyList())
         coEvery {
             getMemberBalancesFlowUseCase.computeMemberBalances(any())
         } returns
@@ -397,6 +401,7 @@ class GetSettlementSuggestionsUseCaseImplTest {
         every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
         every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
         coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
+        every { cashTransferRepository.observeGroupCashTransfers(groupId) } returns flowOf(emptyList())
 
         val balances = listOf(
             MemberBalance(userId = "leaving-user", pocketBalance = 3000, cashInHand = 0), // Owed 30 EUR
@@ -443,6 +448,7 @@ class GetSettlementSuggestionsUseCaseImplTest {
         every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
         every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
         coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
+        every { cashTransferRepository.observeGroupCashTransfers(groupId) } returns flowOf(emptyList())
 
         val balances = listOf(
             MemberBalance(userId = "leaving-user", pocketBalance = -3000, cashInHand = 0), // Owes 30 EUR
@@ -489,6 +495,7 @@ class GetSettlementSuggestionsUseCaseImplTest {
         every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
         every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
         coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
+        every { cashTransferRepository.observeGroupCashTransfers(groupId) } returns flowOf(emptyList())
 
         val balances = listOf(
             MemberBalance(userId = "leaving-user", pocketBalance = 0, cashInHand = 0),
@@ -516,6 +523,7 @@ class GetSettlementSuggestionsUseCaseImplTest {
         every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
         every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
         coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
+        every { cashTransferRepository.observeGroupCashTransfers(groupId) } returns flowOf(emptyList())
 
         val balances = listOf(
             MemberBalance(userId = "member-2", pocketBalance = 1000, cashInHand = 0)
@@ -542,6 +550,7 @@ class GetSettlementSuggestionsUseCaseImplTest {
         every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
         every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
         coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
+        every { cashTransferRepository.observeGroupCashTransfers(groupId) } returns flowOf(emptyList())
 
         val balances = listOf(
             MemberBalance(userId = "leaving-user", pocketBalance = 1000, cashInHand = 0)
