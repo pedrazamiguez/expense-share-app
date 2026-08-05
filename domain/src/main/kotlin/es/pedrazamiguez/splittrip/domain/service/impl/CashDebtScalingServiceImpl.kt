@@ -16,98 +16,118 @@ class CashDebtScalingServiceImpl(
         val totalDebt = debtors.sumOf { -it.balance }
         val totalCredit = creditors.sumOf { it.balance }
 
-        if (totalDebt == 0L || totalCredit == 0L) {
+        if (totalDebt == 0L || totalCredit == 0L || totalDebt == totalCredit) {
             return nodes
         }
 
-        val assignedDebts = creditors.associate { it.userId to 0L }.toMutableMap()
-        var remainingDebtToDistribute = totalDebt
+        if (totalDebt > totalCredit) {
+            // Scale debtors down to match totalCredit
+            val scaledDebtors = scaleNodes(
+                nodesToScale = debtors,
+                targetTotal = totalCredit
+            ) { node, assigned -> node.copy(balance = -assigned) }
+            return creditors + scaledDebtors
+        } else {
+            // Scale creditors down to match totalDebt
+            val scaledCreditors = scaleNodes(
+                nodesToScale = creditors,
+                targetTotal = totalDebt
+            ) { node, assigned -> node.copy(balance = assigned) }
+            return debtors + scaledCreditors
+        }
+    }
 
-        while (remainingDebtToDistribute > 0L) {
-            val debtDistributedInThisRound = distributeRound(
-                remainingDebt = remainingDebtToDistribute,
-                creditors = creditors,
-                assignedDebts = assignedDebts
+    private fun scaleNodes(
+        nodesToScale: List<CashDebtNode>,
+        targetTotal: Long,
+        mapper: (CashDebtNode, Long) -> CashDebtNode
+    ): List<CashDebtNode> {
+        val assignedAmounts = nodesToScale.associate { it.userId to 0L }.toMutableMap()
+        var remainingToDistribute = targetTotal
+
+        while (remainingToDistribute > 0L) {
+            val distributedInThisRound = distributeRound(
+                remainingToDistribute = remainingToDistribute,
+                nodesToScale = nodesToScale,
+                assignedAmounts = assignedAmounts
             )
-            if (debtDistributedInThisRound == 0L) {
+            if (distributedInThisRound == 0L) {
                 break
             }
-            remainingDebtToDistribute -= debtDistributedInThisRound
+            remainingToDistribute -= distributedInThisRound
         }
 
-        val scaledCreditors = creditors.map {
-            it.copy(balance = assignedDebts[it.userId] ?: 0L)
+        return nodesToScale.map {
+            mapper(it, assignedAmounts[it.userId] ?: 0L)
         }
-
-        return debtors + scaledCreditors
     }
 
     private fun distributeRound(
-        remainingDebt: Long,
-        creditors: List<CashDebtNode>,
-        assignedDebts: MutableMap<String, Long>
+        remainingToDistribute: Long,
+        nodesToScale: List<CashDebtNode>,
+        assignedAmounts: MutableMap<String, Long>
     ): Long {
-        val activeCreditors = creditors.filter {
-            val assigned = assignedDebts[it.userId] ?: 0L
-            assigned < it.balance
+        val activeNodes = nodesToScale.filter {
+            val assigned = assignedAmounts[it.userId] ?: 0L
+            assigned < Math.abs(it.balance)
         }
 
-        if (activeCreditors.isEmpty()) return 0L
+        if (activeNodes.isEmpty()) return 0L
 
-        val activeWeights = activeCreditors.map { BigDecimal(it.weight) }
+        val activeWeights = activeNodes.map { BigDecimal(it.weight) }
         val activeSum = activeWeights.fold(BigDecimal.ZERO, BigDecimal::add)
 
         return if (activeSum.compareTo(BigDecimal.ZERO) == 0) {
-            distributeEqually(remainingDebt, activeCreditors, assignedDebts)
+            distributeEqually(remainingToDistribute, activeNodes, assignedAmounts)
         } else {
-            distributeProportionally(remainingDebt, activeCreditors, assignedDebts, activeWeights)
+            distributeProportionally(remainingToDistribute, activeNodes, assignedAmounts, activeWeights)
         }
     }
 
     private fun distributeEqually(
-        remainingDebt: Long,
-        activeCreditors: List<CashDebtNode>,
-        assignedDebts: MutableMap<String, Long>
+        remainingToDistribute: Long,
+        activeNodes: List<CashDebtNode>,
+        assignedAmounts: MutableMap<String, Long>
     ): Long {
-        val share = remainingDebt / activeCreditors.size
-        var remainder = remainingDebt % activeCreditors.size
+        val share = remainingToDistribute / activeNodes.size
+        var remainder = remainingToDistribute % activeNodes.size
         var distributed = 0L
 
-        for (creditor in activeCreditors) {
-            val assigned = assignedDebts[creditor.userId] ?: 0L
+        for (node in activeNodes) {
+            val assigned = assignedAmounts[node.userId] ?: 0L
             var amountToAdd = share + if (remainder > 0) 1 else 0
             if (remainder > 0) remainder--
 
-            val maxToAdd = creditor.balance - assigned
+            val maxToAdd = Math.abs(node.balance) - assigned
             if (amountToAdd > maxToAdd) {
                 amountToAdd = maxToAdd
             }
 
-            assignedDebts[creditor.userId] = assigned + amountToAdd
+            assignedAmounts[node.userId] = assigned + amountToAdd
             distributed += amountToAdd
         }
         return distributed
     }
 
     private fun distributeProportionally(
-        remainingDebt: Long,
-        activeCreditors: List<CashDebtNode>,
-        assignedDebts: MutableMap<String, Long>,
+        remainingToDistribute: Long,
+        activeNodes: List<CashDebtNode>,
+        assignedAmounts: MutableMap<String, Long>,
         activeWeights: List<BigDecimal>
     ): Long {
         val proposedDistribution = remainderDistributionService.distributeByWeights(
-            total = remainingDebt,
+            total = remainingToDistribute,
             weights = activeWeights
         )
         var distributed = 0L
 
-        activeCreditors.forEachIndexed { index, creditor ->
+        activeNodes.forEachIndexed { index, node ->
             val proposedAmount = proposedDistribution[index]
             if (proposedAmount > 0) {
-                val assigned = assignedDebts[creditor.userId] ?: 0L
-                val maxToAdd = creditor.balance - assigned
+                val assigned = assignedAmounts[node.userId] ?: 0L
+                val maxToAdd = Math.abs(node.balance) - assigned
                 val amountToAdd = if (proposedAmount > maxToAdd) maxToAdd else proposedAmount
-                assignedDebts[creditor.userId] = assigned + amountToAdd
+                assignedAmounts[node.userId] = assigned + amountToAdd
                 distributed += amountToAdd
             }
         }

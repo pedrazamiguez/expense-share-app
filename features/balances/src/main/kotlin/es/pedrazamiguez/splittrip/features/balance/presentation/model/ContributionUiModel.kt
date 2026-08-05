@@ -20,6 +20,8 @@ data class ContributionUiModel(
     val memberDisplay: MemberDisplay = MemberDisplay.Active("", ""),
     val isCurrentUser: Boolean = false,
     val formattedAmount: String = "",
+    val formattedEquivalentAmount: String = "",
+    val isForeignCurrency: Boolean = false,
     val dateText: String = "",
     val scopeLabel: String? = null,
     val isSubunitContribution: Boolean = false,

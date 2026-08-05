@@ -268,7 +268,7 @@ class DebtSimplificationServiceImplTest {
         }
 
         @Test
-        fun `group cash pool overspending generates CASH settlement from overspender to creditor`() {
+        fun `group cash pool overspending generates CASH settlement from cash holder to overspender`() {
             val balances = listOf(
                 MemberBalance(userId = "Andres", withdrawn = 500, cashSpent = 800),
                 MemberBalance(userId = "Antonio", withdrawn = 500, cashSpent = 0)

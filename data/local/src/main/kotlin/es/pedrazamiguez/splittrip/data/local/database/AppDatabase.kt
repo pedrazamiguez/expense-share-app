@@ -9,6 +9,7 @@ import es.pedrazamiguez.splittrip.data.local.converter.BigDecimalConverter
 import es.pedrazamiguez.splittrip.data.local.converter.CashTrancheListConverter
 import es.pedrazamiguez.splittrip.data.local.converter.StringBigDecimalMapConverter
 import es.pedrazamiguez.splittrip.data.local.converter.StringListConverter
+import es.pedrazamiguez.splittrip.data.local.dao.CashTransferDao
 import es.pedrazamiguez.splittrip.data.local.dao.CashWithdrawalDao
 import es.pedrazamiguez.splittrip.data.local.dao.ContributionDao
 import es.pedrazamiguez.splittrip.data.local.dao.CurrencyDao
@@ -20,6 +21,7 @@ import es.pedrazamiguez.splittrip.data.local.dao.MembershipRemovalEventDao
 import es.pedrazamiguez.splittrip.data.local.dao.SettlementRecordDao
 import es.pedrazamiguez.splittrip.data.local.dao.SubunitDao
 import es.pedrazamiguez.splittrip.data.local.dao.UserDao
+import es.pedrazamiguez.splittrip.data.local.entity.CashTransferEntity
 import es.pedrazamiguez.splittrip.data.local.entity.CashWithdrawalEntity
 import es.pedrazamiguez.splittrip.data.local.entity.ContributionEntity
 import es.pedrazamiguez.splittrip.data.local.entity.CurrencyEntity
@@ -41,19 +43,21 @@ import es.pedrazamiguez.splittrip.data.local.entity.UserEntity
         ExpenseSplitEntity::class,
         ContributionEntity::class,
         CashWithdrawalEntity::class,
+        CashTransferEntity::class,
         UserEntity::class,
         SubunitEntity::class,
         SettlementRecordEntity::class,
         MembershipRemovalEventEntity::class
     ],
-    version = 38,
+    version = 40,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 33, to = 34),
         AutoMigration(from = 34, to = 35),
         AutoMigration(from = 35, to = 36),
         AutoMigration(from = 36, to = 37),
-        AutoMigration(from = 37, to = 38)
+        AutoMigration(from = 37, to = 38),
+        AutoMigration(from = 39, to = 40)
     ]
 )
 @TypeConverters(
@@ -71,6 +75,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun expenseSplitDao(): ExpenseSplitDao
     abstract fun contributionDao(): ContributionDao
     abstract fun cashWithdrawalDao(): CashWithdrawalDao
+    abstract fun cashTransferDao(): CashTransferDao
     abstract fun userDao(): UserDao
     abstract fun subunitDao(): SubunitDao
     abstract fun settlementRecordDao(): SettlementRecordDao

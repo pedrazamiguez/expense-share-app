@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.domain.model
 
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 data class Contribution(
@@ -15,6 +16,8 @@ data class Contribution(
     val currency: String = "EUR",
     val linkedExpenseId: String? = null,
     val linkedSettlementId: String? = null,
+    val equivalentBaseAmount: Long? = null,
+    val exchangeRate: BigDecimal? = null,
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null,
     val syncStatus: SyncStatus = SyncStatus.SYNCED

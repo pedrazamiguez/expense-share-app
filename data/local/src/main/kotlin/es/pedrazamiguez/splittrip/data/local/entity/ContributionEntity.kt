@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -30,9 +31,14 @@ data class ContributionEntity(
     val contributionScope: String = "USER",
     val subunitId: String? = null,
     val linkedExpenseId: String? = null,
+    @ColumnInfo(defaultValue = "null")
     val linkedSettlementId: String? = null,
     val amount: Long,
     val currency: String,
+    @ColumnInfo(defaultValue = "null")
+    val equivalentBaseAmount: Long? = null,
+    @ColumnInfo(defaultValue = "null")
+    val exchangeRate: String? = null,
     val createdAtMillis: Long?,
     val lastUpdatedAtMillis: Long?,
     val syncStatus: String = "SYNCED"
