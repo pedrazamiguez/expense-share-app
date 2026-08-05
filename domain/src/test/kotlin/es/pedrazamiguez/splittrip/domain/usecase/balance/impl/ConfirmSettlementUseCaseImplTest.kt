@@ -1,13 +1,11 @@
 package es.pedrazamiguez.splittrip.domain.usecase.balance.impl
 
 import es.pedrazamiguez.splittrip.domain.datasource.GroupDashboardDataSource
-import es.pedrazamiguez.splittrip.domain.model.CashTransfer
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
-import es.pedrazamiguez.splittrip.domain.repository.CashTransferRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
 import es.pedrazamiguez.splittrip.domain.repository.SettlementRepository
@@ -31,7 +29,6 @@ class ConfirmSettlementUseCaseImplTest {
     private val authenticationService = mockk<AuthenticationService>()
     private val groupRepository = mockk<GroupRepository>()
     private val contributionRepository = mockk<ContributionRepository>()
-    private val cashTransferRepository = mockk<CashTransferRepository>()
     private val groupDashboardDataSource = mockk<GroupDashboardDataSource>()
     private val getMemberBalancesFlowUseCase = mockk<GetMemberBalancesFlowUseCase>()
     private lateinit var useCase: ConfirmSettlementUseCaseImpl
@@ -58,14 +55,12 @@ class ConfirmSettlementUseCaseImplTest {
     @BeforeEach
     fun setUp() {
         coEvery { contributionRepository.addContribution(any(), any()) } returns Unit
-        coEvery { cashTransferRepository.addTransfer(any()) } returns Result.success(Unit)
         coEvery { groupRepository.getGroupById(any()) } returns baseGroup
         useCase = ConfirmSettlementUseCaseImpl(
             settlementRepository = settlementRepository,
             authenticationService = authenticationService,
             groupRepository = groupRepository,
             contributionRepository = contributionRepository,
-            cashTransferRepository = cashTransferRepository,
             groupDashboardDataSource = groupDashboardDataSource,
             getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase
         )
@@ -572,7 +567,7 @@ class ConfirmSettlementUseCaseImplTest {
     }
 
     @Test
-    fun `resolving CASH settlement persists CashTransfer event and skips contribution`() = runTest {
+    fun `resolving CASH settlement throws exception and skips contribution`() = runTest {
         every { authenticationService.requireUserId() } returns payeeId
         val cashSettlement = baseSettlement.copy(sourcePocket = SettlementPocketType.CASH)
         val record = SettlementRecord(
@@ -588,23 +583,8 @@ class ConfirmSettlementUseCaseImplTest {
 
         val result = useCase(groupId, settlementId)
 
-        assertTrue(result.isSuccess)
-        assertEquals(SettlementStatus.RESOLVED, result.getOrThrow().status)
-        // A CashTransfer event must be persisted so the reconciliation service
-        // can zero-sum the cash debt in subsequent balance recalculations.
-        coVerify(exactly = 1) {
-            cashTransferRepository.addTransfer(
-                match { transfer: CashTransfer ->
-                    transfer.groupId == groupId &&
-                        transfer.fromUserId == payerId &&
-                        transfer.toUserId == payeeId &&
-                        transfer.amountCents == 1000L &&
-                        transfer.currency == "EUR"
-                }
-            )
-        }
-        // Cash transfers do NOT create a paired Contribution — the payer is
-        // handing over existing physical group cash, not introducing new funds.
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is UnsupportedOperationException)
         coVerify(exactly = 0) { contributionRepository.addContribution(any(), any()) }
     }
 }

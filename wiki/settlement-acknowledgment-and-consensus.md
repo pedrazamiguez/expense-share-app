@@ -110,8 +110,11 @@ stateDiagram-v2
 | Pocket Type | `SUGGESTED` Payer Confirmation | `CONFIRMED_BY_PAYER` Payee Confirmation | Dispute Handling |
 |---|---|---|---|
 | **`POCKET`** | Mandatory | Mandatory | Allowed by either party until `RESOLVED`. |
-| **`CASH`** | Mandatory / Optional direct | Mandatory | Allowed by either party until `RESOLVED`. |
+| **`CASH`** | **N/A (Read-Only)** | **N/A (Read-Only)** | **N/A (Read-Only)** |
 | **`NET`** | Mandatory | Mandatory | Allowed by either party until `RESOLVED`. |
+
+> [!NOTE]
+> `CASH` settlements are strictly informational (read-only) in the UI. Physical cash cannot be enforced by a digital state machine without creating vicious fractional debt feedback loops. Physical cash discrepancies naturally resolve when members log real expenses from the cash pocket.
 
 ---
 

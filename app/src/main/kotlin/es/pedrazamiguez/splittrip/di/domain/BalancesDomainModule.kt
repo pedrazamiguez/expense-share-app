@@ -145,7 +145,6 @@ val balancesDomainModule = module {
             authenticationService = get<AuthenticationService>(),
             groupRepository = get<GroupRepository>(),
             contributionRepository = get<ContributionRepository>(),
-            cashTransferRepository = get<CashTransferRepository>(),
             groupDashboardDataSource = get<GroupDashboardDataSource>(),
             getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
         )

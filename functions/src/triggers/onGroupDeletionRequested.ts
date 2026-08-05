@@ -107,7 +107,7 @@ export const onGroupDeletionRequested = onDocumentUpdated(
       // 2. Delete all other subcollections in parallel.
       // These deletions won't cause notification spam because the existing triggers
       // check groupData.deletionRequested and skip notifications when true.
-      const [expensesDeleted, contributionsDeleted, withdrawalsDeleted, subunitsDeleted, settlementsDeleted, nudgesDeleted] =
+      const [expensesDeleted, contributionsDeleted, withdrawalsDeleted, subunitsDeleted, settlementsDeleted, nudgesDeleted, cashTransfersDeleted] =
         await Promise.all([
           deleteSubcollection(`groups/${groupId}/expenses`),
           deleteSubcollection(`groups/${groupId}/contributions`),
@@ -115,6 +115,7 @@ export const onGroupDeletionRequested = onDocumentUpdated(
           deleteSubcollection(`groups/${groupId}/subunits`),
           deleteSubcollection(`groups/${groupId}/settlements`),
           deleteSubcollection(`groups/${groupId}/nudges`),
+          deleteSubcollection(`groups/${groupId}/cash_transfers`),
         ]);
 
       logger.info("Deleted all subcollections", {
@@ -125,6 +126,7 @@ export const onGroupDeletionRequested = onDocumentUpdated(
         subunits: subunitsDeleted,
         settlements: settlementsDeleted,
         nudges: nudgesDeleted,
+        cashTransfers: cashTransfersDeleted,
       });
 
       // 3. Send a single GROUP_DELETED notification to all former members (except deleter).
@@ -188,6 +190,7 @@ export const onGroupDeletionRequested = onDocumentUpdated(
         subunits: subunitsDeleted,
         settlements: settlementsDeleted,
         nudges: nudgesDeleted,
+        cashTransfers: cashTransfersDeleted,
       });
     } catch (err) {
       logger.error("Cascading group deletion failed", { groupId, err });

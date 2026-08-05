@@ -86,12 +86,13 @@ class SettlementConsensusUiMapper(
             locale = localeProvider.getCurrentLocale()
         )
 
-        val statusDetails = resolveStatusDetails(primaryRecord.status)
+        val isCash = primaryRecord.settlement.sourcePocket == SettlementPocketType.CASH
         val actions = resolveActionCapabilities(
             status = primaryRecord.status,
             isCurrentUserPayer = isCurrentUserPayer,
             isPayee = primaryRecord.settlement.toUserId == currentUserId,
-            isGroupCreator = currentUserId == groupCreatorId
+            isGroupCreator = currentUserId == groupCreatorId,
+            isCash = isCash
         )
 
         val isCreditor = primaryRecord.settlement.toUserId == currentUserId
@@ -99,8 +100,11 @@ class SettlementConsensusUiMapper(
             records = records,
             nudgeTimestamps = nudgeTimestamps,
             rateLimitHours = rateLimitHours,
-            currentTimeMillis = currentTimeMillis
+            currentTimeMillis = currentTimeMillis,
+            isCash = isCash
         )
+
+        val statusDetails = resolveStatusDetails(primaryRecord.status)
 
         return SettlementConsensusItemUiModel(
             settlementId = records.joinToString(",") { it.id },
@@ -117,7 +121,7 @@ class SettlementConsensusUiMapper(
             canDispute = actions.canDispute,
             disputeReason = primaryRecord.disputeReason,
             status = primaryRecord.status,
-            canNudge = isCreditor,
+            canNudge = isCreditor && !isCash,
             isNudgeRateLimited = nudgeInfo.first,
             nudgeButtonLabel = nudgeInfo.second
         )
@@ -166,15 +170,18 @@ class SettlementConsensusUiMapper(
         records: List<SettlementRecord>,
         nudgeTimestamps: Map<String, Long>,
         rateLimitHours: Long,
-        currentTimeMillis: Long
+        currentTimeMillis: Long,
+        isCash: Boolean
     ): Pair<Boolean, String> {
         val lastNudgeTs = records.maxOfOrNull { nudgeTimestamps[it.id] ?: 0L } ?: 0L
         val rateLimitMillis = rateLimitHours * MILLIS_PER_HOUR
-        val isNudgeRateLimited = lastNudgeTs > 0 && (currentTimeMillis - lastNudgeTs) < rateLimitMillis
-        val nudgeButtonLabel = if (isNudgeRateLimited) {
+        val isNudgeRateLimited = isCash || (lastNudgeTs > 0 && (currentTimeMillis - lastNudgeTs) < rateLimitMillis)
+        val nudgeButtonLabel = if (isNudgeRateLimited && !isCash) {
             resourceProvider.getString(R.string.your_position_settlement_reminded)
-        } else {
+        } else if (!isCash) {
             resourceProvider.getString(R.string.your_position_settlement_remind)
+        } else {
+            ""
         }
         return Pair(isNudgeRateLimited, nudgeButtonLabel)
     }
@@ -205,36 +212,43 @@ class SettlementConsensusUiMapper(
         status: SettlementStatus,
         isCurrentUserPayer: Boolean,
         isPayee: Boolean,
-        isGroupCreator: Boolean
-    ): ActionCapabilities = when (status) {
-        SettlementStatus.SUGGESTED -> ActionCapabilities(
-            canConfirm = isCurrentUserPayer,
-            confirmLabel = if (isCurrentUserPayer) {
-                resourceProvider.getString(R.string.your_position_settlement_mark_paid)
-            } else {
-                ""
-            },
-            canDispute = true
-        )
-        SettlementStatus.CONFIRMED_BY_PAYER -> ActionCapabilities(
-            canConfirm = isPayee,
-            confirmLabel = if (isPayee) {
-                resourceProvider.getString(R.string.your_position_settlement_confirm_receipt)
-            } else {
-                ""
-            },
-            canDispute = isPayee
-        )
-        SettlementStatus.DISPUTED -> ActionCapabilities(
-            canConfirm = isPayee || isGroupCreator,
-            confirmLabel = if (isPayee || isGroupCreator) {
-                resourceProvider.getString(R.string.your_position_settlement_resolve_dispute)
-            } else {
-                ""
-            },
-            canDispute = false
-        )
-        SettlementStatus.RESOLVED -> ActionCapabilities(canConfirm = false, confirmLabel = "", canDispute = false)
+        isGroupCreator: Boolean,
+        isCash: Boolean
+    ): ActionCapabilities {
+        if (isCash || status == SettlementStatus.RESOLVED) {
+            return ActionCapabilities(canConfirm = false, confirmLabel = "", canDispute = false)
+        }
+
+        return when (status) {
+            SettlementStatus.SUGGESTED -> ActionCapabilities(
+                canConfirm = isCurrentUserPayer,
+                confirmLabel = if (isCurrentUserPayer) {
+                    resourceProvider.getString(R.string.your_position_settlement_mark_paid)
+                } else {
+                    ""
+                },
+                canDispute = true
+            )
+            SettlementStatus.CONFIRMED_BY_PAYER -> ActionCapabilities(
+                canConfirm = isPayee,
+                confirmLabel = if (isPayee) {
+                    resourceProvider.getString(R.string.your_position_settlement_confirm_receipt)
+                } else {
+                    ""
+                },
+                canDispute = isPayee
+            )
+            SettlementStatus.DISPUTED -> ActionCapabilities(
+                canConfirm = isPayee || isGroupCreator,
+                confirmLabel = if (isPayee || isGroupCreator) {
+                    resourceProvider.getString(R.string.your_position_settlement_resolve_dispute)
+                } else {
+                    ""
+                },
+                canDispute = false
+            )
+            else -> ActionCapabilities(canConfirm = false, confirmLabel = "", canDispute = false)
+        }
     }
 
     private data class StatusDetails(val label: String, val style: ConsensusChipStyle)
