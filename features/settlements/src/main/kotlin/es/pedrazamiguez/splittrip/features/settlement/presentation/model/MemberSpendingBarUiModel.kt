@@ -8,6 +8,7 @@ data class MemberSpendingBarUiModel(
     val isCurrentUser: Boolean,
     val totalCashCents: Long,
     val formattedTotalCash: String,
+    val formattedTotalSpent: String,
     val ownSpendingCents: Long,
     val spilloverSegments: ImmutableList<SpilloverSegment>,
     val memberColorIndex: Int

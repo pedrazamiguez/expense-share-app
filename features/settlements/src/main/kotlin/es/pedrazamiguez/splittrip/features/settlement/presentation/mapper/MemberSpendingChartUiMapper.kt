@@ -68,6 +68,11 @@ class MemberSpendingChartUiMapper(
                     currencyCode = groupCurrencyCode,
                     locale = localeProvider.getCurrentLocale()
                 ),
+                formattedTotalSpent = formatCurrencyAmount(
+                    amount = if (cashOnly) balance.cashSpent else balance.totalSpent,
+                    currencyCode = groupCurrencyCode,
+                    locale = localeProvider.getCurrentLocale()
+                ),
                 ownSpendingCents = ownSpends[index] ?: 0L,
                 spilloverSegments = (spilloverAllocations[index] ?: emptyList()).toImmutableList(),
                 memberColorIndex = index

@@ -26,6 +26,7 @@ private fun MemberSpendingBarChartPreview() {
                         isCurrentUser = true,
                         totalCashCents = 166666L,
                         formattedTotalCash = "€1,666.66",
+                        formattedTotalSpent = "€3,000.00",
                         ownSpendingCents = 166666L,
                         spilloverSegments = persistentListOf(),
                         memberColorIndex = 0
@@ -36,6 +37,7 @@ private fun MemberSpendingBarChartPreview() {
                         isCurrentUser = false,
                         totalCashCents = 166666L,
                         formattedTotalCash = "€1,666.66",
+                        formattedTotalSpent = "€200.00",
                         ownSpendingCents = 20000L,
                         spilloverSegments = persistentListOf(
                             SpilloverSegment(ownerColorIndex = 0, amountCents = 66667L)
@@ -48,6 +50,7 @@ private fun MemberSpendingBarChartPreview() {
                         isCurrentUser = false,
                         totalCashCents = 166666L,
                         formattedTotalCash = "€1,666.66",
+                        formattedTotalSpent = "€0.00",
                         ownSpendingCents = 0L,
                         spilloverSegments = persistentListOf(
                             SpilloverSegment(ownerColorIndex = 0, amountCents = 66667L)

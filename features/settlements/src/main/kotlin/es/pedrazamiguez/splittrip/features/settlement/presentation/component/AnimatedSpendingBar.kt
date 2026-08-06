@@ -19,7 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.MemberSpendingBarUiModel
 
 val MemberSpendingColors = listOf(
@@ -55,8 +55,8 @@ internal fun AnimatedSpendingBar(
     Canvas(
         modifier = modifier
             .fillMaxWidth()
-            .height(12.dp)
-            .clip(RoundedCornerShape(6.dp))
+            .height(MaterialTheme.spacing.Medium)
+            .clip(RoundedCornerShape(percent = 50))
     ) {
         val totalWidth = size.width
         val barHeight = size.height
