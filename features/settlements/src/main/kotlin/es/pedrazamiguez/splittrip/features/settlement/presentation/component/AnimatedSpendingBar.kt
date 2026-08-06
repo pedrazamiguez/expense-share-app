@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,8 +20,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.MemberSpendingBarUiModel
+import es.pedrazamiguez.splittrip.features.settlement.presentation.model.SpilloverSegment
 
 val MemberSpendingColors = listOf(
     Color(0xFF3A7BD5), // Horizon Blue tint
@@ -50,6 +53,30 @@ internal fun AnimatedSpendingBar(
         label = "spending_bar_progress"
     )
 
+    val animatedGlobalMaxCents by animateFloatAsState(
+        targetValue = globalMaxCents.toFloat(),
+        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        label = "global_max_cents"
+    )
+
+    val animatedOwnSpendingCents by animateFloatAsState(
+        targetValue = bar.ownSpendingCents.toFloat(),
+        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        label = "own_spending_cents"
+    )
+
+    val segmentAmounts = remember(bar.spilloverSegments) {
+        calculateSegmentAmounts(bar.spilloverSegments)
+    }
+
+    val animatedSegments = MemberSpendingColors.indices.map { idx ->
+        animateFloatAsState(
+            targetValue = segmentAmounts[idx],
+            animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+            label = "segment_amount_$idx"
+        )
+    }
+
     val surfaceHighest = MaterialTheme.colorScheme.surfaceContainerHighest
 
     Canvas(
@@ -58,38 +85,59 @@ internal fun AnimatedSpendingBar(
             .height(MaterialTheme.spacing.Medium)
             .clip(RoundedCornerShape(percent = 50))
     ) {
-        val totalWidth = size.width
-        val barHeight = size.height
-
-        drawRect(
-            color = surfaceHighest,
-            size = Size(totalWidth, barHeight)
+        drawSpendingBar(
+            surfaceColor = surfaceHighest,
+            progress = progress,
+            globalMax = animatedGlobalMaxCents,
+            ownSpending = animatedOwnSpendingCents,
+            ownColorIndex = bar.memberColorIndex,
+            animatedSegments = animatedSegments
         )
+    }
+}
 
-        if (globalMaxCents <= 0 || progress <= 0f) return@Canvas
+private fun calculateSegmentAmounts(segments: List<SpilloverSegment>): FloatArray {
+    val amounts = FloatArray(MemberSpendingColors.size)
+    segments.forEach { segment ->
+        val colorIdx = segment.ownerColorIndex % MemberSpendingColors.size
+        amounts[colorIdx] += segment.amountCents.toFloat()
+    }
+    return amounts
+}
 
-        var currentX = 0f
+private fun DrawScope.drawSpendingBar(
+    surfaceColor: Color,
+    progress: Float,
+    globalMax: Float,
+    ownSpending: Float,
+    ownColorIndex: Int,
+    animatedSegments: List<State<Float>>
+) {
+    val totalWidth = size.width
+    val barHeight = size.height
 
-        val ownFraction = (bar.ownSpendingCents.toFloat() / globalMaxCents.toFloat()) * progress
-        val ownWidth = ownFraction * totalWidth
+    drawRect(color = surfaceColor, size = Size(totalWidth, barHeight))
 
-        if (ownWidth > 0f) {
-            val ownColor = MemberSpendingColors[bar.memberColorIndex % MemberSpendingColors.size]
-            drawRect(
-                color = ownColor,
-                topLeft = Offset(currentX, 0f),
-                size = Size(ownWidth, barHeight)
-            )
-            currentX += ownWidth
-        }
+    if (globalMax <= 0f || progress <= 0f) return
 
-        bar.spilloverSegments.forEach { segment ->
-            val segmentFraction = (segment.amountCents.toFloat() / globalMaxCents.toFloat()) * progress
+    var currentX = 0f
+    val ownFraction = (ownSpending / globalMax) * progress
+    val ownWidth = ownFraction * totalWidth
+
+    if (ownWidth > 0f) {
+        val ownColor = MemberSpendingColors[ownColorIndex % MemberSpendingColors.size]
+        drawRect(color = ownColor, topLeft = Offset(currentX, 0f), size = Size(ownWidth, barHeight))
+        currentX += ownWidth
+    }
+
+    MemberSpendingColors.indices.forEach { colorIdx ->
+        val segmentAmount = animatedSegments[colorIdx].value
+        if (segmentAmount > 0f) {
+            val segmentFraction = (segmentAmount / globalMax) * progress
             val segmentWidth = segmentFraction * totalWidth
             if (segmentWidth > 0f) {
-                val color = MemberSpendingColors[segment.ownerColorIndex % MemberSpendingColors.size]
                 drawRect(
-                    color = color,
+                    color = MemberSpendingColors[colorIdx],
                     topLeft = Offset(currentX, 0f),
                     size = Size(segmentWidth, barHeight)
                 )

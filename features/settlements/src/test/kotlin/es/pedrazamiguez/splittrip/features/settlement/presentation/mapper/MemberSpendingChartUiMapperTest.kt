@@ -110,7 +110,7 @@ class MemberSpendingChartUiMapperTest {
     @Test
     fun `toChartUiModel - cash mode vs all expenses mode`() {
         val balances = listOf(
-            MemberBalance(userId = "1", withdrawn = 1000L, cashSpent = 100L, totalSpent = 200L)
+            MemberBalance(userId = "1", contributed = 1000L, withdrawn = 1000L, cashSpent = 100L, totalSpent = 200L)
         )
 
         val cashResult = mapper.toChartUiModel(
@@ -187,7 +187,7 @@ class MemberSpendingChartUiMapperTest {
             groupCurrencyCode = "EUR"
         )
 
-        assertEquals(0L, result.bars[0].totalCashCents)
+        assertEquals(0L, result.bars[0].allowanceCents)
         assertEquals(0L, result.bars[0].ownSpendingCents)
         assertTrue(result.bars[0].spilloverSegments.isEmpty())
     }

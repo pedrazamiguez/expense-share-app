@@ -53,7 +53,7 @@ internal fun MemberSpendingBarChart(
                 )
             }
 
-            val globalMax = chart.bars.maxOfOrNull { it.totalCashCents } ?: 0L
+            val globalMax = chart.bars.maxOfOrNull { it.allowanceCents } ?: 0L
 
             chart.bars.forEach { bar ->
                 MemberSpendingBarRow(

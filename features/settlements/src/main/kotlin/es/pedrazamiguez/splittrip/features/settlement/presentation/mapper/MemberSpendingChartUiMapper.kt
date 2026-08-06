@@ -32,24 +32,24 @@ class MemberSpendingChartUiMapper(
         val capacities = mutableListOf<Pair<Int, Long>>()
         val overspenders = mutableListOf<Pair<Int, Long>>()
         val ownSpends = mutableMapOf<Int, Long>()
-        val totalCashes = mutableMapOf<Int, Long>()
+        val allowances = mutableMapOf<Int, Long>()
 
-        var totalWithdrawn = 0L
+        var totalAllowance = 0L
 
         sortedMembers.forEachIndexed { index, balance ->
-            val totalCashCents = balance.withdrawn
+            val allowanceCents = if (cashOnly) balance.withdrawn else balance.contributed
             val spendingCents = if (cashOnly) balance.cashSpent else balance.totalSpent
-            val ownSpendingCents = minOf(spendingCents, totalCashCents)
-            val overspentCents = maxOf(0L, spendingCents - totalCashCents)
+            val ownSpendingCents = minOf(spendingCents, allowanceCents)
+            val overspentCents = maxOf(0L, spendingCents - allowanceCents)
 
-            totalCashes[index] = totalCashCents
+            allowances[index] = allowanceCents
             ownSpends[index] = ownSpendingCents
-            totalWithdrawn += totalCashCents
+            totalAllowance += allowanceCents
 
             if (overspentCents > 0) {
                 overspenders.add(index to overspentCents)
             }
-            val available = totalCashCents - ownSpendingCents
+            val available = allowanceCents - ownSpendingCents
             if (available > 0) {
                 capacities.add(index to available)
             }
@@ -62,9 +62,9 @@ class MemberSpendingChartUiMapper(
                 userId = balance.userId,
                 displayName = resolveDisplayName(balance.userId, memberProfiles, currentUserId),
                 isCurrentUser = balance.userId == currentUserId,
-                totalCashCents = totalCashes[index] ?: 0L,
-                formattedTotalCash = formatCurrencyAmount(
-                    amount = totalCashes[index] ?: 0L,
+                allowanceCents = allowances[index] ?: 0L,
+                formattedAllowance = formatCurrencyAmount(
+                    amount = allowances[index] ?: 0L,
                     currencyCode = groupCurrencyCode,
                     locale = localeProvider.getCurrentLocale()
                 ),
@@ -82,7 +82,7 @@ class MemberSpendingChartUiMapper(
         return MemberSpendingChartUiModel(
             bars = bars,
             formattedGroupTotal = formatCurrencyAmount(
-                amount = totalWithdrawn,
+                amount = totalAllowance,
                 currencyCode = groupCurrencyCode,
                 locale = localeProvider.getCurrentLocale()
             ),

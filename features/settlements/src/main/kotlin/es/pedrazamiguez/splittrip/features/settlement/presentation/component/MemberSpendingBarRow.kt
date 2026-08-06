@@ -48,7 +48,7 @@ internal fun MemberSpendingBarRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             CaptionText(text = bar.formattedTotalSpent)
-            CaptionText(text = bar.formattedTotalCash)
+            CaptionText(text = bar.formattedAllowance)
         }
 
         AnimatedSpendingBar(
