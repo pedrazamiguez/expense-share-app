@@ -1,8 +1,8 @@
 package es.pedrazamiguez.splittrip.features.settlement.presentation.component
 
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -47,33 +47,38 @@ internal fun AnimatedSpendingBar(
         isAnimated = true
     }
 
-    val progress by animateFloatAsState(
-        targetValue = if (isAnimated) 1f else 0f,
-        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
-        label = "spending_bar_progress"
-    )
-
-    val animatedGlobalMaxCents by animateFloatAsState(
-        targetValue = globalMaxCents.toFloat(),
-        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
-        label = "global_max_cents"
-    )
-
-    val animatedOwnSpendingCents by animateFloatAsState(
-        targetValue = bar.ownSpendingCents.toFloat(),
-        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
-        label = "own_spending_cents"
-    )
-
     val segmentAmounts = remember(bar.spilloverSegments) {
         calculateSegmentAmounts(bar.spilloverSegments)
     }
 
-    val animatedSegments = MemberSpendingColors.indices.map { idx ->
+    val targetOwnFraction = if (isAnimated && globalMaxCents > 0) {
+        (bar.ownSpendingCents.toFloat() / globalMaxCents.toFloat()).coerceAtLeast(0f)
+    } else {
+        0f
+    }
+
+    val bouncySpringSpec = spring<Float>(
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = Spring.StiffnessMediumLow
+    )
+
+    val animatedOwnFraction by animateFloatAsState(
+        targetValue = targetOwnFraction,
+        animationSpec = bouncySpringSpec,
+        label = "own_fraction"
+    )
+
+    val animatedSegmentFractions = MemberSpendingColors.indices.map { idx ->
+        val targetFraction = if (isAnimated && globalMaxCents > 0) {
+            (segmentAmounts[idx] / globalMaxCents.toFloat()).coerceAtLeast(0f)
+        } else {
+            0f
+        }
+
         animateFloatAsState(
-            targetValue = segmentAmounts[idx],
-            animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
-            label = "segment_amount_$idx"
+            targetValue = targetFraction,
+            animationSpec = bouncySpringSpec,
+            label = "segment_fraction_$idx"
         )
     }
 
@@ -87,11 +92,9 @@ internal fun AnimatedSpendingBar(
     ) {
         drawSpendingBar(
             surfaceColor = surfaceHighest,
-            progress = progress,
-            globalMax = animatedGlobalMaxCents,
-            ownSpending = animatedOwnSpendingCents,
+            ownFraction = animatedOwnFraction.coerceAtLeast(0f),
             ownColorIndex = bar.memberColorIndex,
-            animatedSegments = animatedSegments
+            segmentFractions = animatedSegmentFractions
         )
     }
 }
@@ -107,21 +110,16 @@ private fun calculateSegmentAmounts(segments: List<SpilloverSegment>): FloatArra
 
 private fun DrawScope.drawSpendingBar(
     surfaceColor: Color,
-    progress: Float,
-    globalMax: Float,
-    ownSpending: Float,
+    ownFraction: Float,
     ownColorIndex: Int,
-    animatedSegments: List<State<Float>>
+    segmentFractions: List<State<Float>>
 ) {
     val totalWidth = size.width
     val barHeight = size.height
 
     drawRect(color = surfaceColor, size = Size(totalWidth, barHeight))
 
-    if (globalMax <= 0f || progress <= 0f) return
-
     var currentX = 0f
-    val ownFraction = (ownSpending / globalMax) * progress
     val ownWidth = ownFraction * totalWidth
 
     if (ownWidth > 0f) {
@@ -131,18 +129,15 @@ private fun DrawScope.drawSpendingBar(
     }
 
     MemberSpendingColors.indices.forEach { colorIdx ->
-        val segmentAmount = animatedSegments[colorIdx].value
-        if (segmentAmount > 0f) {
-            val segmentFraction = (segmentAmount / globalMax) * progress
-            val segmentWidth = segmentFraction * totalWidth
-            if (segmentWidth > 0f) {
-                drawRect(
-                    color = MemberSpendingColors[colorIdx],
-                    topLeft = Offset(currentX, 0f),
-                    size = Size(segmentWidth, barHeight)
-                )
-                currentX += segmentWidth
-            }
+        val segmentFraction = segmentFractions[colorIdx].value.coerceAtLeast(0f)
+        val segmentWidth = segmentFraction * totalWidth
+        if (segmentWidth > 0f) {
+            drawRect(
+                color = MemberSpendingColors[colorIdx],
+                topLeft = Offset(currentX, 0f),
+                size = Size(segmentWidth, barHeight)
+            )
+            currentX += segmentWidth
         }
     }
 }
