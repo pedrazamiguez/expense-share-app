@@ -242,7 +242,14 @@ class YourPositionViewModelTest {
         val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
         coEvery { getGroupByIdUseCase("group1") } returns group
         every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
+        val mockWithdrawal = es.pedrazamiguez.splittrip.domain.model.CashWithdrawal(
+            id = "w1",
+            groupId = "group1",
+            withdrawnBy = "user1",
+            amountWithdrawn = 1000L,
+            currency = "EUR"
+        )
+        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(listOf(mockWithdrawal))
         every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
         every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
         every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
@@ -254,6 +261,25 @@ class YourPositionViewModelTest {
         assertTrue(viewModel.uiState.value.isChartCashOnly)
 
         viewModel.onEvent(YourPositionUiEvent.ChartModeToggled(false))
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isChartCashOnly)
+    }
+
+    @Test
+    fun `initial state of isChartCashOnly is false when no withdrawals exist`() = runTest(testDispatcher) {
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
+        coEvery { getGroupByIdUseCase("group1") } returns group
+        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
+        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
+
+        viewModel.setSelectedGroup("group1")
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.isChartCashOnly)

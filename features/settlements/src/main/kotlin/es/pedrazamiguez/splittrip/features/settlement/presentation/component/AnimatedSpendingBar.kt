@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -119,25 +120,33 @@ private fun DrawScope.drawSpendingBar(
 
     drawRect(color = surfaceColor, size = Size(totalWidth, barHeight))
 
-    var currentX = 0f
-    val ownWidth = ownFraction * totalWidth
+    val pieces = mutableListOf<Pair<Color, Float>>()
+    var accumulatedWidth = 0f
 
+    val ownWidth = ownFraction * totalWidth
     if (ownWidth > 0f) {
+        accumulatedWidth += ownWidth
         val ownColor = MemberSpendingColors[ownColorIndex % MemberSpendingColors.size]
-        drawRect(color = ownColor, topLeft = Offset(currentX, 0f), size = Size(ownWidth, barHeight))
-        currentX += ownWidth
+        pieces.add(ownColor to accumulatedWidth)
     }
 
     MemberSpendingColors.indices.forEach { colorIdx ->
         val segmentFraction = segmentFractions[colorIdx].value.coerceAtLeast(0f)
         val segmentWidth = segmentFraction * totalWidth
         if (segmentWidth > 0f) {
-            drawRect(
-                color = MemberSpendingColors[colorIdx],
-                topLeft = Offset(currentX, 0f),
-                size = Size(segmentWidth, barHeight)
-            )
-            currentX += segmentWidth
+            accumulatedWidth += segmentWidth
+            pieces.add(MemberSpendingColors[colorIdx] to accumulatedWidth)
         }
+    }
+
+    val cornerRadius = CornerRadius(barHeight / 2f, barHeight / 2f)
+
+    pieces.reversed().forEach { (color, width) ->
+        drawRoundRect(
+            color = color,
+            topLeft = Offset(0f, 0f),
+            size = Size(width, barHeight),
+            cornerRadius = cornerRadius
+        )
     }
 }

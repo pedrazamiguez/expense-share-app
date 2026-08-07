@@ -55,7 +55,7 @@ class YourPositionViewModel(
 
     private val _selectedGroupId = MutableStateFlow<String?>(null)
     private val _isCashBreakdownVisible = MutableStateFlow(false)
-    private val _isChartCashOnly = MutableStateFlow(true)
+    private val _isChartCashOnly = MutableStateFlow<Boolean?>(null)
     private val _localState = MutableStateFlow(LocalUiState())
 
     private val _actions = Channel<YourPositionUiAction>(Channel.BUFFERED)
@@ -121,6 +121,9 @@ class YourPositionViewModel(
                     Pair(snapshot, isCashBreakdownVisible)
                 }
                 .combine(_isChartCashOnly) { (snapshot, isCashBreakdownVisible), isChartCashOnly ->
+                    val hasCash = snapshot.withdrawals.isNotEmpty()
+                    val actualIsChartCashOnly = isChartCashOnly ?: hasCash
+
                     val memberBalances = useCases.getMemberBalancesFlowUseCase.computeMemberBalances(
                         MemberBalanceCalculationInputs(
                             contributions = snapshot.contributions,
@@ -171,7 +174,7 @@ class YourPositionViewModel(
 
                     val spendingChart = memberSpendingChartUiMapper.toChartUiModel(
                         memberBalances = memberBalances,
-                        cashOnly = isChartCashOnly,
+                        cashOnly = actualIsChartCashOnly,
                         currentUserId = currentUserId,
                         memberProfiles = memberProfiles,
                         groupCurrencyCode = currency
@@ -183,7 +186,7 @@ class YourPositionViewModel(
                         isCashBreakdownVisible = isCashBreakdownVisible,
                         settlementConsensus = settlementConsensus,
                         spendingChart = spendingChart,
-                        isChartCashOnly = isChartCashOnly
+                        isChartCashOnly = actualIsChartCashOnly
                     )
                 }
 
