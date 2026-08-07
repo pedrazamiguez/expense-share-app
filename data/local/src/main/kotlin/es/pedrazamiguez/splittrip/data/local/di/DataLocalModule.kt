@@ -82,6 +82,7 @@ val dataLocalModule = module {
                 name = "splittrip_db"
             )
             .apply { ALL_MIGRATIONS.forEach { addMigrations(it) } }
+            .fallbackToDestructiveMigrationOnDowngrade()
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {
                     super.onOpen(db)

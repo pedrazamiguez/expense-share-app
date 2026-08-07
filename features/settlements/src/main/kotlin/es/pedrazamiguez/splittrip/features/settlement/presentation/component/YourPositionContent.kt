@@ -18,6 +18,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.sheet
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.CaptionText
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.splittrip.features.settlement.R
+import es.pedrazamiguez.splittrip.features.settlement.presentation.model.MemberSpendingChartUiModel
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.PersonalPositionUiModel
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.SettlementConsensusItemUiModel
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourPositionUiEvent
@@ -30,6 +31,8 @@ internal fun YourPositionContent(
     personalPosition: PersonalPositionUiModel,
     isCashBreakdownVisible: Boolean,
     settlementConsensus: ImmutableList<SettlementConsensusItemUiModel>,
+    chart: MemberSpendingChartUiModel?,
+    isCashOnly: Boolean,
     onEvent: (YourPositionUiEvent) -> Unit,
     modifier: Modifier = Modifier,
     isOffline: Boolean = false
@@ -70,6 +73,15 @@ internal fun YourPositionContent(
                 CaptionText(
                     text = stringResource(R.string.your_position_negative_cash_hint),
                     color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+        item(key = "spending_chart") {
+            chart?.let {
+                MemberSpendingBarChart(
+                    chart = it,
+                    isCashOnly = isCashOnly,
+                    onToggle = { cashOnly -> onEvent(YourPositionUiEvent.ChartModeToggled(cashOnly)) }
                 )
             }
         }

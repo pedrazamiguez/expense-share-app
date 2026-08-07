@@ -26,6 +26,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUse
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.settlement.navigation.impl.SettlementsTabGraphContributorImpl
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.GroupSettlementOverviewUiMapper
+import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.MemberSpendingChartUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.SettlementConsensusUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourPositionUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.impl.GroupSettlementOverviewUiMapperImpl
@@ -102,6 +103,11 @@ val settlementsUiModule = module {
             resourceProvider = resourceProvider
         )
 
+        val memberSpendingChartUiMapper = MemberSpendingChartUiMapper(
+            localeProvider = localeProvider,
+            userUiMapper = get<UserUiMapper>()
+        )
+
         val yourPositionUseCases = YourPositionUseCases(
             getGroupByIdUseCase = getGroupByIdUseCase,
             getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
@@ -123,6 +129,7 @@ val settlementsUiModule = module {
             authenticationService = authenticationService,
             yourPositionUiMapper = yourPositionUiMapper,
             settlementConsensusUiMapper = settlementConsensusUiMapper,
+            memberSpendingChartUiMapper = memberSpendingChartUiMapper,
             appConfigService = appConfigService,
             networkMonitor = networkMonitor
         )
