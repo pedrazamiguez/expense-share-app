@@ -6,4 +6,5 @@ sealed interface GroupSettlementOverviewUiAction {
     data class ShowError(val message: UiText) : GroupSettlementOverviewUiAction
     data class ShowSuccess(val message: UiText) : GroupSettlementOverviewUiAction
     data object NavigateBack : GroupSettlementOverviewUiAction
+    data object NavigateToYourPosition : GroupSettlementOverviewUiAction
 }

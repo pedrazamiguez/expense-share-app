@@ -11,7 +11,7 @@ sealed interface GroupsUiEvent {
     data class WizardNextClicked(val groupId: String) : GroupsUiEvent
     data object WizardBackClicked : GroupsUiEvent
     data object WizardCancelled : GroupsUiEvent
-    data class ConfirmSettlementClicked(val groupId: String, val settlementId: String) : GroupsUiEvent
+    data object NavigateToYourPositionClicked : GroupsUiEvent
     data class LeaveConfirmed(val groupId: String) : GroupsUiEvent
     data class WizardJumpToStepClicked(val step: LeaveWizardStep) : GroupsUiEvent
 }

@@ -7,6 +7,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.splittrip.core.common.presentation.asString
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalTabNavController
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.notification.LocalTopPillController
 import es.pedrazamiguez.splittrip.features.settlement.presentation.screen.GroupSettlementOverviewScreen
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.GroupSettlementOverviewViewModel
@@ -40,6 +41,9 @@ fun GroupSettlementOverviewFeature(
                 }
                 GroupSettlementOverviewUiAction.NavigateBack -> {
                     navController.popBackStack()
+                }
+                GroupSettlementOverviewUiAction.NavigateToYourPosition -> {
+                    navController.navigate(Routes.YOUR_POSITION)
                 }
             }
         }

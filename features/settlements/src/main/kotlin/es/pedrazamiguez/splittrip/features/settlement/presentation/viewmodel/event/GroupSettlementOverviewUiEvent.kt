@@ -13,4 +13,5 @@ sealed interface GroupSettlementOverviewUiEvent {
     data object WizardBackClicked : GroupSettlementOverviewUiEvent
     data object WizardCancelled : GroupSettlementOverviewUiEvent
     data class WizardJumpToStep(val step: ArchiveWizardStep) : GroupSettlementOverviewUiEvent
+    data object NavigateToYourPositionClicked : GroupSettlementOverviewUiEvent
 }

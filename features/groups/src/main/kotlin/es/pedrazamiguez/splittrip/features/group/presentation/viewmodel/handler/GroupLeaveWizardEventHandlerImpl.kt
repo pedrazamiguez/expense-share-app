@@ -6,7 +6,6 @@ import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsExceptio
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
@@ -45,7 +44,6 @@ class GroupLeaveWizardEventHandlerImpl(
     private val getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase,
     private val areMemberSettlementsResolvedUseCase: AreMemberSettlementsResolvedUseCase,
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
-    private val confirmSettlementUseCase: ConfirmSettlementUseCase,
     private val leaveGroupUseCase: LeaveGroupUseCase,
     private val leaveWizardUiMapper: LeaveWizardUiMapper,
     private val getGroupSettlementsFlowUseCase: GetGroupSettlementsFlowUseCase
@@ -113,9 +111,6 @@ class GroupLeaveWizardEventHandlerImpl(
                 if (myBalance.pocketBalance != 0L || myBalance.cashInHand != 0L || myBalance.totalBalance != 0L) {
                     activeSteps.add(LeaveWizardStep.BALANCE_SUMMARY)
                 }
-                if (unresolvedSettlements.isNotEmpty()) {
-                    activeSteps.add(LeaveWizardStep.SETTLEMENTS)
-                }
                 if (myBalance.cashInHand != 0L) {
                     activeSteps.add(LeaveWizardStep.CASH_RESOLUTION)
                 }
@@ -128,9 +123,8 @@ class GroupLeaveWizardEventHandlerImpl(
                     memberProfiles = memberProfiles,
                     currency = group.currency
                 )
-                val settlements = leaveWizardUiMapper.toSettlementUiModels(
+                val hasUnresolvedSettlements = leaveWizardUiMapper.hasUnresolvedSettlements(
                     unresolvedSettlements,
-                    memberProfiles,
                     currentUserId
                 )
                 val cashResolution = leaveWizardUiMapper.toCashResolutionUiModel(myBalance, group.currency)
@@ -144,7 +138,7 @@ class GroupLeaveWizardEventHandlerImpl(
                         currentStep = initialStep,
                         activeSteps = activeSteps.toImmutableList(),
                         balanceSummary = balanceSummary,
-                        settlements = settlements.toImmutableList(),
+                        hasUnresolvedSettlements = hasUnresolvedSettlements,
                         cashResolution = cashResolution,
                         subunitImpact = subunitImpact,
                         isLoading = false
@@ -187,47 +181,6 @@ class GroupLeaveWizardEventHandlerImpl(
         _wizardState.update { it.copy(showSheet = false) }
     }
 
-    override fun handleConfirmSettlement(groupId: String, settlementId: String) {
-        if (groupId.isBlank()) return
-
-        _wizardState.update { state ->
-            state.copy(isConfirmingSettlement = true)
-        }
-
-        coroutineScope.launch {
-            confirmSettlementUseCase(groupId, settlementId).fold(
-                onSuccess = {
-                    val currentUserId = authenticationService.requireUserId()
-                    val group = observeGroupUseCase(groupId).firstOrNull()
-                    val unresolvedSettlements = areMemberSettlementsResolvedUseCase(groupId, currentUserId)
-                    val memberProfiles = if (group != null && group.members.isNotEmpty()) {
-                        getMemberProfilesUseCase(group.members)
-                    } else {
-                        emptyMap()
-                    }
-                    val updatedSettlements = leaveWizardUiMapper.toSettlementUiModels(
-                        unresolvedSettlements,
-                        memberProfiles,
-                        currentUserId
-                    )
-                    _wizardState.update { state ->
-                        state.copy(
-                            settlements = updatedSettlements.toImmutableList(),
-                            isConfirmingSettlement = false
-                        )
-                    }
-                },
-                onFailure = { e ->
-                    Timber.e(e, "Failed to confirm settlement $settlementId")
-                    _wizardState.update { state ->
-                        state.copy(isConfirmingSettlement = false)
-                    }
-                    onError(UiText.StringResource(R.string.settlement_overview_error_confirm))
-                }
-            )
-        }
-    }
-
     override fun handleLeave(groupId: String) {
         _wizardState.update { state ->
             state.copy(
@@ -247,12 +200,12 @@ class GroupLeaveWizardEventHandlerImpl(
                     }
                     onLeaveSuccess(UiText.StringResource(R.string.group_leave_success))
                 },
-                onFailure = { e -> handleLeaveFailure(groupId, e) }
+                onFailure = { e -> handleLeaveFailure(e) }
             )
         }
     }
 
-    private suspend fun handleLeaveFailure(groupId: String, e: Throwable) {
+    private suspend fun handleLeaveFailure(e: Throwable) {
         val isCreator = (e as? CannotLeaveGroupException)?.reason == CannotLeaveGroupException.Reason.IS_CREATOR
         if (isCreator) {
             _wizardState.update { state ->
@@ -264,7 +217,7 @@ class GroupLeaveWizardEventHandlerImpl(
             }
             onError(UiText.StringResource(R.string.group_leave_error_admin))
         } else if (e is UnresolvedSettlementsException) {
-            handleUnresolvedSettlementsOnLeave(groupId, e)
+            handleUnresolvedSettlementsOnLeave()
         } else {
             _wizardState.update { state ->
                 state.copy(
@@ -281,30 +234,12 @@ class GroupLeaveWizardEventHandlerImpl(
         }
     }
 
-    private suspend fun handleUnresolvedSettlementsOnLeave(groupId: String, e: UnresolvedSettlementsException) {
-        val currentUserId = authenticationService.requireUserId()
-        val group = observeGroupUseCase(groupId).firstOrNull()
-        val memberProfiles = if (group != null && group.members.isNotEmpty()) {
-            getMemberProfilesUseCase(group.members)
-        } else {
-            emptyMap()
-        }
-        val updatedSettlements = leaveWizardUiMapper.toSettlementUiModels(
-            e.pendingSettlements,
-            memberProfiles,
-            currentUserId
-        )
+    private suspend fun handleUnresolvedSettlementsOnLeave() {
         _wizardState.update { state ->
-            val currentActive = state.activeSteps.toMutableList()
-            if (LeaveWizardStep.SETTLEMENTS !in currentActive) {
-                val insertIndex = currentActive.indexOf(LeaveWizardStep.CONFIRMATION).coerceAtLeast(0)
-                currentActive.add(insertIndex, LeaveWizardStep.SETTLEMENTS)
-            }
             state.copy(
                 isLeaving = false,
-                activeSteps = currentActive.toImmutableList(),
-                settlements = updatedSettlements.toImmutableList(),
-                currentStep = LeaveWizardStep.SETTLEMENTS,
+                hasUnresolvedSettlements = true,
+                currentStep = LeaveWizardStep.CONFIRMATION,
                 isLoading = false
             )
         }
