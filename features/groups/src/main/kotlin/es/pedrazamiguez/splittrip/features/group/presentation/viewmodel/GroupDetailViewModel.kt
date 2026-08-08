@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
-import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
@@ -15,14 +14,12 @@ import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUse
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
-import es.pedrazamiguez.splittrip.features.group.presentation.mapper.LeaveWizardUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupDetailUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupDetailUiEvent
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupDetailViewModelLocalState
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupLeaveWizardEventHandler
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupDetailUiState
 import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,7 +54,6 @@ class GroupDetailViewModel(
     private val authenticationService: AuthenticationService,
     private val deleteGroupUseCase: DeleteGroupUseCase,
     private val getGroupSettlementsFlowUseCase: GetGroupSettlementsFlowUseCase,
-    private val leaveWizardUiMapper: LeaveWizardUiMapper,
     private val leaveWizardEventHandler: GroupLeaveWizardEventHandler
 ) : ViewModel() {
 
@@ -110,24 +106,6 @@ class GroupDetailViewModel(
                     ) { subunits, userGroups, settlementRecords, localState, wizardState ->
                         val currentUserId = authenticationService.requireUserId()
 
-                        val updatedWizardState = if (wizardState.showSheet) {
-                            val unresolved = settlementRecords.filter { record ->
-                                record.status != SettlementStatus.RESOLVED &&
-                                    (
-                                        record.settlement.fromUserId == currentUserId ||
-                                            record.settlement.toUserId == currentUserId
-                                        )
-                            }
-                            val mappedSettlements = leaveWizardUiMapper.toSettlementUiModels(
-                                unresolved,
-                                memberProfiles,
-                                currentUserId
-                            )
-                            wizardState.copy(settlements = mappedSettlements.toImmutableList())
-                        } else {
-                            wizardState
-                        }
-
                         GroupDetailUiState(
                             group = groupUiModel,
                             isLoading = false,
@@ -137,7 +115,7 @@ class GroupDetailViewModel(
                             showDeleteConfirmation = localState.showDeleteConfirmation,
                             isDeleting = localState.isDeleting,
                             isLeaving = wizardState.isLeaving,
-                            leaveWizardState = updatedWizardState
+                            leaveWizardState = wizardState
                         )
                     }
                         .catch { e ->
@@ -186,8 +164,12 @@ class GroupDetailViewModel(
             GroupDetailUiEvent.LeaveConfirmed -> leaveWizardEventHandler.handleLeave(_groupId.value)
             GroupDetailUiEvent.WizardNextClicked -> leaveWizardEventHandler.handleWizardNext(_groupId.value)
             GroupDetailUiEvent.WizardBackClicked -> leaveWizardEventHandler.handleWizardBack()
-            is GroupDetailUiEvent.ConfirmSettlementClicked ->
-                leaveWizardEventHandler.handleConfirmSettlement(_groupId.value, event.settlementId)
+            GroupDetailUiEvent.NavigateToYourPositionClicked -> {
+                leaveWizardEventHandler.handleWizardCancelled()
+                viewModelScope.launch {
+                    _actions.send(GroupDetailUiAction.NavigateToYourPosition)
+                }
+            }
             is GroupDetailUiEvent.WizardJumpToStepClicked ->
                 leaveWizardEventHandler.handleJumpToStep(event.step)
         }

@@ -16,7 +16,6 @@ import es.pedrazamiguez.splittrip.domain.service.GroupImageStorageService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
 import es.pedrazamiguez.splittrip.domain.usecase.auth.IsUserAnonymousUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
@@ -181,7 +180,6 @@ val groupsUiModule = module {
         val getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>()
         val areMemberSettlementsResolvedUseCase = get<AreMemberSettlementsResolvedUseCase>()
         val getMemberProfilesUseCase = get<GetMemberProfilesUseCase>()
-        val confirmSettlementUseCase = get<ConfirmSettlementUseCase>()
         val leaveGroupUseCase = get<LeaveGroupUseCase>()
         val leaveWizardUiMapper = get<LeaveWizardUiMapper>()
         val getGroupSettlementsFlowUseCase = get<GetGroupSettlementsFlowUseCase>()
@@ -197,7 +195,6 @@ val groupsUiModule = module {
             getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
             areMemberSettlementsResolvedUseCase = areMemberSettlementsResolvedUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
-            confirmSettlementUseCase = confirmSettlementUseCase,
             leaveGroupUseCase = leaveGroupUseCase,
             leaveWizardUiMapper = leaveWizardUiMapper,
             getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase
@@ -213,7 +210,6 @@ val groupsUiModule = module {
         val authenticationService = get<AuthenticationService>()
         val deleteGroupUseCase = get<DeleteGroupUseCase>()
         val getGroupSettlementsFlowUseCase = get<GetGroupSettlementsFlowUseCase>()
-        val leaveWizardUiMapper = get<LeaveWizardUiMapper>()
         val groupLeaveWizardEventHandler =
             get<GroupLeaveWizardEventHandler>()
 
@@ -226,7 +222,6 @@ val groupsUiModule = module {
             authenticationService = authenticationService,
             deleteGroupUseCase = deleteGroupUseCase,
             getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
-            leaveWizardUiMapper = leaveWizardUiMapper,
             leaveWizardEventHandler = groupLeaveWizardEventHandler
         )
     }

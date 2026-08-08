@@ -8,10 +8,8 @@ data class LeaveWizardUiState(
     val currentStep: LeaveWizardStep = LeaveWizardStep.BALANCE_SUMMARY,
     val activeSteps: ImmutableList<LeaveWizardStep> = persistentListOf(),
     val balanceSummary: LeaveBalanceSummaryUiModel = LeaveBalanceSummaryUiModel(),
-    val settlements: ImmutableList<LeaveSettlementUiModel> = persistentListOf(),
-    val cashResolution: LeaveCashResolutionUiModel = LeaveCashResolutionUiModel(),
     val subunitImpact: LeaveSubunitImpactUiModel = LeaveSubunitImpactUiModel(),
+    val hasUnresolvedSettlements: Boolean = false,
     val isLoading: Boolean = false,
-    val isConfirmingSettlement: Boolean = false,
     val isLeaving: Boolean = false
 )

@@ -8,7 +8,6 @@ import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
@@ -21,7 +20,6 @@ import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUse
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.LeaveWizardUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveBalanceSummaryUiModel
-import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveCashResolutionUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveSubunitImpactUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardStep
 import io.mockk.coEvery
@@ -59,7 +57,6 @@ class GroupLeaveWizardEventHandlerImplTest {
     private lateinit var getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase
     private lateinit var areMemberSettlementsResolvedUseCase: AreMemberSettlementsResolvedUseCase
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
-    private lateinit var confirmSettlementUseCase: ConfirmSettlementUseCase
     private lateinit var leaveGroupUseCase: LeaveGroupUseCase
     private lateinit var getGroupSettlementsFlowUseCase: GetGroupSettlementsFlowUseCase
     private lateinit var leaveWizardUiMapper: LeaveWizardUiMapper
@@ -92,7 +89,6 @@ class GroupLeaveWizardEventHandlerImplTest {
         getSettlementSuggestionsUseCase = mockk(relaxed = true)
         areMemberSettlementsResolvedUseCase = mockk(relaxed = true)
         getMemberProfilesUseCase = mockk(relaxed = true)
-        confirmSettlementUseCase = mockk(relaxed = true)
         leaveGroupUseCase = mockk(relaxed = true)
         getGroupSettlementsFlowUseCase = mockk(relaxed = true)
         leaveWizardUiMapper = mockk(relaxed = true)
@@ -118,7 +114,6 @@ class GroupLeaveWizardEventHandlerImplTest {
             getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
             areMemberSettlementsResolvedUseCase = areMemberSettlementsResolvedUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
-            confirmSettlementUseCase = confirmSettlementUseCase,
             leaveGroupUseCase = leaveGroupUseCase,
             getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
             leaveWizardUiMapper = leaveWizardUiMapper
@@ -153,8 +148,7 @@ class GroupLeaveWizardEventHandlerImplTest {
                 currency = any()
             )
         } returns LeaveBalanceSummaryUiModel("€25.00", "€10.00", "€35.00")
-        every { leaveWizardUiMapper.toCashResolutionUiModel(any(), any()) } returns
-            LeaveCashResolutionUiModel(requiresDeposit = true, formattedAmount = "€10.00")
+
         every { leaveWizardUiMapper.toSubunitImpactUiModel(any()) } returns
             LeaveSubunitImpactUiModel(hasSubunitImpact = true)
 
@@ -165,7 +159,7 @@ class GroupLeaveWizardEventHandlerImplTest {
         assertTrue(wizardState.showSheet)
         assertEquals(LeaveWizardStep.BALANCE_SUMMARY, wizardState.currentStep)
         assertTrue(wizardState.activeSteps.contains(LeaveWizardStep.BALANCE_SUMMARY))
-        assertTrue(wizardState.activeSteps.contains(LeaveWizardStep.CASH_RESOLUTION))
+
         assertTrue(wizardState.activeSteps.contains(LeaveWizardStep.CONFIRMATION))
     }
 
@@ -236,17 +230,6 @@ class GroupLeaveWizardEventHandlerImplTest {
     }
 
     @Test
-    fun `handleConfirmSettlement invokes confirmSettlementUseCase`() = runTest(testDispatcher) {
-        handler.bind(this, onSuccess, onError)
-        coEvery { confirmSettlementUseCase(testGroupId, "s-1") } returns Result.success(mockk())
-
-        handler.handleConfirmSettlement(testGroupId, "s-1")
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { confirmSettlementUseCase(testGroupId, "s-1") }
-    }
-
-    @Test
     fun `handleLeave failure with CannotLeaveGroupException emits error`() = runTest(testDispatcher) {
         handler.bind(this, onSuccess, onError)
         val ex = CannotLeaveGroupException(CannotLeaveGroupException.Reason.NON_ZERO_POCKET_BALANCE)
@@ -259,7 +242,7 @@ class GroupLeaveWizardEventHandlerImplTest {
     }
 
     @Test
-    fun `handleLeave failure with UnresolvedSettlementsException navigates to SETTLEMENTS step`() =
+    fun `handleLeave failure with UnresolvedSettlementsException stays at CONFIRMATION step`() =
         runTest(testDispatcher) {
             handler.bind(this, onSuccess, onError)
             val ex = UnresolvedSettlementsException(testGroupId, emptyList())
@@ -269,8 +252,7 @@ class GroupLeaveWizardEventHandlerImplTest {
             advanceUntilIdle()
 
             val state = handler.wizardState.value
-            assertTrue(state.activeSteps.contains(LeaveWizardStep.SETTLEMENTS))
-            assertEquals(LeaveWizardStep.SETTLEMENTS, state.currentStep)
+            assertEquals(LeaveWizardStep.CONFIRMATION, state.currentStep)
         }
 
     @Test
@@ -288,11 +270,6 @@ class GroupLeaveWizardEventHandlerImplTest {
         assertEquals(LeaveWizardStep.BALANCE_SUMMARY, handler.wizardState.value.currentStep)
 
         handler.handleJumpToStep(LeaveWizardStep.CONFIRMATION)
-        assertEquals(LeaveWizardStep.CONFIRMATION, handler.wizardState.value.currentStep)
-
-        // Try to jump to step not in activeSteps (e.g. SETTLEMENTS)
-        handler.handleJumpToStep(LeaveWizardStep.SETTLEMENTS)
-        // Should remain at CONFIRMATION
         assertEquals(LeaveWizardStep.CONFIRMATION, handler.wizardState.value.currentStep)
     }
 }

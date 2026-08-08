@@ -18,7 +18,6 @@ import es.pedrazamiguez.splittrip.features.group.presentation.component.RestoreS
 import es.pedrazamiguez.splittrip.features.group.presentation.component.TrackScrollEffect
 import es.pedrazamiguez.splittrip.features.group.presentation.component.leave.GroupLeaveWizardSheet
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
-import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardStep
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupsUiState
 
 @Suppress("kotlin:S107", "LongMethod", "LongParameterList")
@@ -39,9 +38,8 @@ fun GroupsScreen(
     onWizardNextClicked: (String) -> Unit = {},
     onWizardBackClicked: () -> Unit = {},
     onWizardCancelled: () -> Unit = {},
-    onConfirmSettlement: (String, String) -> Unit = { _, _ -> },
     onConfirmLeave: (String) -> Unit = {},
-    onWizardJumpToStepClicked: (LeaveWizardStep) -> Unit = {}
+    onNavigateToYourPosition: () -> Unit = {}
 ) {
     val listState = rememberLazyListState()
     var selectedGroupForMenu by remember { mutableStateOf<GroupUiModel?>(null) }
@@ -108,9 +106,8 @@ fun GroupsScreen(
                 onWizardCancelled()
                 groupToLeave = null
             },
-            onConfirmSettlement = { onConfirmSettlement(groupToLeave!!.id, it) },
             onConfirmLeave = { onConfirmLeave(groupToLeave!!.id) },
-            onGoToSettlementsClicked = { onWizardJumpToStepClicked(LeaveWizardStep.SETTLEMENTS) }
+            onGoToSettlementsClicked = onNavigateToYourPosition
         )
     } else if (shouldClearGroupToLeave) {
         // Clear groupToLeave when the sheet is closed and not loading

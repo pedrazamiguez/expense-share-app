@@ -22,7 +22,6 @@ interface GroupLeaveWizardEventHandler {
     fun handleWizardNext(groupId: String)
     fun handleWizardBack()
     fun handleWizardCancelled()
-    fun handleConfirmSettlement(groupId: String, settlementId: String)
     fun handleLeave(groupId: String)
     fun handleJumpToStep(step: LeaveWizardStep)
 }

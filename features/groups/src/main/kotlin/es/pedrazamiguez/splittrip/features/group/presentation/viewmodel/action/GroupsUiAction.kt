@@ -11,4 +11,7 @@ sealed interface GroupsUiAction {
     data class ShowArchiveError(override val message: UiText) : GroupsUiAction
     data class ShowLeaveSuccess(override val message: UiText) : GroupsUiAction
     data class ShowLeaveError(override val message: UiText) : GroupsUiAction
+    data object NavigateToYourPosition : GroupsUiAction {
+        override val message: UiText = UiText.DynamicString("")
+    }
 }

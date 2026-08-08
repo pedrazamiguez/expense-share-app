@@ -661,14 +661,13 @@ class GroupsViewModelTest {
             viewModel.onEvent(GroupsUiEvent.WizardNextClicked("group-1"))
             viewModel.onEvent(GroupsUiEvent.WizardBackClicked)
             viewModel.onEvent(GroupsUiEvent.WizardCancelled)
-            viewModel.onEvent(GroupsUiEvent.ConfirmSettlementClicked("group-1", "s1"))
+
             viewModel.onEvent(GroupsUiEvent.LeaveConfirmed("group-1"))
             advanceUntilIdle()
 
             io.mockk.verify(exactly = 1) { leaveWizardEventHandler.handleWizardNext("group-1") }
             io.mockk.verify(exactly = 1) { leaveWizardEventHandler.handleWizardBack() }
             io.mockk.verify(exactly = 1) { leaveWizardEventHandler.handleWizardCancelled() }
-            io.mockk.verify(exactly = 1) { leaveWizardEventHandler.handleConfirmSettlement("group-1", "s1") }
             io.mockk.verify(exactly = 1) { leaveWizardEventHandler.handleLeave("group-1") }
             collectJob.cancel()
         }

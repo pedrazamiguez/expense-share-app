@@ -21,9 +21,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizar
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepIndicator
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.component.step.leave.LeaveBalanceSummaryStep
-import es.pedrazamiguez.splittrip.features.group.presentation.component.step.leave.LeaveCashResolutionStep
 import es.pedrazamiguez.splittrip.features.group.presentation.component.step.leave.LeaveConfirmationStep
-import es.pedrazamiguez.splittrip.features.group.presentation.component.step.leave.LeaveSettlementStep
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardStep
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardUiState
 
@@ -38,7 +36,7 @@ fun GroupLeaveWizardSheet(
     onNextClicked: () -> Unit,
     onBackClicked: () -> Unit,
     onDismissRequest: () -> Unit,
-    onConfirmSettlement: (String) -> Unit,
+
     onConfirmLeave: () -> Unit,
     onGoToSettlementsClicked: () -> Unit,
     modifier: Modifier = Modifier
@@ -61,8 +59,7 @@ fun GroupLeaveWizardSheet(
         val isOnLastStep = leaveWizardState.currentStep == activeSteps.lastOrNull()
 
         val isCurrentStepValid = when (leaveWizardState.currentStep) {
-            LeaveWizardStep.SETTLEMENTS -> leaveWizardState.settlements.all { it.isConfirmed }
-            LeaveWizardStep.CONFIRMATION -> leaveWizardState.settlements.all { it.isConfirmed }
+            LeaveWizardStep.CONFIRMATION -> !leaveWizardState.hasUnresolvedSettlements
             else -> true
         }
 
@@ -90,25 +87,11 @@ fun GroupLeaveWizardSheet(
                             modifier = Modifier.padding(bottom = StepBottomPadding)
                         )
                     }
-                    LeaveWizardStep.SETTLEMENTS -> {
-                        LeaveSettlementStep(
-                            settlements = leaveWizardState.settlements,
-                            onConfirmSettlement = onConfirmSettlement,
-                            modifier = Modifier.padding(bottom = StepBottomPadding)
-                        )
-                    }
-                    LeaveWizardStep.CASH_RESOLUTION -> {
-                        LeaveCashResolutionStep(
-                            cashResolution = leaveWizardState.cashResolution,
-                            modifier = Modifier.padding(bottom = StepBottomPadding)
-                        )
-                    }
                     LeaveWizardStep.CONFIRMATION -> {
-                        val hasUnresolved = leaveWizardState.settlements.any { !it.isConfirmed }
                         LeaveConfirmationStep(
                             groupName = groupName,
                             subunitImpact = leaveWizardState.subunitImpact,
-                            hasUnresolvedSettlements = hasUnresolved,
+                            hasUnresolvedSettlements = leaveWizardState.hasUnresolvedSettlements,
                             onGoToSettlementsClicked = onGoToSettlementsClicked,
                             modifier = Modifier.padding(bottom = StepBottomPadding)
                         )

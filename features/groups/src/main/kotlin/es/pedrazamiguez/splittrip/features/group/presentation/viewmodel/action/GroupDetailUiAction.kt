@@ -11,4 +11,7 @@ sealed interface GroupDetailUiAction {
     data class NavigateToSettlementOverview(val groupId: String) : GroupDetailUiAction {
         override val message: UiText? = null
     }
+    data object NavigateToYourPosition : GroupDetailUiAction {
+        override val message: UiText? = null
+    }
 }

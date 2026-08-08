@@ -19,7 +19,6 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizar
 import es.pedrazamiguez.splittrip.features.settlement.R
 import es.pedrazamiguez.splittrip.features.settlement.presentation.component.DisputeSettlementBottomSheet
 import es.pedrazamiguez.splittrip.features.settlement.presentation.component.SettlementContent
-import es.pedrazamiguez.splittrip.features.settlement.presentation.component.step.archive.ArchiveActionStep
 import es.pedrazamiguez.splittrip.features.settlement.presentation.component.step.archive.ArchiveConfirmationStep
 import es.pedrazamiguez.splittrip.features.settlement.presentation.component.step.archive.ArchiveSummaryStep
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.archive.ArchiveWizardStep
@@ -81,27 +80,14 @@ fun GroupSettlementOverviewScreen(
                                 modifier = Modifier.verticalScroll(rememberScrollState())
                             )
                         }
-                        ArchiveWizardStep.ACTION_REQUIRED -> {
-                            ArchiveActionStep(
-                                pendingSettlements = uiState.pendingSettlements,
-                                onConfirmSettlement = { id ->
-                                    onEvent(GroupSettlementOverviewUiEvent.ConfirmSettlement(id))
-                                },
-                                onDisputeSettlement = { id ->
-                                    onEvent(GroupSettlementOverviewUiEvent.DisputeSettlement(id))
-                                },
-                                modifier = Modifier.verticalScroll(rememberScrollState())
-                            )
-                        }
+
                         ArchiveWizardStep.CONFIRMATION -> {
                             ArchiveConfirmationStep(
                                 groupName = uiState.groupName,
                                 hasUnresolvedSettlements = !uiState.areAllSettlementsResolved,
                                 onGoToSettlementsClicked = {
                                     onEvent(
-                                        GroupSettlementOverviewUiEvent.WizardJumpToStep(
-                                            ArchiveWizardStep.ACTION_REQUIRED
-                                        )
+                                        GroupSettlementOverviewUiEvent.NavigateToYourPositionClicked
                                     )
                                 },
                                 modifier = Modifier.verticalScroll(rememberScrollState())

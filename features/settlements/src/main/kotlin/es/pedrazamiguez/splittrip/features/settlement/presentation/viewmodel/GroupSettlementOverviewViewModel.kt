@@ -140,6 +140,11 @@ class GroupSettlementOverviewViewModel(
             GroupSettlementOverviewUiEvent.WizardBackClicked -> handleWizardBack()
             GroupSettlementOverviewUiEvent.WizardCancelled -> handleWizardCancelled()
             is GroupSettlementOverviewUiEvent.WizardJumpToStep -> handleJumpToStep(event.step)
+            GroupSettlementOverviewUiEvent.NavigateToYourPositionClicked -> {
+                viewModelScope.launch {
+                    _actions.send(GroupSettlementOverviewUiAction.NavigateToYourPosition)
+                }
+            }
         }
     }
 

@@ -48,15 +48,10 @@ class GroupSettlementOverviewUiMapperImpl(
         val waitingOnOthersCount = pending.count { !it.canCurrentUserConfirm }
         val disputedCount = disputed.size
 
-        val activeSteps = if (areAllSettlementsResolved) {
-            listOf(ArchiveWizardStep.SETTLEMENT_SUMMARY, ArchiveWizardStep.CONFIRMATION).toImmutableList()
-        } else {
-            listOf(
-                ArchiveWizardStep.SETTLEMENT_SUMMARY,
-                ArchiveWizardStep.ACTION_REQUIRED,
-                ArchiveWizardStep.CONFIRMATION
-            ).toImmutableList()
-        }
+        val activeSteps = listOf(
+            ArchiveWizardStep.SETTLEMENT_SUMMARY,
+            ArchiveWizardStep.CONFIRMATION
+        ).toImmutableList()
 
         return GroupSettlementOverviewUiState(
             pendingSettlements = pending.toImmutableList(),
