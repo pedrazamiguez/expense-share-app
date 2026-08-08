@@ -533,7 +533,6 @@ class GroupSettlementOverviewUiMapperImplTest {
             assertEquals(
                 listOf(
                     ArchiveWizardStep.SETTLEMENT_SUMMARY,
-                    ArchiveWizardStep.ACTION_REQUIRED,
                     ArchiveWizardStep.CONFIRMATION
                 ),
                 result.activeSteps
