@@ -111,9 +111,6 @@ class GroupLeaveWizardEventHandlerImpl(
                 if (myBalance.pocketBalance != 0L || myBalance.cashInHand != 0L || myBalance.totalBalance != 0L) {
                     activeSteps.add(LeaveWizardStep.BALANCE_SUMMARY)
                 }
-                if (myBalance.cashInHand != 0L) {
-                    activeSteps.add(LeaveWizardStep.CASH_RESOLUTION)
-                }
                 activeSteps.add(LeaveWizardStep.CONFIRMATION)
 
                 val balanceSummary = leaveWizardUiMapper.toBalanceSummaryUiModel(
@@ -127,7 +124,7 @@ class GroupLeaveWizardEventHandlerImpl(
                     unresolvedSettlements,
                     currentUserId
                 )
-                val cashResolution = leaveWizardUiMapper.toCashResolutionUiModel(myBalance, group.currency)
+
                 val subunitImpact = leaveWizardUiMapper.toSubunitImpactUiModel(userSubunits)
 
                 val initialStep = activeSteps.first()
@@ -139,7 +136,6 @@ class GroupLeaveWizardEventHandlerImpl(
                         activeSteps = activeSteps.toImmutableList(),
                         balanceSummary = balanceSummary,
                         hasUnresolvedSettlements = hasUnresolvedSettlements,
-                        cashResolution = cashResolution,
                         subunitImpact = subunitImpact,
                         isLoading = false
                     )

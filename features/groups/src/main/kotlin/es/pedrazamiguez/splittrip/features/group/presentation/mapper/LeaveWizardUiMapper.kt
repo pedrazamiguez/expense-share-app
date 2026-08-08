@@ -5,7 +5,6 @@ import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveBalanceSummaryUiModel
-import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveCashResolutionUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveSubunitImpactUiModel
 
 interface LeaveWizardUiMapper {
@@ -21,11 +20,6 @@ interface LeaveWizardUiMapper {
         settlements: List<SettlementRecord>,
         currentUserId: String
     ): Boolean
-
-    fun toCashResolutionUiModel(
-        memberBalance: MemberBalance,
-        currency: String
-    ): LeaveCashResolutionUiModel
 
     fun toSubunitImpactUiModel(
         userSubunits: List<Subunit>

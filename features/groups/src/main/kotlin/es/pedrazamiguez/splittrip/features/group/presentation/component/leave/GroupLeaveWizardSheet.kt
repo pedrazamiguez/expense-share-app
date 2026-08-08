@@ -21,7 +21,6 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizar
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepIndicator
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.component.step.leave.LeaveBalanceSummaryStep
-import es.pedrazamiguez.splittrip.features.group.presentation.component.step.leave.LeaveCashResolutionStep
 import es.pedrazamiguez.splittrip.features.group.presentation.component.step.leave.LeaveConfirmationStep
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardStep
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardUiState
@@ -85,12 +84,6 @@ fun GroupLeaveWizardSheet(
                     LeaveWizardStep.BALANCE_SUMMARY -> {
                         LeaveBalanceSummaryStep(
                             balanceSummary = leaveWizardState.balanceSummary,
-                            modifier = Modifier.padding(bottom = StepBottomPadding)
-                        )
-                    }
-                    LeaveWizardStep.CASH_RESOLUTION -> {
-                        LeaveCashResolutionStep(
-                            cashResolution = leaveWizardState.cashResolution,
                             modifier = Modifier.padding(bottom = StepBottomPadding)
                         )
                     }

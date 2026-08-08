@@ -12,10 +12,8 @@ import es.pedrazamiguez.splittrip.domain.service.DebtSimplificationService
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.LeaveWizardUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveBalanceSummaryUiModel
-import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveCashResolutionUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveSubunitImpactUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.NetPositionUiModel
-import kotlin.math.abs
 import kotlinx.collections.immutable.toImmutableList
 
 class LeaveWizardUiMapperImpl(
@@ -86,22 +84,6 @@ class LeaveWizardUiMapperImpl(
         currentUserId: String
     ): Boolean {
         return settlements.isNotEmpty()
-    }
-
-    override fun toCashResolutionUiModel(
-        memberBalance: MemberBalance,
-        currency: String
-    ): LeaveCashResolutionUiModel {
-        val cashInHand = memberBalance.cashInHand
-        val formattedAmount = formattingHelper.formatCentsWithCurrency(
-            abs(cashInHand),
-            currency
-        )
-        return LeaveCashResolutionUiModel(
-            requiresDeposit = cashInHand > 0,
-            requiresReimbursement = cashInHand < 0,
-            formattedAmount = formattedAmount
-        )
     }
 
     override fun toSubunitImpactUiModel(userSubunits: List<Subunit>): LeaveSubunitImpactUiModel {
