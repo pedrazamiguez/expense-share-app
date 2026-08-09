@@ -10,7 +10,9 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.features.expense.R
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -24,8 +26,16 @@ internal fun ExpenseDatePickerDialog(
         .atStartOfDay()
         .toInstant(ZoneOffset.UTC)
         .toEpochMilli()
+    val initialSelected = initialDateMillis?.let {
+        Instant.ofEpochMilli(it)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate()
+            .atStartOfDay()
+            .toInstant(ZoneOffset.UTC)
+            .toEpochMilli()
+    }
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = initialDateMillis ?: currentLocalDateMillis,
+        initialSelectedDateMillis = initialSelected ?: currentLocalDateMillis,
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
                 return utcTimeMillis <= currentLocalDateMillis
