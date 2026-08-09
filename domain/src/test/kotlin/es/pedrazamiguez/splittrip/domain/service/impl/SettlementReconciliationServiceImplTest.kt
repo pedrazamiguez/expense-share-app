@@ -273,12 +273,12 @@ class SettlementReconciliationServiceImplTest {
                 Contribution(
                     id = "contrib-1",
                     groupId = "group-1",
-                    contributorId = "user-2",
-                    amountCents = 1000L,
+                    userId = "user-2",
+                    amount = 1000L,
                     currency = "EUR",
-                    equivalentBaseAmountCents = 1000L,
+                    equivalentBaseAmount = 1000L,
                     linkedSettlementId = "settlement-1",
-                    createdAt = System.currentTimeMillis()
+                    createdAt = LocalDateTime.now()
                 )
             )
 
