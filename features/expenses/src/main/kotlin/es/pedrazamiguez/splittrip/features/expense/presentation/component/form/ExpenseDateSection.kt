@@ -20,6 +20,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.CardSectionLabelText
 import es.pedrazamiguez.splittrip.features.expense.R
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
@@ -76,10 +77,23 @@ internal fun ExpenseDateSection(
             initialTimeMillis = expenseDateMillis,
             onDismiss = { showTimePicker = false },
             onTimeSelected = { hour, minute ->
-                val dateMillis = tempSelectedDateMillis ?: System.currentTimeMillis()
-                val localDate = Instant.ofEpochMilli(dateMillis).atZone(ZoneOffset.UTC).toLocalDate()
+                val localDate = if (tempSelectedDateMillis != null) {
+                    // DatePicker returns UTC midnight, so ZoneOffset.UTC extracts the correct exact calendar day
+                    Instant.ofEpochMilli(tempSelectedDateMillis!!)
+                        .atZone(ZoneOffset.UTC)
+                        .toLocalDate()
+                } else {
+                    // Fallback uses the current device instant, so we use systemDefault()
+                    Instant.ofEpochMilli(System.currentTimeMillis())
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate()
+                }
                 val localDateTime = localDate.atTime(hour, minute)
-                val combinedMillis = localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli()
+                // Convert the user's intended local date/time into a correct absolute UTC timestamp
+                val combinedMillis = localDateTime
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant()
+                    .toEpochMilli()
                 onDateSelected(combinedMillis)
                 showTimePicker = false
             }
