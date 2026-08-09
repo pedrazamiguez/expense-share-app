@@ -9,6 +9,7 @@ interface AppConfigRepository {
     val extractedDateMaxFutureDays: StateFlow<Int>
     val supportEmailAddress: StateFlow<String>
     val settlementNudgeRateLimitHours: StateFlow<Long>
+    val ocrSafetyFalsePositivesBlacklist: StateFlow<List<String>>
 
     suspend fun fetchConfiguration(): Boolean
 }

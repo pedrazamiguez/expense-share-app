@@ -7,6 +7,7 @@ import es.pedrazamiguez.splittrip.domain.model.ExtractionConfidence
 import es.pedrazamiguez.splittrip.domain.model.ExtractionSource
 import es.pedrazamiguez.splittrip.domain.model.RawReceiptText
 import es.pedrazamiguez.splittrip.domain.repository.AiInferenceRepository
+import es.pedrazamiguez.splittrip.domain.repository.AppConfigRepository
 import es.pedrazamiguez.splittrip.domain.service.AiModelResolverService
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
@@ -26,6 +27,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -36,6 +38,7 @@ class ReceiptExtractionServiceImplTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var context: Context
+    private lateinit var appConfigRepository: AppConfigRepository
     private lateinit var aiCoreCapabilityProvider: AICoreCapabilityProvider
     private lateinit var aiCoreInferenceRepository: AiInferenceRepository
     private lateinit var liteRtInferenceRepository: AiInferenceRepository
@@ -54,12 +57,16 @@ class ReceiptExtractionServiceImplTest {
         context = mockk(relaxed = true)
         val resources = mockk<android.content.res.Resources>(relaxed = true)
         every { context.resources } returns resources
-        every { resources.openRawResource(any()) } returns ByteArrayInputStream("Custom prompt %1\$s".toByteArray())
+        every { resources.openRawResource(any()) } answers { ByteArrayInputStream("Custom prompt %1\$s".toByteArray()) }
 
         aiCoreCapabilityProvider = mockk()
         aiCoreInferenceRepository = mockk()
         liteRtInferenceRepository = mockk()
         aiModelResolver = mockk()
+        appConfigRepository = mockk()
+
+        val blacklistFlow = MutableStateFlow(listOf("razor", "private", "toothbrushes"))
+        every { appConfigRepository.ocrSafetyFalsePositivesBlacklist } returns blacklistFlow
 
         activeEngineFlow.value = AiEngineType.AI_CORE_GEMMA_4
         every { aiModelResolver.getActiveModel() } returns activeEngineFlow
@@ -67,6 +74,7 @@ class ReceiptExtractionServiceImplTest {
 
         service = ReceiptExtractionServiceImpl(
             context = context,
+            appConfigRepository = appConfigRepository,
             aiCoreCapabilityProvider = aiCoreCapabilityProvider,
             aiCoreInferenceRepository = lazy { aiCoreInferenceRepository },
             liteRtInferenceRepository = lazy { liteRtInferenceRepository },
@@ -193,7 +201,7 @@ class ReceiptExtractionServiceImplTest {
     }
 
     @Test
-    fun `extract returns NO_OP fallback when inference fails`() = runTest(testDispatcher) {
+    fun `extract returns failure when inference fails`() = runTest(testDispatcher) {
         activeEngineFlow.value = AiEngineType.AI_CORE_GEMMA_4
         every { aiCoreCapabilityProvider.isSupported() } returns true
         coEvery { aiCoreInferenceRepository.generateContent(any()) } returns
@@ -202,10 +210,35 @@ class ReceiptExtractionServiceImplTest {
 
         val result = service.extract(rawReceiptText)
 
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `extract retries with aggressive truncation when initial inference fails`() = runTest(testDispatcher) {
+        activeEngineFlow.value = AiEngineType.AI_CORE_GEMMA_4
+        every { aiCoreCapabilityProvider.isSupported() } returns true
+        advanceUntilIdle()
+
+        val longText = "A".repeat(2000)
+        val dirtyText = RawReceiptText(
+            fullText = longText,
+            blocks = persistentListOf(),
+            recognisedAt = Instant.now()
+        )
+
+        val promptSlot = mutableListOf<String>()
+        coEvery { aiCoreInferenceRepository.generateContent(capture(promptSlot)) } returnsMany listOf(
+            Result.failure(Exception("Inference failed first time")),
+            Result.success("{}")
+        )
+
+        val result = service.extract(dirtyText)
+
         assertTrue(result.isSuccess)
-        val receipt = result.getOrThrow()
-        assertEquals(ExtractionSource.NO_OP, receipt.source)
-        assertEquals(ExtractionConfidence.LOW, receipt.confidence)
+        assertEquals(2, promptSlot.size)
+        assertTrue(promptSlot[0].length > promptSlot[1].length)
+        assertTrue(promptSlot[1].contains("A".repeat(1000)))
+        assertFalse(promptSlot[1].contains("A".repeat(1001)))
     }
 
     @Test
@@ -286,5 +319,29 @@ class ReceiptExtractionServiceImplTest {
         assertEquals("EUR", receipt.currency)
         assertEquals(LocalDate.of(2026, 5, 20), receipt.date)
         assertEquals("Store", receipt.title)
+    }
+
+    @Test
+    fun `extract sanitizes false positive words based on remote config blacklist`() = runTest(testDispatcher) {
+        activeEngineFlow.value = AiEngineType.AI_CORE_GEMMA_4
+        every { aiCoreCapabilityProvider.isSupported() } returns true
+        advanceUntilIdle()
+
+        val dirtyText = RawReceiptText(
+            fullText = "Private Store Name\nTotal: 12.34 EUR\nRazor\nDate: 2026-05-20",
+            blocks = persistentListOf(),
+            recognisedAt = Instant.now()
+        )
+
+        val promptSlot = io.mockk.slot<String>()
+        coEvery { aiCoreInferenceRepository.generateContent(capture(promptSlot)) } returns Result.success("{}")
+
+        service.extract(dirtyText)
+
+        val prompt = promptSlot.captured
+        // Verify that the blacklisted words are completely removed from the prompt input
+        assertTrue(prompt.contains("Store Name"))
+        assertFalse(prompt.contains("Private", ignoreCase = true))
+        assertFalse(prompt.contains("Razor", ignoreCase = true))
     }
 }

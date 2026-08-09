@@ -12,6 +12,7 @@ import es.pedrazamiguez.splittrip.domain.model.ExtractionConfidence
 import es.pedrazamiguez.splittrip.domain.model.ExtractionSource
 import es.pedrazamiguez.splittrip.domain.model.RawReceiptText
 import es.pedrazamiguez.splittrip.domain.repository.AiInferenceRepository
+import es.pedrazamiguez.splittrip.domain.repository.AppConfigRepository
 import es.pedrazamiguez.splittrip.domain.service.AiModelResolverService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
 import java.math.BigDecimal
@@ -30,6 +31,7 @@ import timber.log.Timber
 
 internal class ReceiptExtractionServiceImpl(
     private val context: Context,
+    private val appConfigRepository: AppConfigRepository,
     private val aiCoreCapabilityProvider: AICoreCapabilityProvider,
     private val aiCoreInferenceRepository: Lazy<AiInferenceRepository>,
     private val liteRtInferenceRepository: Lazy<AiInferenceRepository>,
@@ -70,10 +72,25 @@ internal class ReceiptExtractionServiceImpl(
         }
 
         val startMs = System.currentTimeMillis()
-        val truncatedText = smartTruncate(rawText.fullText)
+        val blacklist = appConfigRepository.ocrSafetyFalsePositivesBlacklist.value
+        val sanitizedText = sanitizeOcrText(rawText.fullText, blacklist)
+        val truncatedText = smartTruncate(sanitizedText)
         val prompt = buildPrompt(truncatedText)
 
-        val inferenceResult = runInference(resolvedEngine, prompt)
+        var inferenceResult = runInference(resolvedEngine, prompt)
+
+        if (inferenceResult.isFailure) {
+            Timber.e(
+                inferenceResult.exceptionOrNull(),
+                "ReceiptExtractionService: Primary inference failed " +
+                    "(elapsed=%dms). Triggering fallback. Offending payload:\n%s",
+                System.currentTimeMillis() - startMs,
+                truncatedText
+            )
+            val aggressiveText = aggressiveTruncate(sanitizedText)
+            val aggressivePrompt = buildPrompt(aggressiveText)
+            inferenceResult = runInference(resolvedEngine, aggressivePrompt)
+        }
 
         val result = inferenceResult.mapCatching { rawOutput ->
             Timber.d(
@@ -81,13 +98,12 @@ internal class ReceiptExtractionServiceImpl(
                 rawOutput.length
             )
             parseInferenceResult(rawOutput, resolvedEngine)
-        }.recover { error ->
+        }.onFailure { error ->
             Timber.w(
                 error,
-                "ReceiptExtractionService: Inference/Parsing failed mid-flight — falling back to NO_OP (elapsed=%dms)",
+                "ReceiptExtractionService: Inference/Parsing failed mid-flight (elapsed=%dms)",
                 System.currentTimeMillis() - startMs
             )
-            getNoOpFallbackReceipt()
         }
 
         Timber.d(
@@ -96,6 +112,16 @@ internal class ReceiptExtractionServiceImpl(
             result.getOrNull()?.source
         )
         result
+    }
+
+    private fun sanitizeOcrText(text: String, blacklist: List<String>): String {
+        var sanitized = text
+        for (word in blacklist) {
+            // Remove the word case-insensitively, allowing for boundary matching
+            sanitized = sanitized.replace(Regex("(?i)\\b$word\\b"), "")
+        }
+        // Clean up any double spaces created by the removal
+        return sanitized.replace(Regex(" {2,}"), " ").trim()
     }
 
     private fun isEngineSupported(activeEngine: AiEngineType): Boolean {
@@ -202,11 +228,17 @@ internal class ReceiptExtractionServiceImpl(
         // Referenced by name in DEFAULT_PROMPT_TEMPLATE to avoid ${'$'} escaping inside triple-quoted strings.
         private const val OCR_PLACEHOLDER = "%1\$s"
 
+        private const val AGGRESSIVE_TRUNCATION_CHARS = 1_000
+
         internal fun smartTruncate(text: String): String {
             if (text.length <= MAX_OCR_INPUT_CHARS) return text
             val head = text.take(OCR_INPUT_HEAD_CHARS)
             val tail = text.takeLast(OCR_INPUT_TAIL_CHARS)
             return "$head$SEPARATOR$tail"
+        }
+
+        internal fun aggressiveTruncate(text: String): String {
+            return if (text.length <= AGGRESSIVE_TRUNCATION_CHARS) text else text.take(AGGRESSIVE_TRUNCATION_CHARS)
         }
 
         @Suppress("MaxLineLength")
