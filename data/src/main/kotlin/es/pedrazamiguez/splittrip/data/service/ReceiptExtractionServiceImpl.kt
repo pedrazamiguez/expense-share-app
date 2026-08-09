@@ -77,7 +77,20 @@ internal class ReceiptExtractionServiceImpl(
         val truncatedText = smartTruncate(sanitizedText)
         val prompt = buildPrompt(truncatedText)
 
-        val inferenceResult = runInference(resolvedEngine, prompt)
+        var inferenceResult = runInference(resolvedEngine, prompt)
+
+        if (inferenceResult.isFailure) {
+            Timber.e(
+                inferenceResult.exceptionOrNull(),
+                "ReceiptExtractionService: Primary inference failed " +
+                    "(elapsed=%dms). Triggering fallback. Offending payload:\n%s",
+                System.currentTimeMillis() - startMs,
+                truncatedText
+            )
+            val aggressiveText = aggressiveTruncate(sanitizedText)
+            val aggressivePrompt = buildPrompt(aggressiveText)
+            inferenceResult = runInference(resolvedEngine, aggressivePrompt)
+        }
 
         val result = inferenceResult.mapCatching { rawOutput ->
             Timber.d(
@@ -215,11 +228,17 @@ internal class ReceiptExtractionServiceImpl(
         // Referenced by name in DEFAULT_PROMPT_TEMPLATE to avoid ${'$'} escaping inside triple-quoted strings.
         private const val OCR_PLACEHOLDER = "%1\$s"
 
+        private const val AGGRESSIVE_TRUNCATION_CHARS = 1_000
+
         internal fun smartTruncate(text: String): String {
             if (text.length <= MAX_OCR_INPUT_CHARS) return text
             val head = text.take(OCR_INPUT_HEAD_CHARS)
             val tail = text.takeLast(OCR_INPUT_TAIL_CHARS)
             return "$head$SEPARATOR$tail"
+        }
+
+        internal fun aggressiveTruncate(text: String): String {
+            return if (text.length <= AGGRESSIVE_TRUNCATION_CHARS) text else text.take(AGGRESSIVE_TRUNCATION_CHARS)
         }
 
         @Suppress("MaxLineLength")

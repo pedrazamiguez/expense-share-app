@@ -213,6 +213,34 @@ class ReceiptExtractionServiceImplTest {
     }
 
     @Test
+    fun `extract retries with aggressive truncation when initial inference fails`() = runTest(testDispatcher) {
+        activeEngineFlow.value = AiEngineType.AI_CORE_GEMMA_4
+        every { aiCoreCapabilityProvider.isSupported() } returns true
+        advanceUntilIdle()
+
+        val longText = "A".repeat(2000)
+        val dirtyText = RawReceiptText(
+            fullText = longText,
+            blocks = persistentListOf(),
+            recognisedAt = Instant.now()
+        )
+
+        val promptSlot = mutableListOf<String>()
+        coEvery { aiCoreInferenceRepository.generateContent(capture(promptSlot)) } returnsMany listOf(
+            Result.failure(Exception("Inference failed first time")),
+            Result.success("{}")
+        )
+
+        val result = service.extract(dirtyText)
+
+        assertTrue(result.isSuccess)
+        assertEquals(2, promptSlot.size)
+        assertTrue(promptSlot[0].length > promptSlot[1].length)
+        assertTrue(promptSlot[1].contains("A".repeat(1000)))
+        assertFalse(promptSlot[1].contains("A".repeat(1001)))
+    }
+
+    @Test
     fun `extract routes to override engine when explicit engineType is passed`() = runTest(
         testDispatcher
     ) {
