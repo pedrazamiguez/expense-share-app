@@ -20,7 +20,7 @@ internal fun ExpenseTimePickerDialog(
     onTimeSelected: (hour: Int, minute: Int) -> Unit
 ) {
     val calendar = if (initialTimeMillis != null) {
-        JavaCalendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+        JavaCalendar.getInstance(TimeZone.getDefault()).apply {
             timeInMillis = initialTimeMillis
         }
     } else {

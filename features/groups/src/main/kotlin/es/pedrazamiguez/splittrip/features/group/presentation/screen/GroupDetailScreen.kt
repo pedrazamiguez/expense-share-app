@@ -49,7 +49,6 @@ import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.component.MemberAvatarStack
 import es.pedrazamiguez.splittrip.features.group.presentation.component.SelectedGroupCoverImage
 import es.pedrazamiguez.splittrip.features.group.presentation.component.leave.GroupLeaveWizardSheet
-import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardStep
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupDetailUiEvent
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupDetailUiState
 
@@ -97,12 +96,9 @@ fun GroupDetailScreen(
                     onNextClicked = { onEvent(GroupDetailUiEvent.WizardNextClicked) },
                     onBackClicked = { onEvent(GroupDetailUiEvent.WizardBackClicked) },
                     onDismissRequest = { onEvent(GroupDetailUiEvent.WizardCancelled) },
-                    onConfirmSettlement = { settlementId ->
-                        onEvent(GroupDetailUiEvent.ConfirmSettlementClicked(settlementId))
-                    },
                     onConfirmLeave = { onEvent(GroupDetailUiEvent.LeaveConfirmed) },
                     onGoToSettlementsClicked = {
-                        onEvent(GroupDetailUiEvent.WizardJumpToStepClicked(LeaveWizardStep.SETTLEMENTS))
+                        onEvent(GroupDetailUiEvent.NavigateToYourPositionClicked)
                     }
                 )
             }

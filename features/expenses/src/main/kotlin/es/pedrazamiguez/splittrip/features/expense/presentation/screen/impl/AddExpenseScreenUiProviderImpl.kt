@@ -47,6 +47,7 @@ class AddExpenseScreenUiProviderImpl(override val route: String = Routes.ADD_EXP
             title = title,
             subtitle = groupName,
             onBack = { vm?.onEvent(AddExpenseUiEvent.PreviousStep) ?: navController.popBackStack() },
+            onBackLongPress = { vm?.onEvent(AddExpenseUiEvent.CloseWizard) },
             pinned = true
         )
     }

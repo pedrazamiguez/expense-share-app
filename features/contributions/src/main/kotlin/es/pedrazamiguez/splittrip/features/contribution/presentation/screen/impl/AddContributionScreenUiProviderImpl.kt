@@ -37,6 +37,7 @@ class AddContributionScreenUiProviderImpl(override val route: String = Routes.AD
             title = stringResource(R.string.contribution_add_money_title),
             subtitle = groupName,
             onBack = { vm?.onEvent(AddContributionUiEvent.PreviousStep) ?: navController.popBackStack() },
+            onBackLongPress = { vm?.onEvent(AddContributionUiEvent.CloseWizard) },
             pinned = true
         )
     }

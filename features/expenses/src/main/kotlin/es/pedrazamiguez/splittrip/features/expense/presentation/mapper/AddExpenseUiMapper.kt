@@ -27,6 +27,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -75,7 +76,7 @@ class AddExpenseUiMapper(
         val locale = localeProvider.getCurrentLocale()
         val dateTime = LocalDateTime.ofInstant(
             Instant.ofEpochMilli(dateMillis),
-            ZoneOffset.UTC
+            ZoneId.systemDefault()
         )
         val formatter = DateTimeFormatter
             .ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)

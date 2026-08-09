@@ -8,7 +8,6 @@ import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
@@ -22,11 +21,11 @@ import es.pedrazamiguez.splittrip.domain.usecase.group.LeaveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
+import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.LeaveWizardUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveBalanceSummaryUiModel
-import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveCashResolutionUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveSubunitImpactUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardStep
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupDetailUiAction
@@ -74,7 +73,7 @@ class GroupDetailViewModelTest {
     private lateinit var getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase
     private lateinit var areMemberSettlementsResolvedUseCase: AreMemberSettlementsResolvedUseCase
     private lateinit var getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase
-    private lateinit var confirmSettlementUseCase: ConfirmSettlementUseCase
+
     private lateinit var getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase
     private lateinit var getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase
     private lateinit var getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase
@@ -114,7 +113,7 @@ class GroupDetailViewModelTest {
         getMemberBalancesFlowUseCase = mockk(relaxed = true)
         areMemberSettlementsResolvedUseCase = mockk(relaxed = true)
         getSettlementSuggestionsUseCase = mockk(relaxed = true)
-        confirmSettlementUseCase = mockk(relaxed = true)
+
         getGroupExpensesFlowUseCase = mockk(relaxed = true)
         getGroupContributionsFlowUseCase = mockk(relaxed = true)
         getCashWithdrawalsFlowUseCase = mockk(relaxed = true)
@@ -132,7 +131,7 @@ class GroupDetailViewModelTest {
             getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
             areMemberSettlementsResolvedUseCase = areMemberSettlementsResolvedUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
-            confirmSettlementUseCase = confirmSettlementUseCase,
+
             leaveGroupUseCase = leaveGroupUseCase,
             getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
             leaveWizardUiMapper = leaveWizardUiMapper
@@ -168,7 +167,6 @@ class GroupDetailViewModelTest {
         authenticationService = authenticationService,
         deleteGroupUseCase = deleteGroupUseCase,
         getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
-        leaveWizardUiMapper = leaveWizardUiMapper,
         leaveWizardEventHandler = leaveWizardEventHandler
     )
 
@@ -248,8 +246,7 @@ class GroupDetailViewModelTest {
                     currency = any()
                 )
             } returns LeaveBalanceSummaryUiModel("€25.00", "€10.00", "€35.00")
-            every { leaveWizardUiMapper.toCashResolutionUiModel(any(), any()) } returns
-                LeaveCashResolutionUiModel(requiresDeposit = true, formattedAmount = "€10.00")
+
             every { leaveWizardUiMapper.toSubunitImpactUiModel(any()) } returns
                 LeaveSubunitImpactUiModel(hasSubunitImpact = true)
 
@@ -264,7 +261,7 @@ class GroupDetailViewModelTest {
             assertTrue(wizardState.showSheet)
             assertEquals(LeaveWizardStep.BALANCE_SUMMARY, wizardState.currentStep)
             assertTrue(wizardState.activeSteps.contains(LeaveWizardStep.BALANCE_SUMMARY))
-            assertTrue(wizardState.activeSteps.contains(LeaveWizardStep.CASH_RESOLUTION))
+
             assertTrue(wizardState.activeSteps.contains(LeaveWizardStep.CONFIRMATION))
 
             collectJob.cancel()
@@ -297,7 +294,7 @@ class GroupDetailViewModelTest {
         }
 
         @Test
-        fun `on LeaveClicked with unresolved settlements includes SETTLEMENTS step`() = runTest(
+        fun `on LeaveClicked with unresolved settlements includes CONFIRMATION step`() = runTest(
             testDispatcher
         ) {
             val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 0L, cashInHand = 0L)
@@ -305,7 +302,6 @@ class GroupDetailViewModelTest {
                 getMemberBalancesFlowUseCase.computeMemberBalances(any())
             } returns listOf(memberBalance)
             coEvery { areMemberSettlementsResolvedUseCase(any(), any()) } returns listOf(mockk())
-            every { leaveWizardUiMapper.toSettlementUiModels(any(), any(), any()) } returns listOf(mockk())
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.setGroupId(testGroupId)
@@ -315,7 +311,7 @@ class GroupDetailViewModelTest {
             advanceUntilIdle()
 
             val wizardState = viewModel.uiState.value.leaveWizardState
-            assertTrue(wizardState.activeSteps.contains(LeaveWizardStep.SETTLEMENTS))
+            assertTrue(wizardState.activeSteps.contains(LeaveWizardStep.CONFIRMATION))
 
             collectJob.cancel()
         }
@@ -445,54 +441,6 @@ class GroupDetailViewModelTest {
         }
 
         @Test
-        fun `on ConfirmSettlementClicked invokes confirmSettlementUseCase and refreshes settlement status`() = runTest(
-            testDispatcher
-        ) {
-            coEvery { confirmSettlementUseCase(testGroupId, "s-1") } returns Result.success(mockk())
-
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setGroupId(testGroupId)
-            advanceUntilIdle()
-
-            viewModel.onEvent(GroupDetailUiEvent.ConfirmSettlementClicked("s-1"))
-            advanceUntilIdle()
-
-            coVerify(exactly = 1) { confirmSettlementUseCase(testGroupId, "s-1") }
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `on ConfirmSettlementClicked failure path emits ShowError action`() = runTest(testDispatcher) {
-            coEvery { confirmSettlementUseCase(testGroupId, "s-1") } returns Result.failure(Exception("Failed"))
-
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setGroupId(testGroupId)
-            advanceUntilIdle()
-
-            val actions = mutableListOf<GroupDetailUiAction>()
-            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.actions.collect { actions.add(it) }
-            }
-
-            viewModel.onEvent(GroupDetailUiEvent.ConfirmSettlementClicked("s-1"))
-            advanceUntilIdle()
-
-            assertTrue(actions.any { it is GroupDetailUiAction.ShowError })
-
-            actionsJob.cancel()
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `on ConfirmSettlementClicked with blank groupId does nothing`() = runTest(testDispatcher) {
-            viewModel.onEvent(GroupDetailUiEvent.ConfirmSettlementClicked("s-1"))
-            advanceUntilIdle()
-
-            coVerify(exactly = 0) { confirmSettlementUseCase(any(), any()) }
-        }
-
-        @Test
         fun `on LeaveConfirmed failure with NON_ZERO_POCKET_BALANCE emits balance error`() = runTest(testDispatcher) {
             val ex = CannotLeaveGroupException(CannotLeaveGroupException.Reason.NON_ZERO_POCKET_BALANCE)
             coEvery { leaveGroupUseCase(testGroupId) } returns Result.failure(ex)
@@ -540,7 +488,7 @@ class GroupDetailViewModelTest {
         }
 
         @Test
-        fun `on LeaveConfirmed failure with UnresolvedSettlementsException navigates to SETTLEMENTS step`() = runTest(
+        fun `on LeaveConfirmed failure with UnresolvedSettlementsException navigates to CONFIRMATION step`() = runTest(
             testDispatcher
         ) {
             val ex = UnresolvedSettlementsException(testGroupId, emptyList())
@@ -554,8 +502,7 @@ class GroupDetailViewModelTest {
             advanceUntilIdle()
 
             val state = viewModel.uiState.value.leaveWizardState
-            assertTrue(state.activeSteps.contains(LeaveWizardStep.SETTLEMENTS))
-            assertEquals(LeaveWizardStep.SETTLEMENTS, state.currentStep)
+            assertEquals(LeaveWizardStep.CONFIRMATION, state.currentStep)
 
             collectJob.cancel()
         }
@@ -664,6 +611,34 @@ class GroupDetailViewModelTest {
             advanceUntilIdle()
 
             assertTrue(actions.any { it is GroupDetailUiAction.ShowError })
+
+            actionsJob.cancel()
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `DeleteConfirmed failure with UnresolvedSettlementsException emits specific ShowError action`() = runTest(
+            testDispatcher
+        ) {
+            coEvery { deleteGroupUseCase(testGroupId) } throws UnresolvedSettlementsException(testGroupId, emptyList())
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setGroupId(testGroupId)
+            advanceUntilIdle()
+
+            val actions = mutableListOf<GroupDetailUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            viewModel.onEvent(GroupDetailUiEvent.DeleteConfirmed)
+            advanceUntilIdle()
+
+            val showErrorAction = actions.find { it is GroupDetailUiAction.ShowError } as? GroupDetailUiAction.ShowError
+            assertNotNull(showErrorAction)
+            assertEquals(
+                R.string.error_group_delete_unresolved_settlements,
+                (showErrorAction?.message as? UiText.StringResource)?.resId
+            )
 
             actionsJob.cancel()
             collectJob.cancel()

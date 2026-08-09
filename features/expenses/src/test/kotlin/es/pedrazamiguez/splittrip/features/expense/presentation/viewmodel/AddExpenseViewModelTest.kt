@@ -1507,6 +1507,10 @@ class AddExpenseViewModelTest {
 
         @Test
         fun `PreviousStep on first step with dirty state emits RequestExitConfirmation`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
             // Make the state dirty by changing the title
             viewModel.onEvent(AddExpenseUiEvent.TitleChanged("Coffee break"))
             assertEquals(0, viewModel.uiState.value.currentStepIndex)
@@ -1536,6 +1540,42 @@ class AddExpenseViewModelTest {
             viewModel.onEvent(AddExpenseUiEvent.PreviousStep)
 
             assertEquals(initialStep, viewModel.uiState.value.currentStep)
+        }
+
+        @Test
+        fun `CloseWizard with clean state emits NavigateBack`() = runTest {
+            assertFalse(viewModel.uiState.value.isDirty)
+
+            val emittedActions = mutableListOf<AddExpenseUiAction>()
+            val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
+
+            viewModel.onEvent(AddExpenseUiEvent.CloseWizard)
+            advanceUntilIdle()
+
+            job.cancel()
+
+            assertTrue(emittedActions.any { it is AddExpenseUiAction.NavigateBack })
+        }
+
+        @Test
+        fun `CloseWizard with dirty state emits RequestExitConfirmation`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // Make the state dirty
+            viewModel.onEvent(AddExpenseUiEvent.TitleChanged("Coffee break"))
+            assertTrue(viewModel.uiState.value.isDirty)
+
+            val emittedActions = mutableListOf<AddExpenseUiAction>()
+            val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
+
+            viewModel.onEvent(AddExpenseUiEvent.CloseWizard)
+            advanceUntilIdle()
+
+            job.cancel()
+
+            assertTrue(emittedActions.any { it is AddExpenseUiAction.RequestExitConfirmation })
         }
 
         @Test

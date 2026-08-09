@@ -203,7 +203,10 @@ object JacocoExclusions {
         "**/SafeCollector*.*",
         
         // ── Simple delegation wrappers
-        "**/domain/usecase/user/impl/UpdateUserReminderPreferencesUseCaseImpl*.*"
+        "**/domain/usecase/user/impl/UpdateUserReminderPreferencesUseCaseImpl*.*",
+        
+        // ── Flow-combining orchestration (not unit-testable directly, tested via integration)
+        "**/data/datasource/GroupDashboardDataSourceImpl*.*"
     )
 }
 

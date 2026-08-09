@@ -1,5 +1,8 @@
 package es.pedrazamiguez.splittrip.di.domain
 
+import es.pedrazamiguez.splittrip.data.datasource.GroupDashboardDataSourceImpl
+import es.pedrazamiguez.splittrip.domain.datasource.GroupDashboardDataSource
+import es.pedrazamiguez.splittrip.domain.repository.CashTransferRepository
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
@@ -10,15 +13,21 @@ import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.service.AddOnCalculationService
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.service.CashDebtScalingService
 import es.pedrazamiguez.splittrip.domain.service.DebtSimplificationService
 import es.pedrazamiguez.splittrip.domain.service.GroupMembershipService
+import es.pedrazamiguez.splittrip.domain.service.RemainderDistributionService
+import es.pedrazamiguez.splittrip.domain.service.SettlementReconciliationService
+import es.pedrazamiguez.splittrip.domain.service.impl.CashDebtScalingServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.DebtSimplificationServiceImpl
+import es.pedrazamiguez.splittrip.domain.service.impl.SettlementReconciliationServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreGroupSettlementsResolvedUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.DeleteCashWithdrawalUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.DeleteContributionUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.DisputeSettlementUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetBalancesDashboardFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetContributionByExpenseIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
@@ -32,6 +41,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.ConfirmSettlementU
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.DeleteCashWithdrawalUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.DeleteContributionUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.DisputeSettlementUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetBalancesDashboardFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetCashWithdrawalsFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetContributionByExpenseIdUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetGroupContributionsFlowUseCaseImpl
@@ -43,6 +53,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.settlement.GetNudgeTimestampsFl
 import es.pedrazamiguez.splittrip.domain.usecase.settlement.NudgeDebtorUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.settlement.impl.GetNudgeTimestampsFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.settlement.impl.NudgeDebtorUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import org.koin.dsl.module
 
 val balancesDomainModule = module {
@@ -68,9 +79,14 @@ val balancesDomainModule = module {
         )
     }
 
+    factory<SettlementReconciliationService> {
+        SettlementReconciliationServiceImpl()
+    }
+
     factory<GetMemberBalancesFlowUseCase> {
         GetMemberBalancesFlowUseCaseImpl(
-            addOnCalculationService = get<AddOnCalculationService>()
+            addOnCalculationService = get<AddOnCalculationService>(),
+            settlementReconciliationService = get<SettlementReconciliationService>()
         )
     }
 
@@ -97,8 +113,16 @@ val balancesDomainModule = module {
         )
     }
 
+    factory<CashDebtScalingService> {
+        CashDebtScalingServiceImpl(
+            remainderDistributionService = get<RemainderDistributionService>()
+        )
+    }
+
     factory<DebtSimplificationService> {
-        DebtSimplificationServiceImpl()
+        DebtSimplificationServiceImpl(
+            cashDebtScalingService = get<CashDebtScalingService>()
+        )
     }
 
     factory<GetSettlementSuggestionsUseCase> {
@@ -110,6 +134,7 @@ val balancesDomainModule = module {
             contributionRepository = get<ContributionRepository>(),
             cashWithdrawalRepository = get<CashWithdrawalRepository>(),
             subunitRepository = get<SubunitRepository>(),
+            cashTransferRepository = get<CashTransferRepository>(),
             getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
         )
     }
@@ -119,7 +144,9 @@ val balancesDomainModule = module {
             settlementRepository = get<SettlementRepository>(),
             authenticationService = get<AuthenticationService>(),
             groupRepository = get<GroupRepository>(),
-            contributionRepository = get<ContributionRepository>()
+            contributionRepository = get<ContributionRepository>(),
+            groupDashboardDataSource = get<GroupDashboardDataSource>(),
+            getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
         )
     }
 
@@ -145,6 +172,29 @@ val balancesDomainModule = module {
     factory<AreGroupSettlementsResolvedUseCase> {
         AreGroupSettlementsResolvedUseCaseImpl(
             settlementRepository = get<SettlementRepository>()
+        )
+    }
+
+    factory<GroupDashboardDataSource> {
+        GroupDashboardDataSourceImpl(
+            groupRepository = get<GroupRepository>(),
+            contributionRepository = get<ContributionRepository>(),
+            withdrawalRepository = get<CashWithdrawalRepository>(),
+            expenseRepository = get<ExpenseRepository>(),
+            settlementRepository = get<SettlementRepository>(),
+            subunitRepository = get<SubunitRepository>(),
+            cashTransferRepository = get<CashTransferRepository>()
+        )
+    }
+
+    factory<GetBalancesDashboardFlowUseCase> {
+        GetBalancesDashboardFlowUseCaseImpl(
+            groupDashboardDataSource = get<GroupDashboardDataSource>(),
+            getGroupPocketBalanceFlowUseCase = get<GetGroupPocketBalanceFlowUseCase>(),
+            getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>(),
+            getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>(),
+            getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
+            appConfigService = get<AppConfigService>()
         )
     }
 

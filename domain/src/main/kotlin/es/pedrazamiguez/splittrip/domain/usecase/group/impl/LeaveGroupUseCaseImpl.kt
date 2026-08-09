@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
 import es.pedrazamiguez.splittrip.domain.exception.CannotLeaveGroupException
 import es.pedrazamiguez.splittrip.domain.exception.GroupArchivedException
 import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
+import es.pedrazamiguez.splittrip.domain.repository.CashTransferRepository
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
@@ -32,6 +33,7 @@ class LeaveGroupUseCaseImpl(
     private val contributionRepository: ContributionRepository,
     private val cashWithdrawalRepository: CashWithdrawalRepository,
     private val subunitRepository: SubunitRepository,
+    private val cashTransferRepository: CashTransferRepository,
     private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase,
     private val resolveCashOnLeaveUseCase: ResolveCashOnLeaveUseCase,
     private val settlementRepository: SettlementRepository
@@ -67,6 +69,7 @@ class LeaveGroupUseCaseImpl(
         val contributions = contributionRepository.getGroupContributionsFlow(groupId).first()
         val withdrawals = cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId).first()
         val subunits = subunitRepository.getGroupSubunits(groupId)
+        val cashTransfers = cashTransferRepository.observeGroupCashTransfers(groupId).first()
         val settlements = settlementRepository.getGroupSettlements(groupId)
 
         val balances = getMemberBalancesFlowUseCase.computeMemberBalances(
@@ -74,6 +77,7 @@ class LeaveGroupUseCaseImpl(
                 contributions = contributions,
                 withdrawals = withdrawals,
                 expenses = expenses,
+                cashTransfers = cashTransfers,
                 subunits = subunits,
                 groupMemberIds = group.members,
                 groupCurrency = group.currency,

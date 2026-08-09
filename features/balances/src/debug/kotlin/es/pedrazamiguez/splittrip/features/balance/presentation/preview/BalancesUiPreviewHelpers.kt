@@ -51,7 +51,8 @@ fun ContributionItemPreviewHelper(
             mapper.mapContributions(
                 listOf(domain),
                 currentUserId = null,
-                memberProfiles = memberProfiles
+                memberProfiles = memberProfiles,
+                groupCurrency = "EUR"
             ).first()
         },
         content = content
@@ -73,7 +74,8 @@ fun ContributionListPreviewHelper(
             mapper.mapContributions(
                 domain,
                 currentUserId = null,
-                memberProfiles = memberProfiles
+                memberProfiles = memberProfiles,
+                groupCurrency = "EUR"
             )
         },
         content = content
@@ -188,7 +190,7 @@ fun MemberBalanceListPreviewHelper(
 }
 
 /**
- * Preview helper for [es.pedrazamiguez.splittrip.features.balance.presentation.component.CashBreakdownBottomSheet].
+ * Preview helper for [es.pedrazamiguez.splittrip.core.designsystem.presentation.component.sheet.CashBreakdownBottomSheet].
  *
  * Maps [memberBalance] + [withdrawals] through [BalancesUiMapper.mapMemberBalances] with a full
  * [MemberBalanceCashContext], then passes `cashBreakdown` and `formattedCashInHand` to [content].

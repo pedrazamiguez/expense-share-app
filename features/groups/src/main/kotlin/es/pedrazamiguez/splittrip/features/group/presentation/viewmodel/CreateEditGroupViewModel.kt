@@ -9,6 +9,7 @@ import es.pedrazamiguez.splittrip.core.logging.sanitizer.maskEmail
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.EmailValidationService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedFeature
@@ -58,6 +59,7 @@ class CreateEditGroupViewModel(
     private val groupUiMapper: GroupUiMapper,
     private val featureGateService: FeatureGateService,
     private val appConfigService: AppConfigService,
+    private val authenticationService: AuthenticationService,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
@@ -90,6 +92,10 @@ class CreateEditGroupViewModel(
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
+            val email = authenticationService.currentUserEmail()
+            if (email != null) {
+                _uiState.update { it.copy(currentUserEmail = email) }
+            }
             loadCurrencies(groupId)
         }
     }
@@ -101,12 +107,11 @@ class CreateEditGroupViewModel(
             is CreateEditGroupUiEvent.NameChanged -> _uiState.update { state ->
                 state.copy(
                     groupName = event.name,
-                    isNameValid = event.name.isNotBlank(),
-                    hasUserModifiedAnyField = true
+                    isNameValid = event.name.isNotBlank()
                 )
             }
             is CreateEditGroupUiEvent.DescriptionChanged -> _uiState.update { state ->
-                state.copy(groupDescription = event.description, hasUserModifiedAnyField = true)
+                state.copy(groupDescription = event.description)
             }
             is CreateEditGroupUiEvent.CurrencySelected -> handleCurrencySelected(event.code)
             is CreateEditGroupUiEvent.ExtraCurrencyToggled -> handleExtraCurrencyToggled(event.code)
@@ -123,20 +128,19 @@ class CreateEditGroupViewModel(
                             user
                         }
                     }.toImmutableList()
-                    state.copy(selectedMembers = updated, hasUserModifiedAnyField = true)
+                    state.copy(selectedMembers = updated)
                 }
             }
             is CreateEditGroupUiEvent.Submit -> submitEventHandler.handleSubmit(onSuccess)
             is CreateEditGroupUiEvent.NextStep,
             is CreateEditGroupUiEvent.PreviousStep,
+            is CreateEditGroupUiEvent.CloseWizard,
             is CreateEditGroupUiEvent.JumpToStep -> navigationEventHandler.handleNavigation(event)
             is CreateEditGroupUiEvent.GroupImagePicked -> {
                 imageEventHandler.handleGroupImagePicked(event.uri)
-                _uiState.update { it.copy(hasUserModifiedAnyField = true) }
             }
             is CreateEditGroupUiEvent.GroupImageRemoved -> {
                 imageEventHandler.handleGroupImageRemoved()
-                _uiState.update { it.copy(hasUserModifiedAnyField = true) }
             }
             is CreateEditGroupUiEvent.ShowImageSourceSheet -> imageEventHandler.handleShowImageSourceSheet(
                 event.show
@@ -150,7 +154,7 @@ class CreateEditGroupViewModel(
             val updatedExtras = state.extraCurrencies
                 .filter { it.code != code }
                 .toImmutableList()
-            state.copy(selectedCurrency = selected, extraCurrencies = updatedExtras, hasUserModifiedAnyField = true)
+            state.copy(selectedCurrency = selected, extraCurrencies = updatedExtras)
         }
     }
 
@@ -163,7 +167,7 @@ class CreateEditGroupViewModel(
                 val item = state.availableCurrencies.find { it.code == code } ?: return
                 currentExtras + item
             }.toImmutableList()
-            state.copy(extraCurrencies = updatedExtras, hasUserModifiedAnyField = true)
+            state.copy(extraCurrencies = updatedExtras)
         }
     }
 
@@ -174,8 +178,7 @@ class CreateEditGroupViewModel(
             } else {
                 state.copy(
                     selectedMembers = (state.selectedMembers + event.user).toImmutableList(),
-                    memberSearchResults = persistentListOf(),
-                    hasUserModifiedAnyField = true
+                    memberSearchResults = persistentListOf()
                 )
             }
         }
@@ -186,8 +189,7 @@ class CreateEditGroupViewModel(
             state.copy(
                 selectedMembers = state.selectedMembers
                     .filter { it.userId != event.user.userId }
-                    .toImmutableList(),
-                hasUserModifiedAnyField = true
+                    .toImmutableList()
             )
         }
     }
@@ -207,19 +209,7 @@ class CreateEditGroupViewModel(
             searchUsersByEmailUseCase(query).onSuccess { users ->
                 val selectedIds = _uiState.value.selectedMembers.map { it.userId }.toSet()
                 val results = if (users.isEmpty()) {
-                    val normalizedEmail = User.normalizeEmail(query)
-                    val pendingUserId = User.generatePendingUserId(normalizedEmail)
-                    if (pendingUserId !in selectedIds) {
-                        listOf(
-                            User(
-                                userId = pendingUserId,
-                                email = normalizedEmail,
-                                isPending = true
-                            )
-                        )
-                    } else {
-                        emptyList()
-                    }
+                    getPendingUserResults(query, selectedIds)
                 } else {
                     users.filter { u -> u.userId !in selectedIds }
                 }
@@ -264,7 +254,9 @@ class CreateEditGroupViewModel(
                         availableCurrencies = mappedCurrencies,
                         selectedCurrency = it.selectedCurrency ?: defaultCurrency,
                         isLoadingCurrencies = false
-                    )
+                    ).let { updatedState ->
+                        updatedState.copy(initialFormSnapshot = updatedState.toFormSnapshot())
+                    }
                 }
                 if (groupId != null) {
                     _actions.emit(
@@ -312,7 +304,9 @@ class CreateEditGroupViewModel(
                 imageUrl = group.mainImagePath,
                 localGroupImagePath = group.mainImagePath,
                 isLoadingCurrencies = false
-            )
+            ).let { updatedState ->
+                updatedState.copy(initialFormSnapshot = updatedState.toFormSnapshot())
+            }
         }
     }
 
@@ -329,8 +323,7 @@ class CreateEditGroupViewModel(
         )
         _uiState.update { state ->
             state.copy(
-                selectedMembers = (state.selectedMembers + partialUser).toImmutableList(),
-                hasUserModifiedAnyField = true
+                selectedMembers = (state.selectedMembers + partialUser).toImmutableList()
             )
         }
 
@@ -348,6 +341,20 @@ class CreateEditGroupViewModel(
             }.onFailure { e ->
                 Timber.e(e, "Failed to load profile for scanned user $userId")
             }
+        }
+    }
+
+    private fun getPendingUserResults(query: String, selectedIds: Set<String>): List<User> {
+        val normalizedEmail = User.normalizeEmail(query)
+        val normalizedCurrentUserEmail = _uiState.value.currentUserEmail?.let { User.normalizeEmail(it) }
+
+        if (normalizedEmail == normalizedCurrentUserEmail) return emptyList()
+
+        val pendingUserId = User.generatePendingUserId(normalizedEmail)
+        return if (pendingUserId !in selectedIds) {
+            listOf(User(userId = pendingUserId, email = normalizedEmail, isPending = true))
+        } else {
+            emptyList()
         }
     }
 

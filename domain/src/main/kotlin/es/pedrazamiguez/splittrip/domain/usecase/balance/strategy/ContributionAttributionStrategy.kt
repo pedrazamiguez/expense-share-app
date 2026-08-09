@@ -28,7 +28,7 @@ object StandardContributionAttributionStrategy : ContributionAttributionStrategy
         val result = mutableMapOf<String, Long>()
         for (contribution in contributions) {
             val distributions = distributeByScope(
-                contribution.amount,
+                contribution.equivalentBaseAmount ?: contribution.amount,
                 contribution.contributionScope,
                 contribution.userId,
                 subunitMap,

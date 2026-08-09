@@ -35,8 +35,8 @@ service cloud.firestore {
     // exist yet in the committed database state.
     function isGroupActiveOrNew(groupId) {
       return !exists(/databases/$(database)/documents/groups/$(groupId))
-             || get(/databases/$(database)/documents/groups/$(groupId)).data.status != "ARCHIVED"
-             || get(/databases/$(database)/documents/groups/$(groupId)).data.deletionRequested == true;
+             || get(/databases/$(database)/documents/groups/$(groupId)).data.get("status", "ACTIVE") != "ARCHIVED"
+             || get(/databases/$(database)/documents/groups/$(groupId)).data.get("deletionRequested", false) == true;
     }
 
     // ---------------------------------------------------------------
@@ -85,7 +85,7 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
       allow update: if isMemberOrPending(resource.data.memberIds)
-                     && (resource.data.status != "ARCHIVED" || request.resource.data.deletionRequested == true);
+                     && (resource.data.get("status", "ACTIVE") != "ARCHIVED" || request.resource.data.get("deletionRequested", false) == true);
       allow delete: if isMemberOrPending(resource.data.memberIds);
 
       // Members subcollection
@@ -132,6 +132,13 @@ service cloud.firestore {
 
       // Nudges subcollection
       match /nudges/{nudgeId} {
+        allow read: if isAuthenticated();
+        allow create, update: if isAuthenticated() && isGroupActiveOrNew(groupId);
+        allow delete: if isAuthenticated();
+      }
+
+      // Cash transfers subcollection
+      match /cash_transfers/{transferId} {
         allow read: if isAuthenticated();
         allow create, update: if isAuthenticated() && isGroupActiveOrNew(groupId);
         allow delete: if isAuthenticated();

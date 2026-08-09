@@ -85,6 +85,7 @@ val expensesDataModule = module {
     single<ReceiptExtractionService> {
         ReceiptExtractionServiceImpl(
             context = androidContext(),
+            appConfigRepository = get(),
             aiCoreCapabilityProvider = get<AICoreCapabilityProvider>(),
             aiCoreInferenceRepository = lazy { get<AiInferenceRepository>(org.koin.core.qualifier.named("ai_core")) },
             liteRtInferenceRepository = lazy { get<AiInferenceRepository>(org.koin.core.qualifier.named("lite_rt")) },

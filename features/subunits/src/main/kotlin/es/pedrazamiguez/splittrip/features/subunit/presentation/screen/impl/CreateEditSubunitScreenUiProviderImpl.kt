@@ -26,6 +26,7 @@ class CreateEditSubunitScreenUiProviderImpl(override val route: String = Routes.
         DynamicTopAppBar(
             title = stringResource(R.string.subunit_create_edit_title),
             onBack = { vm?.onEvent(CreateEditSubunitUiEvent.PreviousStep) ?: navController.popBackStack() },
+            onBackLongPress = { vm?.onEvent(CreateEditSubunitUiEvent.CloseWizard) },
             pinned = true
         )
     }

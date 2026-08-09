@@ -3,10 +3,14 @@ package es.pedrazamiguez.splittrip.domain.service.impl
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
+import es.pedrazamiguez.splittrip.domain.service.CashDebtScalingService
 import es.pedrazamiguez.splittrip.domain.service.DebtSimplificationService
+import es.pedrazamiguez.splittrip.domain.service.cashdebt.CashDebtNode
 import kotlin.math.min
 
-class DebtSimplificationServiceImpl : DebtSimplificationService {
+class DebtSimplificationServiceImpl(
+    private val cashDebtScalingService: CashDebtScalingService
+) : DebtSimplificationService {
     override fun simplify(memberBalances: List<MemberBalance>): List<Settlement> =
         runGreedyAlgorithm(
             balances = memberBalances.map { it.userId to it.totalBalance },
@@ -37,23 +41,33 @@ class DebtSimplificationServiceImpl : DebtSimplificationService {
             .distinct()
 
         return if (cashCurrencies.isEmpty()) {
+            val nodes = memberBalances.map { mb ->
+                CashDebtNode(
+                    userId = mb.userId,
+                    balance = mb.withdrawn - mb.cashSpent,
+                    weight = mb.withdrawn
+                )
+            }
             runGreedyAlgorithm(
-                balances = memberBalances.map { mb ->
-                    mb.userId to (mb.withdrawn - mb.cashSpent)
-                },
+                balances = cashDebtScalingService.scaleBalances(nodes).map { it.userId to it.balance },
                 sourcePocket = SettlementPocketType.CASH,
                 currency = groupCurrency
             )
         } else {
             cashCurrencies.flatMap { currencyCode ->
+                val nodes = memberBalances.map { mb ->
+                    val withdrawn = mb.withdrawnByCurrency
+                        .find { it.currency == currencyCode }?.amountCents ?: 0L
+                    val spent = mb.cashSpentByCurrency
+                        .find { it.currency == currencyCode }?.amountCents ?: 0L
+                    CashDebtNode(
+                        userId = mb.userId,
+                        balance = withdrawn - spent,
+                        weight = withdrawn
+                    )
+                }
                 runGreedyAlgorithm(
-                    balances = memberBalances.map { mb ->
-                        val withdrawn = mb.withdrawnByCurrency
-                            .find { it.currency == currencyCode }?.amountCents ?: 0L
-                        val spent = mb.cashSpentByCurrency
-                            .find { it.currency == currencyCode }?.amountCents ?: 0L
-                        mb.userId to (withdrawn - spent)
-                    },
+                    balances = cashDebtScalingService.scaleBalances(nodes).map { it.userId to it.balance },
                     sourcePocket = SettlementPocketType.CASH,
                     currency = currencyCode
                 )

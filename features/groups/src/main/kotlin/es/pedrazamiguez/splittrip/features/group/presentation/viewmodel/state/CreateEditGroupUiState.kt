@@ -25,6 +25,7 @@ data class CreateEditGroupUiState(
     val memberSearchResults: ImmutableList<User> = persistentListOf(),
     val selectedMembers: ImmutableList<User> = persistentListOf(),
     val isSearchingMembers: Boolean = false,
+    val currentUserEmail: String? = null,
 
     // Errors
     val error: UiText? = null,
@@ -36,8 +37,19 @@ data class CreateEditGroupUiState(
     val localGroupImagePath: String? = null,
     val showImageSourceSheet: Boolean = false,
     val isCoverUploadEnabled: Boolean = true,
-    val hasUserModifiedAnyField: Boolean = false
+    val initialFormSnapshot: CreateEditGroupFormSnapshot? = null
 ) {
+    val isDirty: Boolean
+        get() = initialFormSnapshot != null && toFormSnapshot() != initialFormSnapshot
+
+    fun toFormSnapshot() = CreateEditGroupFormSnapshot(
+        groupName = groupName,
+        groupDescription = groupDescription,
+        selectedCurrency = selectedCurrency,
+        extraCurrencies = extraCurrencies,
+        selectedMembers = selectedMembers,
+        localGroupImagePath = localGroupImagePath
+    )
     val steps: List<CreateEditGroupStep>
         get() = if (isEditMode) {
             if (selectedMembers.any { it.isPending }) {
@@ -83,3 +95,12 @@ data class CreateEditGroupUiState(
             CreateEditGroupStep.REVIEW -> groupName.isNotBlank() && isNameValid && selectedCurrency != null
         }
 }
+
+data class CreateEditGroupFormSnapshot(
+    val groupName: String,
+    val groupDescription: String,
+    val selectedCurrency: CurrencyUiModel?,
+    val extraCurrencies: ImmutableList<CurrencyUiModel>,
+    val selectedMembers: ImmutableList<User>,
+    val localGroupImagePath: String?
+)

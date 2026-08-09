@@ -58,18 +58,26 @@ Because this follow-up may be initiated in a new conversation without prior cont
    - Use the appropriate file viewing/image tool to inspect the image contents.
 4. **Locate the affected code**: Search the codebase for the features, ViewModels, Screens, or Services associated with the issue.
 
-## Step 3 — Post Implementation Plan as an Issue Comment
+## Step 3 — Provide a Plain English Explanation, RCA, and Request Approval
 
-If the triage in Step 2 reveals that code changes are required, you MUST automatically post your proposed implementation plan/changes as a comment on the GitHub issue using the github-mcp-server tool `add_issue_comment` before writing code. Do not wait for the user to ask or perform this step manually; the agent must perform this step programmatically as part of this skill.
+Before generating any code or technical implementation plans, you MUST provide the user with a clear, plain-English explanation in your chat response. Do not skip this step.
+1. Explain the **Root Cause**: What exactly was causing the bug or issue? Why was it happening?
+2. Explain the **Proposed Fix**: How do you plan to fix it? Why will this solution work?
+3. **Request Approval**: You MUST explicitly ask the user to confirm or review the proposed fix.
+4. **STOP AND WAIT**: You MUST stop execution and wait for the user's explicit approval before proceeding to write any code, create implementation plans, or make changes. If the user suggests alternative approaches, adjust your plan and seek approval again.
+
+## Step 4 — Post Implementation Plan as an Issue Comment
+
+After the user has explicitly approved your proposed fix from Step 3, you MUST automatically post your proposed implementation plan/changes as a comment on the GitHub issue using the github-mcp-server tool `add_issue_comment` before writing code. Do not wait for the user to ask or perform this step manually; the agent must perform this step programmatically as part of this skill.
 
 The comment must include:
 - Summary of proposed changes per file
 - Architecture compliance checklist confirmed for each new/modified component
 
-Stick to the plan. If the plan needs to change, update the comment on the issue (also automatically using the github-mcp-server).
+Stick to the plan. If the plan needs to change, seek user approval for the changes first, then update the comment on the issue (also automatically using the github-mcp-server).
 ---
 
-## Step 4 — File-Size Guard (600-line hard limit, enforced by Konsist)
+## Step 5 — File-Size Guard (600-line hard limit, enforced by Konsist)
 
 Before editing any file, check its current line count:
 ```bash
@@ -84,7 +92,7 @@ wc -l <path/to/file.kt>
 If the result exceeds 600 lines, refactor immediately — do not move on.
 ---
 
-## Step 5 — Implement
+## Step 6 — Implement
 
 - REQUIREMENT: No pragmatic patches. Clean architecture only.
 - REQUIREMENT: ViewModels inject only UseCases, Mappers, Domain Services.
@@ -97,7 +105,7 @@ If the result exceeds 600 lines, refactor immediately — do not move on.
 - REQUIREMENT: Comment the *why*, not the *what*. No redundant comments.
 ---
 
-## Step 6 — Local Verification Gate (run BEFORE declaring done)
+## Step 7 — Local Verification Gate (run BEFORE declaring done)
 
 Use `make fast-check` for fast feedback during iterative development (~15–30s):
 ```bash
@@ -112,7 +120,7 @@ make check > build.log 2>&1 && echo "Check passed successfully" || (tail -n 100 
 If any check fails, fix it before finishing. Do not leave the user to discover failures in CI.
 ---
 
-## Step 7 — Post walkthrough as an issue comment
+## Step 8 — Post walkthrough as an issue comment
 
 After verifying that all checks pass locally and your work is complete, you MUST automatically post the walkthrough you generate as a comment on the GitHub issue using the github-mcp-server tool `add_issue_comment` before finishing the task. Do not wait for the user to ask or perform this step manually; the agent must perform this step programmatically as part of this skill.
 

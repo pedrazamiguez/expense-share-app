@@ -132,7 +132,9 @@ class ContributionConfigHandler(
                         groupCurrencySymbol = addContributionUiMapper.resolveCurrencySymbol(
                             currency
                         )
-                    )
+                    ).let { updatedState ->
+                        updatedState.copy(initialFormSnapshot = updatedState.toFormSnapshot())
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e

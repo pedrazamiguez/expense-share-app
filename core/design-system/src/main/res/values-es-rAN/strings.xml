@@ -118,5 +118,20 @@
     <string name="settlement_status_awaiting_confirmation">Êpperando confirmaçión</string>
     <string name="settlement_status_confirmed">Confirmao</string>
     <string name="settlement_status_disputed">Dîpputao</string>
+    <string name="core_cash_breakdown_title">Dêggloçe de efêttibo</string>
+    <string name="core_cash_breakdown_group_scope">Efêttibo der grupo (parte êtt.)</string>
+    <string name="core_cash_breakdown_personal_scope">Efêttibo perçonâh</string>
+    <string name="core_cash_breakdown_total_label">Totâh</string>
+    <string name="core_cash_breakdown_estimated_hint">Êttimao · tu parte proporçionâh del efêttibo der grupo</string>
+    <string name="core_cash_breakdown_empty">Çin retirô âttibô</string>
+    <string name="core_cash_breakdown_rate">@ %1$s %2$s/%3$s</string>
+    <string name="core_cash_breakdown_atm_fallback">Cahero — %1$s</string>
+    <string name="core_cash_breakdown_view_cd">Bêh dêggloçe de efêttibo</string>
+    <string name="core_cash_breakdown_unknown_subunit">Çubunidá dêcconoçida</string>
+    <string name="core_cash_breakdown_fee_tip">%1$s: %2$s</string>
+    <string name="core_cash_breakdown_add_on_tip">Propina</string>
+    <string name="core_cash_breakdown_add_on_fee">Comiçión</string>
+    <string name="core_cash_breakdown_add_on_surcharge">Recargo</string>
+    <string name="core_cash_breakdown_total_fees_label">Comiçionê</string>
     <string name="app_name" translatable="false">SplitTrip</string>
 </resources>

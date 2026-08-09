@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler
 
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.CreateEditGroupUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.CreateEditGroupUiEvent
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.CreateEditGroupFormSnapshot
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.CreateEditGroupStep
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.CreateEditGroupUiState
 import kotlinx.coroutines.Dispatchers
@@ -102,8 +103,7 @@ class CreateEditGroupNavigationEventHandlerImplTest {
 
             handler.bind(stateFlow, actionsFlow, this)
             stateFlow.value = CreateEditGroupUiState(
-                currentStep = CreateEditGroupStep.INFO,
-                hasUserModifiedAnyField = false
+                currentStep = CreateEditGroupStep.INFO
             )
 
             handler.handleNavigation(CreateEditGroupUiEvent.PreviousStep)
@@ -121,10 +121,65 @@ class CreateEditGroupNavigationEventHandlerImplTest {
             handler.bind(stateFlow, actionsFlow, this)
             stateFlow.value = CreateEditGroupUiState(
                 currentStep = CreateEditGroupStep.INFO,
-                hasUserModifiedAnyField = true
+                groupName = "Changed",
+                initialFormSnapshot = CreateEditGroupFormSnapshot(
+                    groupName = "Original",
+                    groupDescription = "",
+                    selectedCurrency = null,
+                    extraCurrencies = kotlinx.collections.immutable.persistentListOf(),
+                    selectedMembers = kotlinx.collections.immutable.persistentListOf(),
+                    localGroupImagePath = null
+                )
             )
 
             handler.handleNavigation(CreateEditGroupUiEvent.PreviousStep)
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is CreateEditGroupUiAction.RequestExitConfirmation })
+            collectJob.cancel()
+        }
+    }
+
+    @Nested
+    inner class CloseWizard {
+
+        @Test
+        fun `CloseWizard when clean emits NavigateBack action`() = runTest(testDispatcher) {
+            val actions = mutableListOf<CreateEditGroupUiAction>()
+            val collectJob = launch { actionsFlow.collect { actions.add(it) } }
+
+            handler.bind(stateFlow, actionsFlow, this)
+            stateFlow.value = CreateEditGroupUiState(
+                currentStep = CreateEditGroupStep.CURRENCY
+            )
+
+            handler.handleNavigation(CreateEditGroupUiEvent.CloseWizard)
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is CreateEditGroupUiAction.NavigateBack })
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `CloseWizard when dirty emits RequestExitConfirmation action`() = runTest(testDispatcher) {
+            val actions = mutableListOf<CreateEditGroupUiAction>()
+            val collectJob = launch { actionsFlow.collect { actions.add(it) } }
+
+            handler.bind(stateFlow, actionsFlow, this)
+            stateFlow.value = CreateEditGroupUiState(
+                currentStep = CreateEditGroupStep.CURRENCY,
+                groupName = "Changed",
+                initialFormSnapshot = CreateEditGroupFormSnapshot(
+                    groupName = "Original",
+                    groupDescription = "",
+                    selectedCurrency = null,
+                    extraCurrencies = kotlinx.collections.immutable.persistentListOf(),
+                    selectedMembers = kotlinx.collections.immutable.persistentListOf(),
+                    localGroupImagePath = null
+                )
+            )
+
+            handler.handleNavigation(CreateEditGroupUiEvent.CloseWizard)
             advanceUntilIdle()
 
             assertTrue(actions.any { it is CreateEditGroupUiAction.RequestExitConfirmation })

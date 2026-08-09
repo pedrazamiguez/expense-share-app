@@ -37,6 +37,7 @@ class AddCashWithdrawalScreenUiProviderImpl(override val route: String = Routes.
             title = stringResource(R.string.withdrawal_cash_title),
             subtitle = groupName,
             onBack = { vm?.onEvent(AddCashWithdrawalUiEvent.PreviousStep) ?: navController.popBackStack() },
+            onBackLongPress = { vm?.onEvent(AddCashWithdrawalUiEvent.CloseWizard) },
             pinned = true
         )
     }

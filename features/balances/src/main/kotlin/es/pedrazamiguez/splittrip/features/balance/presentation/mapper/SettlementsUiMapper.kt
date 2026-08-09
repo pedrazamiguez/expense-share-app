@@ -49,10 +49,24 @@ class SettlementsUiMapper(
         memberProfiles: Map<String, User>
     ): ImmutableList<SettlementUiModel> {
         val locale = localeProvider.getCurrentLocale()
-        return settlements.map { s ->
+
+        val grouped = settlements.groupBy { s ->
+            // In SettlementsUiMapper, we group to avoid "Debes a Pepe twice"
+            val isCurrentUserPayer = s.fromUserId == currentUserId
+            val counterpartyId = if (isCurrentUserPayer) s.toUserId else s.fromUserId
+            Triple(counterpartyId, s.currency, isCurrentUserPayer)
+        }
+
+        return grouped.values.map { groupRecords ->
+            val s = groupRecords.first()
             val isDebtor = s.fromUserId == currentUserId
             val isCreditor = s.toUserId == currentUserId
             val status = SettlementStatus.SUGGESTED
+
+            val totalAmount = groupRecords.sumOf { it.amount }
+
+            val pocketTypeLabel = resolvePocketTypeLabel(groupRecords, s)
+
             SettlementUiModel(
                 debtorId = s.fromUserId,
                 creditorId = s.toUserId,
@@ -68,12 +82,12 @@ class SettlementsUiMapper(
                     currentUserId = currentUserId,
                     selfIdentificationContext = SelfIdentificationContext.NOMINATIVE
                 ),
-                formattedAmount = formatCurrencyAmount(s.amount, s.currency.ifEmpty { currency }, locale),
+                formattedAmount = formatCurrencyAmount(totalAmount, s.currency.ifEmpty { currency }, locale),
                 isCurrentUserDebtor = isDebtor,
                 isCurrentUserCreditor = isCreditor,
                 pocketType = s.sourcePocket,
                 currencyCode = s.currency.ifEmpty { currency },
-                pocketTypeLabel = resourceProvider.getString(POCKET_RES_MAP[s.sourcePocket]!!),
+                pocketTypeLabel = pocketTypeLabel,
                 statusLabel = resourceProvider.getString(STATUS_RES_MAP[status]!!),
                 statusChipStyle = STATUS_STYLE_MAP[status]!!,
                 status = status
@@ -87,5 +101,24 @@ class SettlementsUiMapper(
                 else -> a.debtorName.compareTo(b.debtorName, ignoreCase = true)
             }
         }.toImmutableList()
+    }
+
+    private fun resolvePocketTypeLabel(
+        groupRecords: List<Settlement>,
+        s: Settlement
+    ): String {
+        return if (groupRecords.size > 1) {
+            val hasPocket = groupRecords.any { it.sourcePocket == SettlementPocketType.POCKET }
+            val hasCash = groupRecords.any { it.sourcePocket == SettlementPocketType.CASH }
+            if (hasPocket && hasCash) {
+                val pocketLabel = resourceProvider.getString(POCKET_RES_MAP[SettlementPocketType.POCKET]!!)
+                val cashLabel = resourceProvider.getString(POCKET_RES_MAP[SettlementPocketType.CASH]!!)
+                "$pocketLabel + $cashLabel"
+            } else {
+                resourceProvider.getString(POCKET_RES_MAP[s.sourcePocket]!!)
+            }
+        } else {
+            resourceProvider.getString(POCKET_RES_MAP[s.sourcePocket]!!)
+        }
     }
 }

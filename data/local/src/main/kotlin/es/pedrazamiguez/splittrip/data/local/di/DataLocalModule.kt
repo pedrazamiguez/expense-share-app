@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import es.pedrazamiguez.splittrip.data.local.dao.CashTransferDao
 import es.pedrazamiguez.splittrip.data.local.dao.CashWithdrawalDao
 import es.pedrazamiguez.splittrip.data.local.dao.ContributionDao
 import es.pedrazamiguez.splittrip.data.local.dao.CurrencyDao
@@ -81,6 +82,7 @@ val dataLocalModule = module {
                 name = "splittrip_db"
             )
             .apply { ALL_MIGRATIONS.forEach { addMigrations(it) } }
+            .fallbackToDestructiveMigrationOnDowngrade()
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {
                     super.onOpen(db)
@@ -106,6 +108,8 @@ val dataLocalModule = module {
     single<ContributionDao> { get<AppDatabase>().contributionDao() }
 
     single<CashWithdrawalDao> { get<AppDatabase>().cashWithdrawalDao() }
+
+    single<CashTransferDao> { get<AppDatabase>().cashTransferDao() }
 
     single<LocalCurrencyDataSource> {
         LocalCurrencyDataSourceImpl(

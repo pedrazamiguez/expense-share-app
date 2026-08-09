@@ -1,17 +1,30 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.preview
 
 import androidx.compose.runtime.Composable
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.sheet.CashBreakdownBottomSheet
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CashBreakdownItemUiModel
 import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewComplete
-import es.pedrazamiguez.splittrip.features.balance.presentation.component.CashBreakdownBottomSheet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 @PreviewComplete
 @Composable
 private fun CashBreakdownBottomSheetPreview() {
-    CashBreakdownPreviewHelper { breakdown, formattedTotal ->
+    CashBreakdownPreviewHelper { breakdownItems, formattedTotal ->
         CashBreakdownBottomSheet(
-            memberName = "Andrés Pedraza Miguez",
-            breakdown = breakdown,
+            memberName = "Javi",
+            breakdown = breakdownItems.map {
+                CashBreakdownItemUiModel(
+                    withdrawalLabel = it.withdrawalLabel,
+                    dateText = it.dateText,
+                    formattedRate = it.formattedRate,
+                    formattedNativeRemaining = it.formattedNativeRemaining,
+                    formattedEquivalent = it.formattedEquivalent,
+                    scopeLabel = it.scopeLabel,
+                    isEstimatedShare = it.isEstimatedShare,
+                    formattedAddOns = it.formattedAddOns
+                )
+            }.toImmutableList(),
             formattedTotal = formattedTotal,
             formattedTotalFees = "3.45 €",
             onDismiss = {}

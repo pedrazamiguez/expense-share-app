@@ -14,6 +14,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.notification.Lo
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.splittrip.features.group.presentation.screen.GroupsScreen
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.GroupsViewModel
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupsUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupsUiEvent
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
@@ -49,7 +50,11 @@ fun GroupsFeature(
     // Collect and handle UiActions
     LaunchedEffect(Unit) {
         groupsViewModel.actions.collectLatest { action ->
-            pillController.showPill(message = action.message.asString(context))
+            if (action is GroupsUiAction.NavigateToYourPosition) {
+                navController.navigate(Routes.YOUR_POSITION)
+            } else {
+                pillController.showPill(message = action.message.asString(context))
+            }
         }
     }
 
@@ -94,10 +99,7 @@ fun GroupsFeature(
         onWizardNextClicked = { groupsViewModel.onEvent(GroupsUiEvent.WizardNextClicked(it)) },
         onWizardBackClicked = { groupsViewModel.onEvent(GroupsUiEvent.WizardBackClicked) },
         onWizardCancelled = { groupsViewModel.onEvent(GroupsUiEvent.WizardCancelled) },
-        onConfirmSettlement = { groupId, settlementId ->
-            groupsViewModel.onEvent(GroupsUiEvent.ConfirmSettlementClicked(groupId, settlementId))
-        },
         onConfirmLeave = { groupsViewModel.onEvent(GroupsUiEvent.LeaveConfirmed(it)) },
-        onWizardJumpToStepClicked = { groupsViewModel.onEvent(GroupsUiEvent.WizardJumpToStepClicked(it)) }
+        onNavigateToYourPosition = { groupsViewModel.onEvent(GroupsUiEvent.NavigateToYourPositionClicked) }
     )
 }

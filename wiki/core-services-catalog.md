@@ -38,6 +38,7 @@
   - [E.5 Membership & Auth Services](#e5-membership--auth-services)
   - [E.6 Infrastructure Services](#e6-infrastructure-services)
   - [E.7 Settlement & Consensus Use Cases](#e7-settlement--consensus-use-cases)
+  - [E.8 Cash Settlement Services](#e8-cash-settlement-services)
 - [F. Domain Converter](#f-domain-converter)
 - [G. Data Layer Sync Delegates](#g-data-layer-sync-delegates)
   - [G.1 KeyedSubscriptionTracker](#g1-keyedsubscriptiontracker)
@@ -195,6 +196,8 @@ All components are `@Composable` functions following Material 3 design. They acc
 | `Currency.getNameRes()` | `extension/CurrencyExtensions.kt` | Maps domain `Currency` enum to a string resource ID for the currency's display name. |
 | `NavGraphBuilder.sharedComposable()` | `extension/NavGraphExtensions.kt` | Extension for declaring composable destinations with shared-element transition support. |
 | `Modifier.sharedElementAnimation()` | `extension/SharedTransitionExtensions.kt` | Modifier extension for applying shared-element animation to a composable. |
+| `Modifier.debouncedClickable()` | `extension/ModifierExtensions.kt` | Prevents rapid double navigations/clicks (300ms window). Mandatory for action items. |
+| `Modifier.debouncedCombinedClickable()`| `extension/ModifierExtensions.kt` | Prevents rapid double clicks on primary action for list items. Mandatory for items. |
 | `NotificationPermissionEffect` | `permission/NotificationPermissionEffect.kt` | Composable side-effect that requests notification permission on Android 13+. |
 
 ### B.6 Models & Constants
@@ -648,6 +651,25 @@ Creates `AddOnAmountResolver` based on `AddOnValueType` (EXACT or PERCENTAGE).
 | `AreMemberSettlementsResolvedUseCase` | `usecase/balance/AreMemberSettlementsResolvedUseCase.kt` | Returns all unresolved `SettlementRecord`s involving a specific user. Enforces the leave-group gate invariant (`UnresolvedSettlementsException`). |
 | `AreGroupSettlementsResolvedUseCase` | `usecase/balance/AreGroupSettlementsResolvedUseCase.kt` | Returns all unresolved `SettlementRecord`s within a group. Enforces the archive-group gate invariant (`UnresolvedSettlementsException`). |
 | `GetSettlementSuggestionsUseCase.persistForGroup` | `usecase/balance/GetSettlementSuggestionsUseCase.kt` | Computes per-pocket settlement suggestions (`DebtSimplificationService`) and materializes them as `SettlementRecord`s. Guaranteed idempotent. |
+
+### E.8 Cash Settlement Services
+
+#### `CashDebtScalingService`
+
+**File:** `service/CashDebtScalingService.kt`
+**Type:** Interface (implemented by `CashDebtScalingServiceImpl`)
+
+Scales the creditors' unspent cash balances using a **water-filling proportional distribution** algorithm. 
+
+**Why it is needed:**
+When a member overspends from the group's physical cash pool (i.e., their `spent` cash > their `withdrawn` cash), that overspending creates a debt that must be paid back to the members whose cash was consumed. We must distribute this debt to the creditors proportionally based on their initial contributions to the cash pool (`weight` = withdrawn amount). However, a creditor cannot absorb more debt than their actual unspent cash (`withdrawn - spent`).
+
+**How the water-filling algorithm works:**
+1. It calculates each creditor's fair share of the total debt based on their weight (withdrawn amount).
+2. It assigns debt up to the creditor's unspent cash capacity.
+3. If a creditor hits their capacity ceiling before their fair share is reached, their capacity "overflows".
+4. The remaining debt from this overflow is recursively redistributed (water-filling) among the *active* creditors who still have remaining capacity, using their relative weights, until all debt is assigned.
+5. This guarantees that all physical overspending is correctly attributed without assigning any member more cash debt than they actually hold.
 
 ---
 

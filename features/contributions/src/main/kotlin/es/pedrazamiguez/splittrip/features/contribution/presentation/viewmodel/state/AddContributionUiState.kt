@@ -23,10 +23,18 @@ data class AddContributionUiState(
     val selectedMemberDisplayName: String = "",
 
     // ── Wizard ──────────────────────────────────────────────────────────
-    val currentStep: AddContributionStep = AddContributionStep.AMOUNT
+    val currentStep: AddContributionStep = AddContributionStep.AMOUNT,
+    val initialFormSnapshot: AddContributionFormSnapshot? = null
 ) {
     val isDirty: Boolean
-        get() = amountInput.isNotBlank()
+        get() = initialFormSnapshot != null && toFormSnapshot() != initialFormSnapshot
+
+    fun toFormSnapshot() = AddContributionFormSnapshot(
+        amountInput = amountInput,
+        contributionScope = contributionScope,
+        selectedSubunitId = selectedSubunitId,
+        selectedMemberId = selectedMemberId
+    )
 
     val steps: List<AddContributionStep>
         get() = AddContributionStep.entries
@@ -48,3 +56,10 @@ data class AddContributionUiState(
                 amountInput.isNotBlank() && !amountError
         }
 }
+
+data class AddContributionFormSnapshot(
+    val amountInput: String,
+    val contributionScope: PayerType,
+    val selectedSubunitId: String?,
+    val selectedMemberId: String?
+)

@@ -9,7 +9,9 @@ import org.junit.jupiter.api.Test
 
 class DebtSimplificationServiceImplTest {
 
-    private val service = DebtSimplificationServiceImpl()
+    private val service = DebtSimplificationServiceImpl(
+        CashDebtScalingServiceImpl(RemainderDistributionServiceImpl())
+    )
 
     @Test
     fun `simplify with empty list returns empty settlements`() {
@@ -160,7 +162,9 @@ class DebtSimplificationServiceImplTest {
     }
 
     class SimplifyByPocket {
-        private val service = DebtSimplificationServiceImpl()
+        private val service = DebtSimplificationServiceImpl(
+            CashDebtScalingServiceImpl(RemainderDistributionServiceImpl())
+        )
 
         @Test
         fun `pocket creditor and cash debtor with opposite signs produce separate settlements`() {
@@ -264,7 +268,7 @@ class DebtSimplificationServiceImplTest {
         }
 
         @Test
-        fun `group cash pool overspending generates CASH settlement from overspender to creditor`() {
+        fun `group cash pool overspending generates CASH settlement from cash holder to overspender`() {
             val balances = listOf(
                 MemberBalance(userId = "Andres", withdrawn = 500, cashSpent = 800),
                 MemberBalance(userId = "Antonio", withdrawn = 500, cashSpent = 0)
@@ -275,6 +279,26 @@ class DebtSimplificationServiceImplTest {
             assertEquals("Antonio", cashSettlement.toUserId)
             assertEquals(300L, cashSettlement.amount)
             assertEquals("EUR", cashSettlement.currency)
+        }
+
+        @Test
+        fun `group cash pool overspending is distributed proportionally among members with remaining cash shares`() {
+            val balances = listOf(
+                MemberBalance(userId = "Antonio", withdrawn = 166667, cashSpent = 300000),
+                MemberBalance(userId = "Andres", withdrawn = 166667, cashSpent = 0),
+                MemberBalance(userId = "Pepe", withdrawn = 166666, cashSpent = 0)
+            )
+            val result = service.simplifyByPocket(balances, "EUR")
+            val cashSettlements = result.filter { it.sourcePocket == SettlementPocketType.CASH }
+            assertEquals(2, cashSettlements.size)
+
+            val antonioToAndres = cashSettlements.find { it.toUserId == "Andres" }!!
+            assertEquals("Antonio", antonioToAndres.fromUserId)
+            assertEquals(66667L, antonioToAndres.amount)
+
+            val antonioToPepe = cashSettlements.find { it.toUserId == "Pepe" }!!
+            assertEquals("Antonio", antonioToPepe.fromUserId)
+            assertEquals(66666L, antonioToPepe.amount)
         }
 
         @Test
@@ -353,6 +377,58 @@ class DebtSimplificationServiceImplTest {
             assertEquals(2, byPocketResult.size)
             assertTrue(byPocketResult.any { it.sourcePocket == SettlementPocketType.POCKET })
             assertTrue(byPocketResult.any { it.sourcePocket == SettlementPocketType.CASH })
+        }
+
+        @Test
+        fun `creditor spending within allowance does not shift debt assigned to them`() {
+            // Antonio overspent 133333
+            // Andres spent 0 (capacity 166667)
+            // Pepe spent 0 (capacity 166666)
+            val balancesBefore = listOf(
+                MemberBalance(userId = "Antonio", withdrawn = 166667, cashSpent = 300000),
+                MemberBalance(userId = "Andres", withdrawn = 166667, cashSpent = 0),
+                MemberBalance(userId = "Pepe", withdrawn = 166666, cashSpent = 0)
+            )
+            val resultBefore = service.simplifyByPocket(balancesBefore, "EUR")
+                .filter { it.sourcePocket == SettlementPocketType.CASH }
+
+            // Now Andres spends 20000, which is within his safe share.
+            val balancesAfter = listOf(
+                MemberBalance(userId = "Antonio", withdrawn = 166667, cashSpent = 300000),
+                MemberBalance(userId = "Andres", withdrawn = 166667, cashSpent = 20000),
+                MemberBalance(userId = "Pepe", withdrawn = 166666, cashSpent = 0)
+            )
+            val resultAfter = service.simplifyByPocket(balancesAfter, "EUR")
+                .filter { it.sourcePocket == SettlementPocketType.CASH }
+
+            assertEquals(resultBefore.size, resultAfter.size)
+            resultBefore.forEachIndexed { index, expected ->
+                assertEquals(expected.amount, resultAfter[index].amount)
+                assertEquals(expected.fromUserId, resultAfter[index].fromUserId)
+                assertEquals(expected.toUserId, resultAfter[index].toUserId)
+            }
+        }
+
+        @Test
+        fun `creditor spending beyond allowance spills over debt to other creditors`() {
+            // Antonio overspent 133333.
+            // If Andres spends 120000, his capacity is 46667. His fair share of debt was 66667.
+            // Since 46667 < 66667, his assigned debt is capped at 46667, and the excess 20000 spills over to Pepe.
+            val balances = listOf(
+                MemberBalance(userId = "Antonio", withdrawn = 166667, cashSpent = 300000),
+                MemberBalance(userId = "Andres", withdrawn = 166667, cashSpent = 120000),
+                MemberBalance(userId = "Pepe", withdrawn = 166666, cashSpent = 0)
+            )
+            val result = service.simplifyByPocket(balances, "EUR")
+                .filter { it.sourcePocket == SettlementPocketType.CASH }
+
+            val antonioToAndres = result.find { it.toUserId == "Andres" }!!
+            assertEquals("Antonio", antonioToAndres.fromUserId)
+            assertEquals(46667L, antonioToAndres.amount) // Capped at capacity (166667 - 120000)
+
+            val antonioToPepe = result.find { it.toUserId == "Pepe" }!!
+            assertEquals("Antonio", antonioToPepe.fromUserId)
+            assertEquals(86666L, antonioToPepe.amount) // 66666 original + 20000 spilled over
         }
 
         @Test

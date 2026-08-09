@@ -7,9 +7,6 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.Forma
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.Settlement
-import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
-import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
-import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.service.DebtSimplificationService
@@ -17,7 +14,6 @@ import es.pedrazamiguez.splittrip.features.group.R
 import io.mockk.every
 import io.mockk.mockk
 import java.math.BigDecimal
-import java.time.LocalDateTime
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -118,66 +114,6 @@ class LeaveWizardUiMapperImplTest {
         assertEquals("€15.00", pos2?.amountFormatted)
         assertTrue(pos2?.isPositive == false)
         assertTrue(pos2?.isNegative == true)
-    }
-
-    @Test
-    fun `toSettlementUiModels maps sender and receiver names formatted amounts and confirmation state`() {
-        every { resourceProvider.getString(DesignSystemR.string.balance_you) } returns "You"
-        every { resourceProvider.getString(DesignSystemR.string.settlement_pocket_type_net) } returns "Net"
-        every { resourceProvider.getString(R.string.leave_wizard_settlement_you_owe, "Bob") } returns "You owe Bob"
-        every { resourceProvider.getString(R.string.leave_wizard_settlement_action_required) } returns
-            "Action required by you"
-
-        val record = SettlementRecord(
-            id = "s-1",
-            groupId = "group-1",
-            settlement = Settlement(
-                fromUserId = "user-1",
-                toUserId = "user-2",
-                amount = 5000L,
-                currency = "EUR",
-                sourcePocket = SettlementPocketType.NET
-            ),
-            status = SettlementStatus.SUGGESTED,
-            createdAt = LocalDateTime.now()
-        )
-
-        val profiles = mapOf(
-            "user-1" to User(userId = "user-1", email = "a@b.com", displayName = "Alice"),
-            "user-2" to User(userId = "user-2", email = "c@d.com", displayName = "Bob")
-        )
-
-        val result = mapper.toSettlementUiModels(listOf(record), profiles, currentUserId)
-
-        assertEquals(1, result.size)
-        val uiModel = result.first()
-        assertEquals("s-1", uiModel.settlementId)
-        assertEquals("You", uiModel.debtorName)
-        assertEquals("Bob", uiModel.creditorName)
-        assertEquals("You owe Bob", uiModel.directionTitle)
-        assertEquals("€50.00", uiModel.formattedAmount)
-        assertEquals("Net", uiModel.pocketTypeLabel)
-        assertTrue(uiModel.isCurrentUserDebtor)
-        assertFalse(uiModel.isCurrentUserCreditor)
-        assertTrue(uiModel.canCurrentUserConfirm)
-        assertFalse(uiModel.isConfirmed)
-    }
-
-    @Test
-    fun `toCashResolutionUiModel identifies deposit vs reimbursement based on cash held`() {
-        val depositBalance = MemberBalance(userId = currentUserId, cashInHand = 3000L)
-        val depositResult = mapper.toCashResolutionUiModel(depositBalance, "EUR")
-
-        assertTrue(depositResult.requiresDeposit)
-        assertFalse(depositResult.requiresReimbursement)
-        assertEquals("€30.00", depositResult.formattedAmount)
-
-        val reimburseBalance = MemberBalance(userId = currentUserId, cashInHand = -1500L)
-        val reimburseResult = mapper.toCashResolutionUiModel(reimburseBalance, "EUR")
-
-        assertFalse(reimburseResult.requiresDeposit)
-        assertTrue(reimburseResult.requiresReimbursement)
-        assertEquals("€15.00", reimburseResult.formattedAmount)
     }
 
     @Test

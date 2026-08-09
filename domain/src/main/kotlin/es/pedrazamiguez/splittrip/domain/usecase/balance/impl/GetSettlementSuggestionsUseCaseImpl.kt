@@ -5,6 +5,7 @@ import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
+import es.pedrazamiguez.splittrip.domain.repository.CashTransferRepository
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
@@ -28,6 +29,7 @@ class GetSettlementSuggestionsUseCaseImpl(
     private val contributionRepository: ContributionRepository,
     private val cashWithdrawalRepository: CashWithdrawalRepository,
     private val subunitRepository: SubunitRepository,
+    private val cashTransferRepository: CashTransferRepository,
     private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase
 ) : GetSettlementSuggestionsUseCase {
 
@@ -48,6 +50,7 @@ class GetSettlementSuggestionsUseCaseImpl(
         val contributions = contributionRepository.getGroupContributionsFlow(groupId).first()
         val withdrawals = cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId).first()
         val subunits = subunitRepository.getGroupSubunits(groupId)
+        val cashTransfers = cashTransferRepository.observeGroupCashTransfers(groupId).first()
 
         val existingRecords = settlementRepository.getGroupSettlements(groupId)
 
@@ -56,6 +59,7 @@ class GetSettlementSuggestionsUseCaseImpl(
                 contributions = contributions,
                 withdrawals = withdrawals,
                 expenses = expenses,
+                cashTransfers = cashTransfers,
                 subunits = subunits,
                 groupMemberIds = group.members,
                 groupCurrency = group.currency,

@@ -10,4 +10,5 @@ sealed class YourPositionUiEvent {
     data object DisputeSubmitted : YourPositionUiEvent()
     data object DisputeCancelled : YourPositionUiEvent()
     data class NudgeDebtor(val settlementId: String) : YourPositionUiEvent()
+    data class ChartModeToggled(val cashOnly: Boolean) : YourPositionUiEvent()
 }

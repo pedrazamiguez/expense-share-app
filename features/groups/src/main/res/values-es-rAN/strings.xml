@@ -45,6 +45,7 @@
     <string name="group_delete_warning">¿Çeguro que quierê eliminâh \"%1$s\"? Çe borrarán tôh lô gâttô y no podrâh deçaçêl-lo.</string>
     <string name="group_deleted_successfully">Grupo eliminao corrêttamente</string>
     <string name="error_deleting_group">Errôh al eliminâh er grupo. Por fabôh, inténtalo de nuebo</string>
+    <string name="error_group_delete_unresolved_settlements">¡Er grupo no çe puede eliminâh âtta que çe ayan reçuerto tôh lô çardô!</string>
     <string name="group_actions_title">Grupo \"%1$s\"</string>
     <string name="action_edit_group">Editâh grupo</string>
     <string name="action_delete_group">Eliminâh grupo</string>

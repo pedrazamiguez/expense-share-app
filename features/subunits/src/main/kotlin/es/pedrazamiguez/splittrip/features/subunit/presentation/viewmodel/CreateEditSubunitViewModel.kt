@@ -22,6 +22,7 @@ import es.pedrazamiguez.splittrip.features.subunit.presentation.mapper.SubunitUi
 import es.pedrazamiguez.splittrip.features.subunit.presentation.model.MemberUiModel
 import es.pedrazamiguez.splittrip.features.subunit.presentation.viewmodel.action.CreateEditSubunitUiAction
 import es.pedrazamiguez.splittrip.features.subunit.presentation.viewmodel.event.CreateEditSubunitUiEvent
+import es.pedrazamiguez.splittrip.features.subunit.presentation.viewmodel.state.CreateEditSubunitFormSnapshot
 import es.pedrazamiguez.splittrip.features.subunit.presentation.viewmodel.state.CreateEditSubunitStep
 import es.pedrazamiguez.splittrip.features.subunit.presentation.viewmodel.state.CreateEditSubunitUiState
 import java.math.BigDecimal
@@ -104,7 +105,7 @@ class CreateEditSubunitViewModel(
                 membersError = form.membersError,
                 sharesError = form.sharesError,
                 currentStep = form.currentStep,
-                hasUserModifiedAnyField = form.hasUserModifiedAnyField
+                initialFormSnapshot = form.initialFormSnapshot
             )
         }
     }.stateIn(
@@ -142,10 +143,30 @@ class CreateEditSubunitViewModel(
                                         memberShares = editingSubunit.memberShares.mapValues { (_, share) ->
                                             subunitUiMapper.formatShareAsPercentage(share)
                                         }
-                                    )
+                                    ).let { updatedState ->
+                                        updatedState.copy(
+                                            initialFormSnapshot = CreateEditSubunitFormSnapshot(
+                                                name = updatedState.name,
+                                                selectedMemberIds = updatedState.selectedMemberIds.toImmutableList(),
+                                                memberShares = updatedState.memberShares,
+                                                lockedMemberIds = updatedState.lockedMemberIds.toImmutableSet()
+                                            )
+                                        )
+                                    }
                                 }
                             } else if (!_formState.value.initialized) {
-                                _formState.update { it.copy(initialized = true) }
+                                _formState.update {
+                                    it.copy(initialized = true).let { updatedState ->
+                                        updatedState.copy(
+                                            initialFormSnapshot = CreateEditSubunitFormSnapshot(
+                                                name = updatedState.name,
+                                                selectedMemberIds = updatedState.selectedMemberIds.toImmutableList(),
+                                                memberShares = updatedState.memberShares,
+                                                lockedMemberIds = updatedState.lockedMemberIds.toImmutableSet()
+                                            )
+                                        )
+                                    }
+                                }
                             }
 
                             val currentUserId = authenticationService.currentUserId()
@@ -181,6 +202,7 @@ class CreateEditSubunitViewModel(
             CreateEditSubunitUiEvent.Save -> save()
             CreateEditSubunitUiEvent.NextStep -> handleNextStep()
             CreateEditSubunitUiEvent.PreviousStep -> handlePreviousStep()
+            CreateEditSubunitUiEvent.CloseWizard -> handleCloseWizard()
             is CreateEditSubunitUiEvent.JumpToStep -> handleJumpToStep(event.stepIndex)
         }
     }
@@ -236,7 +258,7 @@ class CreateEditSubunitViewModel(
                 }
 
             WizardNavigator.NavigationResult.ExitWizard -> {
-                if (form.hasUserModifiedAnyField) {
+                if (form.initialFormSnapshot != null && uiState.value.isDirty) {
                     viewModelScope.launch { _actions.emit(CreateEditSubunitUiAction.RequestExitConfirmation) }
                 } else {
                     viewModelScope.launch { _actions.emit(CreateEditSubunitUiAction.NavigateBack) }
@@ -259,7 +281,7 @@ class CreateEditSubunitViewModel(
     }
 
     private fun updateName(name: String) {
-        _formState.update { it.copy(name = name, nameError = null, hasUserModifiedAnyField = true) }
+        _formState.update { it.copy(name = name, nameError = null) }
     }
 
     private fun toggleMember(userId: String) {
@@ -281,8 +303,7 @@ class CreateEditSubunitViewModel(
                 selectedMemberIds = updatedIds,
                 memberShares = updatedShares,
                 lockedMemberIds = emptySet(),
-                membersError = null,
-                hasUserModifiedAnyField = true
+                membersError = null
             )
         }
     }
@@ -331,8 +352,7 @@ class CreateEditSubunitViewModel(
             form.copy(
                 memberShares = updatedShares,
                 lockedMemberIds = updatedLocks,
-                sharesError = null,
-                hasUserModifiedAnyField = true
+                sharesError = null
             )
         }
     }
@@ -344,7 +364,7 @@ class CreateEditSubunitViewModel(
             } else {
                 form.lockedMemberIds + userId
             }
-            form.copy(lockedMemberIds = updatedLocks, hasUserModifiedAnyField = true)
+            form.copy(lockedMemberIds = updatedLocks)
         }
     }
 
@@ -432,6 +452,14 @@ class CreateEditSubunitViewModel(
         }
     }
 
+    private fun handleCloseWizard() {
+        if (uiState.value.isDirty) {
+            viewModelScope.launch { _actions.emit(CreateEditSubunitUiAction.RequestExitConfirmation) }
+        } else {
+            viewModelScope.launch { _actions.emit(CreateEditSubunitUiAction.NavigateBack) }
+        }
+    }
+
     private data class FormState(
         val initialized: Boolean = false,
         val isSaving: Boolean = false,
@@ -443,6 +471,6 @@ class CreateEditSubunitViewModel(
         val membersError: UiText? = null,
         val sharesError: UiText? = null,
         val currentStep: CreateEditSubunitStep = CreateEditSubunitStep.NAME,
-        val hasUserModifiedAnyField: Boolean = false
+        val initialFormSnapshot: CreateEditSubunitFormSnapshot? = null
     )
 }

@@ -11,6 +11,7 @@ import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.ExpenseSplit
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.impl.AddOnCalculationServiceImpl
+import es.pedrazamiguez.splittrip.domain.service.impl.SettlementReconciliationServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetMemberBalancesFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
 import java.math.BigDecimal
@@ -29,7 +30,10 @@ class GetMemberBalancesFlowUseCaseAddOnTest {
 
     @BeforeEach
     fun setUp() {
-        useCase = GetMemberBalancesFlowUseCaseImpl(AddOnCalculationServiceImpl())
+        useCase = GetMemberBalancesFlowUseCaseImpl(
+            addOnCalculationService = AddOnCalculationServiceImpl(),
+            settlementReconciliationService = SettlementReconciliationServiceImpl()
+        )
     }
 
     private fun compute(

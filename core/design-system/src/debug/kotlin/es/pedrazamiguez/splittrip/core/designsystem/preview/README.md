@@ -5,11 +5,12 @@ locales and themes.
 
 ## Quick Reference
 
-| Annotation         | Previews Generated                       | Use Case                                  |
-|--------------------|------------------------------------------|-------------------------------------------|
-| `@PreviewLocales`  | 2 (EN, ES)                               | Test string resources in both languages   |
-| `@PreviewThemes`   | 2 (Light, Dark)                          | Test component styling in both themes     |
-| `@PreviewComplete` | 4 (EN Light, EN Dark, ES Light, ES Dark) | Comprehensive testing of all combinations |
+| Annotation             | Previews Generated                       | Use Case                                                              |
+|------------------------|------------------------------------------|-----------------------------------------------------------------------|
+| `@PreviewLocales`      | 2 (EN, ES)                               | Test string resources in both languages                               |
+| `@PreviewThemes`       | 2 (Light, Dark)                          | Test component styling in both themes                                 |
+| `@PreviewNarrowThemes` | 2 (Narrow Light, Narrow Dark)            | Test responsive layouts and typography on small screens (320dp width) |
+| `@PreviewComplete`     | 4 (EN Light, EN Dark, ES Light, ES Dark) | Comprehensive testing of all combinations                             |
 
 ## Annotations
 
@@ -39,6 +40,20 @@ actually apply. The annotation sets the environment; the wrapper reads it and ap
 @Composable
 private fun MyComponentPreview() {
     PreviewThemeWrapper {  // Required for themes to work!
+        MyComponent()
+    }
+}
+```
+
+### @PreviewNarrowThemes
+
+Shows your component in narrow device configurations (e.g., small phones, 320dp width) in both light and dark themes.
+
+```kotlin
+@PreviewNarrowThemes
+@Composable
+private fun MyComponentNarrowPreview() {
+    PreviewThemeWrapper {
         MyComponent()
     }
 }

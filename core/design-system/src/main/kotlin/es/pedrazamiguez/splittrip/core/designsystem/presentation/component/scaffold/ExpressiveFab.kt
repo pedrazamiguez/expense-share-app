@@ -9,7 +9,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
@@ -35,6 +34,7 @@ import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.star
+import es.pedrazamiguez.splittrip.core.designsystem.extension.debouncedClickable
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.shape.MorphShape
 import es.pedrazamiguez.splittrip.core.designsystem.transition.fabSharedTransitionModifier
 
@@ -218,7 +218,7 @@ private fun ExpressiveFabBase(
             )
             .clip(fabShape)
             .background(colors.containerColor)
-            .clickable(
+            .debouncedClickable(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick
