@@ -32,6 +32,14 @@ class FirebaseAppConfigRepositoryTest {
         firebaseRemoteConfig = mockk(relaxed = true)
         every { firebaseRemoteConfig.setDefaultsAsync(any<Int>()) } returns mockk(relaxed = true)
 
+        every { firebaseRemoteConfig.getString("default_currency_code") } returns "USD"
+        every { firebaseRemoteConfig.getLong("balance_computation_debounce_ms") } returns 500L
+        every { firebaseRemoteConfig.getLong("max_members_per_group") } returns 15L
+        every { firebaseRemoteConfig.getLong("extracted_date_max_future_days") } returns 45L
+        every { firebaseRemoteConfig.getString("support_email_address") } returns "test-support@splittrip.com"
+        every { firebaseRemoteConfig.getLong("settlement_nudge_rate_limit_hours") } returns 48L
+        every { firebaseRemoteConfig.getString("ocr_safety_false_positives_blacklist") } returns "blade,secret"
+
         repository = FirebaseAppConfigRepository(firebaseRemoteConfig)
     }
 
