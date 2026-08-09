@@ -72,6 +72,8 @@ class GetMemberBalancesFlowUseCaseImpl(
             balances = rawBalances,
             settlements = inputs.settlements,
             cashTransfers = inputs.cashTransfers,
+            contributions = inputs.contributions,
+            withdrawals = inputs.withdrawals,
             groupCurrency = inputs.groupCurrency
         )
     }

@@ -1,9 +1,10 @@
 package es.pedrazamiguez.splittrip.domain.service.impl
 
 import es.pedrazamiguez.splittrip.domain.model.CashTransfer
+import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
+import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.CurrencyAmount
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
-import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.service.SettlementReconciliationService
@@ -21,6 +22,8 @@ class SettlementReconciliationServiceImpl : SettlementReconciliationService {
         balances: List<MemberBalance>,
         settlements: List<SettlementRecord>,
         cashTransfers: List<CashTransfer>,
+        contributions: List<Contribution>,
+        withdrawals: List<CashWithdrawal>,
         groupCurrency: String
     ): List<MemberBalance> {
         val balanceMap = balances.associateBy { it.userId }.toMutableMap()
@@ -34,7 +37,7 @@ class SettlementReconciliationServiceImpl : SettlementReconciliationService {
         // 2. Apply resolved non-cash settlements
         val resolvedSettlements = settlements.filter { it.status == SettlementStatus.RESOLVED }
         for (record in resolvedSettlements) {
-            applySettlementRecord(balanceMap, record.settlement, groupCurrency)
+            applySettlementRecord(balanceMap, record, contributions, withdrawals, groupCurrency)
         }
 
         return balances.map { balanceMap[it.userId]!! }
@@ -149,13 +152,15 @@ class SettlementReconciliationServiceImpl : SettlementReconciliationService {
 
     private fun applySettlementRecord(
         balanceMap: MutableMap<String, MemberBalance>,
-        settlement: Settlement,
+        record: SettlementRecord,
+        contributions: List<Contribution>,
+        withdrawals: List<CashWithdrawal>,
         groupCurrency: String
     ) {
-        val fromUser = balanceMap[settlement.fromUserId] ?: return
-        val toUser = balanceMap[settlement.toUserId] ?: return
+        val fromUser = balanceMap[record.settlement.fromUserId] ?: return
+        val toUser = balanceMap[record.settlement.toUserId] ?: return
 
-        val strategy = strategies.firstOrNull { it.appliesTo(settlement.sourcePocket) }
-        strategy?.apply(balanceMap, settlement, fromUser, toUser, groupCurrency)
+        val strategy = strategies.firstOrNull { it.appliesTo(record.settlement.sourcePocket) }
+        strategy?.apply(balanceMap, record, fromUser, toUser, contributions, withdrawals, groupCurrency)
     }
 }
