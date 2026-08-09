@@ -1,8 +1,10 @@
 package es.pedrazamiguez.splittrip.domain.service.settlement
 
+import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
+import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
-import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
+import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 
 class PocketSettlementReconciliationStrategy : SettlementReconciliationStrategy {
 
@@ -12,22 +14,27 @@ class PocketSettlementReconciliationStrategy : SettlementReconciliationStrategy 
 
     override fun apply(
         balanceMap: MutableMap<String, MemberBalance>,
-        settlement: Settlement,
+        record: SettlementRecord,
         fromUser: MemberBalance,
         toUser: MemberBalance,
+        contributions: List<Contribution>,
+        withdrawals: List<CashWithdrawal>,
         groupCurrency: String
     ) {
-        val isAlreadyMaterialized = fromUser.contributed >= settlement.amount
+        // If a linked contribution exists, the settlement is already materialized in the pot.
+        val isAlreadyMaterialized = contributions.any { it.linkedSettlementId == record.id }
+
+        // If it is NOT materialized, we must apply the resolution virtually for BOTH users.
+        // If it IS materialized, we do NOTHING (the pot absorbed the contribution).
         if (!isAlreadyMaterialized) {
-            balanceMap[settlement.fromUserId] = fromUser.copy(
-                contributed = fromUser.contributed + settlement.amount,
-                pocketBalance = fromUser.pocketBalance + settlement.amount
+            balanceMap[record.settlement.fromUserId] = fromUser.copy(
+                contributed = fromUser.contributed + record.settlement.amount,
+                pocketBalance = fromUser.pocketBalance + record.settlement.amount
+            )
+            balanceMap[record.settlement.toUserId] = toUser.copy(
+                withdrawn = toUser.withdrawn + record.settlement.amount,
+                pocketBalance = toUser.pocketBalance - record.settlement.amount
             )
         }
-
-        balanceMap[settlement.toUserId] = toUser.copy(
-            withdrawn = toUser.withdrawn + settlement.amount,
-            pocketBalance = toUser.pocketBalance - settlement.amount
-        )
     }
 }

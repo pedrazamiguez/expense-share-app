@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.domain.service.impl
 
 import es.pedrazamiguez.splittrip.domain.model.CashTransfer
+import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.CurrencyAmount
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.Settlement
@@ -44,7 +45,14 @@ class SettlementReconciliationServiceImplTest {
                 )
             )
 
-            val result = service.applyResolvedSettlements(balances, settlements, emptyList(), "EUR")
+            val result = service.applyResolvedSettlements(
+                balances,
+                settlements,
+                emptyList(),
+                emptyList(),
+                emptyList(),
+                "EUR"
+            )
 
             assertEquals(balances, result)
         }
@@ -75,7 +83,14 @@ class SettlementReconciliationServiceImplTest {
                 )
             )
 
-            val result = service.applyResolvedSettlements(balances, settlements, emptyList(), "EUR")
+            val result = service.applyResolvedSettlements(
+                balances,
+                settlements,
+                emptyList(),
+                emptyList(),
+                emptyList(),
+                "EUR"
+            )
             val balanceMap = result.associateBy { it.userId }
 
             val user1 = balanceMap["user-1"]!!
@@ -128,7 +143,14 @@ class SettlementReconciliationServiceImplTest {
                 )
             )
 
-            val result = service.applyResolvedSettlements(balances, emptyList(), cashTransfers, "EUR")
+            val result = service.applyResolvedSettlements(
+                balances,
+                emptyList(),
+                cashTransfers,
+                emptyList(),
+                emptyList(),
+                "EUR"
+            )
             val balanceMap = result.associateBy { it.userId }
 
             val user1 = balanceMap["user-1"]!!
@@ -192,7 +214,14 @@ class SettlementReconciliationServiceImplTest {
                 )
             )
 
-            val reconciled = service.applyResolvedSettlements(balances, emptyList(), cashTransfers, "EUR")
+            val reconciled = service.applyResolvedSettlements(
+                balances,
+                emptyList(),
+                cashTransfers,
+                emptyList(),
+                emptyList(),
+                "EUR"
+            )
             val reconciledMap = reconciled.associateBy { it.userId }
 
             // After reconciliation, cash debt should be zero for both
@@ -213,6 +242,66 @@ class SettlementReconciliationServiceImplTest {
                 it.sourcePocket == SettlementPocketType.CASH
             }
             assertEquals(0, cashSettlements.size, "No new cash settlements should be generated after reconciliation")
+        }
+
+        @Test
+        fun `applies pocket settlement correctly when materialized via linked contribution`() {
+            val balances = listOf(
+                MemberBalance(
+                    userId = "user-1",
+                    pocketBalance = 1000L,
+                    withdrawn = 0L,
+                    contributed = 1000L
+                ),
+                MemberBalance(
+                    userId = "user-2",
+                    pocketBalance = -1000L,
+                    withdrawn = 1000L,
+                    contributed = 0L
+                )
+            )
+            val settlements = listOf(
+                SettlementRecord(
+                    id = "settlement-1",
+                    groupId = "group-1",
+                    settlement = Settlement("user-2", "user-1", 1000L, "EUR", SettlementPocketType.POCKET),
+                    status = SettlementStatus.RESOLVED,
+                    createdAt = LocalDateTime.now()
+                )
+            )
+            val contributions = listOf(
+                Contribution(
+                    id = "contrib-1",
+                    groupId = "group-1",
+                    userId = "user-2",
+                    amount = 1000L,
+                    currency = "EUR",
+                    equivalentBaseAmount = 1000L,
+                    linkedSettlementId = "settlement-1",
+                    createdAt = LocalDateTime.now()
+                )
+            )
+
+            val result = service.applyResolvedSettlements(
+                balances,
+                settlements,
+                emptyList(),
+                contributions,
+                emptyList(),
+                "EUR"
+            )
+            val balanceMap = result.associateBy { it.userId }
+
+            val user1 = balanceMap["user-1"]!!
+            val user2 = balanceMap["user-2"]!!
+
+            // Neither user-1 nor user-2 balances are mutated by the reconciliation strategy,
+            // since the contribution logic itself already accounted for it.
+            assertEquals(-1000L, user2.pocketBalance)
+            assertEquals(0L, user2.contributed)
+
+            assertEquals(1000L, user1.pocketBalance)
+            assertEquals(0L, user1.withdrawn)
         }
     }
 }
