@@ -499,7 +499,7 @@ class CreateEditSubunitViewModelTest {
             advanceUntilIdle()
 
             assertEquals(CreateEditSubunitStep.NAME, viewModel.uiState.value.currentStep)
-            assertFalse(viewModel.uiState.value.hasUserModifiedAnyField)
+            assertFalse(viewModel.uiState.value.isDirty)
 
             viewModel.onEvent(CreateEditSubunitUiEvent.PreviousStep)
             advanceUntilIdle()
@@ -529,7 +529,7 @@ class CreateEditSubunitViewModelTest {
             // Make it dirty
             viewModel.onEvent(CreateEditSubunitUiEvent.UpdateName("New Subunit Name"))
             advanceUntilIdle()
-            assertTrue(viewModel.uiState.value.hasUserModifiedAnyField)
+            assertTrue(viewModel.uiState.value.isDirty)
 
             viewModel.onEvent(CreateEditSubunitUiEvent.PreviousStep)
             advanceUntilIdle()

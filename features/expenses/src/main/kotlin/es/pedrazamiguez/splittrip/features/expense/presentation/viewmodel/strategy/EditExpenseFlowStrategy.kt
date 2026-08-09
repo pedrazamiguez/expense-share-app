@@ -97,7 +97,9 @@ class EditExpenseFlowStrategy(
                         screenTitleRes = R.string.edit_expense_title,
                         submitLabelRes = R.string.edit_expense_submit_button,
                         isAiModeActive = false
-                    )
+                    ).let { updatedState ->
+                        updatedState.copy(initialFormSnapshot = updatedState.toFormSnapshot())
+                    }
                 }
 
                 onConfigLoaded()

@@ -1507,6 +1507,10 @@ class AddExpenseViewModelTest {
 
         @Test
         fun `PreviousStep on first step with dirty state emits RequestExitConfirmation`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
             // Make the state dirty by changing the title
             viewModel.onEvent(AddExpenseUiEvent.TitleChanged("Coffee break"))
             assertEquals(0, viewModel.uiState.value.currentStepIndex)

@@ -444,6 +444,12 @@ class AddContributionViewModelTest {
                 viewModel.actions.collect { emitted.add(it) }
             }
 
+            coEvery { getGroupByIdUseCase("group-1") } returns testGroup
+            coEvery { getGroupSubunitsUseCase("group-1") } returns emptyList()
+            every { authenticationService.currentUserId() } returns "user-1"
+            viewModel.setGroupContext("group-1", "EUR")
+            advanceUntilIdle()
+
             // Make it dirty by updating the amount input
             viewModel.onEvent(AddContributionUiEvent.UpdateAmount("10.00"))
             assertTrue(viewModel.uiState.value.isDirty)

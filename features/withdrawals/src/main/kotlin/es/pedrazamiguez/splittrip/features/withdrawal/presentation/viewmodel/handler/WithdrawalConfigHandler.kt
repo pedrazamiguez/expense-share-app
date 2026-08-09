@@ -134,7 +134,9 @@ class WithdrawalConfigHandler(
                     memberOptions
                 ),
                 error = null
-            )
+            ).let { updatedState ->
+                updatedState.copy(initialFormSnapshot = updatedState.toFormSnapshot())
+            }
         }
     }
 

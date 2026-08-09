@@ -22,8 +22,17 @@ data class CreateEditSubunitUiState(
 
     // ── Wizard ──────────────────────────────────────────────────────────
     val currentStep: CreateEditSubunitStep = CreateEditSubunitStep.NAME,
-    val hasUserModifiedAnyField: Boolean = false
+    val initialFormSnapshot: CreateEditSubunitFormSnapshot? = null
 ) {
+    val isDirty: Boolean
+        get() = initialFormSnapshot != null && toFormSnapshot() != initialFormSnapshot
+
+    fun toFormSnapshot() = CreateEditSubunitFormSnapshot(
+        name = name,
+        selectedMemberIds = selectedMemberIds,
+        memberShares = memberShares,
+        lockedMemberIds = lockedMemberIds
+    )
     val steps: List<CreateEditSubunitStep>
         get() = CreateEditSubunitStep.entries
 
@@ -45,3 +54,10 @@ data class CreateEditSubunitUiState(
                 name.isNotBlank() && selectedMemberIds.isNotEmpty()
         }
 }
+
+data class CreateEditSubunitFormSnapshot(
+    val name: String,
+    val selectedMemberIds: ImmutableList<String>,
+    val memberShares: Map<String, String>,
+    val lockedMemberIds: ImmutableSet<String>
+)

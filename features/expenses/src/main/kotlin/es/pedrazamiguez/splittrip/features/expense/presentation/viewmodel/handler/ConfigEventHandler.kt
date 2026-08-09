@@ -203,7 +203,9 @@ class ConfigEventHandler(
                 memberIds = memberIds.toImmutableList(),
                 contributionSubunitOptions = userSubunitOptions,
                 error = null
-            ).withStepClamped()
+            ).withStepClamped().let { updatedState ->
+                updatedState.copy(initialFormSnapshot = updatedState.toFormSnapshot())
+            }
         }
 
         emitPostConfigActions(
