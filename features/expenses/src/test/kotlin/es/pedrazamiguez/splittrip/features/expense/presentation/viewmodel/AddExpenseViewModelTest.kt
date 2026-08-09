@@ -1543,6 +1543,42 @@ class AddExpenseViewModelTest {
         }
 
         @Test
+        fun `CloseWizard with clean state emits NavigateBack`() = runTest {
+            assertFalse(viewModel.uiState.value.isDirty)
+
+            val emittedActions = mutableListOf<AddExpenseUiAction>()
+            val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
+
+            viewModel.onEvent(AddExpenseUiEvent.CloseWizard)
+            advanceUntilIdle()
+
+            job.cancel()
+
+            assertTrue(emittedActions.any { it is AddExpenseUiAction.NavigateBack })
+        }
+
+        @Test
+        fun `CloseWizard with dirty state emits RequestExitConfirmation`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // Make the state dirty
+            viewModel.onEvent(AddExpenseUiEvent.TitleChanged("Coffee break"))
+            assertTrue(viewModel.uiState.value.isDirty)
+
+            val emittedActions = mutableListOf<AddExpenseUiAction>()
+            val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
+
+            viewModel.onEvent(AddExpenseUiEvent.CloseWizard)
+            advanceUntilIdle()
+
+            job.cancel()
+
+            assertTrue(emittedActions.any { it is AddExpenseUiAction.RequestExitConfirmation })
+        }
+
+        @Test
         fun `JumpToReview sets currentStep to REVIEW and records jumpedFromStep`() = runTest {
             // Navigate to an optional step (CATEGORY)
             val steps = viewModel.uiState.value.applicableSteps

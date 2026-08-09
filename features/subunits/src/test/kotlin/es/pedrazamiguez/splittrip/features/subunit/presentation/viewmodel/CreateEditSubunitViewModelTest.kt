@@ -541,6 +541,59 @@ class CreateEditSubunitViewModelTest {
         }
 
         @Test
+        fun `CloseWizard when clean emits NavigateBack`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val actions = mutableListOf<CreateEditSubunitUiAction>()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.isDirty)
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.CloseWizard)
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is CreateEditSubunitUiAction.NavigateBack })
+
+            collectJob.cancel()
+            actionsJob.cancel()
+        }
+
+        @Test
+        fun `CloseWizard when dirty emits RequestExitConfirmation`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val actions = mutableListOf<CreateEditSubunitUiAction>()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            // Make it dirty
+            viewModel.onEvent(CreateEditSubunitUiEvent.UpdateName("New Subunit Name"))
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.isDirty)
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.CloseWizard)
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is CreateEditSubunitUiAction.RequestExitConfirmation })
+
+            collectJob.cancel()
+            actionsJob.cancel()
+        }
+
+        @Test
         fun `NextStep clears errors`() = runTest(testDispatcher) {
             setupDefaultMocks()
             createViewModel()

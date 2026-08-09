@@ -20,6 +20,7 @@ sealed interface CreateEditGroupUiEvent {
     data class ShowImageSourceSheet(val show: Boolean) : CreateEditGroupUiEvent
     data object NextStep : CreateEditGroupUiEvent
     data object PreviousStep : CreateEditGroupUiEvent
+    data object CloseWizard : CreateEditGroupUiEvent
     data class JumpToStep(val stepIndex: Int) : CreateEditGroupUiEvent
     data object Submit : CreateEditGroupUiEvent
 }

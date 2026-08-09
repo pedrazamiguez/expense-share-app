@@ -288,6 +288,39 @@ class AddCashWithdrawalViewModelTest {
         }
 
         @Test
+        fun `CloseWizard with clean state emits NavigateBack`() = runTest(testDispatcher) {
+            assertFalse(viewModel.uiState.value.isDirty)
+
+            val emittedActions = mutableListOf<AddCashWithdrawalUiAction>()
+            val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
+
+            viewModel.onEvent(AddCashWithdrawalUiEvent.CloseWizard)
+            advanceUntilIdle()
+
+            assertTrue(emittedActions.any { it is AddCashWithdrawalUiAction.NavigateBack })
+            job.cancel()
+        }
+
+        @Test
+        fun `CloseWizard with dirty state emits RequestExitConfirmation`() = runTest(testDispatcher) {
+            // Setup initial snapshot so isDirty can evaluate correctly
+            _uiState.value = _uiState.value.copy(initialFormSnapshot = _uiState.value.toFormSnapshot())
+
+            // Make it dirty
+            viewModel.onEvent(AddCashWithdrawalUiEvent.TitleChanged("ATM fee"))
+            assertTrue(viewModel.uiState.value.isDirty)
+
+            val emittedActions = mutableListOf<AddCashWithdrawalUiAction>()
+            val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
+
+            viewModel.onEvent(AddCashWithdrawalUiEvent.CloseWizard)
+            advanceUntilIdle()
+
+            assertTrue(emittedActions.any { it is AddCashWithdrawalUiAction.RequestExitConfirmation })
+            job.cancel()
+        }
+
+        @Test
         fun `NextStep then PreviousStep returns to original step`() = runTest(testDispatcher) {
             viewModel.onEvent(AddCashWithdrawalUiEvent.NextStep)
             advanceUntilIdle()

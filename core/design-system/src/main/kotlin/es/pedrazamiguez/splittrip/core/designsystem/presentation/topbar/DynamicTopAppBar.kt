@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
@@ -25,12 +25,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.R
+import es.pedrazamiguez.splittrip.core.designsystem.extension.debouncedClickable
+import es.pedrazamiguez.splittrip.core.designsystem.extension.debouncedCombinedClickable
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ArrowLeft
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.shape.ExpressiveShapes
@@ -61,6 +65,7 @@ fun DynamicTopAppBar(
     title: String,
     subtitle: String? = null,
     onBack: (() -> Unit)? = null,
+    onBackLongPress: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     pinned: Boolean = false,
     scrollBehavior: TopAppBarScrollBehavior? = null
@@ -71,6 +76,7 @@ fun DynamicTopAppBar(
             title = title,
             subtitle = subtitle,
             onBack = onBack,
+            onBackLongPress = onBackLongPress,
             actions = actions
         )
         return
@@ -85,6 +91,7 @@ fun DynamicTopAppBar(
             title = title,
             subtitle = subtitle,
             onBack = onBack,
+            onBackLongPress = onBackLongPress,
             actions = actions,
             scrollBehavior = effectiveScrollBehavior
         )
@@ -94,6 +101,7 @@ fun DynamicTopAppBar(
             title = title,
             subtitle = subtitle,
             onBack = onBack,
+            onBackLongPress = onBackLongPress,
             actions = actions
         )
     }
@@ -106,6 +114,7 @@ private fun DynamicLargeTopAppBar(
     title: String,
     subtitle: String?,
     onBack: (() -> Unit)?,
+    onBackLongPress: (() -> Unit)?,
     actions: @Composable RowScope.() -> Unit,
     scrollBehavior: TopAppBarScrollBehavior
 ) {
@@ -172,24 +181,12 @@ private fun DynamicLargeTopAppBar(
         },
         navigationIcon = {
             if (onBack != null) {
-                val backButtonShape = remember {
-                    RoundedPolygonShape(ExpressiveShapes.softScallopedCircle())
-                }
-                IconButton(onClick = onBack) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(backButtonShape)
-                            .background(navigationIconBgColor),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = TablerIcons.Outline.ArrowLeft,
-                            contentDescription = stringResource(R.string.content_description_back),
-                            tint = titleColor
-                        )
-                    }
-                }
+                DynamicTopAppBarBackButton(
+                    onBack = onBack,
+                    onBackLongPress = onBackLongPress,
+                    backgroundColor = navigationIconBgColor,
+                    iconColor = titleColor
+                )
             }
         },
         actions = {
@@ -211,6 +208,7 @@ private fun StandardTopAppBar(
     title: String,
     subtitle: String?,
     onBack: (() -> Unit)?,
+    onBackLongPress: (() -> Unit)?,
     actions: @Composable RowScope.() -> Unit
 ) {
     TopAppBar(
@@ -232,24 +230,12 @@ private fun StandardTopAppBar(
         },
         navigationIcon = {
             if (onBack != null) {
-                val backButtonShape = remember {
-                    RoundedPolygonShape(ExpressiveShapes.softScallopedCircle())
-                }
-                IconButton(onClick = onBack) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(backButtonShape)
-                            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = TablerIcons.Outline.ArrowLeft,
-                            contentDescription = stringResource(R.string.content_description_back),
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                }
+                DynamicTopAppBarBackButton(
+                    onBack = onBack,
+                    onBackLongPress = onBackLongPress,
+                    backgroundColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
+                    iconColor = MaterialTheme.colorScheme.onPrimary
+                )
             }
         },
         actions = {
@@ -261,4 +247,48 @@ private fun StandardTopAppBar(
             containerColor = MaterialTheme.colorScheme.primary
         )
     )
+}
+
+@Composable
+private fun DynamicTopAppBarBackButton(
+    onBack: () -> Unit,
+    onBackLongPress: (() -> Unit)?,
+    backgroundColor: Color,
+    iconColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val backButtonShape = remember {
+        RoundedPolygonShape(ExpressiveShapes.softScallopedCircle())
+    }
+    val onClickLabel = stringResource(R.string.content_description_back)
+    val clickModifier = if (onBackLongPress != null) {
+        Modifier.debouncedCombinedClickable(
+            onClick = onBack,
+            onLongClick = onBackLongPress,
+            onClickLabel = onClickLabel,
+            role = Role.Button
+        )
+    } else {
+        Modifier.debouncedClickable(
+            onClick = onBack,
+            onClickLabel = onClickLabel,
+            role = Role.Button
+        )
+    }
+
+    Box(
+        modifier = modifier
+            .minimumInteractiveComponentSize()
+            .then(clickModifier)
+            .size(40.dp)
+            .clip(backButtonShape)
+            .background(backgroundColor),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = TablerIcons.Outline.ArrowLeft,
+            contentDescription = null,
+            tint = iconColor
+        )
+    }
 }

@@ -134,6 +134,7 @@ sealed interface AddExpenseUiEvent {
     // ── Wizard Navigation ───────────────────────────────────────────────
     data object NextStep : AddExpenseUiEvent
     data object PreviousStep : AddExpenseUiEvent
+    data object CloseWizard : AddExpenseUiEvent
 
     /** Jumps directly from the current optional step to the REVIEW step. */
     data object JumpToReview : AddExpenseUiEvent

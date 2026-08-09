@@ -202,6 +202,7 @@ class CreateEditSubunitViewModel(
             CreateEditSubunitUiEvent.Save -> save()
             CreateEditSubunitUiEvent.NextStep -> handleNextStep()
             CreateEditSubunitUiEvent.PreviousStep -> handlePreviousStep()
+            CreateEditSubunitUiEvent.CloseWizard -> handleCloseWizard()
             is CreateEditSubunitUiEvent.JumpToStep -> handleJumpToStep(event.stepIndex)
         }
     }
@@ -448,6 +449,14 @@ class CreateEditSubunitViewModel(
 
                     _actions.emit(CreateEditSubunitUiAction.ShowError(errorMessage))
                 }
+        }
+    }
+
+    private fun handleCloseWizard() {
+        if (uiState.value.isDirty) {
+            viewModelScope.launch { _actions.emit(CreateEditSubunitUiAction.RequestExitConfirmation) }
+        } else {
+            viewModelScope.launch { _actions.emit(CreateEditSubunitUiAction.NavigateBack) }
         }
     }
 

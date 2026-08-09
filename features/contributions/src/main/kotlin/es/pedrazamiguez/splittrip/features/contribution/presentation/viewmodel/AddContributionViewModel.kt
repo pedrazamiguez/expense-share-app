@@ -83,6 +83,7 @@ class AddContributionViewModel(
 
             AddContributionUiEvent.NextStep -> handleNextStep()
             AddContributionUiEvent.PreviousStep -> handlePreviousStep()
+            AddContributionUiEvent.CloseWizard -> handleCloseWizard()
             is AddContributionUiEvent.JumpToStep -> handleJumpToStep(event.stepIndex)
         }
     }
@@ -156,6 +157,14 @@ class AddContributionViewModel(
                 contributionScope = scope,
                 selectedSubunitId = if (scope == PayerType.SUBUNIT) subunitId else null
             )
+        }
+    }
+
+    private fun handleCloseWizard() {
+        if (_uiState.value.isDirty) {
+            viewModelScope.launch { _actions.emit(AddContributionUiAction.RequestExitConfirmation) }
+        } else {
+            viewModelScope.launch { _actions.emit(AddContributionUiAction.NavigateBack) }
         }
     }
 }
