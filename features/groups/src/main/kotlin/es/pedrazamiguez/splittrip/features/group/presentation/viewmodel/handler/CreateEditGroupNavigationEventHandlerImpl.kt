@@ -47,6 +47,13 @@ class CreateEditGroupNavigationEventHandlerImpl : CreateEditGroupNavigationEvent
                     }
                 }
             }
+            is CreateEditGroupUiEvent.CloseWizard -> {
+                if (state.isDirty) {
+                    scope.launch { _actions.emit(CreateEditGroupUiAction.RequestExitConfirmation) }
+                } else {
+                    scope.launch { _actions.emit(CreateEditGroupUiAction.NavigateBack) }
+                }
+            }
             is CreateEditGroupUiEvent.JumpToStep -> {
                 val target = wizardNavigator.jumpToStep(state.currentStep, event.stepIndex, state.steps) ?: return
                 _uiState.update { it.copy(currentStep = target, error = null) }

@@ -463,6 +463,49 @@ class AddContributionViewModelTest {
     }
 
     @Nested
+    inner class CloseWizard {
+        @Test
+        fun `emits NavigateBack when clean`() = runTest(testDispatcher) {
+            val emitted = mutableListOf<AddContributionUiAction>()
+            val collectJob = launch {
+                viewModel.actions.collect { emitted.add(it) }
+            }
+
+            assertFalse(viewModel.uiState.value.isDirty)
+
+            viewModel.onEvent(AddContributionUiEvent.CloseWizard)
+            advanceUntilIdle()
+
+            assertTrue(emitted.any { it is AddContributionUiAction.NavigateBack })
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `emits RequestExitConfirmation when dirty`() = runTest(testDispatcher) {
+            val emitted = mutableListOf<AddContributionUiAction>()
+            val collectJob = launch {
+                viewModel.actions.collect { emitted.add(it) }
+            }
+
+            coEvery { getGroupByIdUseCase("group-1") } returns testGroup
+            coEvery { getGroupSubunitsUseCase("group-1") } returns emptyList()
+            every { authenticationService.currentUserId() } returns "user-1"
+            viewModel.setGroupContext("group-1", "EUR")
+            advanceUntilIdle()
+
+            // Make it dirty
+            viewModel.onEvent(AddContributionUiEvent.UpdateAmount("10.00"))
+            assertTrue(viewModel.uiState.value.isDirty)
+
+            viewModel.onEvent(AddContributionUiEvent.CloseWizard)
+            advanceUntilIdle()
+
+            assertTrue(emitted.any { it is AddContributionUiAction.RequestExitConfirmation })
+            collectJob.cancel()
+        }
+    }
+
+    @Nested
     @DisplayName("JumpToStep")
     inner class JumpToStep {
 

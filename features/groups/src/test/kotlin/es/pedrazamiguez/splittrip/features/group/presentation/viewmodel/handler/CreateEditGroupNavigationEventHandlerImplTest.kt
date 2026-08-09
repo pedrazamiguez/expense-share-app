@@ -141,6 +141,53 @@ class CreateEditGroupNavigationEventHandlerImplTest {
     }
 
     @Nested
+    inner class CloseWizard {
+
+        @Test
+        fun `CloseWizard when clean emits NavigateBack action`() = runTest(testDispatcher) {
+            val actions = mutableListOf<CreateEditGroupUiAction>()
+            val collectJob = launch { actionsFlow.collect { actions.add(it) } }
+
+            handler.bind(stateFlow, actionsFlow, this)
+            stateFlow.value = CreateEditGroupUiState(
+                currentStep = CreateEditGroupStep.CURRENCY
+            )
+
+            handler.handleNavigation(CreateEditGroupUiEvent.CloseWizard)
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is CreateEditGroupUiAction.NavigateBack })
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `CloseWizard when dirty emits RequestExitConfirmation action`() = runTest(testDispatcher) {
+            val actions = mutableListOf<CreateEditGroupUiAction>()
+            val collectJob = launch { actionsFlow.collect { actions.add(it) } }
+
+            handler.bind(stateFlow, actionsFlow, this)
+            stateFlow.value = CreateEditGroupUiState(
+                currentStep = CreateEditGroupStep.CURRENCY,
+                groupName = "Changed",
+                initialFormSnapshot = CreateEditGroupFormSnapshot(
+                    groupName = "Original",
+                    groupDescription = "",
+                    selectedCurrency = null,
+                    extraCurrencies = kotlinx.collections.immutable.persistentListOf(),
+                    selectedMembers = kotlinx.collections.immutable.persistentListOf(),
+                    localGroupImagePath = null
+                )
+            )
+
+            handler.handleNavigation(CreateEditGroupUiEvent.CloseWizard)
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is CreateEditGroupUiAction.RequestExitConfirmation })
+            collectJob.cancel()
+        }
+    }
+
+    @Nested
     inner class JumpToStep {
 
         @Test

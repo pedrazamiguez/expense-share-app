@@ -381,6 +381,7 @@ class AddExpenseViewModel(
             // ── Wizard Navigation ────────────────────────────────────────
             AddExpenseUiEvent.NextStep -> navigateNext()
             AddExpenseUiEvent.PreviousStep -> navigatePrevious()
+            AddExpenseUiEvent.CloseWizard -> handleCloseWizard()
             AddExpenseUiEvent.JumpToReview -> navigateToReview()
             is AddExpenseUiEvent.JumpToStep -> navigateToStep(event.stepIndex)
         }
@@ -481,6 +482,14 @@ class AddExpenseViewModel(
                     viewModelScope.launch { _actions.emit(AddExpenseUiAction.NavigateBack) }
                 }
             }
+        }
+    }
+
+    private fun handleCloseWizard() {
+        if (_uiState.value.isDirty) {
+            viewModelScope.launch { _actions.emit(AddExpenseUiAction.RequestExitConfirmation) }
+        } else {
+            viewModelScope.launch { _actions.emit(AddExpenseUiAction.NavigateBack) }
         }
     }
 }

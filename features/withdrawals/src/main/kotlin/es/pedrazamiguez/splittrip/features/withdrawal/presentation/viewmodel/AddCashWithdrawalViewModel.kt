@@ -129,6 +129,7 @@ class AddCashWithdrawalViewModel(
             // ── Wizard Navigation ────────────────────────────────────────
             AddCashWithdrawalUiEvent.NextStep -> navigateNext()
             AddCashWithdrawalUiEvent.PreviousStep -> navigatePrevious()
+            AddCashWithdrawalUiEvent.CloseWizard -> handleCloseWizard()
             AddCashWithdrawalUiEvent.JumpToReview -> navigateToReview()
             is AddCashWithdrawalUiEvent.JumpToStep -> navigateToStep(event.stepIndex)
         }
@@ -197,6 +198,14 @@ class AddCashWithdrawalViewModel(
                     viewModelScope.launch { _actions.emit(AddCashWithdrawalUiAction.NavigateBack) }
                 }
             }
+        }
+    }
+
+    private fun handleCloseWizard() {
+        if (_uiState.value.isDirty) {
+            viewModelScope.launch { _actions.emit(AddCashWithdrawalUiAction.RequestExitConfirmation) }
+        } else {
+            viewModelScope.launch { _actions.emit(AddCashWithdrawalUiAction.NavigateBack) }
         }
     }
 }

@@ -134,6 +134,7 @@ class CreateEditGroupViewModel(
             is CreateEditGroupUiEvent.Submit -> submitEventHandler.handleSubmit(onSuccess)
             is CreateEditGroupUiEvent.NextStep,
             is CreateEditGroupUiEvent.PreviousStep,
+            is CreateEditGroupUiEvent.CloseWizard,
             is CreateEditGroupUiEvent.JumpToStep -> navigationEventHandler.handleNavigation(event)
             is CreateEditGroupUiEvent.GroupImagePicked -> {
                 imageEventHandler.handleGroupImagePicked(event.uri)
