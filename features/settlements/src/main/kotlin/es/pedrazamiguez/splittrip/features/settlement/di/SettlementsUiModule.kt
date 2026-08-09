@@ -35,11 +35,23 @@ import es.pedrazamiguez.splittrip.features.settlement.presentation.screen.impl.Y
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.GroupSettlementOverviewViewModel
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourPositionUseCases
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourPositionViewModel
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.delegate.YourPositionActionDelegate
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val settlementsUiModule = module {
+    factory {
+        val confirmSettlementUseCase = get<ConfirmSettlementUseCase>()
+        val disputeSettlementUseCase = get<DisputeSettlementUseCase>()
+        val nudgeDebtorUseCase = get<NudgeDebtorUseCase>()
+        YourPositionActionDelegate(
+            confirmSettlementUseCase = confirmSettlementUseCase,
+            disputeSettlementUseCase = disputeSettlementUseCase,
+            nudgeDebtorUseCase = nudgeDebtorUseCase
+        )
+    }
+
     single<GroupSettlementOverviewUiMapper> {
         val formattingHelper = get<FormattingHelper>()
         val resourceProvider = get<ResourceProvider>()
@@ -81,17 +93,15 @@ val settlementsUiModule = module {
         val getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>()
         val getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
         val getGroupSettlementsFlowUseCase = get<GetGroupSettlementsFlowUseCase>()
-        val confirmSettlementUseCase = get<ConfirmSettlementUseCase>()
-        val disputeSettlementUseCase = get<DisputeSettlementUseCase>()
         val getMemberProfilesUseCase = get<GetMemberProfilesUseCase>()
         val getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>()
-        val nudgeDebtorUseCase = get<NudgeDebtorUseCase>()
         val getNudgeTimestampsFlowUseCase = get<GetNudgeTimestampsFlowUseCase>()
         val authenticationService = get<AuthenticationService>()
         val appConfigService = get<AppConfigService>()
         val networkMonitor = get<NetworkMonitor>()
         val localeProvider = get<LocaleProvider>()
         val resourceProvider = get<ResourceProvider>()
+        val yourPositionActionDelegate = get<YourPositionActionDelegate>()
 
         val yourPositionUiMapper = YourPositionUiMapper(
             localeProvider = localeProvider,
@@ -116,16 +126,14 @@ val settlementsUiModule = module {
             getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
             getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
             getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
-            confirmSettlementUseCase = confirmSettlementUseCase,
-            disputeSettlementUseCase = disputeSettlementUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
-            nudgeDebtorUseCase = nudgeDebtorUseCase,
             getNudgeTimestampsFlowUseCase = getNudgeTimestampsFlowUseCase
         )
 
         YourPositionViewModel(
             useCases = yourPositionUseCases,
+            actionDelegate = yourPositionActionDelegate,
             authenticationService = authenticationService,
             yourPositionUiMapper = yourPositionUiMapper,
             settlementConsensusUiMapper = settlementConsensusUiMapper,
