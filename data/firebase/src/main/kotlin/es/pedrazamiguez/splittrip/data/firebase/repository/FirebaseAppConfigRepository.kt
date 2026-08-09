@@ -34,6 +34,10 @@ class FirebaseAppConfigRepository(
     private val _settlementNudgeRateLimitHours = MutableStateFlow(DEFAULT_SETTLEMENT_NUDGE_RATE_LIMIT_HOURS)
     override val settlementNudgeRateLimitHours: StateFlow<Long> = _settlementNudgeRateLimitHours.asStateFlow()
 
+    private val _ocrSafetyFalsePositivesBlacklist = MutableStateFlow(DEFAULT_OCR_SAFETY_FALSE_POSITIVES_BLACKLIST)
+    override val ocrSafetyFalsePositivesBlacklist: StateFlow<List<String>> =
+        _ocrSafetyFalsePositivesBlacklist.asStateFlow()
+
     init {
         remoteConfig.setDefaultsAsync(R.xml.remote_config_defaults)
         updateFlowsFromConfig()
@@ -86,6 +90,12 @@ class FirebaseAppConfigRepository(
         val nudgeLimitHours = remoteConfig.getLong("settlement_nudge_rate_limit_hours")
         _settlementNudgeRateLimitHours.value =
             if (nudgeLimitHours > 0) nudgeLimitHours else DEFAULT_SETTLEMENT_NUDGE_RATE_LIMIT_HOURS
+        val blacklistStr = remoteConfig.getString("ocr_safety_false_positives_blacklist")
+        _ocrSafetyFalsePositivesBlacklist.value = if (blacklistStr.isNotBlank()) {
+            blacklistStr.split(",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
+        } else {
+            DEFAULT_OCR_SAFETY_FALSE_POSITIVES_BLACKLIST
+        }
     }
 
     companion object {
@@ -95,5 +105,6 @@ class FirebaseAppConfigRepository(
         private const val DEFAULT_EXTRACTED_DATE_MAX_FUTURE_DAYS = 30
         private const val DEFAULT_SUPPORT_EMAIL = "support@splittrip.com"
         private const val DEFAULT_SETTLEMENT_NUDGE_RATE_LIMIT_HOURS = 24L
+        private val DEFAULT_OCR_SAFETY_FALSE_POSITIVES_BLACKLIST = listOf("razor", "private", "toothbrushes")
     }
 }

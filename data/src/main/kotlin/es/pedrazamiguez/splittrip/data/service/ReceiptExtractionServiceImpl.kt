@@ -12,6 +12,7 @@ import es.pedrazamiguez.splittrip.domain.model.ExtractionConfidence
 import es.pedrazamiguez.splittrip.domain.model.ExtractionSource
 import es.pedrazamiguez.splittrip.domain.model.RawReceiptText
 import es.pedrazamiguez.splittrip.domain.repository.AiInferenceRepository
+import es.pedrazamiguez.splittrip.domain.repository.AppConfigRepository
 import es.pedrazamiguez.splittrip.domain.service.AiModelResolverService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
 import java.math.BigDecimal
@@ -30,6 +31,7 @@ import timber.log.Timber
 
 internal class ReceiptExtractionServiceImpl(
     private val context: Context,
+    private val appConfigRepository: AppConfigRepository,
     private val aiCoreCapabilityProvider: AICoreCapabilityProvider,
     private val aiCoreInferenceRepository: Lazy<AiInferenceRepository>,
     private val liteRtInferenceRepository: Lazy<AiInferenceRepository>,
@@ -70,7 +72,9 @@ internal class ReceiptExtractionServiceImpl(
         }
 
         val startMs = System.currentTimeMillis()
-        val truncatedText = smartTruncate(rawText.fullText)
+        val blacklist = appConfigRepository.ocrSafetyFalsePositivesBlacklist.value
+        val sanitizedText = sanitizeOcrText(rawText.fullText, blacklist)
+        val truncatedText = smartTruncate(sanitizedText)
         val prompt = buildPrompt(truncatedText)
 
         val inferenceResult = runInference(resolvedEngine, prompt)
@@ -81,13 +85,12 @@ internal class ReceiptExtractionServiceImpl(
                 rawOutput.length
             )
             parseInferenceResult(rawOutput, resolvedEngine)
-        }.recover { error ->
+        }.onFailure { error ->
             Timber.w(
                 error,
-                "ReceiptExtractionService: Inference/Parsing failed mid-flight — falling back to NO_OP (elapsed=%dms)",
+                "ReceiptExtractionService: Inference/Parsing failed mid-flight (elapsed=%dms)",
                 System.currentTimeMillis() - startMs
             )
-            getNoOpFallbackReceipt()
         }
 
         Timber.d(
@@ -96,6 +99,16 @@ internal class ReceiptExtractionServiceImpl(
             result.getOrNull()?.source
         )
         result
+    }
+
+    private fun sanitizeOcrText(text: String, blacklist: List<String>): String {
+        var sanitized = text
+        for (word in blacklist) {
+            // Remove the word case-insensitively, allowing for boundary matching
+            sanitized = sanitized.replace(Regex("(?i)\\b$word\\b"), "")
+        }
+        // Clean up any double spaces created by the removal
+        return sanitized.replace(Regex(" {2,}"), " ").trim()
     }
 
     private fun isEngineSupported(activeEngine: AiEngineType): Boolean {

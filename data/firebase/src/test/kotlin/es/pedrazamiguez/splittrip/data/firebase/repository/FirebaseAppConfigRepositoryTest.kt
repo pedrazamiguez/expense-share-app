@@ -47,31 +47,22 @@ class FirebaseAppConfigRepositoryTest {
     }
 
     @Test
-    fun `repository exposes all remote config properties correctly`() {
-        every { firebaseRemoteConfig.getString("default_currency_code") } returns "USD"
-        every { firebaseRemoteConfig.getLong("balance_computation_debounce_ms") } returns 500L
-        every { firebaseRemoteConfig.getLong("max_members_per_group") } returns 15L
-        every { firebaseRemoteConfig.getLong("extracted_date_max_future_days") } returns 45L
-        every { firebaseRemoteConfig.getString("support_email_address") } returns "test-support@splittrip.com"
-        every { firebaseRemoteConfig.getLong("settlement_nudge_rate_limit_hours") } returns 48L
-
-        // Trigger updates
-        repository = FirebaseAppConfigRepository(firebaseRemoteConfig)
-
+    fun `init sets default values from RemoteConfig`() {
         assertEquals("USD", repository.defaultCurrencyCode.value)
         assertEquals(500L, repository.balanceComputationDebounceMs.value)
         assertEquals(15, repository.maxMembersPerGroup.value)
         assertEquals(45, repository.extractedDateMaxFutureDays.value)
         assertEquals("test-support@splittrip.com", repository.supportEmailAddress.value)
         assertEquals(48L, repository.settlementNudgeRateLimitHours.value)
+        assertEquals(listOf("blade", "secret"), repository.ocrSafetyFalsePositivesBlacklist.value)
     }
 
     @Test
     fun `fetchConfiguration delegates to FirebaseRemoteConfig and updates flows`() = runTest {
         mockkStatic("kotlinx.coroutines.tasks.TasksKt")
-        val mockTask = mockk<Task<Boolean>>()
-        every { firebaseRemoteConfig.fetchAndActivate() } returns mockTask
-        coEvery { mockTask.await() } returns true
+        val mockTaskA = mockk<Task<Boolean>>()
+        every { firebaseRemoteConfig.fetchAndActivate() } returns mockTaskA
+        coEvery { mockTaskA.await() } returns true
 
         every { firebaseRemoteConfig.getString("default_currency_code") } returns "GBP"
         every { firebaseRemoteConfig.getLong("balance_computation_debounce_ms") } returns 100L
@@ -79,17 +70,19 @@ class FirebaseAppConfigRepositoryTest {
         every { firebaseRemoteConfig.getLong("extracted_date_max_future_days") } returns 60L
         every { firebaseRemoteConfig.getString("support_email_address") } returns "fetch-support@splittrip.com"
         every { firebaseRemoteConfig.getLong("settlement_nudge_rate_limit_hours") } returns 12L
+        every { firebaseRemoteConfig.getString("ocr_safety_false_positives_blacklist") } returns "fuck,dick,pussy,cunt"
 
         val result = repository.fetchConfiguration()
 
         assertTrue(result)
+        verify(exactly = 1) { firebaseRemoteConfig.fetchAndActivate() }
         assertEquals("GBP", repository.defaultCurrencyCode.value)
         assertEquals(100L, repository.balanceComputationDebounceMs.value)
         assertEquals(25, repository.maxMembersPerGroup.value)
         assertEquals(60, repository.extractedDateMaxFutureDays.value)
         assertEquals("fetch-support@splittrip.com", repository.supportEmailAddress.value)
         assertEquals(12L, repository.settlementNudgeRateLimitHours.value)
-        verify(exactly = 1) { firebaseRemoteConfig.fetchAndActivate() }
+        assertEquals(listOf("fuck", "dick", "pussy", "cunt"), repository.ocrSafetyFalsePositivesBlacklist.value)
     }
 
     @Test
