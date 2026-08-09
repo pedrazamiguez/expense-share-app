@@ -107,12 +107,11 @@ class CreateEditGroupViewModel(
             is CreateEditGroupUiEvent.NameChanged -> _uiState.update { state ->
                 state.copy(
                     groupName = event.name,
-                    isNameValid = event.name.isNotBlank(),
-                    hasUserModifiedAnyField = true
+                    isNameValid = event.name.isNotBlank()
                 )
             }
             is CreateEditGroupUiEvent.DescriptionChanged -> _uiState.update { state ->
-                state.copy(groupDescription = event.description, hasUserModifiedAnyField = true)
+                state.copy(groupDescription = event.description)
             }
             is CreateEditGroupUiEvent.CurrencySelected -> handleCurrencySelected(event.code)
             is CreateEditGroupUiEvent.ExtraCurrencyToggled -> handleExtraCurrencyToggled(event.code)
@@ -129,7 +128,7 @@ class CreateEditGroupViewModel(
                             user
                         }
                     }.toImmutableList()
-                    state.copy(selectedMembers = updated, hasUserModifiedAnyField = true)
+                    state.copy(selectedMembers = updated)
                 }
             }
             is CreateEditGroupUiEvent.Submit -> submitEventHandler.handleSubmit(onSuccess)
@@ -138,11 +137,9 @@ class CreateEditGroupViewModel(
             is CreateEditGroupUiEvent.JumpToStep -> navigationEventHandler.handleNavigation(event)
             is CreateEditGroupUiEvent.GroupImagePicked -> {
                 imageEventHandler.handleGroupImagePicked(event.uri)
-                _uiState.update { it.copy(hasUserModifiedAnyField = true) }
             }
             is CreateEditGroupUiEvent.GroupImageRemoved -> {
                 imageEventHandler.handleGroupImageRemoved()
-                _uiState.update { it.copy(hasUserModifiedAnyField = true) }
             }
             is CreateEditGroupUiEvent.ShowImageSourceSheet -> imageEventHandler.handleShowImageSourceSheet(
                 event.show
@@ -156,7 +153,7 @@ class CreateEditGroupViewModel(
             val updatedExtras = state.extraCurrencies
                 .filter { it.code != code }
                 .toImmutableList()
-            state.copy(selectedCurrency = selected, extraCurrencies = updatedExtras, hasUserModifiedAnyField = true)
+            state.copy(selectedCurrency = selected, extraCurrencies = updatedExtras)
         }
     }
 
@@ -169,7 +166,7 @@ class CreateEditGroupViewModel(
                 val item = state.availableCurrencies.find { it.code == code } ?: return
                 currentExtras + item
             }.toImmutableList()
-            state.copy(extraCurrencies = updatedExtras, hasUserModifiedAnyField = true)
+            state.copy(extraCurrencies = updatedExtras)
         }
     }
 
@@ -180,8 +177,7 @@ class CreateEditGroupViewModel(
             } else {
                 state.copy(
                     selectedMembers = (state.selectedMembers + event.user).toImmutableList(),
-                    memberSearchResults = persistentListOf(),
-                    hasUserModifiedAnyField = true
+                    memberSearchResults = persistentListOf()
                 )
             }
         }
@@ -192,8 +188,7 @@ class CreateEditGroupViewModel(
             state.copy(
                 selectedMembers = state.selectedMembers
                     .filter { it.userId != event.user.userId }
-                    .toImmutableList(),
-                hasUserModifiedAnyField = true
+                    .toImmutableList()
             )
         }
     }
@@ -258,7 +253,9 @@ class CreateEditGroupViewModel(
                         availableCurrencies = mappedCurrencies,
                         selectedCurrency = it.selectedCurrency ?: defaultCurrency,
                         isLoadingCurrencies = false
-                    )
+                    ).let { updatedState ->
+                        updatedState.copy(initialFormSnapshot = updatedState.toFormSnapshot())
+                    }
                 }
                 if (groupId != null) {
                     _actions.emit(
@@ -306,7 +303,9 @@ class CreateEditGroupViewModel(
                 imageUrl = group.mainImagePath,
                 localGroupImagePath = group.mainImagePath,
                 isLoadingCurrencies = false
-            )
+            ).let { updatedState ->
+                updatedState.copy(initialFormSnapshot = updatedState.toFormSnapshot())
+            }
         }
     }
 
@@ -323,8 +322,7 @@ class CreateEditGroupViewModel(
         )
         _uiState.update { state ->
             state.copy(
-                selectedMembers = (state.selectedMembers + partialUser).toImmutableList(),
-                hasUserModifiedAnyField = true
+                selectedMembers = (state.selectedMembers + partialUser).toImmutableList()
             )
         }
 

@@ -9,6 +9,7 @@ import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.han
 import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.handler.WithdrawalCurrencyHandler
 import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.handler.WithdrawalFeeHandler
 import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.handler.WithdrawalSubmitHandler
+import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.state.AddCashWithdrawalUiState
 import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.state.CashWithdrawalStep
 import io.mockk.every
 import io.mockk.mockk
@@ -16,6 +17,7 @@ import io.mockk.verify
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -43,6 +45,8 @@ class AddCashWithdrawalViewModelTest {
     private lateinit var addCashWithdrawalUiMapper: AddCashWithdrawalUiMapper
     private lateinit var viewModel: AddCashWithdrawalViewModel
 
+    private lateinit var _uiState: MutableStateFlow<AddCashWithdrawalUiState>
+
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -51,6 +55,11 @@ class AddCashWithdrawalViewModelTest {
         feeHandler = mockk(relaxed = true)
         submitHandler = mockk(relaxed = true)
         addCashWithdrawalUiMapper = mockk(relaxed = true)
+        val uiStateSlot = io.mockk.slot<MutableStateFlow<AddCashWithdrawalUiState>>()
+        every { configHandler.bind(capture(uiStateSlot), any(), any()) } answers {
+            _uiState = uiStateSlot.captured
+        }
+
         viewModel = AddCashWithdrawalViewModel(
             configHandler = configHandler,
             currencyHandler = currencyHandler,
@@ -260,6 +269,9 @@ class AddCashWithdrawalViewModelTest {
         @Test
         fun `PreviousStep on first step with dirty state emits RequestExitConfirmation`() = runTest(testDispatcher) {
             assertEquals(CashWithdrawalStep.AMOUNT, viewModel.uiState.value.currentStep)
+
+            // Setup initial snapshot so isDirty can evaluate correctly
+            _uiState.value = _uiState.value.copy(initialFormSnapshot = _uiState.value.toFormSnapshot())
 
             // Make it dirty by updating the title (directly handled by ViewModel, not mocked currencyHandler)
             viewModel.onEvent(AddCashWithdrawalUiEvent.TitleChanged("ATM fee"))

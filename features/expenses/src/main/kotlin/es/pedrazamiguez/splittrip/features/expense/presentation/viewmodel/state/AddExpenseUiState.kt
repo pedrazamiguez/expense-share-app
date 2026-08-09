@@ -201,7 +201,8 @@ data class AddExpenseUiState(
      * Jumps from this step to REVIEW via "Skip to Review".
      * Back returns here instead of previous step.
      */
-    val jumpedFromStep: AddExpenseStep? = null
+    val jumpedFromStep: AddExpenseStep? = null,
+    val initialFormSnapshot: AddExpenseFormSnapshot? = null
 ) {
     /**
      * Returns true when the screen is ready for user interaction.
@@ -227,16 +228,28 @@ data class AddExpenseUiState(
      * Covers mandatory and optional fields alike.
      */
     val isDirty: Boolean
-        get() = expenseTitle.isNotBlank() ||
-            sourceAmount.isNotBlank() ||
-            vendor.isNotBlank() ||
-            notes.isNotBlank() ||
-            receiptUri != null ||
-            addOns.isNotEmpty() ||
-            dueDateMillis != null ||
-            isAiModeActive ||
-            (selectedCategory != null) ||
-            (selectedPaymentStatus != null && selectedPaymentStatus != availablePaymentStatuses.firstOrNull())
+        get() = initialFormSnapshot != null && toFormSnapshot() != initialFormSnapshot
+
+    fun toFormSnapshot() = AddExpenseFormSnapshot(
+        expenseTitle = expenseTitle,
+        sourceAmount = sourceAmount,
+        vendor = vendor,
+        notes = notes,
+        receiptUri = receiptUri,
+        addOns = addOns,
+        dueDateMillis = dueDateMillis,
+        isAiModeActive = isAiModeActive,
+        selectedCategory = selectedCategory,
+        selectedPaymentStatus = selectedPaymentStatus,
+        selectedCurrency = selectedCurrency,
+        selectedPaymentMethod = selectedPaymentMethod,
+        selectedFundingSource = selectedFundingSource,
+        splits = splits,
+        displayExchangeRate = displayExchangeRate,
+        expenseDateMillis = expenseDateMillis,
+        contributionScope = contributionScope,
+        selectedContributionSubunitId = selectedContributionSubunitId
+    )
 
     // ── Wizard computed properties ──────────────────────────────────────
 
@@ -356,4 +369,25 @@ data class AddExpenseUiState(
 data class AutoFillBanner(
     val fields: ImmutableList<UiText>,
     val source: ExtractionSource
+)
+
+data class AddExpenseFormSnapshot(
+    val expenseTitle: String,
+    val sourceAmount: String,
+    val vendor: String,
+    val notes: String,
+    val receiptUri: String?,
+    val addOns: ImmutableList<AddOnUiModel>,
+    val dueDateMillis: Long?,
+    val isAiModeActive: Boolean,
+    val selectedCategory: CategoryUiModel?,
+    val selectedPaymentStatus: PaymentStatusUiModel?,
+    val selectedCurrency: CurrencyUiModel?,
+    val selectedPaymentMethod: PaymentMethodUiModel?,
+    val selectedFundingSource: FundingSourceUiModel?,
+    val splits: ImmutableList<SplitUiModel>,
+    val displayExchangeRate: String,
+    val expenseDateMillis: Long?,
+    val contributionScope: PayerType,
+    val selectedContributionSubunitId: String?
 )

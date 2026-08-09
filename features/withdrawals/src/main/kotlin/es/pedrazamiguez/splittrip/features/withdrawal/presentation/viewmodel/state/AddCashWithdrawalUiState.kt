@@ -76,10 +76,26 @@ data class AddCashWithdrawalUiState(
      * When non-null, the user jumped from this step to REVIEW via "Skip to Review".
      * Pressing Back on REVIEW returns to this step instead of the previous sequential one.
      */
-    val jumpedFromStep: CashWithdrawalStep? = null
+    val jumpedFromStep: CashWithdrawalStep? = null,
+    val initialFormSnapshot: AddCashWithdrawalFormSnapshot? = null
 ) {
     val isDirty: Boolean
-        get() = withdrawalAmount.isNotBlank() || title.isNotBlank() || notes.isNotBlank()
+        get() = initialFormSnapshot != null && toFormSnapshot() != initialFormSnapshot
+
+    fun toFormSnapshot() = AddCashWithdrawalFormSnapshot(
+        withdrawalAmount = withdrawalAmount,
+        title = title,
+        notes = notes,
+        selectedCurrency = selectedCurrency,
+        displayExchangeRate = displayExchangeRate,
+        hasFee = hasFee,
+        feeAmount = feeAmount,
+        feeCurrency = feeCurrency,
+        feeExchangeRate = feeExchangeRate,
+        withdrawalScope = withdrawalScope,
+        selectedSubunitId = selectedSubunitId,
+        selectedMemberId = selectedMemberId
+    )
 
     val isReady: Boolean
         get() = isConfigLoaded && !configLoadFailed && !isLoading
@@ -166,3 +182,18 @@ data class AddCashWithdrawalUiState(
             CashWithdrawalStep.REVIEW -> isFormValid
         }
 }
+
+data class AddCashWithdrawalFormSnapshot(
+    val withdrawalAmount: String,
+    val title: String,
+    val notes: String,
+    val selectedCurrency: CurrencyUiModel?,
+    val displayExchangeRate: String,
+    val hasFee: Boolean,
+    val feeAmount: String,
+    val feeCurrency: CurrencyUiModel?,
+    val feeExchangeRate: String,
+    val withdrawalScope: PayerType,
+    val selectedSubunitId: String?,
+    val selectedMemberId: String?
+)
