@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.extensions
 
+import es.pedrazamiguez.splittrip.core.common.R as CommonR
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Bed
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Car
@@ -11,8 +12,9 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Run
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Shield
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ShoppingBag
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ToolsKitchen2
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toIconVector
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toStringRes
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
-import es.pedrazamiguez.splittrip.features.expense.R
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertSame
@@ -26,52 +28,52 @@ class ExpenseCategoryExtensionsTest {
 
         @Test
         fun `CONTRIBUTION maps to contribution string resource`() {
-            assertEquals(R.string.expense_category_contribution, ExpenseCategory.CONTRIBUTION.toStringRes())
+            assertEquals(CommonR.string.expense_category_contribution, ExpenseCategory.CONTRIBUTION.toStringRes())
         }
 
         @Test
         fun `REFUND maps to refund string resource`() {
-            assertEquals(R.string.expense_category_refund, ExpenseCategory.REFUND.toStringRes())
+            assertEquals(CommonR.string.expense_category_refund, ExpenseCategory.REFUND.toStringRes())
         }
 
         @Test
         fun `TRANSPORT maps to transport string resource`() {
-            assertEquals(R.string.expense_category_transport, ExpenseCategory.TRANSPORT.toStringRes())
+            assertEquals(CommonR.string.expense_category_transport, ExpenseCategory.TRANSPORT.toStringRes())
         }
 
         @Test
         fun `FOOD maps to food string resource`() {
-            assertEquals(R.string.expense_category_food, ExpenseCategory.FOOD.toStringRes())
+            assertEquals(CommonR.string.expense_category_food, ExpenseCategory.FOOD.toStringRes())
         }
 
         @Test
         fun `LODGING maps to lodging string resource`() {
-            assertEquals(R.string.expense_category_lodging, ExpenseCategory.LODGING.toStringRes())
+            assertEquals(CommonR.string.expense_category_lodging, ExpenseCategory.LODGING.toStringRes())
         }
 
         @Test
         fun `ACTIVITIES maps to activities string resource`() {
-            assertEquals(R.string.expense_category_activities, ExpenseCategory.ACTIVITIES.toStringRes())
+            assertEquals(CommonR.string.expense_category_activities, ExpenseCategory.ACTIVITIES.toStringRes())
         }
 
         @Test
         fun `INSURANCE maps to insurance string resource`() {
-            assertEquals(R.string.expense_category_insurance, ExpenseCategory.INSURANCE.toStringRes())
+            assertEquals(CommonR.string.expense_category_insurance, ExpenseCategory.INSURANCE.toStringRes())
         }
 
         @Test
         fun `ENTERTAINMENT maps to entertainment string resource`() {
-            assertEquals(R.string.expense_category_entertainment, ExpenseCategory.ENTERTAINMENT.toStringRes())
+            assertEquals(CommonR.string.expense_category_entertainment, ExpenseCategory.ENTERTAINMENT.toStringRes())
         }
 
         @Test
         fun `SHOPPING maps to shopping string resource`() {
-            assertEquals(R.string.expense_category_shopping, ExpenseCategory.SHOPPING.toStringRes())
+            assertEquals(CommonR.string.expense_category_shopping, ExpenseCategory.SHOPPING.toStringRes())
         }
 
         @Test
         fun `OTHER maps to other string resource`() {
-            assertEquals(R.string.expense_category_other, ExpenseCategory.OTHER.toStringRes())
+            assertEquals(CommonR.string.expense_category_other, ExpenseCategory.OTHER.toStringRes())
         }
 
         @Test

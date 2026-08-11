@@ -115,5 +115,8 @@
     <string name="balances_filter">Filter balances</string>
     <string name="balances_your_balance_title">Your Position</string>
 
+    <!-- Category Spending -->
+    <string name="balances_category_spending_title">Category spending</string>
+
 </resources>
 

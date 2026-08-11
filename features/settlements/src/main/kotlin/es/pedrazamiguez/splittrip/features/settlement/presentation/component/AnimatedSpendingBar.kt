@@ -22,20 +22,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import es.pedrazamiguez.splittrip.core.designsystem.foundation.ChartColors
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.MemberSpendingBarUiModel
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.SpilloverSegment
-
-val MemberSpendingColors = listOf(
-    Color(0xFF3A7BD5), // Horizon Blue tint
-    Color(0xFFE05555), // Warm Red
-    Color(0xFFE8A838), // Amber
-    Color(0xFF3DAA70), // Teal Green
-    Color(0xFF9B59B6), // Violet
-    Color(0xFFE67E22), // Orange
-    Color(0xFF1ABC9C), // Emerald
-    Color(0xFF2C3E50) // Dark Slate
-)
 
 @Composable
 internal fun AnimatedSpendingBar(
@@ -69,7 +59,7 @@ internal fun AnimatedSpendingBar(
         label = "own_fraction"
     )
 
-    val animatedSegmentFractions = MemberSpendingColors.indices.map { idx ->
+    val animatedSegmentFractions = ChartColors.indices.map { idx ->
         val targetFraction = if (isAnimated && globalMaxCents > 0) {
             (segmentAmounts[idx] / globalMaxCents.toFloat()).coerceAtLeast(0f)
         } else {
@@ -101,9 +91,9 @@ internal fun AnimatedSpendingBar(
 }
 
 private fun calculateSegmentAmounts(segments: List<SpilloverSegment>): FloatArray {
-    val amounts = FloatArray(MemberSpendingColors.size)
+    val amounts = FloatArray(ChartColors.size)
     segments.forEach { segment ->
-        val colorIdx = segment.ownerColorIndex % MemberSpendingColors.size
+        val colorIdx = segment.ownerColorIndex % ChartColors.size
         amounts[colorIdx] += segment.amountCents.toFloat()
     }
     return amounts
@@ -126,16 +116,16 @@ private fun DrawScope.drawSpendingBar(
     val ownWidth = ownFraction * totalWidth
     if (ownWidth > 0f) {
         accumulatedWidth += ownWidth
-        val ownColor = MemberSpendingColors[ownColorIndex % MemberSpendingColors.size]
+        val ownColor = ChartColors[ownColorIndex % ChartColors.size]
         pieces.add(ownColor to accumulatedWidth)
     }
 
-    MemberSpendingColors.indices.forEach { colorIdx ->
+    ChartColors.indices.forEach { colorIdx ->
         val segmentFraction = segmentFractions[colorIdx].value.coerceAtLeast(0f)
         val segmentWidth = segmentFraction * totalWidth
         if (segmentWidth > 0f) {
             accumulatedWidth += segmentWidth
-            pieces.add(MemberSpendingColors[colorIdx] to accumulatedWidth)
+            pieces.add(ChartColors[colorIdx] to accumulatedWidth)
         }
     }
 
