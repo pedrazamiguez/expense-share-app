@@ -2,13 +2,19 @@ package es.pedrazamiguez.splittrip.features.balance.presentation.screen.impl
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.MainAction
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.DynamicTopAppBar
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.splittrip.features.balance.R
+import org.koin.androidx.compose.koinViewModel
 
 class CategorySpendingScreenUiProviderImpl(
     override val route: String = Routes.CATEGORY_SPENDING
@@ -17,10 +23,16 @@ class CategorySpendingScreenUiProviderImpl(
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {
         val tabNavController = LocalTabNavController.current
+        val sharedViewModel: SharedViewModel = koinViewModel(
+            viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
+        )
+        val groupName by sharedViewModel.selectedGroupName.collectAsStateWithLifecycle()
 
         DynamicTopAppBar(
             title = stringResource(R.string.balances_category_spending_title),
-            onBack = { tabNavController.navigateUp() }
+            subtitle = groupName,
+            onBack = { tabNavController.navigateUp() },
+            pinned = true
         )
     }
 
