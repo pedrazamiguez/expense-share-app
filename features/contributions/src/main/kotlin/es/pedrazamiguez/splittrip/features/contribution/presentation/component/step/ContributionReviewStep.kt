@@ -87,6 +87,22 @@ fun ContributionReviewStep(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                BodyText(
+                    text = stringResource(R.string.contribution_wizard_step_date),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = uiState.formattedContributionDate.ifBlank { none },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }

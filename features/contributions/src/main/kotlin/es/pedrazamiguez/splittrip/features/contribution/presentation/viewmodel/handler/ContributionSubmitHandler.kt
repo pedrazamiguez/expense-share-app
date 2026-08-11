@@ -11,6 +11,8 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.AddContributionUseCase
 import es.pedrazamiguez.splittrip.features.contribution.R
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.action.AddContributionUiAction
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.state.AddContributionUiState
+import java.time.Instant
+import java.time.ZoneId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -68,13 +70,18 @@ class ContributionSubmitHandler(
         _uiState.update { it.copy(isLoading = true) }
 
         scope.launch {
+            val localDateTime = Instant.ofEpochMilli(state.contributionDateMillis)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime()
+
             val contribution = Contribution(
                 groupId = groupId,
                 userId = state.selectedMemberId ?: "",
                 contributionScope = state.contributionScope,
                 subunitId = selectedSubunitId,
                 amount = amountInSmallestUnit,
-                currency = groupCurrency
+                currency = groupCurrency,
+                contributionDate = localDateTime
             )
             performSubmit(groupId, contribution, onSuccess)
         }

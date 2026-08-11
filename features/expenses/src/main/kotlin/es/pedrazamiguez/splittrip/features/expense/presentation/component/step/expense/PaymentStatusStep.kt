@@ -3,9 +3,11 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.component.step.
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.AppDateTimeSelectionSection
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepLayout
+import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.form.DueDateSection
-import es.pedrazamiguez.splittrip.features.expense.presentation.component.form.ExpenseDateSection
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.form.payment.PaymentStatusSection
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -36,11 +38,13 @@ fun PaymentStatusStep(
             )
         }
 
-        ExpenseDateSection(
-            formattedExpenseDate = uiState.formattedExpenseDate,
-            isExpenseDateValid = uiState.isExpenseDateValid,
-            expenseDateMillis = uiState.expenseDateMillis,
-            onDateSelected = { onEvent(AddExpenseUiEvent.ExpenseDateSelected(it)) }
+        AppDateTimeSelectionSection(
+            title = stringResource(R.string.add_expense_date_time_title),
+            label = stringResource(R.string.add_expense_date_time_label),
+            formattedDateTime = uiState.formattedExpenseDate,
+            isDateTimeValid = uiState.isExpenseDateValid,
+            dateTimeMillis = uiState.expenseDateMillis,
+            onDateTimeSelected = { onEvent(AddExpenseUiEvent.ExpenseDateSelected(it)) }
         )
     }
 }

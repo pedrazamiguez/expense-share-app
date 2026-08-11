@@ -1,4 +1,4 @@
-package es.pedrazamiguez.splittrip.features.expense.presentation.component.form
+package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,29 +12,31 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.AppDatePickerDialog
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.AppTimePickerDialog
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.CardSectionLabelText
-import es.pedrazamiguez.splittrip.features.expense.R
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
- * Expense date and time picker section.
+ * Reusable date and time picker section.
  * Shows a read-only text field that opens a Material 3 DatePickerDialog on tap,
  * followed by a TimePicker in an AlertDialog.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ExpenseDateSection(
-    formattedExpenseDate: String,
-    isExpenseDateValid: Boolean,
-    expenseDateMillis: Long?,
-    onDateSelected: (Long) -> Unit,
+fun AppDateTimeSelectionSection(
+    title: String,
+    label: String,
+    formattedDateTime: String,
+    isDateTimeValid: Boolean,
+    dateTimeMillis: Long?,
+    onDateTimeSelected: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
@@ -46,23 +48,23 @@ internal fun ExpenseDateSection(
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
     ) {
         CardSectionLabelText(
-            text = stringResource(R.string.add_expense_date_time_title)
+            text = title
         )
         StyledOutlinedTextField(
-            value = formattedExpenseDate,
+            value = formattedDateTime,
             onValueChange = {},
             readOnly = true,
-            label = stringResource(R.string.add_expense_date_time_label),
+            label = label,
             trailingIcon = { Icon(TablerIcons.Outline.Calendar, null) },
             onClick = { showDatePicker = true },
             modifier = Modifier.fillMaxWidth(),
-            isError = !isExpenseDateValid
+            isError = !isDateTimeValid
         )
     }
 
     if (showDatePicker) {
-        ExpenseDatePickerDialog(
-            initialDateMillis = expenseDateMillis,
+        AppDatePickerDialog(
+            initialDateMillis = dateTimeMillis,
             onDismiss = { showDatePicker = false },
             onDateSelected = { selectedDate ->
                 tempSelectedDateMillis = selectedDate
@@ -73,8 +75,8 @@ internal fun ExpenseDateSection(
     }
 
     if (showTimePicker) {
-        ExpenseTimePickerDialog(
-            initialTimeMillis = expenseDateMillis,
+        AppTimePickerDialog(
+            initialTimeMillis = dateTimeMillis,
             onDismiss = { showTimePicker = false },
             onTimeSelected = { hour, minute ->
                 val localDate = if (tempSelectedDateMillis != null) {
@@ -94,7 +96,7 @@ internal fun ExpenseDateSection(
                     .atZone(ZoneId.systemDefault())
                     .toInstant()
                     .toEpochMilli()
-                onDateSelected(combinedMillis)
+                onDateTimeSelected(combinedMillis)
                 showTimePicker = false
             }
         )

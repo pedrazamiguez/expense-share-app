@@ -21,6 +21,7 @@ fun ContributionEntity.toDomain(): Contribution = Contribution(
     currency = currency,
     equivalentBaseAmount = equivalentBaseAmount,
     exchangeRate = exchangeRate?.let { runCatching { BigDecimal(it) }.getOrNull() },
+    contributionDate = contributionDateMillis?.toLocalDateTimeUtc(),
     createdAt = createdAtMillis?.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc(),
     syncStatus = SyncStatus.fromStringOrDefault(syncStatus)
@@ -43,6 +44,7 @@ fun Contribution.toEntity(): ContributionEntity {
         currency = currency,
         equivalentBaseAmount = equivalentBaseAmount,
         exchangeRate = exchangeRate?.toPlainString(),
+        contributionDateMillis = contributionDate?.toEpochMillisUtc(),
         createdAtMillis = effectiveCreatedAtMillis,
         lastUpdatedAtMillis = effectiveLastUpdatedAtMillis,
         syncStatus = syncStatus.name

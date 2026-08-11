@@ -22,6 +22,7 @@ fun Contribution.toDocument(contributionId: String, groupId: String, groupDocRef
         equivalentBaseAmountCents = equivalentBaseAmount,
         exchangeRate = exchangeRate?.toPlainString(),
         createdBy = this.createdBy.ifBlank { userId },
+        contributionDate = contributionDate?.toTimestampUtc(),
         createdAt = (createdAt ?: LocalDateTime.now()).toTimestampUtc(),
         lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc()
     )
@@ -39,6 +40,7 @@ fun ContributionDocument.toDomain() = Contribution(
     currency = currency,
     equivalentBaseAmount = equivalentBaseAmountCents,
     exchangeRate = exchangeRate?.let { runCatching { BigDecimal(it) }.getOrNull() },
+    contributionDate = contributionDate?.toLocalDateTimeUtc(),
     createdAt = createdAt.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()
 )

@@ -32,9 +32,15 @@ class AddContributionUiStateTest {
         }
 
         @Test
-        fun `currentStepIndex returns 2 for REVIEW`() {
-            val state = AddContributionUiState(currentStep = AddContributionStep.REVIEW)
+        fun `currentStepIndex returns 2 for DATE`() {
+            val state = AddContributionUiState(currentStep = AddContributionStep.DATE)
             assertEquals(2, state.currentStepIndex)
+        }
+
+        @Test
+        fun `currentStepIndex returns 3 for REVIEW`() {
+            val state = AddContributionUiState(currentStep = AddContributionStep.REVIEW)
+            assertEquals(3, state.currentStepIndex)
         }
     }
 

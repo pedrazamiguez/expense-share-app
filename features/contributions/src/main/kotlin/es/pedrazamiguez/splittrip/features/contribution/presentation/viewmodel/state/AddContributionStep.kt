@@ -17,5 +17,6 @@ enum class AddContributionStep(
 ) : WizardStep {
     AMOUNT,
     SCOPE,
+    DATE,
     REVIEW(isReview = true)
 }

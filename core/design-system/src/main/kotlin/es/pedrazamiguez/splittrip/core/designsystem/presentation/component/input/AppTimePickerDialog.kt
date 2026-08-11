@@ -1,4 +1,4 @@
-package es.pedrazamiguez.splittrip.features.expense.presentation.component.form
+package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -8,13 +8,13 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import es.pedrazamiguez.splittrip.features.expense.R
+import es.pedrazamiguez.splittrip.core.designsystem.R
 import java.util.Calendar as JavaCalendar
 import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ExpenseTimePickerDialog(
+fun AppTimePickerDialog(
     initialTimeMillis: Long?,
     onDismiss: () -> Unit,
     onTimeSelected: (hour: Int, minute: Int) -> Unit
@@ -42,12 +42,12 @@ internal fun ExpenseTimePickerDialog(
                     onTimeSelected(timePickerState.hour, timePickerState.minute)
                 }
             ) {
-                Text(stringResource(R.string.expense_date_time_ok))
+                Text(stringResource(R.string.action_ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.expense_date_time_cancel))
+                Text(stringResource(R.string.action_cancel))
             }
         },
         text = {
