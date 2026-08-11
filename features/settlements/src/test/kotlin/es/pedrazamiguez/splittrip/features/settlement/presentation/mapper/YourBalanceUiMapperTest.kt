@@ -19,18 +19,18 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-class YourPositionUiMapperTest {
+class YourBalanceUiMapperTest {
 
     private val localeProvider: LocaleProvider = mockk()
     private val resourceProvider: ResourceProvider = mockk()
-    private lateinit var mapper: YourPositionUiMapper
+    private lateinit var mapper: YourBalanceUiMapper
 
     @BeforeEach
     fun setUp() {
         every { localeProvider.getCurrentLocale() } returns Locale.US
         every { resourceProvider.getString(any()) } returns "Label"
         every { resourceProvider.getString(any(), *anyVararg()) } returns "Formatted Label"
-        mapper = YourPositionUiMapper(localeProvider, resourceProvider)
+        mapper = YourBalanceUiMapper(localeProvider, resourceProvider)
     }
 
     @Test
@@ -97,7 +97,7 @@ class YourPositionUiMapperTest {
 
         val result = mapper.toPersonalPosition(memberBalance, "EUR")
 
-        assertEquals(YourPositionUiMapper.EM_DASH, result.formattedCashInHand)
+        assertEquals(YourBalanceUiMapper.EM_DASH, result.formattedCashInHand)
         assertTrue(result.hasNegativeCashInHand)
     }
 

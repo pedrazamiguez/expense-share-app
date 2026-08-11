@@ -27,29 +27,29 @@ class SettlementConsensusUiMapperTest {
     @BeforeEach
     fun setUp() {
         every { localeProvider.getCurrentLocale() } returns Locale.US
-        every { resourceProvider.getString(eq(R.string.your_position_settlement_you_owe), *anyVararg()) } answers {
+        every { resourceProvider.getString(eq(R.string.your_balance_settlement_you_owe), *anyVararg()) } answers {
             val args = secondArg<Array<Any>>()
             "You owe ${args[0]}"
         }
-        every { resourceProvider.getString(eq(R.string.your_position_settlement_owes_you), *anyVararg()) } answers {
+        every { resourceProvider.getString(eq(R.string.your_balance_settlement_owes_you), *anyVararg()) } answers {
             val args = secondArg<Array<Any>>()
             "${args[0]} owes you"
         }
-        every { resourceProvider.getString(R.string.your_position_settlement_mark_paid) } returns "Mark as paid"
-        every { resourceProvider.getString(R.string.your_position_settlement_confirm_receipt) } returns
+        every { resourceProvider.getString(R.string.your_balance_settlement_mark_paid) } returns "Mark as paid"
+        every { resourceProvider.getString(R.string.your_balance_settlement_confirm_receipt) } returns
             "Confirm receipt"
-        every { resourceProvider.getString(R.string.your_position_settlement_resolve_dispute) } returns
+        every { resourceProvider.getString(R.string.your_balance_settlement_resolve_dispute) } returns
             "Resolve dispute"
-        every { resourceProvider.getString(R.string.your_position_settlement_dispute) } returns "Dispute"
-        every { resourceProvider.getString(R.string.your_position_settlement_status_suggested) } returns "Suggested"
-        every { resourceProvider.getString(R.string.your_position_settlement_status_confirmed_payer) } returns
+        every { resourceProvider.getString(R.string.your_balance_settlement_dispute) } returns "Dispute"
+        every { resourceProvider.getString(R.string.your_balance_settlement_status_suggested) } returns "Suggested"
+        every { resourceProvider.getString(R.string.your_balance_settlement_status_confirmed_payer) } returns
             "Confirmed by payer"
-        every { resourceProvider.getString(R.string.your_position_settlement_status_disputed) } returns "Disputed"
-        every { resourceProvider.getString(R.string.your_position_settlement_pocket_pocket) } returns "Pocket"
-        every { resourceProvider.getString(R.string.your_position_settlement_pocket_cash) } returns "Cash"
-        every { resourceProvider.getString(R.string.your_position_settlement_pocket_net) } returns "Net"
-        every { resourceProvider.getString(R.string.your_position_settlement_remind) } returns "Remind"
-        every { resourceProvider.getString(R.string.your_position_settlement_reminded) } returns "Reminded"
+        every { resourceProvider.getString(R.string.your_balance_settlement_status_disputed) } returns "Disputed"
+        every { resourceProvider.getString(R.string.your_balance_settlement_pocket_pocket) } returns "Pocket"
+        every { resourceProvider.getString(R.string.your_balance_settlement_pocket_cash) } returns "Cash"
+        every { resourceProvider.getString(R.string.your_balance_settlement_pocket_net) } returns "Net"
+        every { resourceProvider.getString(R.string.your_balance_settlement_remind) } returns "Remind"
+        every { resourceProvider.getString(R.string.your_balance_settlement_reminded) } returns "Reminded"
 
         mapper = SettlementConsensusUiMapper(localeProvider, resourceProvider)
     }

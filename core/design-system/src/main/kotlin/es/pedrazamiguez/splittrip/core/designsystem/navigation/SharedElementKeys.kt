@@ -11,5 +11,5 @@ object SharedElementKeys {
     const val ADD_CONTRIBUTION = "add_contribution_container"
     const val ADD_CASH_WITHDRAWAL = "add_cash_withdrawal_container"
     const val RECEIPT_VIEWER_SHARED_ELEMENT_KEY = "receipt_viewer_container"
-    const val YOUR_POSITION = "your_position_container"
+    const val YOUR_BALANCE = "your_balance_container"
 }

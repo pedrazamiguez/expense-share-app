@@ -22,7 +22,7 @@ internal fun ConsensusCardActions(
     modifier: Modifier = Modifier,
     isOffline: Boolean = false
 ) {
-    val disputeLabel = stringResource(R.string.your_position_settlement_dispute)
+    val disputeLabel = stringResource(R.string.your_balance_settlement_dispute)
     val actions = buildList {
         if (item.canConfirm) {
             add(

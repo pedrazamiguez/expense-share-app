@@ -19,11 +19,11 @@ import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUse
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.MemberSpendingChartUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.SettlementConsensusUiMapper
-import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourPositionUiMapper
+import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourBalanceUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.MemberSpendingChartUiModel
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.delegate.LocalUiState
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.delegate.YourPositionActionDelegate
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourPositionUiEvent
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.delegate.YourBalanceActionDelegate
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourBalanceUiEvent
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -50,7 +50,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class YourPositionViewModelTest {
+class YourBalanceViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -64,7 +64,7 @@ class YourPositionViewModelTest {
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase = mockk()
     private val getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase = mockk()
     private val getNudgeTimestampsFlowUseCase: GetNudgeTimestampsFlowUseCase = mockk()
-    private val actionDelegate: YourPositionActionDelegate = mockk()
+    private val actionDelegate: YourBalanceActionDelegate = mockk()
 
     private val authenticationService: AuthenticationService = mockk()
     private val appConfigService: AppConfigService = mockk()
@@ -75,9 +75,9 @@ class YourPositionViewModelTest {
     private val settlementConsensusUiMapper: SettlementConsensusUiMapper = mockk()
     private val memberSpendingChartUiMapper: MemberSpendingChartUiMapper = mockk()
 
-    private lateinit var useCases: YourPositionUseCases
-    private lateinit var mapper: YourPositionUiMapper
-    private lateinit var viewModel: YourPositionViewModel
+    private lateinit var useCases: YourBalanceUseCases
+    private lateinit var mapper: YourBalanceUiMapper
+    private lateinit var viewModel: YourBalanceViewModel
 
     @BeforeEach
     fun setUp() {
@@ -101,9 +101,9 @@ class YourPositionViewModelTest {
             MemberSpendingChartUiModel(bars = persistentListOf(), formattedGroupTotal = "Total", isCashOnly = true)
         every { actionDelegate.localState } returns MutableStateFlow(LocalUiState())
 
-        mapper = YourPositionUiMapper(localeProvider, resourceProvider)
+        mapper = YourBalanceUiMapper(localeProvider, resourceProvider)
 
-        useCases = YourPositionUseCases(
+        useCases = YourBalanceUseCases(
             getGroupByIdUseCase = getGroupByIdUseCase,
             getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
             getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
@@ -116,11 +116,11 @@ class YourPositionViewModelTest {
             getNudgeTimestampsFlowUseCase = getNudgeTimestampsFlowUseCase
         )
 
-        viewModel = YourPositionViewModel(
+        viewModel = YourBalanceViewModel(
             useCases = useCases,
             actionDelegate = actionDelegate,
             authenticationService = authenticationService,
-            yourPositionUiMapper = mapper,
+            yourBalanceUiMapper = mapper,
             settlementConsensusUiMapper = settlementConsensusUiMapper,
             memberSpendingChartUiMapper = memberSpendingChartUiMapper,
             appConfigService = appConfigService,
@@ -220,11 +220,11 @@ class YourPositionViewModelTest {
 
         assertFalse(viewModel.uiState.value.isCashBreakdownVisible)
 
-        viewModel.onEvent(YourPositionUiEvent.ShowCashBreakdown)
+        viewModel.onEvent(YourBalanceUiEvent.ShowCashBreakdown)
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value.isCashBreakdownVisible)
 
-        viewModel.onEvent(YourPositionUiEvent.DismissCashBreakdown)
+        viewModel.onEvent(YourBalanceUiEvent.DismissCashBreakdown)
         advanceUntilIdle()
         assertFalse(viewModel.uiState.value.isCashBreakdownVisible)
     }
@@ -254,7 +254,7 @@ class YourPositionViewModelTest {
 
         assertTrue(viewModel.uiState.value.isChartCashOnly)
 
-        viewModel.onEvent(YourPositionUiEvent.ChartModeToggled(false))
+        viewModel.onEvent(YourBalanceUiEvent.ChartModeToggled(false))
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.isChartCashOnly)
@@ -283,7 +283,7 @@ class YourPositionViewModelTest {
     fun `ConfirmSettlement delegates to actionDelegate`() = runTest(testDispatcher) {
         coEvery { actionDelegate.handleConfirm(any(), any(), any(), any()) } returns Unit
 
-        viewModel.onEvent(YourPositionUiEvent.ConfirmSettlement("s1"))
+        viewModel.onEvent(YourBalanceUiEvent.ConfirmSettlement("s1"))
         advanceUntilIdle()
 
         coVerify(exactly = 1) { actionDelegate.handleConfirm("s1", null, false, any()) }
@@ -293,7 +293,7 @@ class YourPositionViewModelTest {
     fun `DisputeSettlement delegates to actionDelegate`() = runTest(testDispatcher) {
         coEvery { actionDelegate.handleOpenDispute(any(), any(), any()) } returns Unit
 
-        viewModel.onEvent(YourPositionUiEvent.DisputeSettlement("s1"))
+        viewModel.onEvent(YourBalanceUiEvent.DisputeSettlement("s1"))
         advanceUntilIdle()
 
         coVerify(exactly = 1) { actionDelegate.handleOpenDispute("s1", false, any()) }
@@ -303,7 +303,7 @@ class YourPositionViewModelTest {
     fun `DisputeReasonChanged delegates to actionDelegate`() = runTest(testDispatcher) {
         every { actionDelegate.updateDisputeReason(any()) } returns Unit
 
-        viewModel.onEvent(YourPositionUiEvent.DisputeReasonChanged("reason"))
+        viewModel.onEvent(YourBalanceUiEvent.DisputeReasonChanged("reason"))
         advanceUntilIdle()
 
         coVerify(exactly = 1) { actionDelegate.updateDisputeReason("reason") }
@@ -313,7 +313,7 @@ class YourPositionViewModelTest {
     fun `DisputeSubmitted delegates to actionDelegate`() = runTest(testDispatcher) {
         coEvery { actionDelegate.handleSubmitDispute(any(), any(), any()) } returns Unit
 
-        viewModel.onEvent(YourPositionUiEvent.DisputeSubmitted)
+        viewModel.onEvent(YourBalanceUiEvent.DisputeSubmitted)
         advanceUntilIdle()
 
         coVerify(exactly = 1) { actionDelegate.handleSubmitDispute(null, false, any()) }
@@ -323,7 +323,7 @@ class YourPositionViewModelTest {
     fun `DisputeCancelled delegates to actionDelegate`() = runTest(testDispatcher) {
         every { actionDelegate.handleCancelDispute() } returns Unit
 
-        viewModel.onEvent(YourPositionUiEvent.DisputeCancelled)
+        viewModel.onEvent(YourBalanceUiEvent.DisputeCancelled)
         advanceUntilIdle()
 
         coVerify(exactly = 1) { actionDelegate.handleCancelDispute() }
@@ -333,7 +333,7 @@ class YourPositionViewModelTest {
     fun `NudgeDebtor delegates to actionDelegate`() = runTest(testDispatcher) {
         coEvery { actionDelegate.handleNudgeDebtor(any(), any(), any(), any()) } returns Unit
 
-        viewModel.onEvent(YourPositionUiEvent.NudgeDebtor("s1"))
+        viewModel.onEvent(YourBalanceUiEvent.NudgeDebtor("s1"))
         advanceUntilIdle()
 
         coVerify(exactly = 1) { actionDelegate.handleNudgeDebtor("s1", null, false, any()) }

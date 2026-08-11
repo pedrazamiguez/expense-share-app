@@ -43,9 +43,9 @@ class BalancesScreenUiProviderImpl(
             val tabNavController = LocalTabNavController.current
             return MainAction(
                 icon = TablerIcons.Outline.ReportAnalytics,
-                contentDescription = stringResource(R.string.balances_your_position_title),
-                onClick = { tabNavController.navigate(Routes.YOUR_POSITION) },
-                sharedTransitionKey = SharedElementKeys.YOUR_POSITION
+                contentDescription = stringResource(R.string.balances_your_balance_title),
+                onClick = { tabNavController.navigate(Routes.YOUR_BALANCE) },
+                sharedTransitionKey = SharedElementKeys.YOUR_BALANCE
             )
         }
 }

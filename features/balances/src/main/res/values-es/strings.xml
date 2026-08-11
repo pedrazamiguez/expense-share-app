@@ -112,6 +112,6 @@
 
     <!-- Main Action -->
     <string name="balances_filter">Filtrar balances</string>
-    <string name="balances_your_position_title">Tu balance</string>
+    <string name="balances_your_balance_title">Tu balance</string>
 
 </resources>

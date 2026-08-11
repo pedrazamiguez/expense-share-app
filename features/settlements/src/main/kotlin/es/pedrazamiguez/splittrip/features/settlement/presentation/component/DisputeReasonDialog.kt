@@ -25,7 +25,7 @@ internal fun DisputeReasonDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = stringResource(R.string.your_position_dispute_dialog_title),
+                text = stringResource(R.string.your_balance_dispute_dialog_title),
                 style = MaterialTheme.typography.titleMedium
             )
         },
@@ -34,7 +34,7 @@ internal fun DisputeReasonDialog(
                 StyledOutlinedTextField(
                     value = reason,
                     onValueChange = onReasonChanged,
-                    placeholder = stringResource(R.string.your_position_dispute_dialog_hint),
+                    placeholder = stringResource(R.string.your_balance_dispute_dialog_hint),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = false,
                     minLines = 3
@@ -46,12 +46,12 @@ internal fun DisputeReasonDialog(
                 onClick = onSubmit,
                 enabled = reason.isNotBlank() && !isOffline
             ) {
-                Text(text = stringResource(R.string.your_position_dispute_dialog_submit))
+                Text(text = stringResource(R.string.your_balance_dispute_dialog_submit))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.your_position_dispute_dialog_cancel))
+                Text(text = stringResource(R.string.your_balance_dispute_dialog_cancel))
             }
         },
         modifier = modifier

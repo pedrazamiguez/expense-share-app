@@ -50,8 +50,8 @@ fun GroupsFeature(
     // Collect and handle UiActions
     LaunchedEffect(Unit) {
         groupsViewModel.actions.collectLatest { action ->
-            if (action is GroupsUiAction.NavigateToYourPosition) {
-                navController.navigate(Routes.YOUR_POSITION)
+            if (action is GroupsUiAction.NavigateToYourBalance) {
+                navController.navigate(Routes.YOUR_BALANCE)
             } else {
                 pillController.showPill(message = action.message.asString(context))
             }
@@ -100,6 +100,6 @@ fun GroupsFeature(
         onWizardBackClicked = { groupsViewModel.onEvent(GroupsUiEvent.WizardBackClicked) },
         onWizardCancelled = { groupsViewModel.onEvent(GroupsUiEvent.WizardCancelled) },
         onConfirmLeave = { groupsViewModel.onEvent(GroupsUiEvent.LeaveConfirmed(it)) },
-        onNavigateToYourPosition = { groupsViewModel.onEvent(GroupsUiEvent.NavigateToYourPositionClicked) }
+        onNavigateToYourBalance = { groupsViewModel.onEvent(GroupsUiEvent.NavigateToYourBalanceClicked) }
     )
 }

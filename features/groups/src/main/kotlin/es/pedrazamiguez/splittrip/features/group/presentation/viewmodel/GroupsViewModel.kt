@@ -184,10 +184,10 @@ class GroupsViewModel(
             is GroupsUiEvent.WizardNextClicked -> leaveWizardEventHandler.handleWizardNext(event.groupId)
             GroupsUiEvent.WizardBackClicked -> leaveWizardEventHandler.handleWizardBack()
             GroupsUiEvent.WizardCancelled -> leaveWizardEventHandler.handleWizardCancelled()
-            GroupsUiEvent.NavigateToYourPositionClicked -> {
+            GroupsUiEvent.NavigateToYourBalanceClicked -> {
                 leaveWizardEventHandler.handleWizardCancelled()
                 viewModelScope.launch {
-                    _actions.send(GroupsUiAction.NavigateToYourPosition)
+                    _actions.send(GroupsUiAction.NavigateToYourBalance)
                 }
             }
             is GroupsUiEvent.LeaveConfirmed -> leaveWizardEventHandler.handleLeave(event.groupId)

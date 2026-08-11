@@ -23,7 +23,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 
-class YourPositionUiMapper(
+class YourBalanceUiMapper(
     private val localeProvider: LocaleProvider,
     private val resourceProvider: ResourceProvider
 ) {
@@ -218,7 +218,7 @@ class YourPositionUiMapper(
         val isForeign = withdrawal.currency != groupCurrency
         val dateText = withdrawal.createdAt?.formatShortDate(locale) ?: ""
         val label = if (withdrawal.title.isNullOrBlank()) {
-            resourceProvider.getString(R.string.your_position_cash_breakdown_atm_fallback, dateText)
+            resourceProvider.getString(R.string.your_balance_cash_breakdown_atm_fallback, dateText)
         } else {
             withdrawal.title ?: ""
         }
@@ -227,7 +227,7 @@ class YourPositionUiMapper(
             dateText = dateText,
             formattedRate = if (isForeign) {
                 resourceProvider.getString(
-                    R.string.your_position_cash_breakdown_rate,
+                    R.string.your_balance_cash_breakdown_rate,
                     withdrawal.exchangeRate.formatForDisplay(locale, maxDecimalPlaces = 6),
                     withdrawal.currency,
                     groupCurrency
@@ -242,10 +242,10 @@ class YourPositionUiMapper(
                 ""
             },
             scopeLabel = when (withdrawal.withdrawalScope) {
-                PayerType.GROUP -> resourceProvider.getString(R.string.your_position_cash_breakdown_group_scope)
-                PayerType.USER -> resourceProvider.getString(R.string.your_position_cash_breakdown_personal_scope)
+                PayerType.GROUP -> resourceProvider.getString(R.string.your_balance_cash_breakdown_group_scope)
+                PayerType.USER -> resourceProvider.getString(R.string.your_balance_cash_breakdown_personal_scope)
                 PayerType.SUBUNIT -> withdrawal.subunitId?.let { subunitsMap[it]?.name }
-                    ?: resourceProvider.getString(R.string.your_position_cash_breakdown_unknown_subunit)
+                    ?: resourceProvider.getString(R.string.your_balance_cash_breakdown_unknown_subunit)
             },
             isEstimatedShare = withdrawal.withdrawalScope == PayerType.GROUP,
             formattedAddOns = formatWithdrawalAddOns(

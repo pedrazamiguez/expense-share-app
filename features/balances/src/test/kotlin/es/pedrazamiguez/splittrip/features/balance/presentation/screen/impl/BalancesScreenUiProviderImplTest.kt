@@ -20,10 +20,10 @@ class BalancesScreenUiProviderImplTest {
     }
 
     @Test
-    fun `mainAction sharedTransitionKey matches YOUR_POSITION key`() {
+    fun `mainAction sharedTransitionKey matches YOUR_BALANCE key`() {
         assertEquals(
-            es.pedrazamiguez.splittrip.core.designsystem.navigation.SharedElementKeys.YOUR_POSITION,
-            "your_position_container"
+            es.pedrazamiguez.splittrip.core.designsystem.navigation.SharedElementKeys.YOUR_BALANCE,
+            "your_balance_container"
         )
     }
 }

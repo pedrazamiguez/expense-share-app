@@ -11,7 +11,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.settlement.GetNudgeTimestampsFl
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 
-data class YourPositionUseCases(
+data class YourBalanceUseCases(
     val getGroupByIdUseCase: GetGroupByIdUseCase,
     val getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase,
     val getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase,

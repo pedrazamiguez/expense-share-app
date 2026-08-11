@@ -42,8 +42,8 @@ fun GroupSettlementOverviewFeature(
                 GroupSettlementOverviewUiAction.NavigateBack -> {
                     navController.popBackStack()
                 }
-                GroupSettlementOverviewUiAction.NavigateToYourPosition -> {
-                    navController.navigate(Routes.YOUR_POSITION)
+                GroupSettlementOverviewUiAction.NavigateToYourBalance -> {
+                    navController.navigate(Routes.YOUR_BALANCE)
                 }
             }
         }

@@ -5,7 +5,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCas
 import es.pedrazamiguez.splittrip.domain.usecase.balance.DisputeSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.settlement.NudgeDebtorUseCase
 import es.pedrazamiguez.splittrip.features.settlement.R
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.action.YourPositionUiAction
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.action.YourBalanceUiAction
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +17,7 @@ data class LocalUiState(
     val disputeReasonInput: String = ""
 )
 
-class YourPositionActionDelegate(
+class YourBalanceActionDelegate(
     private val confirmSettlementUseCase: ConfirmSettlementUseCase,
     private val disputeSettlementUseCase: DisputeSettlementUseCase,
     private val nudgeDebtorUseCase: NudgeDebtorUseCase
@@ -30,7 +30,7 @@ class YourPositionActionDelegate(
         settlementIdString: String,
         groupId: String?,
         isOffline: Boolean,
-        actions: Channel<YourPositionUiAction>
+        actions: Channel<YourBalanceUiAction>
     ) {
         if (checkOfflineAndEmitError(isOffline, actions)) return
         val validGroupId = groupId ?: return
@@ -49,14 +49,14 @@ class YourPositionActionDelegate(
 
         if (hasError) {
             actions.send(
-                YourPositionUiAction.ShowError(
-                    UiText.StringResource(R.string.your_position_confirm_error)
+                YourBalanceUiAction.ShowError(
+                    UiText.StringResource(R.string.your_balance_confirm_error)
                 )
             )
         } else {
             actions.send(
-                YourPositionUiAction.ShowSuccess(
-                    UiText.StringResource(R.string.your_position_confirm_success)
+                YourBalanceUiAction.ShowSuccess(
+                    UiText.StringResource(R.string.your_balance_confirm_success)
                 )
             )
         }
@@ -66,7 +66,7 @@ class YourPositionActionDelegate(
         settlementId: String,
         groupId: String?,
         isOffline: Boolean,
-        actions: Channel<YourPositionUiAction>
+        actions: Channel<YourBalanceUiAction>
     ) {
         if (checkOfflineAndEmitError(isOffline, actions)) return
         val validGroupId = groupId ?: return
@@ -74,23 +74,23 @@ class YourPositionActionDelegate(
         nudgeDebtorUseCase(validGroupId, settlementId).fold(
             onSuccess = {
                 actions.send(
-                    YourPositionUiAction.ShowSuccess(
-                        UiText.StringResource(R.string.your_position_nudge_success)
+                    YourBalanceUiAction.ShowSuccess(
+                        UiText.StringResource(R.string.your_balance_nudge_success)
                     )
                 )
             },
             onFailure = { e ->
                 Timber.w(e, "Failed to send nudge for settlement $settlementId")
                 actions.send(
-                    YourPositionUiAction.ShowError(
-                        UiText.StringResource(R.string.your_position_nudge_error)
+                    YourBalanceUiAction.ShowError(
+                        UiText.StringResource(R.string.your_balance_nudge_error)
                     )
                 )
             }
         )
     }
 
-    suspend fun handleOpenDispute(settlementId: String, isOffline: Boolean, actions: Channel<YourPositionUiAction>) {
+    suspend fun handleOpenDispute(settlementId: String, isOffline: Boolean, actions: Channel<YourBalanceUiAction>) {
         if (checkOfflineAndEmitError(isOffline, actions)) return
         _localState.update {
             it.copy(
@@ -100,7 +100,7 @@ class YourPositionActionDelegate(
         }
     }
 
-    suspend fun handleSubmitDispute(groupId: String?, isOffline: Boolean, actions: Channel<YourPositionUiAction>) {
+    suspend fun handleSubmitDispute(groupId: String?, isOffline: Boolean, actions: Channel<YourBalanceUiAction>) {
         if (checkOfflineAndEmitError(isOffline, actions)) return
         val validGroupId = groupId ?: return
         val settlementId = _localState.value.activeDisputeSettlementId ?: return
@@ -116,27 +116,27 @@ class YourPositionActionDelegate(
                     )
                 }
                 actions.send(
-                    YourPositionUiAction.ShowSuccess(
-                        UiText.StringResource(R.string.your_position_dispute_success)
+                    YourBalanceUiAction.ShowSuccess(
+                        UiText.StringResource(R.string.your_balance_dispute_success)
                     )
                 )
             },
             onFailure = { e ->
                 Timber.w(e, "Failed to dispute settlement $settlementId")
                 actions.send(
-                    YourPositionUiAction.ShowError(
-                        UiText.StringResource(R.string.your_position_dispute_error)
+                    YourBalanceUiAction.ShowError(
+                        UiText.StringResource(R.string.your_balance_dispute_error)
                     )
                 )
             }
         )
     }
 
-    private suspend fun checkOfflineAndEmitError(isOffline: Boolean, actions: Channel<YourPositionUiAction>): Boolean {
+    private suspend fun checkOfflineAndEmitError(isOffline: Boolean, actions: Channel<YourBalanceUiAction>): Boolean {
         if (isOffline) {
             actions.send(
-                YourPositionUiAction.ShowError(
-                    UiText.StringResource(R.string.your_position_offline_warning)
+                YourBalanceUiAction.ShowError(
+                    UiText.StringResource(R.string.your_balance_offline_warning)
                 )
             )
             return true

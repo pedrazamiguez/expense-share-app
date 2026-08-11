@@ -19,7 +19,7 @@ internal fun EntryFeesRow(fees: String) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        CaptionText(text = stringResource(R.string.your_position_cash_breakdown_fees))
+        CaptionText(text = stringResource(R.string.your_balance_cash_breakdown_fees))
         CaptionText(
             text = fees,
             color = MaterialTheme.colorScheme.error
