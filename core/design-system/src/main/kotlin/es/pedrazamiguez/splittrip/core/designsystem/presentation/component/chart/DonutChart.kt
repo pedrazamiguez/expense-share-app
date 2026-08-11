@@ -24,7 +24,8 @@ import kotlinx.collections.immutable.ImmutableList
 fun DonutChart(
     data: ImmutableList<DonutChartData>,
     modifier: Modifier = Modifier,
-    strokeWidthDp: Dp = 24.dp
+    strokeWidthDp: Dp = 24.dp,
+    centerContent: @Composable () -> Unit = {}
 ) {
     var isAnimated by remember { mutableStateOf(false) }
     LaunchedEffect(data) {
@@ -70,5 +71,7 @@ fun DonutChart(
                 }
             }
         }
+
+        centerContent()
     }
 }

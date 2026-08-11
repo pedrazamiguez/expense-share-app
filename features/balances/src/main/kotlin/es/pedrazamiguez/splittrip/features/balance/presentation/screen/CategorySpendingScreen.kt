@@ -1,9 +1,9 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.screen
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,14 +12,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.chart.DonutChart
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.chart.DonutChartData
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.DeferredLoadingContainer
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.ShimmerLoadingList
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.state.CategorySpendingUiState
 import kotlinx.collections.immutable.toImmutableList
@@ -29,6 +32,9 @@ fun CategorySpendingScreen(
     uiState: CategorySpendingUiState,
     modifier: Modifier = Modifier
 ) {
+    val scrollBehavior = rememberConnectedScrollBehavior()
+    val bottomPadding = LocalBottomPadding.current
+
     DeferredLoadingContainer(
         isLoading = uiState.isLoading,
         loadingContent = {
@@ -38,53 +44,63 @@ fun CategorySpendingScreen(
             )
         }
     ) {
-        Column(
-            modifier = modifier.fillMaxSize()
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
+            contentPadding = PaddingValues(bottom = bottomPadding)
         ) {
-            val chartData = uiState.items.map {
-                DonutChartData(
-                    label = it.category.name,
-                    value = it.progress,
-                    color = it.color
-                )
-            }.toImmutableList()
-
-            DonutChart(
-                data = chartData,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(MaterialTheme.spacing.Large)
-                    .height(200.dp)
-            )
-
-            if (uiState.totalFormattedAmount.isNotBlank()) {
-                Text(
-                    text = stringResource(R.string.balances_total_spent, uiState.totalFormattedAmount),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .padding(bottom = MaterialTheme.spacing.Medium)
-                )
+            item {
+                CategorySpendingChart(uiState = uiState)
             }
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-            ) {
-                items(uiState.items) { item ->
-                    CategorySpendingItemRow(
-                        item = item,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                horizontal = MaterialTheme.spacing.Medium,
-                                vertical = MaterialTheme.spacing.Small
-                            )
+            items(uiState.items) { item ->
+                CategorySpendingItemRow(
+                    item = item,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = MaterialTheme.spacing.Medium,
+                            vertical = MaterialTheme.spacing.Small
+                        )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategorySpendingChart(uiState: CategorySpendingUiState) {
+    val chartData = uiState.items.map {
+        DonutChartData(
+            label = it.categoryName,
+            value = it.progress,
+            color = it.color
+        )
+    }.toImmutableList()
+
+    DonutChart(
+        data = chartData,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 64.dp, vertical = MaterialTheme.spacing.Large),
+        centerContent = {
+            if (uiState.totalFormattedAmount.isNotBlank()) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(R.string.balances_total_spent),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = uiState.totalFormattedAmount,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
         }
-    }
+    )
 }

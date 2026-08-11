@@ -74,16 +74,6 @@
     <string name="payment_method_alipay">Alipay</string>
     <string name="payment_method_wechat_pay">WeXâh Pay</string>
     <string name="payment_method_other">Otro</string>
-    <string name="expense_category_contribution">Aportaçión</string>
-    <string name="expense_category_refund">Reemborço</string>
-    <string name="expense_category_transport">Trâpporte</string>
-    <string name="expense_category_food">Comida y Rêttaurantê</string>
-    <string name="expense_category_lodging">Alohamiento</string>
-    <string name="expense_category_activities">Âttibidadê</string>
-    <string name="expense_category_insurance">Çegurô</string>
-    <string name="expense_category_entertainment">Entretenimiento</string>
-    <string name="expense_category_shopping">Comprâ</string>
-    <string name="expense_category_other">Otrô</string>
     <string name="payment_status_received">Reçibío</string>
     <string name="payment_status_pending">Pendiente</string>
     <string name="payment_status_finished">Pagao</string>

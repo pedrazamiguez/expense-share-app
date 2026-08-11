@@ -1,8 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <!-- Support Email -->
+    
     <string name="support_email_subject">Reporte de fallos de SplitTrip</string>
     <string name="support_email_system_info_header">Información del sistema (No modificar):</string>
     <string name="support_email_app_version">Versión de la aplicación: %1$s</string>
     <string name="support_email_os_version">Versión del SO: Android %1$s (API %2$s)</string>
     <string name="support_email_device">Dispositivo: %1$s</string>
-</resources>
+<!-- Expense Categories --><string name="expense_category_contribution">Aportación</string>
+    <string name="expense_category_refund">Reembolso</string>
+    <string name="expense_category_transport">Transporte</string>
+    <string name="expense_category_food">Comida y Restaurantes</string>
+    <string name="expense_category_lodging">Alojamiento</string>
+    <string name="expense_category_activities">Actividades</string>
+    <string name="expense_category_insurance">Seguros</string>
+    <string name="expense_category_entertainment">Entretenimiento</string>
+    <string name="expense_category_shopping">Compras</string>
+    <string name="expense_category_other">Otros</string>
+
+    
+    </resources>

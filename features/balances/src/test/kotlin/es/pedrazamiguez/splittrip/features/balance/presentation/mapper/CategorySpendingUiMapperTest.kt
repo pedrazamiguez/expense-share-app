@@ -1,7 +1,9 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.mapper
 
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
+import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.ChartColors
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toIconVector
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import io.mockk.every
@@ -15,12 +17,14 @@ import org.junit.jupiter.api.Test
 class CategorySpendingUiMapperTest {
 
     private val localeProvider = mockk<LocaleProvider>()
+    private val resourceProvider = mockk<ResourceProvider>()
     private lateinit var mapper: CategorySpendingUiMapper
 
     @BeforeEach
     fun setup() {
         every { localeProvider.getCurrentLocale() } returns Locale.US
-        mapper = CategorySpendingUiMapper(localeProvider)
+        every { resourceProvider.getString(any()) } answers { "Translated Category" }
+        mapper = CategorySpendingUiMapper(localeProvider, resourceProvider)
     }
 
     @Test
@@ -56,12 +60,14 @@ class CategorySpendingUiMapperTest {
         assertEquals(2, result.size)
 
         // Both are 1500, so 50% each
-        assertEquals(ExpenseCategory.FOOD, result[0].category)
+        assertEquals("Translated Category", result[0].categoryName)
+        assertEquals(ExpenseCategory.FOOD.toIconVector(), result[0].categoryIcon)
         assertEquals("$15.00", result[0].formattedAmount)
         assertEquals(0.5f, result[0].progress)
         assertEquals(ChartColors[0], result[0].color)
 
-        assertEquals(ExpenseCategory.LODGING, result[1].category)
+        assertEquals("Translated Category", result[1].categoryName)
+        assertEquals(ExpenseCategory.LODGING.toIconVector(), result[1].categoryIcon)
         assertEquals("$15.00", result[1].formattedAmount)
         assertEquals(0.5f, result[1].progress)
         assertEquals(ChartColors[1], result[1].color)

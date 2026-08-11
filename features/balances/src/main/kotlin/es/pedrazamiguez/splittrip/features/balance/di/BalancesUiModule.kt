@@ -76,7 +76,8 @@ val balancesUiModule = module {
 
     single {
         CategorySpendingUiMapper(
-            localeProvider = get<LocaleProvider>()
+            localeProvider = get<LocaleProvider>(),
+            resourceProvider = get<ResourceProvider>()
         )
     }
 
