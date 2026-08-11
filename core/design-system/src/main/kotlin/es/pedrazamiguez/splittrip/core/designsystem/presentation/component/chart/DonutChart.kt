@@ -1,8 +1,6 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.chart
 
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
@@ -18,32 +16,38 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.delay
+
+private const val ANIMATION_DELAY_MS = 300L
+private const val ANIMATION_DURATION_MS = 1000
 
 @Composable
 fun DonutChart(
     data: ImmutableList<DonutChartData>,
     modifier: Modifier = Modifier,
-    strokeWidthDp: Dp = 24.dp,
+    strokeWidthDp: Dp = 64.dp,
     centerContent: @Composable () -> Unit = {}
 ) {
     var isAnimated by remember { mutableStateOf(false) }
     LaunchedEffect(data) {
+        delay(ANIMATION_DELAY_MS.milliseconds)
         isAnimated = true
     }
 
     val total = remember(data) { data.sumOf { it.value.toDouble() }.toFloat().coerceAtLeast(1f) }
 
-    val bouncySpringSpec = spring<Float>(
-        dampingRatio = Spring.DampingRatioMediumBouncy,
-        stiffness = Spring.StiffnessMediumLow
+    val animationSpec = androidx.compose.animation.core.tween<Float>(
+        durationMillis = ANIMATION_DURATION_MS,
+        easing = androidx.compose.animation.core.FastOutSlowInEasing
     )
 
     val animatedSweepAngles = data.mapIndexed { index, item ->
         val targetAngle = if (isAnimated) (item.value / total) * 360f else 0f
         animateFloatAsState(
             targetValue = targetAngle,
-            animationSpec = bouncySpringSpec,
+            animationSpec = animationSpec,
             label = "slice_angle_$index"
         )
     }
