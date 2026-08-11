@@ -7,6 +7,10 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.resol
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberOptionUiModel
 import es.pedrazamiguez.splittrip.domain.model.User
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import kotlinx.collections.immutable.ImmutableList
 
 /**
@@ -83,5 +87,18 @@ class AddContributionUiMapper(
             youLabel = youLabel,
             displayName = member.displayName
         )
+    }
+
+    /**
+     * Formats a given timestamp (in milliseconds) to a localized medium date + short time string.
+     */
+    fun formatMediumDateTime(dateMillis: Long): String {
+        val localDateTime = Instant.ofEpochMilli(dateMillis)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDateTime()
+        return DateTimeFormatter
+            .ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+            .withLocale(localeProvider.getCurrentLocale())
+            .format(localDateTime)
     }
 }

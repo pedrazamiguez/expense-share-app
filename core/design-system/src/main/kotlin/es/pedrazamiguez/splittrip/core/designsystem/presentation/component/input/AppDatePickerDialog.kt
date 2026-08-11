@@ -1,4 +1,4 @@
-package es.pedrazamiguez.splittrip.features.expense.presentation.component.form
+package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input
 
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -9,7 +9,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import es.pedrazamiguez.splittrip.features.expense.R
+import es.pedrazamiguez.splittrip.core.designsystem.R
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -17,7 +17,7 @@ import java.time.ZoneOffset
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ExpenseDatePickerDialog(
+fun AppDatePickerDialog(
     initialDateMillis: Long?,
     onDismiss: () -> Unit,
     onDateSelected: (Long) -> Unit
@@ -56,12 +56,12 @@ internal fun ExpenseDatePickerDialog(
                     }
                 }
             ) {
-                Text(stringResource(R.string.expense_date_time_ok))
+                Text(stringResource(R.string.action_ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.expense_date_time_cancel))
+                Text(stringResource(R.string.action_cancel))
             }
         }
     ) {

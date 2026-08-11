@@ -27,7 +27,10 @@ interface ContributionDao {
     @Upsert
     suspend fun insertContributions(contributions: List<ContributionEntity>)
 
-    @Query("SELECT * FROM contributions WHERE groupId = :groupId ORDER BY createdAtMillis DESC")
+    @Query(
+        "SELECT * FROM contributions WHERE groupId = :groupId " +
+            "ORDER BY COALESCE(contributionDateMillis, createdAtMillis) DESC"
+    )
     fun getContributionsByGroupIdFlow(groupId: String): Flow<List<ContributionEntity>>
 
     @Query("SELECT * FROM contributions WHERE id = :contributionId")

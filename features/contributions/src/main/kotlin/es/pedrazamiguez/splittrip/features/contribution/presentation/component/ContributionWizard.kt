@@ -26,12 +26,14 @@ internal fun ContributionWizard(
 ) {
     val amountLabel = stringResource(R.string.contribution_wizard_step_amount)
     val scopeLabel = stringResource(R.string.contribution_wizard_step_scope)
+    val dateLabel = stringResource(R.string.contribution_wizard_step_date)
     val reviewLabel = stringResource(R.string.contribution_wizard_step_review)
 
-    val stepLabelMap = remember(amountLabel, scopeLabel, reviewLabel) {
+    val stepLabelMap = remember(amountLabel, scopeLabel, dateLabel, reviewLabel) {
         mapOf(
             AddContributionStep.AMOUNT to amountLabel,
             AddContributionStep.SCOPE to scopeLabel,
+            AddContributionStep.DATE to dateLabel,
             AddContributionStep.REVIEW to reviewLabel
         )
     }

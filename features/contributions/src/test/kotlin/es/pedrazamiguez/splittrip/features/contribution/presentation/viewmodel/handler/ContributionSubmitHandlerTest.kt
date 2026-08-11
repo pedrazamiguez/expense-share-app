@@ -223,6 +223,28 @@ class ContributionSubmitHandlerTest {
                 )
             }
         }
+
+        @Test
+        fun `passes contributionDate as local date time`() = runTest {
+            val dateMillis = 1691740800000L
+            uiState.value = validState.copy(contributionDateMillis = dateMillis)
+            coEvery { addContributionUseCase(any(), any()) } just Runs
+            handler.bind(uiState, actions, this)
+
+            handler.handleSubmit("group-1") {}
+            advanceUntilIdle()
+
+            val expectedDateTime = java.time.Instant.ofEpochMilli(dateMillis)
+                .atZone(java.time.ZoneId.systemDefault())
+                .toLocalDateTime()
+
+            coVerify {
+                addContributionUseCase(
+                    "group-1",
+                    match { it.contributionDate == expectedDateTime }
+                )
+            }
+        }
     }
 
     @Nested

@@ -18,7 +18,11 @@
     <string name="contribution_wizard_back">Back</string>
     <string name="contribution_wizard_step_amount">Amount</string>
     <string name="contribution_wizard_step_scope">Scope</string>
+    <string name="contribution_wizard_step_date">Date</string>
     <string name="contribution_wizard_step_review">Review</string>
+
+    <string name="contribution_date_time_title">Date of contribution</string>
+    <string name="contribution_date_time_label">Date &amp; time</string>
 
     <!-- Contribution Review Step -->
     <string name="contribution_review_title">Review contribution</string>

@@ -263,4 +263,17 @@ class AddContributionUiMapperTest {
             assertEquals("Andrés", result)
         }
     }
+
+    // ── formatMediumDateTime ──────────────────────────────────────────────────
+
+    @Nested
+    inner class FormatMediumDateTime {
+        @Test
+        fun `formats timestamp using localeProvider`() {
+            val millis = 1786449600000L // 2026-08-11
+            val result = mapper.formatMediumDateTime(millis)
+            assertTrue(result.isNotBlank())
+            verify { localeProvider.getCurrentLocale() }
+        }
+    }
 }

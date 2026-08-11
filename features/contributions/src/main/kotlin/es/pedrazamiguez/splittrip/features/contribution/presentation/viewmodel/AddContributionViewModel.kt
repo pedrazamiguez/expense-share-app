@@ -51,6 +51,11 @@ class AddContributionViewModel(
     private var currentGroupId: String? = null
 
     init {
+        _uiState.update {
+            it.copy(
+                formattedContributionDate = addContributionUiMapper.formatMediumDateTime(it.contributionDateMillis)
+            )
+        }
         configHandler.bind(_uiState, _actions, viewModelScope)
         submitHandler.bind(_uiState, _actions, viewModelScope)
     }
@@ -78,6 +83,9 @@ class AddContributionViewModel(
             is AddContributionUiEvent.MemberSelected ->
                 configHandler.handleMemberSelected(event.userId)
 
+            is AddContributionUiEvent.ContributionDateChanged ->
+                handleContributionDateChanged(event.dateMillis)
+
             is AddContributionUiEvent.Submit ->
                 submitHandler.handleSubmit(currentGroupId, onSuccess)
 
@@ -90,6 +98,15 @@ class AddContributionViewModel(
 
     private fun handleAmountChanged(amount: String) {
         _uiState.update { it.copy(amountInput = amount, amountError = false) }
+    }
+
+    private fun handleContributionDateChanged(dateMillis: Long) {
+        _uiState.update {
+            it.copy(
+                contributionDateMillis = dateMillis,
+                formattedContributionDate = addContributionUiMapper.formatMediumDateTime(dateMillis)
+            )
+        }
     }
 
     private fun handleNextStep() {

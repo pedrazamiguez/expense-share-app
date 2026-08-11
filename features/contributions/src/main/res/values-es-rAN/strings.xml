@@ -17,7 +17,10 @@
     <string name="contribution_wizard_back">Atrâh</string>
     <string name="contribution_wizard_step_amount">Importe</string>
     <string name="contribution_wizard_step_scope">Ámbito</string>
+    <string name="contribution_wizard_step_date">Fexa</string>
     <string name="contribution_wizard_step_review">Rebiçión</string>
+    <string name="contribution_date_time_title">Fexa de la aportaçión</string>
+    <string name="contribution_date_time_label">Fexa y ora</string>
     <string name="contribution_review_title">Rebiçâh aportaçión</string>
     <string name="contribution_review_amount">Importe</string>
     <string name="contribution_review_scope">Ámbito</string>

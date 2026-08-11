@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.features.contribution.presentation.component.step.ContributionAmountStep
+import es.pedrazamiguez.splittrip.features.contribution.presentation.component.step.ContributionDateStep
 import es.pedrazamiguez.splittrip.features.contribution.presentation.component.step.ContributionReviewStep
 import es.pedrazamiguez.splittrip.features.contribution.presentation.component.step.ContributionScopeStep
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.event.AddContributionUiEvent
@@ -58,6 +59,10 @@ internal fun WizardStepContent(
                     onSubmitKeyboard = { onEvent(AddContributionUiEvent.NextStep) }
                 )
                 AddContributionStep.SCOPE -> ContributionScopeStep(
+                    uiState = uiState,
+                    onEvent = onEvent
+                )
+                AddContributionStep.DATE -> ContributionDateStep(
                     uiState = uiState,
                     onEvent = onEvent
                 )

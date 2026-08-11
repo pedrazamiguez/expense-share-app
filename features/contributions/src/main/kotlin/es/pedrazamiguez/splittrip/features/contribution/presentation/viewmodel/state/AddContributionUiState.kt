@@ -23,6 +23,8 @@ data class AddContributionUiState(
     val selectedMemberDisplayName: String = "",
 
     // ── Wizard ──────────────────────────────────────────────────────────
+    val contributionDateMillis: Long = System.currentTimeMillis(),
+    val formattedContributionDate: String = "",
     val currentStep: AddContributionStep = AddContributionStep.AMOUNT,
     val initialFormSnapshot: AddContributionFormSnapshot? = null
 ) {
@@ -33,7 +35,8 @@ data class AddContributionUiState(
         amountInput = amountInput,
         contributionScope = contributionScope,
         selectedSubunitId = selectedSubunitId,
-        selectedMemberId = selectedMemberId
+        selectedMemberId = selectedMemberId,
+        contributionDateMillis = contributionDateMillis
     )
 
     val steps: List<AddContributionStep>
@@ -52,6 +55,7 @@ data class AddContributionUiState(
         get() = when (currentStep) {
             AddContributionStep.AMOUNT -> amountInput.isNotBlank() && !amountError
             AddContributionStep.SCOPE -> true // always has a default selection
+            AddContributionStep.DATE -> true
             AddContributionStep.REVIEW ->
                 amountInput.isNotBlank() && !amountError
         }
@@ -61,5 +65,6 @@ data class AddContributionFormSnapshot(
     val amountInput: String,
     val contributionScope: PayerType,
     val selectedSubunitId: String?,
-    val selectedMemberId: String?
+    val selectedMemberId: String?,
+    val contributionDateMillis: Long
 )

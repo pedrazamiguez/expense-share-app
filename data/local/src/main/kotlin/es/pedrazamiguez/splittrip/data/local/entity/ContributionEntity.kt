@@ -39,6 +39,8 @@ data class ContributionEntity(
     val equivalentBaseAmount: Long? = null,
     @ColumnInfo(defaultValue = "null")
     val exchangeRate: String? = null,
+    @ColumnInfo(defaultValue = "null")
+    val contributionDateMillis: Long? = null,
     val createdAtMillis: Long?,
     val lastUpdatedAtMillis: Long?,
     val syncStatus: String = "SYNCED"

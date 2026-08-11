@@ -18,6 +18,7 @@ data class ContributionDocument(
     val exchangeRate: String? = null,
     val createdBy: String = "",
     val createdByRef: DocumentReference? = null,
+    var contributionDate: Timestamp? = null,
     var createdAt: Timestamp? = null,
     var lastUpdatedAt: Timestamp? = null
 ) {
