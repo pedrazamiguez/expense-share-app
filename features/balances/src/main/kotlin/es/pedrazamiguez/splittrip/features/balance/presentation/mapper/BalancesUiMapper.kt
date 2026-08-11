@@ -135,7 +135,7 @@ class BalancesUiMapper(
                     ""
                 },
                 isForeignCurrency = isForeign,
-                dateText = contribution.createdAt?.formatShortDate(locale) ?: "",
+                dateText = (contribution.contributionDate ?: contribution.createdAt)?.formatShortDate(locale) ?: "",
                 scopeLabel = scopeLabel,
                 isSubunitContribution = isSubunit,
                 isPersonalContribution = isPersonal,
@@ -233,7 +233,7 @@ class BalancesUiMapper(
         val contributionItems = contributions.zip(contributionUiModels) { domain, ui ->
             ActivityItemUiModel.ContributionItem(
                 contribution = ui,
-                sortTimestamp = domain.createdAt?.toEpochMillisUtc() ?: 0L
+                sortTimestamp = (domain.contributionDate ?: domain.createdAt)?.toEpochMillisUtc() ?: 0L
             )
         }
 
