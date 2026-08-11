@@ -2,6 +2,7 @@
 <resources>
     <string name="balances_title">Balances</string>
     <string name="balances_subtitle">Balance del grupo</string>
+    <string name="balances_category_spending_title">Gastos por categoría</string>
     <string name="balances_search">Buscar</string>
     <string name="balances_info">Info</string>
     <string name="balances_placeholder">Balances</string>

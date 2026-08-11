@@ -90,3 +90,15 @@ val HorizonOnSecondaryFixedVariant = Color(0xFF004F58) // T30 — onSecondaryFix
 
 // --- Scrim ---
 val HorizonScrim = Color(0xFF000000)
+
+// --- Charts ---
+val ChartColors = listOf(
+    Color(0xFF3A7BD5), // Horizon Blue tint
+    Color(0xFFE05555), // Warm Red
+    Color(0xFFE8A838), // Amber
+    Color(0xFF3DAA70), // Teal Green
+    Color(0xFF9B59B6), // Violet
+    Color(0xFFE67E22), // Orange
+    Color(0xFF1ABC9C), // Emerald
+    Color(0xFF2C3E50) // Dark Slate
+)
