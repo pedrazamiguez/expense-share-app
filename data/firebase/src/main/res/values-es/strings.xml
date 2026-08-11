@@ -41,10 +41,10 @@
 
     <!-- Notification group summary -->
     <string name="notification_group_summary">%1$d nuevas notificaciones</string>
-    <string name="notification_settlement_request_title">Solicitud de liquidación</string>
-    <string name="notification_settlement_request_body">%1$s solicitó una liquidación de %2$s</string>
+    <string name="notification_settlement_request_title">Solicitud de pago</string>
+    <string name="notification_settlement_request_body">%1$s solicitó un pago de %2$s</string>
     <string name="notification_settlement_confirmed_body">%1$s confirmó haber recibido %2$s de tu parte</string>
-    <string name="notification_settlement_disputed_body">%1$s disputó una liquidación de %2$s</string>
+    <string name="notification_settlement_disputed_body">%1$s disputó un pago de %2$s</string>
     
     <!-- Reminders -->
     <string name="notification_scheduled_reminder_title">Próximo gasto programado</string>
