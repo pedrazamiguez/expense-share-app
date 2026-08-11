@@ -39,7 +39,7 @@ fun GroupsScreen(
     onWizardBackClicked: () -> Unit = {},
     onWizardCancelled: () -> Unit = {},
     onConfirmLeave: (String) -> Unit = {},
-    onNavigateToYourPosition: () -> Unit = {}
+    onNavigateToYourBalance: () -> Unit = {}
 ) {
     val listState = rememberLazyListState()
     var selectedGroupForMenu by remember { mutableStateOf<GroupUiModel?>(null) }
@@ -107,7 +107,7 @@ fun GroupsScreen(
                 groupToLeave = null
             },
             onConfirmLeave = { onConfirmLeave(groupToLeave!!.id) },
-            onGoToSettlementsClicked = onNavigateToYourPosition
+            onGoToSettlementsClicked = onNavigateToYourBalance
         )
     } else if (shouldClearGroupToLeave) {
         // Clear groupToLeave when the sheet is closed and not loading

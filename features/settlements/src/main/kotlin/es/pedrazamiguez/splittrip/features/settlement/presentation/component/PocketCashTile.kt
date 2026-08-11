@@ -70,7 +70,7 @@ internal fun RowScope.PocketCashTile(
                     if (showInfoIcon && onInfoClick != null) {
                         Icon(
                             imageVector = TablerIcons.Outline.InfoCircle,
-                            contentDescription = stringResource(R.string.your_position_cash_breakdown_view_cd),
+                            contentDescription = stringResource(R.string.your_balance_cash_breakdown_view_cd),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                             modifier = Modifier
                                 .size(16.dp)

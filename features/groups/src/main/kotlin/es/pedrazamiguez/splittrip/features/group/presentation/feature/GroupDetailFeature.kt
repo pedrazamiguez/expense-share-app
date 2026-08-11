@@ -96,8 +96,8 @@ private fun handleAction(
         is GroupDetailUiAction.NavigateToSettlementOverview -> {
             navController.navigate(Routes.groupSettlementOverviewRoute(action.groupId))
         }
-        is GroupDetailUiAction.NavigateToYourPosition -> {
-            navController.navigate(Routes.YOUR_POSITION)
+        is GroupDetailUiAction.NavigateToYourBalance -> {
+            navController.navigate(Routes.YOUR_BALANCE)
         }
     }
 }

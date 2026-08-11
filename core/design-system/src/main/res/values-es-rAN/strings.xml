@@ -49,7 +49,7 @@
     <string name="empty_state_no_expenses_title">Çin gâttô aún</string>
     <string name="empty_state_no_expenses_description">¡Añade tu primêh gâtto pa empeçâh!</string>
     <string name="nav_groups">Grupô</string>
-    <string name="nav_balances">Çardô</string>
+    <string name="nav_balances">Balançê</string>
     <string name="nav_expenses">Gâttô</string>
     <string name="nav_profile">Perfîh</string>
     <string name="metadata_separator">•</string>
@@ -110,10 +110,10 @@
     <string name="group_detail_end_trip_confirm">Finaliçâh biahe</string>
     <string name="group_detail_archived_label">Arxibao</string>
     <string name="group_error_archiving_failed">Errôh al arxibâh er biahe. Por fabôh, inténtalo de nuebo.</string>
-    <string name="group_error_archiving_unresolved_settlements">No çe puede finaliçâh er biahe mientrâ êççîttan çardô o pagô pendientê çin reçorbêh.</string>
+    <string name="group_error_archiving_unresolved_settlements">No çe puede finaliçâh er biahe mientrâ êççîttan balançê o acuerdô de pago pendientê çin reçorbêh.</string>
     <string name="settlement_pocket_type_virtual">Borçiyo birtuâh</string>
     <string name="settlement_pocket_type_cash">Efêttibo</string>
-    <string name="settlement_pocket_type_net">Çardo neto</string>
+    <string name="settlement_pocket_type_net">Balançe neto</string>
     <string name="settlement_status_pending">Pendiente</string>
     <string name="settlement_status_awaiting_confirmation">Êpperando confirmaçión</string>
     <string name="settlement_status_confirmed">Confirmao</string>

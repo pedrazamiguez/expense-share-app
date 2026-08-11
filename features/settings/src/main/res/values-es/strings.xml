@@ -193,16 +193,16 @@
     <string name="account_status_link_email_dialog_email">Dirección de correo electrónico</string>
     <string name="account_status_link_email_dialog_error_email_empty">El correo no puede estar vacío</string>
     <string name="settings_logout_guest_dialog_title">¿Restablecer sesión de invitado?</string>
-    <string name="settings_logout_guest_dialog_text">Cerrar sesión o restablecer borrará de forma permanente todos los viajes, gastos y saldos locales. ¡Asegúrate de vincular tu cuenta antes para guardar tus datos!</string>
+    <string name="settings_logout_guest_dialog_text">Cerrar sesión o restablecer borrará de forma permanente todos los viajes, gastos y balances locales. ¡Asegúrate de vincular tu cuenta antes para guardar tus datos!</string>
 
     <!-- FAQ Screen -->
     <string name="faq_title">Preguntas frecuentes</string>
     <string name="faq_question_1">¿Qué es SplitTrip?</string>
-    <string name="faq_answer_1">SplitTrip es una aplicación moderna para compartir gastos y dividir cuentas de grupo diseñada para hacer que los viajes, cenas y eventos en grupo sean libres de estrés. Calcula saldos, rastrea gastos y concilia deudas sin conexión o en línea.</string>
+    <string name="faq_answer_1">SplitTrip es una aplicación moderna para compartir gastos y dividir cuentas de grupo diseñada para hacer que los viajes, cenas y eventos en grupo sean libres de estrés. Calcula balances, rastrea gastos y concilia deudas sin conexión o en línea.</string>
     <string name="faq_question_2">¿Cómo funciona el modo sin conexión?</string>
     <string name="faq_answer_2">SplitTrip está construido sobre una arquitectura que prioriza la base de datos local (offline-first). Cualquier transacción o edición de grupo que realices se guarda instantáneamente en tu base de datos local (Room) y se propaga a la interfaz de usuario de inmediato. Cuando hay una conexión de red disponible, los cambios se sincronizan de forma segura en segundo plano en nuestras bases de datos de Cloud Firestore.</string>
     <string name="faq_question_3">¿Puedo usar múltiples monedas?</string>
-    <string name="faq_answer_3">¡Sí! SplitTrip admite completamente viajes con múltiples monedas. Puedes establecer una moneda predeterminada para tu perfil, especificar monedas para gastos individuales y ver saldos convertidos automáticamente basados en tipos de cambio en tiempo real.</string>
+    <string name="faq_answer_3">¡Sí! SplitTrip admite completamente viajes con múltiples monedas. Puedes establecer una moneda predeterminada para tu perfil, especificar monedas para gastos individuales y ver balances convertidos automáticamente basados en tipos de cambio en tiempo real.</string>
     <string name="faq_question_4">¿Mis datos están seguros?</string>
     <string name="faq_answer_4">Absolutamente. SplitTrip utiliza Firebase Authentication para autenticar a los usuarios de forma segura. Tu información personal, los detalles del viaje y las transacciones financieras están protegidos utilizando cifrado de tránsito estándar de la industria y robustas reglas de seguridad de Firestore.</string>
     <string name="faq_question_5">¿Cómo vinculo mi cuenta de invitado?</string>

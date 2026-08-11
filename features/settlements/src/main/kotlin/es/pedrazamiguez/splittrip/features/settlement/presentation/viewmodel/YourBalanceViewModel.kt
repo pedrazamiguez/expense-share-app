@@ -14,11 +14,11 @@ import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.MemberSpendingChartUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.SettlementConsensusUiMapper
-import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourPositionUiMapper
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.action.YourPositionUiAction
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.delegate.YourPositionActionDelegate
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourPositionUiEvent
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.state.YourPositionUiState
+import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourBalanceUiMapper
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.action.YourBalanceUiAction
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.delegate.YourBalanceActionDelegate
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourBalanceUiEvent
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.state.YourBalanceUiState
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,11 +40,11 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-class YourPositionViewModel(
-    private val useCases: YourPositionUseCases,
-    private val actionDelegate: YourPositionActionDelegate,
+class YourBalanceViewModel(
+    private val useCases: YourBalanceUseCases,
+    private val actionDelegate: YourBalanceActionDelegate,
     private val authenticationService: AuthenticationService,
-    private val yourPositionUiMapper: YourPositionUiMapper,
+    private val yourBalanceUiMapper: YourBalanceUiMapper,
     private val settlementConsensusUiMapper: SettlementConsensusUiMapper,
     private val memberSpendingChartUiMapper: MemberSpendingChartUiMapper,
     private val appConfigService: AppConfigService,
@@ -56,10 +56,10 @@ class YourPositionViewModel(
     private val _isCashBreakdownVisible = MutableStateFlow(false)
     private val _isChartCashOnly = MutableStateFlow<Boolean?>(null)
 
-    private val _actions = Channel<YourPositionUiAction>(Channel.BUFFERED)
+    private val _actions = Channel<YourBalanceUiAction>(Channel.BUFFERED)
     val actions = _actions.receiveAsFlow()
 
-    val uiState: StateFlow<YourPositionUiState> = _selectedGroupId
+    val uiState: StateFlow<YourBalanceUiState> = _selectedGroupId
         .filterNotNull()
         .flatMapLatest { groupId ->
             val group = useCases.getGroupByIdUseCase(groupId)
@@ -141,7 +141,7 @@ class YourPositionViewModel(
                     val subunitsMap = snapshot.subunits.associateBy { it.id }
 
                     val personalPosition = currentMemberBalance?.let { balance ->
-                        yourPositionUiMapper.toPersonalPosition(
+                        yourBalanceUiMapper.toPersonalPosition(
                             memberBalance = balance,
                             groupCurrencyCode = currency,
                             withdrawals = snapshot.withdrawals,
@@ -178,7 +178,7 @@ class YourPositionViewModel(
                         groupCurrencyCode = currency
                     )
 
-                    YourPositionUiState(
+                    YourBalanceUiState(
                         isLoading = false,
                         personalPosition = personalPosition,
                         isCashBreakdownVisible = isCashBreakdownVisible,
@@ -201,7 +201,7 @@ class YourPositionViewModel(
             }
                 .catch { e ->
                     Timber.e(e, "Error loading personal position for group $groupId")
-                    emit(YourPositionUiState(isLoading = false))
+                    emit(YourBalanceUiState(isLoading = false))
                 }
                 .flowOn(computationDispatcher)
         }
@@ -211,7 +211,7 @@ class YourPositionViewModel(
                 stopTimeoutMillis = AppConstants.FLOW_RETENTION_TIME,
                 replayExpirationMillis = AppConstants.FLOW_REPLAY_EXPIRATION
             ),
-            initialValue = YourPositionUiState(isLoading = true)
+            initialValue = YourBalanceUiState(isLoading = true)
         )
 
     fun setSelectedGroup(groupId: String?) {
@@ -229,16 +229,16 @@ class YourPositionViewModel(
         }
     }
 
-    fun onEvent(event: YourPositionUiEvent) {
+    fun onEvent(event: YourBalanceUiEvent) {
         when (event) {
-            YourPositionUiEvent.Refresh -> { /* no-op */ }
-            YourPositionUiEvent.ShowCashBreakdown -> {
+            YourBalanceUiEvent.Refresh -> { /* no-op */ }
+            YourBalanceUiEvent.ShowCashBreakdown -> {
                 _isCashBreakdownVisible.value = true
             }
-            YourPositionUiEvent.DismissCashBreakdown -> {
+            YourBalanceUiEvent.DismissCashBreakdown -> {
                 _isCashBreakdownVisible.value = false
             }
-            is YourPositionUiEvent.ConfirmSettlement -> viewModelScope.launch {
+            is YourBalanceUiEvent.ConfirmSettlement -> viewModelScope.launch {
                 actionDelegate.handleConfirm(
                     event.settlementId,
                     _selectedGroupId.value,
@@ -246,15 +246,15 @@ class YourPositionViewModel(
                     _actions
                 )
             }
-            is YourPositionUiEvent.DisputeSettlement -> viewModelScope.launch {
+            is YourBalanceUiEvent.DisputeSettlement -> viewModelScope.launch {
                 actionDelegate.handleOpenDispute(event.settlementId, uiState.value.isOffline, _actions)
             }
-            is YourPositionUiEvent.DisputeReasonChanged -> actionDelegate.updateDisputeReason(event.reason)
-            YourPositionUiEvent.DisputeSubmitted -> viewModelScope.launch {
+            is YourBalanceUiEvent.DisputeReasonChanged -> actionDelegate.updateDisputeReason(event.reason)
+            YourBalanceUiEvent.DisputeSubmitted -> viewModelScope.launch {
                 actionDelegate.handleSubmitDispute(_selectedGroupId.value, uiState.value.isOffline, _actions)
             }
-            YourPositionUiEvent.DisputeCancelled -> actionDelegate.handleCancelDispute()
-            is YourPositionUiEvent.NudgeDebtor -> viewModelScope.launch {
+            YourBalanceUiEvent.DisputeCancelled -> actionDelegate.handleCancelDispute()
+            is YourBalanceUiEvent.NudgeDebtor -> viewModelScope.launch {
                 actionDelegate.handleNudgeDebtor(
                     event.settlementId,
                     _selectedGroupId.value,
@@ -262,7 +262,7 @@ class YourPositionViewModel(
                     _actions
                 )
             }
-            is YourPositionUiEvent.ChartModeToggled -> _isChartCashOnly.value = event.cashOnly
+            is YourBalanceUiEvent.ChartModeToggled -> _isChartCashOnly.value = event.cashOnly
         }
     }
 

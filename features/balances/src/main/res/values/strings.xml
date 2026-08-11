@@ -113,7 +113,7 @@
 
     <!-- Main Action -->
     <string name="balances_filter">Filter balances</string>
-    <string name="balances_your_position_title">Your Position</string>
+    <string name="balances_your_balance_title">Your Position</string>
 
 </resources>
 

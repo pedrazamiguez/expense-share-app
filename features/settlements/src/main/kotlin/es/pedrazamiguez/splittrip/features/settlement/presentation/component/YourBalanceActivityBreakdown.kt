@@ -21,7 +21,7 @@ import es.pedrazamiguez.splittrip.features.settlement.R
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.PersonalPositionUiModel
 
 @Composable
-internal fun YourPositionActivityBreakdown(
+internal fun YourBalanceActivityBreakdown(
     personalPosition: PersonalPositionUiModel,
     modifier: Modifier = Modifier
 ) {
@@ -35,17 +35,17 @@ internal fun YourPositionActivityBreakdown(
             verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
         ) {
             PositionBreakdownRow(
-                label = stringResource(R.string.your_position_label_total_contributed),
+                label = stringResource(R.string.your_balance_label_total_contributed),
                 formattedValue = personalPosition.formattedTotalContributed,
                 icon = TablerIcons.Outline.Wallet
             )
             PositionBreakdownRow(
-                label = stringResource(R.string.your_position_label_total_spent),
+                label = stringResource(R.string.your_balance_label_total_spent),
                 formattedValue = personalPosition.formattedTotalSpent,
                 icon = TablerIcons.Outline.Receipt
             )
             PositionBreakdownSubRow(
-                label = stringResource(R.string.your_position_label_cash_spent),
+                label = stringResource(R.string.your_balance_label_cash_spent),
                 formattedValue = personalPosition.formattedCashSpent,
                 icon = TablerIcons.Outline.Cash
             )
@@ -54,7 +54,7 @@ internal fun YourPositionActivityBreakdown(
             }
 
             PositionBreakdownSubRow(
-                label = stringResource(R.string.your_position_label_non_cash_spent),
+                label = stringResource(R.string.your_balance_label_non_cash_spent),
                 formattedValue = personalPosition.formattedNonCashSpent,
                 icon = TablerIcons.Outline.CreditCard
             )
@@ -64,7 +64,7 @@ internal fun YourPositionActivityBreakdown(
 
             personalPosition.formattedRefundableSpent?.let { refundable ->
                 PositionBreakdownRow(
-                    label = stringResource(R.string.your_position_label_refundable_spent),
+                    label = stringResource(R.string.your_balance_label_refundable_spent),
                     formattedValue = refundable,
                     icon = TablerIcons.Outline.ReceiptRefund
                 )
@@ -75,7 +75,7 @@ internal fun YourPositionActivityBreakdown(
 
             personalPosition.formattedTotalFees?.let { fees ->
                 PositionBreakdownRow(
-                    label = stringResource(R.string.your_position_label_atm_fees),
+                    label = stringResource(R.string.your_balance_label_atm_fees),
                     formattedValue = fees,
                     icon = TablerIcons.Outline.Coin
                 )
