@@ -1,8 +1,10 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
+import es.pedrazamiguez.splittrip.core.common.R as CommonR
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toStringRes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
@@ -890,7 +892,7 @@ class ExpenseUiMapperTest {
 
         @Test
         fun `resolves FOOD category text`() {
-            every { resourceProvider.getString(R.string.expense_category_food) } returns "Food"
+            every { resourceProvider.getString(CommonR.string.expense_category_food) } returns "Food"
 
             val expense = Expense(id = "cat-1", category = ExpenseCategory.FOOD)
 
@@ -901,7 +903,7 @@ class ExpenseUiMapperTest {
 
         @Test
         fun `resolves TRANSPORT category text`() {
-            every { resourceProvider.getString(R.string.expense_category_transport) } returns "Transport"
+            every { resourceProvider.getString(CommonR.string.expense_category_transport) } returns "Transport"
 
             val expense = Expense(id = "cat-2", category = ExpenseCategory.TRANSPORT)
 
@@ -912,7 +914,7 @@ class ExpenseUiMapperTest {
 
         @Test
         fun `resolves LODGING category text`() {
-            every { resourceProvider.getString(R.string.expense_category_lodging) } returns "Lodging"
+            every { resourceProvider.getString(CommonR.string.expense_category_lodging) } returns "Lodging"
 
             val expense = Expense(id = "cat-3", category = ExpenseCategory.LODGING)
 
@@ -923,7 +925,7 @@ class ExpenseUiMapperTest {
 
         @Test
         fun `resolves OTHER category text`() {
-            every { resourceProvider.getString(R.string.expense_category_other) } returns "Other"
+            every { resourceProvider.getString(CommonR.string.expense_category_other) } returns "Other"
 
             val expense = Expense(id = "cat-4", category = ExpenseCategory.OTHER)
 
@@ -934,7 +936,8 @@ class ExpenseUiMapperTest {
 
         @Test
         fun `resolves CONTRIBUTION category text`() {
-            every { resourceProvider.getString(R.string.expense_category_contribution) } returns "Contribution"
+            every { resourceProvider.getString(CommonR.string.expense_category_contribution) } returns
+                "Contribution"
 
             val expense = Expense(id = "cat-5", category = ExpenseCategory.CONTRIBUTION)
 
@@ -945,7 +948,7 @@ class ExpenseUiMapperTest {
 
         @Test
         fun `resolves REFUND category text`() {
-            every { resourceProvider.getString(R.string.expense_category_refund) } returns "Refund"
+            every { resourceProvider.getString(CommonR.string.expense_category_refund) } returns "Refund"
 
             val expense = Expense(id = "cat-6", category = ExpenseCategory.REFUND)
 
@@ -956,7 +959,7 @@ class ExpenseUiMapperTest {
 
         @Test
         fun `resolves ACTIVITIES category text`() {
-            every { resourceProvider.getString(R.string.expense_category_activities) } returns "Activities"
+            every { resourceProvider.getString(CommonR.string.expense_category_activities) } returns "Activities"
 
             val expense = Expense(id = "cat-7", category = ExpenseCategory.ACTIVITIES)
 
@@ -967,7 +970,7 @@ class ExpenseUiMapperTest {
 
         @Test
         fun `resolves INSURANCE category text`() {
-            every { resourceProvider.getString(R.string.expense_category_insurance) } returns "Insurance"
+            every { resourceProvider.getString(CommonR.string.expense_category_insurance) } returns "Insurance"
 
             val expense = Expense(id = "cat-8", category = ExpenseCategory.INSURANCE)
 
@@ -978,7 +981,8 @@ class ExpenseUiMapperTest {
 
         @Test
         fun `resolves ENTERTAINMENT category text`() {
-            every { resourceProvider.getString(R.string.expense_category_entertainment) } returns "Entertainment"
+            every { resourceProvider.getString(CommonR.string.expense_category_entertainment) } returns
+                "Entertainment"
 
             val expense = Expense(id = "cat-9", category = ExpenseCategory.ENTERTAINMENT)
 
@@ -989,7 +993,7 @@ class ExpenseUiMapperTest {
 
         @Test
         fun `resolves SHOPPING category text`() {
-            every { resourceProvider.getString(R.string.expense_category_shopping) } returns "Shopping"
+            every { resourceProvider.getString(CommonR.string.expense_category_shopping) } returns "Shopping"
 
             val expense = Expense(id = "cat-10", category = ExpenseCategory.SHOPPING)
 

@@ -31,15 +31,15 @@ internal fun SettlementConsensusSection(
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
     ) {
         SectionHeadingText(
-            text = stringResource(R.string.your_position_settlement_consensus_title),
+            text = stringResource(R.string.your_balance_settlement_consensus_title),
             modifier = Modifier.padding(top = MaterialTheme.spacing.Small)
         )
 
         if (settlements.isEmpty()) {
             EmptyStateView(
                 icon = TablerIcons.Outline.CheckupList,
-                title = stringResource(R.string.your_position_settlement_empty_title),
-                description = stringResource(R.string.your_position_settlement_empty_description),
+                title = stringResource(R.string.your_balance_settlement_empty_title),
+                description = stringResource(R.string.your_balance_settlement_empty_description),
                 modifier = Modifier.fillMaxWidth()
             )
         } else {

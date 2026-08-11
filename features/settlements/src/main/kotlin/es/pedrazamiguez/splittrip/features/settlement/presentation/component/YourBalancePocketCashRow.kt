@@ -15,7 +15,7 @@ import es.pedrazamiguez.splittrip.features.settlement.R
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.PersonalPositionUiModel
 
 @Composable
-internal fun YourPositionPocketCashRow(
+internal fun YourBalancePocketCashRow(
     personalPosition: PersonalPositionUiModel,
     onShowCashBreakdown: () -> Unit,
     modifier: Modifier = Modifier
@@ -26,13 +26,13 @@ internal fun YourPositionPocketCashRow(
     ) {
         PocketCashTile(
             icon = TablerIcons.Outline.BuildingBank,
-            label = stringResource(R.string.your_position_label_pocket_balance),
+            label = stringResource(R.string.your_balance_label_pocket_balance),
             formattedAmount = personalPosition.formattedPocketBalance
         )
 
         PocketCashTile(
             icon = TablerIcons.Outline.Cash,
-            label = stringResource(R.string.your_position_label_cash_in_hand),
+            label = stringResource(R.string.your_balance_label_cash_in_hand),
             formattedAmount = personalPosition.formattedCashInHand,
             amountColor = if (personalPosition.hasNegativeCashInHand) {
                 MaterialTheme.colorScheme.error

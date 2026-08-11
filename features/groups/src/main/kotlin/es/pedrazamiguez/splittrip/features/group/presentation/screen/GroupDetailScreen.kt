@@ -98,7 +98,7 @@ fun GroupDetailScreen(
                     onDismissRequest = { onEvent(GroupDetailUiEvent.WizardCancelled) },
                     onConfirmLeave = { onEvent(GroupDetailUiEvent.LeaveConfirmed) },
                     onGoToSettlementsClicked = {
-                        onEvent(GroupDetailUiEvent.NavigateToYourPositionClicked)
+                        onEvent(GroupDetailUiEvent.NavigateToYourBalanceClicked)
                     }
                 )
             }

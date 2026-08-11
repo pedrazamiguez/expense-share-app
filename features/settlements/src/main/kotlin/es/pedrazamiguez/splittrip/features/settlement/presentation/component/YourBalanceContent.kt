@@ -21,19 +21,19 @@ import es.pedrazamiguez.splittrip.features.settlement.R
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.MemberSpendingChartUiModel
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.PersonalPositionUiModel
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.SettlementConsensusItemUiModel
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourPositionUiEvent
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourBalanceUiEvent
 import kotlinx.collections.immutable.ImmutableList
 
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun YourPositionContent(
+internal fun YourBalanceContent(
     personalPosition: PersonalPositionUiModel,
     isCashBreakdownVisible: Boolean,
     settlementConsensus: ImmutableList<SettlementConsensusItemUiModel>,
     chart: MemberSpendingChartUiModel?,
     isCashOnly: Boolean,
-    onEvent: (YourPositionUiEvent) -> Unit,
+    onEvent: (YourBalanceUiEvent) -> Unit,
     modifier: Modifier = Modifier,
     isOffline: Boolean = false
 ) {
@@ -53,25 +53,25 @@ internal fun YourPositionContent(
     ) {
         if (isOffline) {
             item(key = "offline_warning_banner") {
-                InlineWarningBanner(warning = UiText.StringResource(R.string.your_position_offline_warning))
+                InlineWarningBanner(warning = UiText.StringResource(R.string.your_balance_offline_warning))
             }
         }
         item(key = "hero_net_position") {
-            YourPositionHeroBanner(personalPosition = personalPosition)
+            YourBalanceHeroBanner(personalPosition = personalPosition)
         }
         item(key = "pocket_cash_row") {
-            YourPositionPocketCashRow(
+            YourBalancePocketCashRow(
                 personalPosition = personalPosition,
-                onShowCashBreakdown = { onEvent(YourPositionUiEvent.ShowCashBreakdown) }
+                onShowCashBreakdown = { onEvent(YourBalanceUiEvent.ShowCashBreakdown) }
             )
         }
         item(key = "activity_breakdown") {
-            YourPositionActivityBreakdown(personalPosition = personalPosition)
+            YourBalanceActivityBreakdown(personalPosition = personalPosition)
         }
         if (personalPosition.hasNegativeCashInHand) {
             item(key = "negative_cash_hint") {
                 CaptionText(
-                    text = stringResource(R.string.your_position_negative_cash_hint),
+                    text = stringResource(R.string.your_balance_negative_cash_hint),
                     color = MaterialTheme.colorScheme.error
                 )
             }
@@ -81,7 +81,7 @@ internal fun YourPositionContent(
                 MemberSpendingBarChart(
                     chart = it,
                     isCashOnly = isCashOnly,
-                    onToggle = { cashOnly -> onEvent(YourPositionUiEvent.ChartModeToggled(cashOnly)) }
+                    onToggle = { cashOnly -> onEvent(YourBalanceUiEvent.ChartModeToggled(cashOnly)) }
                 )
             }
         }
@@ -89,9 +89,9 @@ internal fun YourPositionContent(
             SettlementConsensusSection(
                 settlements = settlementConsensus,
                 isOffline = isOffline,
-                onConfirm = { onEvent(YourPositionUiEvent.ConfirmSettlement(it)) },
-                onDispute = { onEvent(YourPositionUiEvent.DisputeSettlement(it)) },
-                onNudge = { onEvent(YourPositionUiEvent.NudgeDebtor(it)) }
+                onConfirm = { onEvent(YourBalanceUiEvent.ConfirmSettlement(it)) },
+                onDispute = { onEvent(YourBalanceUiEvent.DisputeSettlement(it)) },
+                onNudge = { onEvent(YourBalanceUiEvent.NudgeDebtor(it)) }
             )
         }
     }
@@ -99,11 +99,11 @@ internal fun YourPositionContent(
     if (isCashBreakdownVisible) {
         val breakdownItems = personalPosition.cashBreakdown
         CashBreakdownBottomSheet(
-            memberName = stringResource(R.string.your_position_title),
+            memberName = stringResource(R.string.your_balance_title),
             breakdown = breakdownItems,
             formattedTotal = personalPosition.formattedCashInHand,
             formattedTotalFees = personalPosition.formattedTotalFees ?: "",
-            onDismiss = { onEvent(YourPositionUiEvent.DismissCashBreakdown) }
+            onDismiss = { onEvent(YourBalanceUiEvent.DismissCashBreakdown) }
         )
     }
 }

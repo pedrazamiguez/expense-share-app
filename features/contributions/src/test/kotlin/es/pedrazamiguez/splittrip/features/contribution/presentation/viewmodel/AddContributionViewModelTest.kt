@@ -97,6 +97,7 @@ class AddContributionViewModelTest {
 
         every { appConfigService.defaultCurrencyCode } returns MutableStateFlow("EUR")
         every { addContributionUiMapper.resolveCurrencySymbol(any()) } returns "€"
+        every { addContributionUiMapper.formatMediumDateTime(any()) } returns "11 Aug 2026, 10:00"
         every {
             addContributionUiMapper.formatInputAmountWithCurrency(any(), any())
         } returns "100,00 €"
@@ -351,6 +352,22 @@ class AddContributionViewModelTest {
         }
     }
 
+    // ── ContributionDateChanged ─────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("ContributionDateChanged")
+    inner class ContributionDateChanged {
+
+        @Test
+        fun `updates contributionDateMillis and formattedContributionDate`() = runTest(testDispatcher) {
+            val dateMillis = 1691740800000L
+            viewModel.onEvent(AddContributionUiEvent.ContributionDateChanged(dateMillis))
+
+            assertEquals(dateMillis, viewModel.uiState.value.contributionDateMillis)
+            assertEquals("11 Aug 2026, 10:00", viewModel.uiState.value.formattedContributionDate)
+        }
+    }
+
     // ── NextStep / PreviousStep ─────────────────────────────────────────────
 
     @Nested
@@ -382,6 +399,7 @@ class AddContributionViewModelTest {
                 seedGroup()
                 viewModel.onEvent(AddContributionUiEvent.UpdateAmount("100"))
                 viewModel.onEvent(AddContributionUiEvent.NextStep) // → SCOPE
+                viewModel.onEvent(AddContributionUiEvent.NextStep) // → DATE
                 viewModel.onEvent(AddContributionUiEvent.NextStep) // → REVIEW
 
                 assertEquals(AddContributionStep.REVIEW, viewModel.uiState.value.currentStep)
@@ -520,6 +538,7 @@ class AddContributionViewModelTest {
             // Advance to last step
             viewModel.onEvent(AddContributionUiEvent.UpdateAmount("100"))
             viewModel.onEvent(AddContributionUiEvent.NextStep) // → SCOPE
+            viewModel.onEvent(AddContributionUiEvent.NextStep) // → DATE
             viewModel.onEvent(AddContributionUiEvent.NextStep) // → REVIEW
             assertEquals(AddContributionStep.REVIEW, viewModel.uiState.value.currentStep)
 

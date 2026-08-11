@@ -41,9 +41,9 @@ internal fun MemberSpendingBarChart(
                 SectionHeadingText(
                     text = stringResource(
                         id = if (isCashOnly) {
-                            R.string.your_position_chart_toggle_cash_only
+                            R.string.your_balance_chart_toggle_cash_only
                         } else {
-                            R.string.your_position_chart_toggle_all_expenses
+                            R.string.your_balance_chart_toggle_all_expenses
                         }
                     )
                 )

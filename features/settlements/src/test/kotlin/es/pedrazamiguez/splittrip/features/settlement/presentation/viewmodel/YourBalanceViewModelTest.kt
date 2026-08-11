@@ -7,8 +7,6 @@ import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
-import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.balance.DisputeSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
@@ -17,15 +15,15 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestion
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.settlement.GetNudgeTimestampsFlowUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.settlement.NudgeDebtorUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.MemberSpendingChartUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.SettlementConsensusUiMapper
-import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourPositionUiMapper
+import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourBalanceUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.MemberSpendingChartUiModel
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.action.YourPositionUiAction
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourPositionUiEvent
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.delegate.LocalUiState
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.delegate.YourBalanceActionDelegate
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourBalanceUiEvent
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -38,7 +36,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -53,7 +50,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class YourPositionViewModelTest {
+class YourBalanceViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -64,12 +61,10 @@ class YourPositionViewModelTest {
     private val getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase = mockk()
     private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase = mockk()
     private val getGroupSettlementsFlowUseCase: GetGroupSettlementsFlowUseCase = mockk()
-    private val confirmSettlementUseCase: ConfirmSettlementUseCase = mockk()
-    private val disputeSettlementUseCase: DisputeSettlementUseCase = mockk()
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase = mockk()
     private val getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase = mockk()
-    private val nudgeDebtorUseCase: NudgeDebtorUseCase = mockk()
     private val getNudgeTimestampsFlowUseCase: GetNudgeTimestampsFlowUseCase = mockk()
+    private val actionDelegate: YourBalanceActionDelegate = mockk()
 
     private val authenticationService: AuthenticationService = mockk()
     private val appConfigService: AppConfigService = mockk()
@@ -80,9 +75,9 @@ class YourPositionViewModelTest {
     private val settlementConsensusUiMapper: SettlementConsensusUiMapper = mockk()
     private val memberSpendingChartUiMapper: MemberSpendingChartUiMapper = mockk()
 
-    private lateinit var useCases: YourPositionUseCases
-    private lateinit var mapper: YourPositionUiMapper
-    private lateinit var viewModel: YourPositionViewModel
+    private lateinit var useCases: YourBalanceUseCases
+    private lateinit var mapper: YourBalanceUiMapper
+    private lateinit var viewModel: YourBalanceViewModel
 
     @BeforeEach
     fun setUp() {
@@ -104,10 +99,11 @@ class YourPositionViewModelTest {
             persistentListOf()
         every { memberSpendingChartUiMapper.toChartUiModel(any(), any(), any(), any(), any()) } returns
             MemberSpendingChartUiModel(bars = persistentListOf(), formattedGroupTotal = "Total", isCashOnly = true)
+        every { actionDelegate.localState } returns MutableStateFlow(LocalUiState())
 
-        mapper = YourPositionUiMapper(localeProvider, resourceProvider)
+        mapper = YourBalanceUiMapper(localeProvider, resourceProvider)
 
-        useCases = YourPositionUseCases(
+        useCases = YourBalanceUseCases(
             getGroupByIdUseCase = getGroupByIdUseCase,
             getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
             getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
@@ -115,18 +111,16 @@ class YourPositionViewModelTest {
             getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
             getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
             getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
-            confirmSettlementUseCase = confirmSettlementUseCase,
-            disputeSettlementUseCase = disputeSettlementUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
-            nudgeDebtorUseCase = nudgeDebtorUseCase,
             getNudgeTimestampsFlowUseCase = getNudgeTimestampsFlowUseCase
         )
 
-        viewModel = YourPositionViewModel(
+        viewModel = YourBalanceViewModel(
             useCases = useCases,
+            actionDelegate = actionDelegate,
             authenticationService = authenticationService,
-            yourPositionUiMapper = mapper,
+            yourBalanceUiMapper = mapper,
             settlementConsensusUiMapper = settlementConsensusUiMapper,
             memberSpendingChartUiMapper = memberSpendingChartUiMapper,
             appConfigService = appConfigService,
@@ -226,11 +220,11 @@ class YourPositionViewModelTest {
 
         assertFalse(viewModel.uiState.value.isCashBreakdownVisible)
 
-        viewModel.onEvent(YourPositionUiEvent.ShowCashBreakdown)
+        viewModel.onEvent(YourBalanceUiEvent.ShowCashBreakdown)
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value.isCashBreakdownVisible)
 
-        viewModel.onEvent(YourPositionUiEvent.DismissCashBreakdown)
+        viewModel.onEvent(YourBalanceUiEvent.DismissCashBreakdown)
         advanceUntilIdle()
         assertFalse(viewModel.uiState.value.isCashBreakdownVisible)
     }
@@ -260,7 +254,7 @@ class YourPositionViewModelTest {
 
         assertTrue(viewModel.uiState.value.isChartCashOnly)
 
-        viewModel.onEvent(YourPositionUiEvent.ChartModeToggled(false))
+        viewModel.onEvent(YourBalanceUiEvent.ChartModeToggled(false))
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.isChartCashOnly)
@@ -286,224 +280,62 @@ class YourPositionViewModelTest {
     }
 
     @Test
-    fun `ConfirmSettlement event calls confirmSettlementUseCase and emits success`() = runTest(testDispatcher) {
-        val actions = mutableListOf<YourPositionUiAction>()
-        val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.actions.collect { actions.add(it) }
-        }
-        backgroundScope.launch { viewModel.uiState.collect {} }
+    fun `ConfirmSettlement delegates to actionDelegate`() = runTest(testDispatcher) {
+        coEvery { actionDelegate.handleConfirm(any(), any(), any(), any()) } returns Unit
 
-        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
-        coEvery { getGroupByIdUseCase("group1") } returns group
-        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
-        coEvery { confirmSettlementUseCase("group1", "s1") } returns Result.success(mockk())
-
-        viewModel.setSelectedGroup("group1")
+        viewModel.onEvent(YourBalanceUiEvent.ConfirmSettlement("s1"))
         advanceUntilIdle()
 
-        viewModel.onEvent(YourPositionUiEvent.ConfirmSettlement("s1"))
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { confirmSettlementUseCase("group1", "s1") }
-        assertEquals(1, actions.size)
-        assertTrue(actions[0] is YourPositionUiAction.ShowSuccess)
-        actionsJob.cancel()
+        coVerify(exactly = 1) { actionDelegate.handleConfirm("s1", null, false, any()) }
     }
 
     @Test
-    fun `ConfirmSettlement failure emits ShowError action`() = runTest(testDispatcher) {
-        val actions = mutableListOf<YourPositionUiAction>()
-        val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.actions.collect { actions.add(it) }
-        }
-        backgroundScope.launch { viewModel.uiState.collect {} }
+    fun `DisputeSettlement delegates to actionDelegate`() = runTest(testDispatcher) {
+        coEvery { actionDelegate.handleOpenDispute(any(), any(), any()) } returns Unit
 
-        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
-        coEvery { getGroupByIdUseCase("group1") } returns group
-        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
-        coEvery { confirmSettlementUseCase("group1", "s1") } returns Result.failure(RuntimeException("Error"))
-
-        viewModel.setSelectedGroup("group1")
+        viewModel.onEvent(YourBalanceUiEvent.DisputeSettlement("s1"))
         advanceUntilIdle()
 
-        viewModel.onEvent(YourPositionUiEvent.ConfirmSettlement("s1"))
-        advanceUntilIdle()
-
-        assertEquals(1, actions.size)
-        assertTrue(actions[0] is YourPositionUiAction.ShowError)
-        actionsJob.cancel()
+        coVerify(exactly = 1) { actionDelegate.handleOpenDispute("s1", false, any()) }
     }
 
     @Test
-    fun `DisputeSettlement event opens dispute dialog`() = runTest(testDispatcher) {
-        viewModel.onEvent(YourPositionUiEvent.DisputeSettlement("s1"))
+    fun `DisputeReasonChanged delegates to actionDelegate`() = runTest(testDispatcher) {
+        every { actionDelegate.updateDisputeReason(any()) } returns Unit
 
-        viewModel.onEvent(YourPositionUiEvent.DisputeReasonChanged("Invalid amount"))
+        viewModel.onEvent(YourBalanceUiEvent.DisputeReasonChanged("reason"))
+        advanceUntilIdle()
 
-        viewModel.onEvent(YourPositionUiEvent.DisputeCancelled)
+        coVerify(exactly = 1) { actionDelegate.updateDisputeReason("reason") }
     }
 
     @Test
-    fun `DisputeSubmitted calls disputeSettlementUseCase and clears dialog state on success`() = runTest(
-        testDispatcher
-    ) {
-        val actions = mutableListOf<YourPositionUiAction>()
-        val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.actions.collect { actions.add(it) }
-        }
-        backgroundScope.launch { viewModel.uiState.collect {} }
+    fun `DisputeSubmitted delegates to actionDelegate`() = runTest(testDispatcher) {
+        coEvery { actionDelegate.handleSubmitDispute(any(), any(), any()) } returns Unit
 
-        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
-        coEvery { getGroupByIdUseCase("group1") } returns group
-        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
-        coEvery { disputeSettlementUseCase("group1", "s1", "Wrong amount") } returns Result.success(mockk())
-
-        viewModel.setSelectedGroup("group1")
+        viewModel.onEvent(YourBalanceUiEvent.DisputeSubmitted)
         advanceUntilIdle()
 
-        viewModel.onEvent(YourPositionUiEvent.DisputeSettlement("s1"))
-        viewModel.onEvent(YourPositionUiEvent.DisputeReasonChanged("Wrong amount"))
-        viewModel.onEvent(YourPositionUiEvent.DisputeSubmitted)
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { disputeSettlementUseCase("group1", "s1", "Wrong amount") }
-        assertEquals(1, actions.size)
-        assertTrue(actions[0] is YourPositionUiAction.ShowSuccess)
-        assertNull(viewModel.uiState.value.activeDisputeSettlementId)
-        assertEquals("", viewModel.uiState.value.disputeReasonInput)
-        actionsJob.cancel()
+        coVerify(exactly = 1) { actionDelegate.handleSubmitDispute(null, false, any()) }
     }
 
     @Test
-    fun `DisputeSubmitted with blank reason does nothing`() = runTest(testDispatcher) {
-        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
-        coEvery { getGroupByIdUseCase("group1") } returns group
-        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
+    fun `DisputeCancelled delegates to actionDelegate`() = runTest(testDispatcher) {
+        every { actionDelegate.handleCancelDispute() } returns Unit
 
-        viewModel.setSelectedGroup("group1")
+        viewModel.onEvent(YourBalanceUiEvent.DisputeCancelled)
         advanceUntilIdle()
 
-        viewModel.onEvent(YourPositionUiEvent.DisputeSettlement("s1"))
-        viewModel.onEvent(YourPositionUiEvent.DisputeReasonChanged("   "))
-        viewModel.onEvent(YourPositionUiEvent.DisputeSubmitted)
-        advanceUntilIdle()
-
-        coVerify(exactly = 0) { disputeSettlementUseCase(any(), any(), any()) }
+        coVerify(exactly = 1) { actionDelegate.handleCancelDispute() }
     }
 
     @Test
-    fun `onEvent_NudgeDebtor_whenUseCaseSucceeds_emitsShowSuccessAction`() = runTest(testDispatcher) {
-        val actions = mutableListOf<YourPositionUiAction>()
-        val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.actions.collect { actions.add(it) }
-        }
-        backgroundScope.launch { viewModel.uiState.collect {} }
+    fun `NudgeDebtor delegates to actionDelegate`() = runTest(testDispatcher) {
+        coEvery { actionDelegate.handleNudgeDebtor(any(), any(), any(), any()) } returns Unit
 
-        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
-        coEvery { getGroupByIdUseCase("group1") } returns group
-        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
-        coEvery { nudgeDebtorUseCase("group1", "s1") } returns Result.success(Unit)
-
-        viewModel.setSelectedGroup("group1")
+        viewModel.onEvent(YourBalanceUiEvent.NudgeDebtor("s1"))
         advanceUntilIdle()
 
-        viewModel.onEvent(YourPositionUiEvent.NudgeDebtor("s1"))
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { nudgeDebtorUseCase("group1", "s1") }
-        assertEquals(1, actions.size)
-        assertTrue(actions[0] is YourPositionUiAction.ShowSuccess)
-        actionsJob.cancel()
-    }
-
-    @Test
-    fun `onEvent_NudgeDebtor_whenUseCaseFails_emitsShowErrorAction`() = runTest(testDispatcher) {
-        val actions = mutableListOf<YourPositionUiAction>()
-        val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.actions.collect { actions.add(it) }
-        }
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
-        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
-        coEvery { getGroupByIdUseCase("group1") } returns group
-        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
-        coEvery { nudgeDebtorUseCase("group1", "s1") } returns Result.failure(RuntimeException("Rate limit"))
-
-        viewModel.setSelectedGroup("group1")
-        advanceUntilIdle()
-
-        viewModel.onEvent(YourPositionUiEvent.NudgeDebtor("s1"))
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { nudgeDebtorUseCase("group1", "s1") }
-        assertEquals(1, actions.size)
-        assertTrue(actions[0] is YourPositionUiAction.ShowError)
-        actionsJob.cancel()
-    }
-
-    @Test
-    fun `consensus actions are blocked when isOffline is true`() = runTest(testDispatcher) {
-        val actions = mutableListOf<YourPositionUiAction>()
-        val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.actions.collect { actions.add(it) }
-        }
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
-        val group = Group(id = "group1", name = "Trip", currency = "EUR", members = listOf("user1"))
-        coEvery { getGroupByIdUseCase("group1") } returns group
-        every { getGroupContributionsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getCashWithdrawalsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupExpensesFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupSubunitsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getGroupSettlementsFlowUseCase("group1") } returns flowOf(emptyList())
-        every { getMemberBalancesFlowUseCase.computeMemberBalances(any()) } returns emptyList()
-
-        viewModel.setSelectedGroup("group1")
-        advanceUntilIdle()
-
-        isOnlineFlow.value = false
-        advanceUntilIdle()
-
-        viewModel.onEvent(YourPositionUiEvent.ConfirmSettlement("s1"))
-        viewModel.onEvent(YourPositionUiEvent.DisputeSettlement("s1"))
-        viewModel.onEvent(YourPositionUiEvent.NudgeDebtor("s1"))
-        advanceUntilIdle()
-
-        coVerify(exactly = 0) { confirmSettlementUseCase(any(), any()) }
-        coVerify(exactly = 0) { disputeSettlementUseCase(any(), any(), any()) }
-        coVerify(exactly = 0) { nudgeDebtorUseCase(any(), any()) }
-        assertTrue(actions.all { it is YourPositionUiAction.ShowError })
-
-        actionsJob.cancel()
+        coVerify(exactly = 1) { actionDelegate.handleNudgeDebtor("s1", null, false, any()) }
     }
 }

@@ -17,9 +17,12 @@ import es.pedrazamiguez.splittrip.domain.usecase.setting.GetLastSeenBalanceUseCa
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetLastSeenBalanceUseCase
 import es.pedrazamiguez.splittrip.features.balance.navigation.impl.BalancesNavigationProviderImpl
 import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.BalancesUiMapper
+import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.CategorySpendingUiMapper
 import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.SettlementsUiMapper
 import es.pedrazamiguez.splittrip.features.balance.presentation.screen.impl.BalancesScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.balance.presentation.screen.impl.CategorySpendingScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.BalancesViewModel
+import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.CategorySpendingViewModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.handler.BalancesActivityEventHandler
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.handler.BalancesActivityEventHandlerImpl
 import kotlinx.coroutines.Dispatchers
@@ -71,12 +74,34 @@ val balancesUiModule = module {
         )
     }
 
+    single {
+        CategorySpendingUiMapper(
+            localeProvider = get<LocaleProvider>(),
+            resourceProvider = get<ResourceProvider>()
+        )
+    }
+
+    viewModel {
+        CategorySpendingViewModel(
+            getGroupExpensesFlowUseCase = get(),
+            observeGroupUseCase = get(),
+            appConfigService = get(),
+            categorySpendingUiMapper = get(),
+            computationDispatcher = Dispatchers.Default
+        )
+    }
+
     factory {
         BalancesNavigationProviderImpl(
             graphContributors = getAll<TabGraphContributor>()
         )
     } bind NavigationProvider::class
+
     single {
         BalancesScreenUiProviderImpl()
+    } bind ScreenUiProvider::class
+
+    single {
+        CategorySpendingScreenUiProviderImpl()
     } bind ScreenUiProvider::class
 }

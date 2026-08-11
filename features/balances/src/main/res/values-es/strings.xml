@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="balances_title">Saldos</string>
+    <string name="balances_title">Balances</string>
     <string name="balances_subtitle">Balance del grupo</string>
+    <string name="balances_category_spending_title">Gastos por categoría</string>
     <string name="balances_search">Buscar</string>
     <string name="balances_info">Info</string>
-    <string name="balances_placeholder">Saldos</string>
+    <string name="balances_placeholder">Balances</string>
     <string name="balances_all_settled">¡Todo cuadrado! Nadie debe nada</string>
 
     <!-- Group Pocket Balance -->
@@ -15,12 +16,12 @@
     <string name="balances_total_contributed">Total aportado</string>
     <string name="balances_total_spent">Total gastado</string>
     <string name="balances_total_extras">Extras</string>
-    <string name="balances_error_loading">No se pudieron cargar los saldos</string>
+    <string name="balances_error_loading">No se pudieron cargar los balances</string>
     <string name="balances_empty_title">Sin actividad todavía</string>
     <string name="balances_empty_description">Añade dinero a la cuenta del grupo para empezar</string>
 
     <!-- Member Balances -->
-    <string name="balances_member_balances_title">Saldos por miembro</string>
+    <string name="balances_member_balances_title">Balances por miembro</string>
     <string name="balances_member_you">Tú</string>
     <string name="balances_member_contributed_label">Aportado</string>
     <string name="balances_member_cash_in_hand_label">Efectivo</string>
@@ -111,8 +112,7 @@
     <string name="balances_extras_atm_fallback">Cajero — %1$s</string>
 
     <!-- Main Action -->
-    <string name="balances_filter">Filtrar saldos</string>
-    <string name="balances_your_position_title">Tu posición</string>
+    <string name="balances_filter">Filtrar balances</string>
+    <string name="balances_your_balance_title">Tu balance</string>
 
 </resources>
-

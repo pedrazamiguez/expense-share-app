@@ -9,6 +9,7 @@ sealed interface AddContributionUiEvent {
         val subunitId: String? = null
     ) : AddContributionUiEvent
     data class MemberSelected(val userId: String) : AddContributionUiEvent
+    data class ContributionDateChanged(val dateMillis: Long) : AddContributionUiEvent
     data object Submit : AddContributionUiEvent
     data object NextStep : AddContributionUiEvent
     data object PreviousStep : AddContributionUiEvent

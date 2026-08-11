@@ -164,10 +164,10 @@ class GroupDetailViewModel(
             GroupDetailUiEvent.LeaveConfirmed -> leaveWizardEventHandler.handleLeave(_groupId.value)
             GroupDetailUiEvent.WizardNextClicked -> leaveWizardEventHandler.handleWizardNext(_groupId.value)
             GroupDetailUiEvent.WizardBackClicked -> leaveWizardEventHandler.handleWizardBack()
-            GroupDetailUiEvent.NavigateToYourPositionClicked -> {
+            GroupDetailUiEvent.NavigateToYourBalanceClicked -> {
                 leaveWizardEventHandler.handleWizardCancelled()
                 viewModelScope.launch {
-                    _actions.send(GroupDetailUiAction.NavigateToYourPosition)
+                    _actions.send(GroupDetailUiAction.NavigateToYourBalance)
                 }
             }
             is GroupDetailUiEvent.WizardJumpToStepClicked ->

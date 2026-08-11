@@ -9,7 +9,7 @@ import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class YourPositionUiMapperHelperTest {
+class YourBalanceUiMapperHelperTest {
 
     @Test
     fun `computeUserNativeShare for USER scope`() {

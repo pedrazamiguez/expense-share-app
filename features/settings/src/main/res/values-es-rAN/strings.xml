@@ -165,14 +165,14 @@
     <string name="account_status_link_email_dialog_email">Dirêççión de correo elêttrónico</string>
     <string name="account_status_link_email_dialog_error_email_empty">Er correo no puede êttâh baçío</string>
     <string name="settings_logout_guest_dialog_title">¿Rêttableçêh çeçión de imbitao?</string>
-    <string name="settings_logout_guest_dialog_text">Çerrâh çeçión o rêttableçêh borrará de forma permanente tôh lô biahê, gâttô y çardô localê. ¡Açegúrate de binculâh tu cuenta antê pa guardâh tû datô!</string>
+    <string name="settings_logout_guest_dialog_text">Çerrâh çeçión o rêttableçêh borrará de forma permanente tôh lô biahê, gâttô y balançê localê. ¡Açegúrate de binculâh tu cuenta antê pa guardâh tû datô!</string>
     <string name="faq_title">Preguntâ frecuentê</string>
     <string name="faq_question_1">¿Qué êh SplîTTrîh?</string>
-    <string name="faq_answer_1">SplîTTrîh êh una aplicaçión modênna pa compartîh gâttô y dibidîh cuentâ de grupo diçeñá pa açêh que lô biahê, çenâ y ebentô en grupo çean librê de êttrêh. Carcula çardô, râttrea gâttô y conçilia deudâ çin conêççión o en línea.</string>
+    <string name="faq_answer_1">SplîTTrîh êh una aplicaçión modênna pa compartîh gâttô y dibidîh cuentâ de grupo diçeñá pa açêh que lô biahê, çenâ y ebentô en grupo çean librê de êttrêh. Carcula balançê, râttrea gâttô y conçilia deudâ çin conêççión o en línea.</string>
     <string name="faq_question_2">¿Cómo funçiona er modo çin conêççión?</string>
     <string name="faq_answer_2">SplîTTrîh êttá côttruío çobre una arquitêttura que prioriça la baçe de datô locâh (ôffline-firtt). Cuarquiêh trançâççión o ediçión de grupo que realiçê çe guarda îttantáneamente en tu baçe de datô locâh (Room) y çe propaga a la interfâh de uçuario de îmmediato. Cuando ay una conêççión de ré dîpponible, lô cambiô çe çincroniçan de forma çegura en çegundo plano en nuêttrâ baçê de datô de Cloûh Firêttore.</string>
     <string name="faq_question_3">¿Puedo uçâh múrtiplê monedâ?</string>
-    <string name="faq_answer_3">¡Çí! SplîTTrîh âmmite completamente biahê con múrtiplê monedâ. Puedê êttableçêh una moneda predeterminá pa tu perfîh, êppeçificâh monedâ pa gâttô indibidualê y bêh çardô combertíô automáticamente baçáô en tipô de cambio en tiempo reâh.</string>
+    <string name="faq_answer_3">¡Çí! SplîTTrîh âmmite completamente biahê con múrtiplê monedâ. Puedê êttableçêh una moneda predeterminá pa tu perfîh, êppeçificâh monedâ pa gâttô indibidualê y bêh balançê combertíô automáticamente baçáô en tipô de cambio en tiempo reâh.</string>
     <string name="faq_question_4">¿Mî datô êttán çegurô?</string>
     <string name="faq_answer_4">Âççolutamente. SplîTTrîh utiliça Firebaçe Autentication pa autenticâh a lô uçuariô de forma çegura. Tu informaçión perçonâh, lô detayê der biahe y lâ trançâççionê finançierâ êttán protehíô utiliçando çifrao de tránçito êttándâ de la indûttria y robûttâ reglâ de çeguridá de Firêttore.</string>
     <string name="faq_question_5">¿Cómo binculo mi cuenta de imbitao?</string>

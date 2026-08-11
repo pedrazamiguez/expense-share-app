@@ -4,18 +4,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import es.pedrazamiguez.splittrip.features.settlement.presentation.component.DisputeReasonDialog
-import es.pedrazamiguez.splittrip.features.settlement.presentation.component.YourPositionContent
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourPositionUiEvent
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.state.YourPositionUiState
+import es.pedrazamiguez.splittrip.features.settlement.presentation.component.YourBalanceContent
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourBalanceUiEvent
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.state.YourBalanceUiState
 
 @Composable
-internal fun YourPositionFeatureBody(
-    uiState: YourPositionUiState,
-    onEvent: (YourPositionUiEvent) -> Unit,
+internal fun YourBalanceFeatureBody(
+    uiState: YourBalanceUiState,
+    onEvent: (YourBalanceUiEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val personalPosition = uiState.personalPosition ?: return
-    YourPositionContent(
+    YourBalanceContent(
         personalPosition = personalPosition,
         isCashBreakdownVisible = uiState.isCashBreakdownVisible,
         settlementConsensus = uiState.settlementConsensus,
@@ -29,9 +29,9 @@ internal fun YourPositionFeatureBody(
     if (uiState.activeDisputeSettlementId != null) {
         DisputeReasonDialog(
             reason = uiState.disputeReasonInput,
-            onReasonChanged = { reason -> onEvent(YourPositionUiEvent.DisputeReasonChanged(reason)) },
-            onSubmit = { onEvent(YourPositionUiEvent.DisputeSubmitted) },
-            onDismiss = { onEvent(YourPositionUiEvent.DisputeCancelled) },
+            onReasonChanged = { reason -> onEvent(YourBalanceUiEvent.DisputeReasonChanged(reason)) },
+            onSubmit = { onEvent(YourBalanceUiEvent.DisputeSubmitted) },
+            onDismiss = { onEvent(YourBalanceUiEvent.DisputeCancelled) },
             isOffline = uiState.isOffline
         )
     }

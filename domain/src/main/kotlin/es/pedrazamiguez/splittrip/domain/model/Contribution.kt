@@ -18,6 +18,7 @@ data class Contribution(
     val linkedSettlementId: String? = null,
     val equivalentBaseAmount: Long? = null,
     val exchangeRate: BigDecimal? = null,
+    val contributionDate: LocalDateTime? = null,
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null,
     val syncStatus: SyncStatus = SyncStatus.SYNCED

@@ -1,9 +1,12 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.screen.impl
 
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChartDonut
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReportAnalytics
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalTabNavController
@@ -29,6 +32,15 @@ class BalancesScreenUiProviderImpl(
             title = stringResource(R.string.balances_title),
             subtitle = stringResource(R.string.balances_subtitle),
             actions = {
+                val tabNavController = LocalTabNavController.current
+                IconButton(
+                    onClick = { tabNavController.navigate(Routes.CATEGORY_SPENDING) }
+                ) {
+                    Icon(
+                        imageVector = TablerIcons.Outline.ChartDonut,
+                        contentDescription = stringResource(R.string.balances_category_spending_title)
+                    )
+                }
                 ProfileAvatarButton(
                     avatarUrl = avatarUrl,
                     onClick = { rootNavController.navigate(Routes.PROFILE) }
@@ -43,9 +55,9 @@ class BalancesScreenUiProviderImpl(
             val tabNavController = LocalTabNavController.current
             return MainAction(
                 icon = TablerIcons.Outline.ReportAnalytics,
-                contentDescription = stringResource(R.string.balances_your_position_title),
-                onClick = { tabNavController.navigate(Routes.YOUR_POSITION) },
-                sharedTransitionKey = SharedElementKeys.YOUR_POSITION
+                contentDescription = stringResource(R.string.balances_your_balance_title),
+                onClick = { tabNavController.navigate(Routes.YOUR_BALANCE) },
+                sharedTransitionKey = SharedElementKeys.YOUR_BALANCE
             )
         }
 }

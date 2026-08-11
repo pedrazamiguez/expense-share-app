@@ -87,7 +87,7 @@ fun GroupSettlementOverviewScreen(
                                 hasUnresolvedSettlements = !uiState.areAllSettlementsResolved,
                                 onGoToSettlementsClicked = {
                                     onEvent(
-                                        GroupSettlementOverviewUiEvent.NavigateToYourPositionClicked
+                                        GroupSettlementOverviewUiEvent.NavigateToYourBalanceClicked
                                     )
                                 },
                                 modifier = Modifier.verticalScroll(rememberScrollState())

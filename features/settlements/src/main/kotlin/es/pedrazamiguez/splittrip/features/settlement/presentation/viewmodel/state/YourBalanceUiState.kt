@@ -6,7 +6,7 @@ import es.pedrazamiguez.splittrip.features.settlement.presentation.model.Settlem
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
-data class YourPositionUiState(
+data class YourBalanceUiState(
     val isLoading: Boolean = true,
     val isOffline: Boolean = false,
     val personalPosition: PersonalPositionUiModel? = null,

@@ -18,7 +18,7 @@ import es.pedrazamiguez.splittrip.features.settlement.presentation.model.NetPosi
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.PersonalPositionUiModel
 
 @Composable
-internal fun YourPositionHeroBanner(
+internal fun YourBalanceHeroBanner(
     personalPosition: PersonalPositionUiModel,
     modifier: Modifier = Modifier
 ) {
@@ -38,7 +38,7 @@ internal fun YourPositionHeroBanner(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             CaptionText(
-                text = stringResource(R.string.your_position_label_net_position).uppercase()
+                text = stringResource(R.string.your_balance_label_net_position).uppercase()
             )
             AnimatedAmount(
                 formattedAmount = personalPosition.formattedNetPosition,

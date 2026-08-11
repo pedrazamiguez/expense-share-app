@@ -19,47 +19,47 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.notification.Lo
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.splittrip.core.designsystem.transition.SharedTransitionSurface
 import es.pedrazamiguez.splittrip.features.settlement.R
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourPositionViewModel
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.action.YourPositionUiAction
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourBalanceViewModel
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.action.YourBalanceUiAction
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun YourPositionFeature(
-    yourPositionViewModel: YourPositionViewModel = koinViewModel(),
+fun YourBalanceFeature(
+    yourBalanceViewModel: YourBalanceViewModel = koinViewModel(),
     sharedViewModel: SharedViewModel = koinViewModel(
         viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
     ),
     modifier: Modifier = Modifier
 ) {
-    val uiState by yourPositionViewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by yourBalanceViewModel.uiState.collectAsStateWithLifecycle()
     val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
     val pillController = LocalTopPillController.current
     val context = LocalContext.current
 
-    LaunchedEffect(selectedGroupId) { yourPositionViewModel.setSelectedGroup(selectedGroupId) }
+    LaunchedEffect(selectedGroupId) { yourBalanceViewModel.setSelectedGroup(selectedGroupId) }
 
     LaunchedEffect(Unit) {
-        yourPositionViewModel.actions.collectLatest { action ->
+        yourBalanceViewModel.actions.collectLatest { action ->
             val message = when (action) {
-                is YourPositionUiAction.ShowError -> action.message.asString(context)
-                is YourPositionUiAction.ShowSuccess -> action.message.asString(context)
+                is YourBalanceUiAction.ShowError -> action.message.asString(context)
+                is YourBalanceUiAction.ShowSuccess -> action.message.asString(context)
             }
             pillController.showPill(message = message)
         }
     }
 
-    SharedTransitionSurface(sharedElementKey = SharedElementKeys.YOUR_POSITION, modifier = modifier) {
+    SharedTransitionSurface(sharedElementKey = SharedElementKeys.YOUR_BALANCE, modifier = modifier) {
         when {
             uiState.isLoading -> ShimmerLoadingList(modifier = Modifier.fillMaxSize())
-            uiState.personalPosition != null -> YourPositionFeatureBody(
+            uiState.personalPosition != null -> YourBalanceFeatureBody(
                 uiState = uiState,
-                onEvent = yourPositionViewModel::onEvent
+                onEvent = yourBalanceViewModel::onEvent
             )
             else -> EmptyStateView(
                 icon = TablerIcons.Outline.Wallet,
-                title = stringResource(R.string.your_position_empty_title),
-                description = stringResource(R.string.your_position_empty_description),
+                title = stringResource(R.string.your_balance_empty_title),
+                description = stringResource(R.string.your_balance_empty_description),
                 modifier = Modifier.fillMaxSize()
             )
         }

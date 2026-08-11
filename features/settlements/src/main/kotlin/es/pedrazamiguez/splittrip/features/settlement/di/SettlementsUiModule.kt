@@ -28,18 +28,30 @@ import es.pedrazamiguez.splittrip.features.settlement.navigation.impl.Settlement
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.GroupSettlementOverviewUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.MemberSpendingChartUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.SettlementConsensusUiMapper
-import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourPositionUiMapper
+import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourBalanceUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.impl.GroupSettlementOverviewUiMapperImpl
 import es.pedrazamiguez.splittrip.features.settlement.presentation.screen.impl.GroupSettlementOverviewScreenUiProviderImpl
-import es.pedrazamiguez.splittrip.features.settlement.presentation.screen.impl.YourPositionScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.settlement.presentation.screen.impl.YourBalanceScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.GroupSettlementOverviewViewModel
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourPositionUseCases
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourPositionViewModel
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourBalanceUseCases
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.YourBalanceViewModel
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.delegate.YourBalanceActionDelegate
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val settlementsUiModule = module {
+    factory {
+        val confirmSettlementUseCase = get<ConfirmSettlementUseCase>()
+        val disputeSettlementUseCase = get<DisputeSettlementUseCase>()
+        val nudgeDebtorUseCase = get<NudgeDebtorUseCase>()
+        YourBalanceActionDelegate(
+            confirmSettlementUseCase = confirmSettlementUseCase,
+            disputeSettlementUseCase = disputeSettlementUseCase,
+            nudgeDebtorUseCase = nudgeDebtorUseCase
+        )
+    }
+
     single<GroupSettlementOverviewUiMapper> {
         val formattingHelper = get<FormattingHelper>()
         val resourceProvider = get<ResourceProvider>()
@@ -81,19 +93,17 @@ val settlementsUiModule = module {
         val getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>()
         val getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
         val getGroupSettlementsFlowUseCase = get<GetGroupSettlementsFlowUseCase>()
-        val confirmSettlementUseCase = get<ConfirmSettlementUseCase>()
-        val disputeSettlementUseCase = get<DisputeSettlementUseCase>()
         val getMemberProfilesUseCase = get<GetMemberProfilesUseCase>()
         val getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>()
-        val nudgeDebtorUseCase = get<NudgeDebtorUseCase>()
         val getNudgeTimestampsFlowUseCase = get<GetNudgeTimestampsFlowUseCase>()
         val authenticationService = get<AuthenticationService>()
         val appConfigService = get<AppConfigService>()
         val networkMonitor = get<NetworkMonitor>()
         val localeProvider = get<LocaleProvider>()
         val resourceProvider = get<ResourceProvider>()
+        val yourBalanceActionDelegate = get<YourBalanceActionDelegate>()
 
-        val yourPositionUiMapper = YourPositionUiMapper(
+        val yourBalanceUiMapper = YourBalanceUiMapper(
             localeProvider = localeProvider,
             resourceProvider = resourceProvider
         )
@@ -108,7 +118,7 @@ val settlementsUiModule = module {
             userUiMapper = get<UserUiMapper>()
         )
 
-        val yourPositionUseCases = YourPositionUseCases(
+        val yourBalanceUseCases = YourBalanceUseCases(
             getGroupByIdUseCase = getGroupByIdUseCase,
             getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
             getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
@@ -116,18 +126,16 @@ val settlementsUiModule = module {
             getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
             getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
             getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
-            confirmSettlementUseCase = confirmSettlementUseCase,
-            disputeSettlementUseCase = disputeSettlementUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
-            nudgeDebtorUseCase = nudgeDebtorUseCase,
             getNudgeTimestampsFlowUseCase = getNudgeTimestampsFlowUseCase
         )
 
-        YourPositionViewModel(
-            useCases = yourPositionUseCases,
+        YourBalanceViewModel(
+            useCases = yourBalanceUseCases,
+            actionDelegate = yourBalanceActionDelegate,
             authenticationService = authenticationService,
-            yourPositionUiMapper = yourPositionUiMapper,
+            yourBalanceUiMapper = yourBalanceUiMapper,
             settlementConsensusUiMapper = settlementConsensusUiMapper,
             memberSpendingChartUiMapper = memberSpendingChartUiMapper,
             appConfigService = appConfigService,
@@ -135,6 +143,6 @@ val settlementsUiModule = module {
         )
     }
     factory { SettlementsTabGraphContributorImpl() } bind TabGraphContributor::class
-    single { YourPositionScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { YourBalanceScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { GroupSettlementOverviewScreenUiProviderImpl() } bind ScreenUiProvider::class
 }

@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.network.NetworkMonitor
-import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Expense
@@ -13,13 +12,13 @@ import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.support.MemberBalanceCalculationInputs
-import es.pedrazamiguez.splittrip.features.settlement.R
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.MemberSpendingChartUiMapper
 import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.SettlementConsensusUiMapper
-import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourPositionUiMapper
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.action.YourPositionUiAction
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourPositionUiEvent
-import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.state.YourPositionUiState
+import es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.YourBalanceUiMapper
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.action.YourBalanceUiAction
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.delegate.YourBalanceActionDelegate
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.event.YourBalanceUiEvent
+import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.state.YourBalanceUiState
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -37,15 +36,15 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-class YourPositionViewModel(
-    private val useCases: YourPositionUseCases,
+class YourBalanceViewModel(
+    private val useCases: YourBalanceUseCases,
+    private val actionDelegate: YourBalanceActionDelegate,
     private val authenticationService: AuthenticationService,
-    private val yourPositionUiMapper: YourPositionUiMapper,
+    private val yourBalanceUiMapper: YourBalanceUiMapper,
     private val settlementConsensusUiMapper: SettlementConsensusUiMapper,
     private val memberSpendingChartUiMapper: MemberSpendingChartUiMapper,
     private val appConfigService: AppConfigService,
@@ -56,12 +55,11 @@ class YourPositionViewModel(
     private val _selectedGroupId = MutableStateFlow<String?>(null)
     private val _isCashBreakdownVisible = MutableStateFlow(false)
     private val _isChartCashOnly = MutableStateFlow<Boolean?>(null)
-    private val _localState = MutableStateFlow(LocalUiState())
 
-    private val _actions = Channel<YourPositionUiAction>(Channel.BUFFERED)
+    private val _actions = Channel<YourBalanceUiAction>(Channel.BUFFERED)
     val actions = _actions.receiveAsFlow()
 
-    val uiState: StateFlow<YourPositionUiState> = _selectedGroupId
+    val uiState: StateFlow<YourBalanceUiState> = _selectedGroupId
         .filterNotNull()
         .flatMapLatest { groupId ->
             val group = useCases.getGroupByIdUseCase(groupId)
@@ -143,7 +141,7 @@ class YourPositionViewModel(
                     val subunitsMap = snapshot.subunits.associateBy { it.id }
 
                     val personalPosition = currentMemberBalance?.let { balance ->
-                        yourPositionUiMapper.toPersonalPosition(
+                        yourBalanceUiMapper.toPersonalPosition(
                             memberBalance = balance,
                             groupCurrencyCode = currency,
                             withdrawals = snapshot.withdrawals,
@@ -180,7 +178,7 @@ class YourPositionViewModel(
                         groupCurrencyCode = currency
                     )
 
-                    YourPositionUiState(
+                    YourBalanceUiState(
                         isLoading = false,
                         personalPosition = personalPosition,
                         isCashBreakdownVisible = isCashBreakdownVisible,
@@ -190,7 +188,11 @@ class YourPositionViewModel(
                     )
                 }
 
-            combine(baseStateFlow, _localState, networkMonitor.isOnline) { baseState, localState, isOnline ->
+            combine(baseStateFlow, actionDelegate.localState, networkMonitor.isOnline) {
+                    baseState,
+                    localState,
+                    isOnline
+                ->
                 baseState.copy(
                     isOffline = !isOnline,
                     activeDisputeSettlementId = localState.activeDisputeSettlementId,
@@ -199,7 +201,7 @@ class YourPositionViewModel(
             }
                 .catch { e ->
                     Timber.e(e, "Error loading personal position for group $groupId")
-                    emit(YourPositionUiState(isLoading = false))
+                    emit(YourBalanceUiState(isLoading = false))
                 }
                 .flowOn(computationDispatcher)
         }
@@ -209,7 +211,7 @@ class YourPositionViewModel(
                 stopTimeoutMillis = AppConstants.FLOW_RETENTION_TIME,
                 replayExpirationMillis = AppConstants.FLOW_REPLAY_EXPIRATION
             ),
-            initialValue = YourPositionUiState(isLoading = true)
+            initialValue = YourBalanceUiState(isLoading = true)
         )
 
     fun setSelectedGroup(groupId: String?) {
@@ -227,155 +229,42 @@ class YourPositionViewModel(
         }
     }
 
-    fun onEvent(event: YourPositionUiEvent) {
+    fun onEvent(event: YourBalanceUiEvent) {
         when (event) {
-            YourPositionUiEvent.Refresh -> { /* no-op */ }
-            YourPositionUiEvent.ShowCashBreakdown -> {
+            YourBalanceUiEvent.Refresh -> { /* no-op */ }
+            YourBalanceUiEvent.ShowCashBreakdown -> {
                 _isCashBreakdownVisible.value = true
             }
-            YourPositionUiEvent.DismissCashBreakdown -> {
+            YourBalanceUiEvent.DismissCashBreakdown -> {
                 _isCashBreakdownVisible.value = false
             }
-            is YourPositionUiEvent.ConfirmSettlement -> handleConfirm(event.settlementId)
-            is YourPositionUiEvent.DisputeSettlement -> handleOpenDispute(event.settlementId)
-            is YourPositionUiEvent.DisputeReasonChanged -> _localState.update {
-                it.copy(disputeReasonInput = event.reason)
-            }
-            YourPositionUiEvent.DisputeSubmitted -> handleSubmitDispute()
-            YourPositionUiEvent.DisputeCancelled -> handleCancelDispute()
-            is YourPositionUiEvent.NudgeDebtor -> handleNudgeDebtor(event.settlementId)
-            is YourPositionUiEvent.ChartModeToggled -> _isChartCashOnly.value = event.cashOnly
-        }
-    }
-
-    private fun checkOfflineAndEmitError(): Boolean {
-        if (uiState.value.isOffline) {
-            viewModelScope.launch {
-                _actions.send(
-                    YourPositionUiAction.ShowError(
-                        UiText.StringResource(R.string.your_position_offline_warning)
-                    )
+            is YourBalanceUiEvent.ConfirmSettlement -> viewModelScope.launch {
+                actionDelegate.handleConfirm(
+                    event.settlementId,
+                    _selectedGroupId.value,
+                    uiState.value.isOffline,
+                    _actions
                 )
             }
-            return true
-        }
-        return false
-    }
-
-    private fun handleConfirm(settlementIdString: String) {
-        if (checkOfflineAndEmitError()) return
-        val groupId = _selectedGroupId.value ?: return
-        val settlementIds = settlementIdString.split(",")
-
-        viewModelScope.launch {
-            var hasError = false
-            for (id in settlementIds) {
-                useCases.confirmSettlementUseCase(groupId, id).fold(
-                    onSuccess = { /* continue */ },
-                    onFailure = { e ->
-                        Timber.w(e, "Failed to confirm settlement $id")
-                        hasError = true
-                    }
+            is YourBalanceUiEvent.DisputeSettlement -> viewModelScope.launch {
+                actionDelegate.handleOpenDispute(event.settlementId, uiState.value.isOffline, _actions)
+            }
+            is YourBalanceUiEvent.DisputeReasonChanged -> actionDelegate.updateDisputeReason(event.reason)
+            YourBalanceUiEvent.DisputeSubmitted -> viewModelScope.launch {
+                actionDelegate.handleSubmitDispute(_selectedGroupId.value, uiState.value.isOffline, _actions)
+            }
+            YourBalanceUiEvent.DisputeCancelled -> actionDelegate.handleCancelDispute()
+            is YourBalanceUiEvent.NudgeDebtor -> viewModelScope.launch {
+                actionDelegate.handleNudgeDebtor(
+                    event.settlementId,
+                    _selectedGroupId.value,
+                    uiState.value.isOffline,
+                    _actions
                 )
             }
-
-            if (hasError) {
-                _actions.send(
-                    YourPositionUiAction.ShowError(
-                        UiText.StringResource(R.string.your_position_confirm_error)
-                    )
-                )
-            } else {
-                _actions.send(
-                    YourPositionUiAction.ShowSuccess(
-                        UiText.StringResource(R.string.your_position_confirm_success)
-                    )
-                )
-            }
+            is YourBalanceUiEvent.ChartModeToggled -> _isChartCashOnly.value = event.cashOnly
         }
     }
-
-    private fun handleNudgeDebtor(settlementId: String) {
-        if (checkOfflineAndEmitError()) return
-        val groupId = _selectedGroupId.value ?: return
-        viewModelScope.launch {
-            useCases.nudgeDebtorUseCase(groupId, settlementId).fold(
-                onSuccess = {
-                    _actions.send(
-                        YourPositionUiAction.ShowSuccess(
-                            UiText.StringResource(R.string.your_position_nudge_success)
-                        )
-                    )
-                },
-                onFailure = { e ->
-                    Timber.w(e, "Failed to send nudge for settlement $settlementId")
-                    _actions.send(
-                        YourPositionUiAction.ShowError(
-                            UiText.StringResource(R.string.your_position_nudge_error)
-                        )
-                    )
-                }
-            )
-        }
-    }
-
-    private fun handleOpenDispute(settlementId: String) {
-        if (checkOfflineAndEmitError()) return
-        _localState.update {
-            it.copy(
-                activeDisputeSettlementId = settlementId,
-                disputeReasonInput = ""
-            )
-        }
-    }
-
-    private fun handleSubmitDispute() {
-        if (checkOfflineAndEmitError()) return
-        val groupId = _selectedGroupId.value ?: return
-        val settlementId = _localState.value.activeDisputeSettlementId ?: return
-        val reason = _localState.value.disputeReasonInput.trim()
-        if (reason.isBlank()) return
-
-        viewModelScope.launch {
-            useCases.disputeSettlementUseCase(groupId, settlementId, reason).fold(
-                onSuccess = {
-                    _localState.update {
-                        it.copy(
-                            activeDisputeSettlementId = null,
-                            disputeReasonInput = ""
-                        )
-                    }
-                    _actions.send(
-                        YourPositionUiAction.ShowSuccess(
-                            UiText.StringResource(R.string.your_position_dispute_success)
-                        )
-                    )
-                },
-                onFailure = { e ->
-                    Timber.w(e, "Failed to dispute settlement $settlementId")
-                    _actions.send(
-                        YourPositionUiAction.ShowError(
-                            UiText.StringResource(R.string.your_position_dispute_error)
-                        )
-                    )
-                }
-            )
-        }
-    }
-
-    private fun handleCancelDispute() {
-        _localState.update {
-            it.copy(
-                activeDisputeSettlementId = null,
-                disputeReasonInput = ""
-            )
-        }
-    }
-
-    private data class LocalUiState(
-        val activeDisputeSettlementId: String? = null,
-        val disputeReasonInput: String = ""
-    )
 
     private data class TransactionData(
         val contributions: List<Contribution>,

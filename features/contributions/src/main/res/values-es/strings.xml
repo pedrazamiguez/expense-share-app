@@ -19,7 +19,11 @@
     <string name="contribution_wizard_back">Atrás</string>
     <string name="contribution_wizard_step_amount">Importe</string>
     <string name="contribution_wizard_step_scope">Ámbito</string>
+    <string name="contribution_wizard_step_date">Fecha</string>
     <string name="contribution_wizard_step_review">Revisión</string>
+
+    <string name="contribution_date_time_title">Fecha de la aportación</string>
+    <string name="contribution_date_time_label">Fecha y hora</string>
 
     <!-- Contribution Review Step -->
     <string name="contribution_review_title">Revisar aportación</string>

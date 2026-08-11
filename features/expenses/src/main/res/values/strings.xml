@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="expenses_title">Expenses</string>
     <string name="expenses_subtitle">Who paid for what?</string>
@@ -14,7 +15,7 @@
     <string name="expense_error_insufficient_cash">Not enough cash\nYou need %1$s but only %2$s available</string>
     <string name="expense_error_cash_conflict">Someone else just used this cash. The available amount has changed — please review and retry.</string>
 
-    <!-- Cash conflict resolution sheet (Phase 3) -->
+    
     <string name="add_expense_cash_conflict_resolution_title">Cash amount changed</string>
     <string name="add_expense_cash_conflict_use_remaining">Use remaining cash (%1$s)</string>
     <string name="add_expense_cash_conflict_switch_payment">Switch payment method</string>
@@ -27,7 +28,7 @@
     <string name="paid_by_you">Paid by you</string>
     <string name="you_label">You</string>
 
-    <!-- Expense Actions -->
+    
     <string name="expense_actions_title">Expense \"%1$s\"</string>
     <string name="action_edit_expense">Edit expense</string>
     <string name="action_delete_expense">Delete expense</string>
@@ -43,7 +44,7 @@
     <string name="expense_cancelled_successfully">Reservation cancelled and refunded successfully</string>
     <string name="error_cancelling_expense">Failed to cancel reservation</string>
 
-    <!-- Add Expense Screen -->
+    
     <string name="add_expense_title">New expense</string>
     <string name="add_expense_what_for">What\'s it for?</string>
     <string name="add_expense_amount_paid">How much?</string>
@@ -51,7 +52,7 @@
     <string name="add_expense_exchange_rate_title">Currency conversion</string>
     <string name="add_expense_cash_rate_locked_hint">Rate calculated from your ATM withdrawal(s)</string>
     <string name="add_expense_cash_insufficient_hint">Not enough cash available for this amount</string>
-    <!-- Cash tranche preview — "Funded from" breakdown -->
+    
     <string name="add_expense_cash_tranche_funded_from">Funded from</string>
     <string name="add_expense_cash_tranche_atm_label">ATM — %1$s</string>
     <string name="add_expense_cash_tranche_atm_label_no_date">ATM</string>
@@ -69,7 +70,7 @@
     <string name="add_expense_payment_method_title">How did you pay?</string>
     <string name="add_expense_submit_button">Add expense</string>
 
-    <!-- Payment Methods -->
+    
     <string name="payment_method_cash">Cash</string>
     <string name="payment_method_bizum">Bizum</string>
     <string name="payment_method_pix">Pix</string>
@@ -82,19 +83,7 @@
     <string name="payment_method_wechat_pay">WeChat Pay</string>
     <string name="payment_method_other">Other</string>
 
-    <!-- Expense Categories -->
-    <string name="expense_category_contribution">Contribution</string>
-    <string name="expense_category_refund">Refund</string>
-    <string name="expense_category_transport">Transport</string>
-    <string name="expense_category_food">Food &amp; Restaurants</string>
-    <string name="expense_category_lodging">Accommodation</string>
-    <string name="expense_category_activities">Activities</string>
-    <string name="expense_category_insurance">Insurance</string>
-    <string name="expense_category_entertainment">Entertainment</string>
-    <string name="expense_category_shopping">Shopping</string>
-    <string name="expense_category_other">Other</string>
-
-    <!-- Payment Status -->
+    
     <string name="payment_status_received">Received</string>
     <string name="payment_status_pending">Pending</string>
     <string name="payment_status_finished">Paid</string>
@@ -103,7 +92,7 @@
     <string name="payment_status_refundable">Paid (Refundable)</string>
     <string name="expense_detail_on_hold">On hold</string>
 
-    <!-- Add Expense Form - New Sections -->
+    
     <string name="add_expense_category_title">Category</string>
     <string name="add_expense_vendor_label">Company / Vendor (optional)</string>
     <string name="add_expense_vendor_helper">Where did you buy this?</string>
@@ -124,22 +113,22 @@
     <string name="add_expense_receipt_remove">Remove photo</string>
     <string name="add_expense_receipt_image_description">Receipt photo</string>
 
-    <!-- Validation Errors - New -->
+    
     <string name="expense_error_due_date_required">Please select a due date for the scheduled payment</string>
 
-    <!-- Payment Status Badge -->
+    
     <string name="expense_relative_today">Today</string>
     <string name="expense_relative_tomorrow">Tomorrow</string>
     <string name="expense_relative_yesterday">Yesterday</string>
     <string name="expense_status_cancelled_refunded">Cancelled - Refunded</string>
     <string name="expense_refundable_until">Refundable until %1$s</string>
 
-    <!-- Split Types -->
+    
     <string name="split_type_equal">Equal</string>
     <string name="split_type_exact">Exact</string>
     <string name="split_type_percent">Percent</string>
 
-    <!-- Split Section -->
+    
     <string name="add_expense_split_title">Split among members</string>
     <string name="add_expense_split_amount_label">Amount</string>
     <string name="add_expense_split_percentage_label">%</string>
@@ -153,7 +142,7 @@
     <string name="add_expense_split_share_lock">Lock share value</string>
     <string name="add_expense_split_share_unlock">Unlock share value</string>
 
-    <!-- Subunit Split Mode -->
+    
     <string name="add_expense_split_subunit_mode">Split by subunit</string>
     <plurals name="add_expense_split_subunit_members_count">
         <item quantity="one">%1$d member</item>
@@ -163,12 +152,12 @@
     <string name="add_expense_split_subunit_collapse">Collapse subunit</string>
     <string name="add_expense_split_subunit_distribution">Distribution within subunit</string>
 
-    <!-- Progressive Disclosure -->
+    
     <string name="add_expense_more_details">Add more details</string>
     <string name="add_expense_less_details">Less details</string>
     <string name="add_expense_chips_more">More</string>
 
-    <!-- Wizard Navigation -->
+    
     <string name="expense_wizard_next">Next</string>
     <string name="expense_wizard_back">Back</string>
     <string name="expense_wizard_step_title">Title</string>
@@ -184,7 +173,7 @@
     <string name="expense_wizard_step_review">Review</string>
     <string name="expense_wizard_skip_to_review">Skip to Review →</string>
 
-    <!-- Review Step -->
+    
     <string name="expense_review_title">Review your expense</string>
     <string name="expense_review_none">–</string>
     <string name="expense_review_title_label">Title</string>
@@ -204,21 +193,21 @@
     <string name="expense_review_add_ons">Add-ons</string>
     <string name="expense_review_effective_total">Effective total</string>
 
-    <!-- Add-On Types -->
+    
     <string name="add_on_type_tip">Tip</string>
     <string name="add_on_type_fee">Fee</string>
     <string name="add_on_type_discount">Discount</string>
     <string name="add_on_type_surcharge">Surcharge</string>
 
-    <!-- Add-On Modes -->
+    
     <string name="add_on_mode_on_top">On top</string>
     <string name="add_on_mode_included">Already included</string>
 
-    <!-- Add-On Value Types -->
+    
     <string name="add_on_value_type_exact">Amount</string>
     <string name="add_on_value_type_percentage">Percentage</string>
 
-    <!-- Add-On Section -->
+    
     <string name="add_expense_add_ons_title">Add-ons</string>
     <string name="add_expense_add_on_button">Add fee or tip</string>
     <string name="add_expense_add_on_amount_hint">Amount</string>
@@ -231,7 +220,7 @@
     <string name="add_expense_add_on_error_amount">Add-on amount must be greater than zero</string>
     <string name="add_expense_add_on_error_included_exceeds">Included amount must be less than the expense</string>
 
-    <!-- Funding Source -->
+    
     <string name="funding_source_title">Paid from</string>
     <string name="funding_source_group_pocket">Group Pocket</string>
     <string name="funding_source_my_money">My Money</string>
@@ -239,7 +228,7 @@
     <string name="expense_wizard_step_funding_source">Source</string>
     <string name="expense_review_funding_source">Paid from</string>
 
-    <!-- Contribution Scope (out-of-pocket) -->
+    
     <string name="expense_contribution_scope_title">Who gets credit?</string>
     <string name="expense_contribution_scope_for_group">For the whole group</string>
     <string name="expense_contribution_scope_for_you">For you</string>
@@ -249,11 +238,11 @@
     <string name="expense_review_scope_personal">Personal</string>
     <string name="expense_review_scope_group">Group</string>
 
-    <!-- Expense List Item Add-On Badge -->
+    
     <string name="expense_has_add_ons">Expense has add-ons</string>
     <string name="expense_add_ons_label">Extras</string>
 
-    <!-- Out-of-Pocket Badge -->
+    
     <string name="expense_paid_by_me">Paid by me</string>
     <string name="expense_paid_by_member">Paid by %1$s</string>
     <string name="expense_paid_for_scope">Paid for %1$s</string>
@@ -261,7 +250,7 @@
     <string name="expense_scope_everyone">everyone</string>
     <string name="expense_out_of_pocket">Out of pocket</string>
 
-    <!-- Expense Detail Screen -->
+    
     <string name="expense_detail_error_loading">Could not load expense details</string>
     <string name="expense_detail_group_currency_label">Group balance</string>
     <string name="expense_detail_amount_in_currency">Amount in %1$s</string>
@@ -290,29 +279,28 @@
     <string name="expense_detail_addon_mode_included">Included</string>
     <string name="expense_detail_addon_mode_on_top">On top</string>
 
-    <!-- Expense scope labels — shown as the hero card header in place of "IMPORTE" -->
+    
     <string name="expense_scope_group">group expense</string>
     <string name="expense_scope_subunit">subunit expense</string>
     <string name="expense_scope_personal">personal expense</string>
 
-    <!-- Withdrawal pool selection — shown in Exchange Rate step when multiple pools have funds -->
+    
     <string name="add_expense_cash_pool_selection_title">Draw cash from</string>
     <string name="add_expense_cash_pool_personal">My personal cash</string>
     <string name="add_expense_cash_pool_group">Group cash</string>
     <string name="add_expense_cash_pool_subunit">%1$s cash</string>
     <string name="add_expense_cash_pool_subunit_generic">Subunit cash</string>
 
-    <!-- Personal cash split warning — shown in Split step when a USER/SUBUNIT-scoped pool is
-         selected but the split includes members outside the pool's natural scope -->
+    
     <string name="add_expense_personal_cash_split_warning">You\'re spending from your personal cash.\nMake sure it\'s intentional to share this with others.</string>
-    <!-- Subunit cash split warning — %1$s is the subunit pool display label (e.g. "Caris cash") -->
+    
     <string name="add_expense_subunit_cash_split_warning">You\'re spending from %1$s.\nMake sure it\'s intentional to share this with others.</string>
     <string name="receipt_viewer_image_cd">Receipt full image</string>
     <string name="receipt_viewer_close_cd">Close viewer</string>
     <string name="receipt_viewer_pdf_error">Failed to load PDF receipt</string>
     <string name="receipt_viewer_pdf_page_cd">PDF page %1$d</string>
 
-    <!-- Receipt Auto-fill -->
+    
     <string name="expense_autofill_in_progress">Analyzing receipt…</string>
     <string name="expense_autofill_success">Receipt scanned successfully</string>
     <string name="expense_autofill_failed">Could not read receipt fields</string>
@@ -341,7 +329,7 @@
     <string name="edit_expense_title">Edit expense</string>
     <string name="edit_expense_submit_button">Save changes</string>
 
-    <!-- Scheduled payment confirmation -->
+    
     <string name="expense_payment_confirmed_successfully">Payment confirmed successfully</string>
     <string name="expense_error_confirm_payment_failed">Failed to confirm payment. Please check the amount.</string>
     <string name="confirm_payment">Confirm Payment</string>

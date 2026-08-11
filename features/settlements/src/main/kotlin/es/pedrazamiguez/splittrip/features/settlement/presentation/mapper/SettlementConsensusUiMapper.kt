@@ -142,9 +142,9 @@ class SettlementConsensusUiMapper(
 
     private fun resolveDirectionLabel(isCurrentUserPayer: Boolean, counterpartyName: String): String {
         return if (isCurrentUserPayer) {
-            resourceProvider.getString(R.string.your_position_settlement_you_owe, counterpartyName)
+            resourceProvider.getString(R.string.your_balance_settlement_you_owe, counterpartyName)
         } else {
-            resourceProvider.getString(R.string.your_position_settlement_owes_you, counterpartyName)
+            resourceProvider.getString(R.string.your_balance_settlement_owes_you, counterpartyName)
         }
     }
 
@@ -177,9 +177,9 @@ class SettlementConsensusUiMapper(
         val rateLimitMillis = rateLimitHours * MILLIS_PER_HOUR
         val isNudgeRateLimited = isCash || (lastNudgeTs > 0 && (currentTimeMillis - lastNudgeTs) < rateLimitMillis)
         val nudgeButtonLabel = if (isNudgeRateLimited && !isCash) {
-            resourceProvider.getString(R.string.your_position_settlement_reminded)
+            resourceProvider.getString(R.string.your_balance_settlement_reminded)
         } else if (!isCash) {
-            resourceProvider.getString(R.string.your_position_settlement_remind)
+            resourceProvider.getString(R.string.your_balance_settlement_remind)
         } else {
             ""
         }
@@ -187,22 +187,22 @@ class SettlementConsensusUiMapper(
     }
 
     private fun resolvePocketTypeLabel(sourcePocket: SettlementPocketType): String = when (sourcePocket) {
-        SettlementPocketType.POCKET -> resourceProvider.getString(R.string.your_position_settlement_pocket_pocket)
-        SettlementPocketType.CASH -> resourceProvider.getString(R.string.your_position_settlement_pocket_cash)
-        SettlementPocketType.NET -> resourceProvider.getString(R.string.your_position_settlement_pocket_net)
+        SettlementPocketType.POCKET -> resourceProvider.getString(R.string.your_balance_settlement_pocket_pocket)
+        SettlementPocketType.CASH -> resourceProvider.getString(R.string.your_balance_settlement_pocket_cash)
+        SettlementPocketType.NET -> resourceProvider.getString(R.string.your_balance_settlement_pocket_net)
     }
 
     private fun resolveStatusDetails(status: SettlementStatus): StatusDetails = when (status) {
         SettlementStatus.SUGGESTED -> StatusDetails(
-            label = resourceProvider.getString(R.string.your_position_settlement_status_suggested),
+            label = resourceProvider.getString(R.string.your_balance_settlement_status_suggested),
             style = ConsensusChipStyle.SUGGESTED
         )
         SettlementStatus.CONFIRMED_BY_PAYER -> StatusDetails(
-            label = resourceProvider.getString(R.string.your_position_settlement_status_confirmed_payer),
+            label = resourceProvider.getString(R.string.your_balance_settlement_status_confirmed_payer),
             style = ConsensusChipStyle.IN_PROGRESS
         )
         SettlementStatus.DISPUTED -> StatusDetails(
-            label = resourceProvider.getString(R.string.your_position_settlement_status_disputed),
+            label = resourceProvider.getString(R.string.your_balance_settlement_status_disputed),
             style = ConsensusChipStyle.DISPUTED
         )
         SettlementStatus.RESOLVED -> StatusDetails(label = "", style = ConsensusChipStyle.SUGGESTED)
@@ -223,7 +223,7 @@ class SettlementConsensusUiMapper(
             SettlementStatus.SUGGESTED -> ActionCapabilities(
                 canConfirm = isCurrentUserPayer,
                 confirmLabel = if (isCurrentUserPayer) {
-                    resourceProvider.getString(R.string.your_position_settlement_mark_paid)
+                    resourceProvider.getString(R.string.your_balance_settlement_mark_paid)
                 } else {
                     ""
                 },
@@ -232,7 +232,7 @@ class SettlementConsensusUiMapper(
             SettlementStatus.CONFIRMED_BY_PAYER -> ActionCapabilities(
                 canConfirm = isPayee,
                 confirmLabel = if (isPayee) {
-                    resourceProvider.getString(R.string.your_position_settlement_confirm_receipt)
+                    resourceProvider.getString(R.string.your_balance_settlement_confirm_receipt)
                 } else {
                     ""
                 },
@@ -241,7 +241,7 @@ class SettlementConsensusUiMapper(
             SettlementStatus.DISPUTED -> ActionCapabilities(
                 canConfirm = isPayee || isGroupCreator,
                 confirmLabel = if (isPayee || isGroupCreator) {
-                    resourceProvider.getString(R.string.your_position_settlement_resolve_dispute)
+                    resourceProvider.getString(R.string.your_balance_settlement_resolve_dispute)
                 } else {
                     ""
                 },
