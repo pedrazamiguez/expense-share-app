@@ -1,6 +1,6 @@
 package es.pedrazamiguez.splittrip.features.settlement.presentation.mapper.impl
 
-import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
@@ -122,7 +122,7 @@ class GroupSettlementOverviewUiMapperImpl(
             user = profiles[userId],
             fallbackUserId = userId,
             currentUserId = currentUserId,
-            selfIdentificationContext = SelfIdentificationContext.NOMINATIVE
+            selfIdentificationContext = SelfIdentificationContextEnum.NOMINATIVE
         )
     }
 

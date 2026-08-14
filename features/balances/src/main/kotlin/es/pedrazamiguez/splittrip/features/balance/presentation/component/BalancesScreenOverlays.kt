@@ -23,10 +23,7 @@ internal fun BalancesScreenOverlays(
 ) {
     uiState.contributionToDelete?.let { contribution ->
         ActionBottomSheet(
-            title = stringResource(
-                R.string.balances_contribution_actions_title,
-                contribution.displayName
-            ),
+            title = contribution.actionsTitle,
             icon = TablerIcons.Outline.Wallet,
             actions = listOf(
                 SheetAction(
@@ -45,10 +42,7 @@ internal fun BalancesScreenOverlays(
 
     uiState.withdrawalToDelete?.let { withdrawal ->
         ActionBottomSheet(
-            title = stringResource(
-                R.string.balances_withdrawal_actions_title,
-                withdrawal.displayName
-            ),
+            title = withdrawal.actionsTitle,
             icon = TablerIcons.Outline.CashBanknote,
             actions = listOf(
                 SheetAction(

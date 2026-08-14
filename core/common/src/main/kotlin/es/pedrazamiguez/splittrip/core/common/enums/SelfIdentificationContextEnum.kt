@@ -1,9 +1,10 @@
 package es.pedrazamiguez.splittrip.core.common.enums
 
-enum class SelfIdentificationContext {
+enum class SelfIdentificationContextEnum {
     NOMINATIVE,
     BENEFICIARY,
     AGENT,
     RECIPIENT,
-    PREPOSITIONAL
+    PREPOSITIONAL,
+    POSSESSIVE_PRONOUN
 }

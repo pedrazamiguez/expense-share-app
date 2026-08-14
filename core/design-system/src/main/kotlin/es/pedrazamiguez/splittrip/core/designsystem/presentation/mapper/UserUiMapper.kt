@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper
 
-import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
+import es.pedrazamiguez.splittrip.core.common.enums.GrammaticalGenderEnum
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.common.util.DisplayNameResolver
 import es.pedrazamiguez.splittrip.core.designsystem.R
@@ -36,12 +37,14 @@ class UserUiMapper(
         fallbackUserId: String,
         currentUserId: String? = null,
         youLabel: String = "",
-        selfIdentificationContext: SelfIdentificationContext? = null
+        selfIdentificationContext: SelfIdentificationContextEnum? = null,
+        gender: GrammaticalGenderEnum = GrammaticalGenderEnum.FEMININE
     ): String {
         val effectiveYouLabel = when {
             youLabel.isNotBlank() -> youLabel
             selfIdentificationContext != null && currentUserId != null -> mapToSelfIdentification(
-                selfIdentificationContext
+                context = selfIdentificationContext,
+                gender = gender
             )
             else -> ""
         }
@@ -77,17 +80,35 @@ class UserUiMapper(
      * @param context The grammatical context (NOMINATIVE, BENEFICIARY, AGENT, RECIPIENT).
      * @return Localized pronoun string for the current user.
      */
-    fun mapToSelfIdentification(context: SelfIdentificationContext): String {
+    fun mapToSelfIdentification(
+        context: SelfIdentificationContextEnum,
+        gender: GrammaticalGenderEnum = GrammaticalGenderEnum.FEMININE
+    ): String {
         return when (context) {
-            SelfIdentificationContext.NOMINATIVE -> resourceProvider.getString(R.string.self_identification_nominative)
-            SelfIdentificationContext.BENEFICIARY -> resourceProvider.getString(
+            SelfIdentificationContextEnum.NOMINATIVE -> resourceProvider.getString(
+                R.string.self_identification_nominative
+            )
+            SelfIdentificationContextEnum.BENEFICIARY -> resourceProvider.getString(
                 R.string.self_identification_beneficiary
             )
-            SelfIdentificationContext.AGENT -> resourceProvider.getString(R.string.self_identification_agent)
-            SelfIdentificationContext.RECIPIENT -> resourceProvider.getString(R.string.self_identification_recipient)
-            SelfIdentificationContext.PREPOSITIONAL -> resourceProvider.getString(
+            SelfIdentificationContextEnum.AGENT -> resourceProvider.getString(R.string.self_identification_agent)
+            SelfIdentificationContextEnum.RECIPIENT -> resourceProvider.getString(
+                R.string.self_identification_recipient
+            )
+            SelfIdentificationContextEnum.PREPOSITIONAL -> resourceProvider.getString(
                 R.string.self_identification_prepositional
             )
+            SelfIdentificationContextEnum.POSSESSIVE_PRONOUN -> when (gender) {
+                GrammaticalGenderEnum.MASCULINE -> resourceProvider.getString(
+                    R.string.self_identification_possessive_pronoun_masculine
+                )
+                GrammaticalGenderEnum.FEMININE -> resourceProvider.getString(
+                    R.string.self_identification_possessive_pronoun_feminine
+                )
+                GrammaticalGenderEnum.NEUTER -> resourceProvider.getString(
+                    R.string.self_identification_possessive_pronoun_masculine
+                ) // Fallback to masculine for neuter if no specific resource
+            }
         }
     }
 
