@@ -2,8 +2,10 @@ package es.pedrazamiguez.splittrip.data.firebase.firestore.mapper
 
 import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.ContributionDocument
+import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import io.mockk.mockk
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -197,6 +199,28 @@ class ContributionDocumentMapperTest {
             assertNotNull(document.createdAt)
             assertNotNull(document.lastUpdatedAt)
         }
+
+        @Test
+        fun `maps contributionScope, equivalentBaseAmount, exchangeRate, and contributionDate correctly`() {
+            val contribution = fullContribution.copy(
+                contributionScope = PayerType.SUBUNIT,
+                equivalentBaseAmount = 60000L,
+                exchangeRate = BigDecimal("1.25"),
+                contributionDate = testTimestamp
+            )
+
+            val document = contribution.toDocument(
+                testContributionId,
+                testGroupId,
+                testGroupDocRef,
+                testActorId
+            )
+
+            assertEquals("SUBUNIT", document.contributionScope)
+            assertEquals(60000L, document.equivalentBaseAmountCents)
+            assertEquals("1.25", document.exchangeRate)
+            assertEquals(testFirebaseTimestamp, document.contributionDate)
+        }
     }
 
     @Nested
@@ -281,6 +305,62 @@ class ContributionDocumentMapperTest {
 
             assertNull(contribution.createdAt)
             assertNull(contribution.lastUpdatedAt)
+        }
+
+        @Test
+        fun `infers SUBUNIT contribution scope when scope is blank and subunitId is present`() {
+            val doc = fullDocument.copy(contributionScope = "", subunitId = testSubunitId)
+            val domain = doc.toDomain()
+            assertEquals(PayerType.SUBUNIT, domain.contributionScope)
+        }
+
+        @Test
+        fun `infers USER contribution scope when scope is blank and subunitId is null`() {
+            val doc = fullDocument.copy(contributionScope = "", subunitId = null)
+            val domain = doc.toDomain()
+            assertEquals(PayerType.USER, domain.contributionScope)
+        }
+
+        @Test
+        fun `parses valid contribution scope string`() {
+            val doc = fullDocument.copy(contributionScope = "GROUP")
+            val domain = doc.toDomain()
+            assertEquals(PayerType.GROUP, domain.contributionScope)
+        }
+
+        @Test
+        fun `falls back to USER contribution scope when scope string is invalid`() {
+            val doc = fullDocument.copy(contributionScope = "INVALID_SCOPE")
+            val domain = doc.toDomain()
+            assertEquals(PayerType.USER, domain.contributionScope)
+        }
+
+        @Test
+        fun `maps exchangeRate parsing valid BigDecimal string`() {
+            val doc = fullDocument.copy(exchangeRate = "1.3333")
+            val domain = doc.toDomain()
+            assertEquals(BigDecimal("1.3333"), domain.exchangeRate)
+        }
+
+        @Test
+        fun `handles invalid exchangeRate string gracefully by returning null`() {
+            val doc = fullDocument.copy(exchangeRate = "invalid-number")
+            val domain = doc.toDomain()
+            assertNull(domain.exchangeRate)
+        }
+
+        @Test
+        fun `maps contributionDate when present`() {
+            val doc = fullDocument.copy(contributionDate = testFirebaseTimestamp)
+            val domain = doc.toDomain()
+            assertEquals(testTimestamp, domain.contributionDate)
+        }
+
+        @Test
+        fun `maps null contributionDate to null`() {
+            val doc = fullDocument.copy(contributionDate = null)
+            val domain = doc.toDomain()
+            assertNull(domain.contributionDate)
         }
     }
 }

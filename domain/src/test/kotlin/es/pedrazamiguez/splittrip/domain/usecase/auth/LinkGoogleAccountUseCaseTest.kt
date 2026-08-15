@@ -8,8 +8,11 @@ import es.pedrazamiguez.splittrip.domain.usecase.user.ReconcileUnregisteredUserU
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -79,5 +82,46 @@ class LinkGoogleAccountUseCaseTest {
         coVerify(exactly = 1) { authenticationService.linkGoogleAccount(idToken) }
         coVerify(exactly = 1) { userRepository.saveUser(any()) }
         coVerify(exactly = 1) { reconcileUnregisteredUserUseCase(email, userId) }
+    }
+
+    @Test
+    fun `creates new user profile when existing profile is null and creation timestamp is present`() = runTest {
+        val slot = slot<User>()
+        coEvery { authenticationService.linkGoogleAccount(idToken) } returns Result.success(Unit)
+        coEvery { userRepository.getCurrentUserProfile() } returns null
+        coEvery { authenticationService.getCurrentUserCreationTimestamp() } returns 1672531199000L
+        coEvery { authenticationService.currentUserDisplayName() } returns "Google Name"
+        coEvery { authenticationService.currentUserPhotoUrl() } returns "https://photo.url"
+        coEvery { userRepository.saveUser(capture(slot)) } returns Result.success(Unit)
+
+        val result = useCase(idToken)
+
+        assertTrue(result.isSuccess)
+        val savedUser = slot.captured
+        assertEquals(userId, savedUser.userId)
+        assertEquals(email, savedUser.email)
+        assertEquals("Google Name", savedUser.displayName)
+        assertEquals("https://photo.url", savedUser.profileImagePath)
+    }
+
+    @Test
+    fun `creates new user profile with fallback displayName and now timestamp when attributes are null`() = runTest {
+        val slot = slot<User>()
+        coEvery { authenticationService.linkGoogleAccount(idToken) } returns Result.success(Unit)
+        coEvery { userRepository.getCurrentUserProfile() } returns null
+        coEvery { authenticationService.getCurrentUserCreationTimestamp() } returns null
+        coEvery { authenticationService.currentUserDisplayName() } returns null
+        coEvery { authenticationService.currentUserPhotoUrl() } returns null
+        coEvery { userRepository.saveUser(capture(slot)) } returns Result.success(Unit)
+
+        val result = useCase(idToken)
+
+        assertTrue(result.isSuccess)
+        val savedUser = slot.captured
+        assertEquals(userId, savedUser.userId)
+        assertEquals(email, savedUser.email)
+        assertEquals("google", savedUser.displayName)
+        assertNull(savedUser.profileImagePath)
+        assertNotNull(savedUser.createdAt)
     }
 }

@@ -78,6 +78,7 @@ fun Modifier.debouncedClickable(
 /**
  * A debounced version of [Modifier.combinedClickable] that prevents rapid double clicks on its primary onClick event.
  */
+@Suppress("LongParameterList", "kotlin:S107")
 @OptIn(ExperimentalFoundationApi::class)
 fun Modifier.debouncedCombinedClickable(
     debounceInterval: Long = UiConstants.DEFAULT_DEBOUNCE_MS,

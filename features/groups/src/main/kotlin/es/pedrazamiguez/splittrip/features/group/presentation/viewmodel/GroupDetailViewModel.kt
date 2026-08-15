@@ -103,7 +103,7 @@ class GroupDetailViewModel(
                         getGroupSettlementsFlowUseCase(groupId).distinctUntilChanged(),
                         _localUiState,
                         leaveWizardEventHandler.wizardState
-                    ) { subunits, userGroups, settlementRecords, localState, wizardState ->
+                    ) { subunits, userGroups, _, localState, wizardState ->
                         val currentUserId = authenticationService.requireUserId()
 
                         GroupDetailUiState(

@@ -64,6 +64,10 @@ class FeatureGateServiceImplTest {
             LimitResult.Blocked(GatedLimit.MAX_GROUPS_COUNT, upgradeRequired = true),
             service.checkLimit(GatedLimit.MAX_GROUPS_COUNT, 1).first()
         )
+        assertEquals(
+            LimitResult.Blocked(GatedLimit.MAX_GROUPS_COUNT, upgradeRequired = true),
+            service.checkLimit(GatedLimit.MAX_GROUPS_COUNT, 2).first()
+        )
     }
 
     @Test
@@ -88,6 +92,10 @@ class FeatureGateServiceImplTest {
             LimitResult.Blocked(GatedLimit.MAX_MEMBERS_PER_GROUP, upgradeRequired = true),
             service.checkLimit(GatedLimit.MAX_MEMBERS_PER_GROUP, 3).first()
         )
+        assertEquals(
+            LimitResult.Blocked(GatedLimit.MAX_MEMBERS_PER_GROUP, upgradeRequired = true),
+            service.checkLimit(GatedLimit.MAX_MEMBERS_PER_GROUP, 5).first()
+        )
     }
 
     @Test
@@ -100,6 +108,10 @@ class FeatureGateServiceImplTest {
         assertEquals(
             LimitResult.Blocked(GatedLimit.MAX_MEMBERS_PER_GROUP, upgradeRequired = false),
             service.checkLimit(GatedLimit.MAX_MEMBERS_PER_GROUP, 20).first()
+        )
+        assertEquals(
+            LimitResult.Blocked(GatedLimit.MAX_MEMBERS_PER_GROUP, upgradeRequired = false),
+            service.checkLimit(GatedLimit.MAX_MEMBERS_PER_GROUP, 25).first()
         )
     }
 
