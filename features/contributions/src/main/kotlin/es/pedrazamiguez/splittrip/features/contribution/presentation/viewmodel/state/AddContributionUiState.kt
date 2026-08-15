@@ -3,13 +3,14 @@ package es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberOptionUiModel
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
+import es.pedrazamiguez.splittrip.domain.model.Contribution
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
 data class AddContributionUiState(
     val isLoading: Boolean = false,
     val contributionId: String? = null,
-    val originalContribution: es.pedrazamiguez.splittrip.domain.model.Contribution? = null,
+    val originalContribution: Contribution? = null,
     val amountInput: String = "",
     val amountError: Boolean = false,
     val groupCurrencyCode: String = "",
