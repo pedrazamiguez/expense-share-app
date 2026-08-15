@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
  * Named levels replace ad-hoc hardcoded `dp` values across every screen and component,
  * providing a single source of truth for padding, gap, and margin decisions.
  *
- * ## Token → dp mapping (aligned with `wiki/horizon-narrative-design-language.md §6`)
+ * ## Token → dp mapping (aligned with `docs/design-system/horizon-narrative-design.md §6`)
  *
  * | Token         | dp  | Typical context                              |
  * |---------------|-----|----------------------------------------------|

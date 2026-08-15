@@ -300,7 +300,7 @@ This prevents a personal ATM withdrawal (USER scope) from being accidentally con
 
 If no pool has sufficient funds, `InsufficientCashException` is thrown and the expense is NOT saved.
 
-> **Full FIFO documentation:** See [Cash Tranche FIFO & Withdrawal Pools](cash-tranche-fifo-and-withdrawal-pools.md) for the complete lifecycle including tranche preview, pool selection UI, conflict detection, and the balance engine formula change.
+> **Full FIFO documentation:** See [Cash Tranche FIFO & Withdrawal Pools](cash-tranches-and-fifo.md) for the complete lifecycle including tranche preview, pool selection UI, conflict detection, and the balance engine formula change.
 
 ### UI Behavior
 
@@ -530,7 +530,7 @@ The ultimate purpose of subunits is to answer **"who owes whom"** correctly. The
 netBalance[user] = effectiveContributions - effectiveWithdrawals - expenseSplitDebts
 ```
 
-> **`cashInHand` calculation:** The `cashInHand` field (how much unspent cash a user holds) is computed from `sum(withdrawal.remainingAmount)` attributed by scope — NOT from `rawWithdrawn − cashSpent` (the old formula). `remainingAmount` is updated in real time by the FIFO algorithm on each expense save/delete, making it the authoritative source of truth for available cash. See [Cash Tranche FIFO & Withdrawal Pools](cash-tranche-fifo-and-withdrawal-pools.md) §7 for the full formula.
+> **`cashInHand` calculation:** The `cashInHand` field (how much unspent cash a user holds) is computed from `sum(withdrawal.remainingAmount)` attributed by scope — NOT from `rawWithdrawn − cashSpent` (the old formula). `remainingAmount` is updated in real time by the FIFO algorithm on each expense save/delete, making it the authoritative source of truth for available cash. See [Cash Tranche FIFO & Withdrawal Pools](cash-tranches-and-fifo.md) §7 for the full formula.
 
 ### Attribution Rules
 

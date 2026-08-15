@@ -27,17 +27,18 @@ Study the feasibility and viability of the following proposed feature or archite
 Thoroughly research the feature description and explore the codebase to understand the context:
 1. Identify which modules and packages in the project would be affected by the proposed changes.
 2. Search GitHub or the local codebase for any existing or overlapping implementations.
-3. Read targeted wiki articles ONLY if the feature area requires it:
-   > - Sync / offline patterns → `wiki/offline-first-architecture.md`
-   > - UI components / Horizon design → `wiki/horizon-narrative-design-language.md`
-   > - Reusable services or components → `wiki/core-services-catalog.md` (relevant section only)
-   > - Data mapping → `wiki/data-mapping-strategy-and-architecture.md`
+3. Read targeted `/docs/` articles ONLY if the feature area requires it:
+   > - Sync / offline patterns → `docs/architecture/patterns/offline-first.md`
+   > - UI components / Horizon design → `docs/design-system/horizon-narrative-design.md`
+   > - Reusable services or components → `docs/architecture/patterns/core-services-catalog.md` (relevant section only)
+   > - Data mapping → `docs/architecture/patterns/data-mapping-strategy.md`
+   > - Architecture decisions → `docs/architecture/adrs/`
 ---
 
 ## Step 2 — Analyse data layer and synchronization implications
 
 If the feature touches state or persistent data:
-1. Examine how it integrates with the offline-first architecture (Room database schemas, Kotlin serialization, and Firestore sync delegates). If needed, refer to `wiki/offline-first-architecture.md` for patterns.
+1. Examine how it integrates with the offline-first architecture (Room database schemas, Kotlin serialization, and Firestore sync delegates). If needed, refer to `docs/architecture/patterns/offline-first.md` for patterns.
 2. Verify that any decimal or monetary values use `BigDecimal` rather than `Double` or `Float` to prevent precision loss.
 3. Plan local UUID generation and database transaction handling.
 ---
@@ -45,7 +46,7 @@ If the feature touches state or persistent data:
 ## Step 3 — Analyse UI and Design System impacts
 
 If the feature touches the UI:
-1. Review the "Horizon Narrative" design guidelines in `wiki/horizon-narrative-design-language.md` if applicable.
+1. Review the "Horizon Narrative" design guidelines in `docs/design-system/horizon-narrative-design.md` if applicable.
 2. Determine if existing components from `:core:design-system` can be reused, or if new components are required.
 3. Account for UI state constraints (MVI pattern, stateless Screen composables, LocalBottomPadding application).
 ---

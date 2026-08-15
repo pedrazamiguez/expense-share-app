@@ -29,11 +29,12 @@ Before writing any code or performing checks, verify your local Git state:
 ## Step 1 — Load issue context
 
 1. Fetch issue `$ISSUE_NUMBER` (`get` + `get_comments`), all linked issues, and every comment thread.
-2. Read targeted wiki articles ONLY if the implementation plan or issue domain requires it:
-   > - Decimal/currency math → `wiki/multi-currency-logic-and-snapshot-model.md`
-   > - Sync / offline patterns → `wiki/offline-first-architecture.md`
-   > - UI components → `wiki/core-services-catalog.md` §A, `wiki/horizon-narrative-design-language.md`
-   > - Domain services → `wiki/core-services-catalog.md` §B–§G (relevant entry only)
+2. Read targeted `/docs/` articles ONLY if the implementation plan or issue domain requires it:
+   > - Decimal/currency math → `docs/domain/multi-currency-and-snapshots.md`
+   > - Sync / offline patterns → `docs/architecture/patterns/offline-first.md`
+   > - UI components → `docs/architecture/patterns/core-services-catalog.md` §A, `docs/design-system/horizon-narrative-design.md`
+   > - Domain services → `docs/architecture/patterns/core-services-catalog.md` §B–§G (relevant entry only)
+   > - Architecture decisions → `docs/architecture/adrs/`
 ---
 
 ## Step 2 — Find the Posted Implementation Plan
@@ -65,9 +66,20 @@ wc -l <path/to/file.kt>
 If the result exceeds 600 lines, refactor immediately — do not move on.
 ---
 
-## Step 4 — Implement the Plan
+## Step 4 — Implement the Plan (Phased SDD Pipeline)
 
-Implement the technical solution by sticking strictly to the posted implementation plan. Do not perform any deep design analysis or suggest new technical directions.
+Implement the technical solution by strictly following the posted implementation plan through the 5-phase Specification-Driven Development (SDD) lifecycle:
+
+1. **Phase 1 (Specification Ingest):** Review the plan requirements and grounding rules in `docs/domain/`.
+2. **Phase 2 (Architecture Contracts):** Verify module boundaries, public interfaces, and UseCase signatures adhere strictly to Clean Architecture (`docs/architecture/adrs/0003-clean-architecture.md`).
+3. **Phase 3 (Domain Implementation & TDD):** Implement pure business logic in `:domain` with MockK/JUnit 5 unit tests first.
+   - ZERO Android framework dependencies.
+   - Strict `BigDecimal` math (`docs/architecture/adrs/0002-bigdecimal-math.md`).
+   - Zero string formatting in domain services.
+4. **Phase 4 (Infra & UI Wiring):** Implement Room persistence, Firestore sync delegates, MVI ViewModels, and stateless Compose screens (`docs/architecture/patterns/offline-first.md`, `docs/architecture/patterns/mvi-and-stateless-screens.md`).
+   - Use `debouncedClickable` on actionable components (`docs/architecture/adrs/0005-debounced-ui-interactions.md`).
+   - Formatting in UiMappers only.
+5. **Phase 5 (Auditing & Quality Gate):** Verify Konsist architectural rules, 0 FQN violations, and 600-line file limits (`docs/engineering/quality-and-static-analysis.md`).
 
 - REQUIREMENT: No pragmatic patches. Clean architecture only.
 - REQUIREMENT: ViewModels inject only UseCases, Mappers, Domain Services.

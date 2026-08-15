@@ -25,10 +25,11 @@ Turn the description above into a well-formed GitHub issue ready to be picked up
 ## Step 1 — Understand the context
 
 1. Search GitHub for existing issues or PRs that overlap with or inform this idea.
-2. Read targeted wiki articles ONLY if the feature area requires architectural clarification:
-   > - Sync / offline patterns → `wiki/offline-first-architecture.md`
-   > - UI components / Horizon design → `wiki/horizon-narrative-design-language.md`
-   > - Domain services → `wiki/core-services-catalog.md` (relevant section only)
+2. Read targeted `/docs/` articles ONLY if the feature area requires architectural clarification:
+   > - Sync / offline patterns → `docs/architecture/patterns/offline-first.md`
+   > - UI components / Horizon design → `docs/design-system/horizon-narrative-design.md`
+   > - Domain services → `docs/architecture/patterns/core-services-catalog.md` (relevant section only)
+   > - Architecture decisions → `docs/architecture/adrs/`
 ---
 
 ## Step 2 — Draft the GitHub issue

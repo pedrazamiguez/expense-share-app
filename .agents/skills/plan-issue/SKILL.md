@@ -24,12 +24,13 @@ Plan a technical solution for this issue:
 ## Step 1 — Load issue context
 
 1. Fetch issue `$ISSUE_NUMBER` (`get` + `get_comments`), all parent/linked issues, and every comment thread.
-2. Read targeted wiki articles ONLY if the task domain requires it:
-   > - Decimal/currency math → `wiki/multi-currency-logic-and-snapshot-model.md`
-   > - Sync / offline patterns → `wiki/offline-first-architecture.md`
-   > - UI components / design tokens → `wiki/horizon-narrative-design-language.md`
-   > - Reusable services or components → `wiki/core-services-catalog.md` (relevant section only)
-   > - Data mapping → `wiki/data-mapping-strategy-and-architecture.md`
+2. Read targeted `/docs/` articles ONLY if the task domain requires it:
+   > - Decimal/currency math → `docs/domain/multi-currency-and-snapshots.md`
+   > - Sync / offline patterns → `docs/architecture/patterns/offline-first.md`
+   > - UI components / design tokens → `docs/design-system/horizon-narrative-design.md`
+   > - Reusable services or components → `docs/architecture/patterns/core-services-catalog.md` (relevant section only)
+   > - Data mapping → `docs/architecture/patterns/data-mapping-strategy.md`
+   > - Architecture decisions → `docs/architecture/adrs/`
 ---
 
 ## Step 2 — Formulate the Technical Solution

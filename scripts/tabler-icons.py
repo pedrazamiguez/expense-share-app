@@ -34,7 +34,7 @@ Examples:
     # Check all icon files stay under 600 lines
     ./scripts/tabler-icons.py check
 
-See wiki/tabler-icons-maintenance.md for full documentation.
+See docs/design-system/tabler-icons.md for full documentation.
 """
 
 import argparse

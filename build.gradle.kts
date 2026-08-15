@@ -233,7 +233,7 @@ sonarqube {
         // ── Issue exclusions (align with detekt's Compose-aware rules) ───────────
         // Sonar's resourceKey accepts a SINGLE Ant-style path pattern per entry.
         // For multiple paths, use separate multicriteria IDs (e1, e2, …).
-        // See wiki/code-quality-and-static-analysis.md § "SonarQube Exclusion System".
+        // See docs/engineering/quality-and-static-analysis.md § "SonarQube Exclusion System".
         property("sonar.issue.ignore.multicriteria", "e1,e2,e3,e4,e5,e6,e7,e8,e9,e10,e11,e12,e13,e14")
 
         // ── kotlin:S107 — Too many function parameters ─────────────────────

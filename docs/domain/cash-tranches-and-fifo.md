@@ -1,6 +1,6 @@
 # Cash Tranche FIFO & Withdrawal Pool System
 
-> **Related articles:** [Multi-Currency Logic & Snapshot Model](multi-currency-logic-and-snapshot-model.md) · [Subunits & Group Composition](sub-units-and-group-composition.md) · [Offline-First Architecture](offline-first-architecture.md) · [Core Services Catalog](core-services-catalog.md)
+> **Related articles:** [Multi-Currency Logic & Snapshot Model](multi-currency-and-snapshots.md) · [Subunits & Group Composition](subunits-and-composition.md) · [Offline-First Architecture](../architecture/patterns/offline-first.md) · [Core Services Catalog](../architecture/patterns/core-services-catalog.md)
 
 When a cash expense is recorded in a multi-currency group, SplitTrip does not ask the user to enter an exchange rate manually. Instead, it automatically links the expense to the ATM withdrawal(s) that funded it, using a **First-In-First-Out (FIFO)** algorithm. This article explains the complete lifecycle — from withdrawal recording through expense creation to balance calculation.
 
