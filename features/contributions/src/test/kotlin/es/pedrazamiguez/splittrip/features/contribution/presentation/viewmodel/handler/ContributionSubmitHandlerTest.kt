@@ -1,5 +1,5 @@
 package es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.handler
-
+import es.pedrazamiguez.splittrip.core.common.extensions.toLocalDateTimeUtc
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberOptionUiModel
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
@@ -18,10 +18,14 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -190,6 +194,46 @@ class ContributionSubmitHandlerTest {
         }
 
         @Test
+        fun `calls updateContributionUseCase and emits edit success when in edit mode`() = runTest {
+            val emitted = mutableListOf<AddContributionUiAction>()
+            val collectJob = launch(UnconfinedTestDispatcher()) {
+                actions.toList(emitted)
+            }
+
+            uiState.value = validState.copy(
+                contributionId = "existing-id",
+                originalContribution = es.pedrazamiguez.splittrip.domain.model.Contribution(
+                    id = "existing-id",
+                    groupId = "group-1",
+                    userId = "user-1",
+                    contributionScope = PayerType.USER,
+                    amount = 1000L,
+                    currency = "EUR"
+                )
+            )
+            coEvery { updateContributionUseCase(any(), any()) } just Runs
+            handler.bind(uiState, actions, this)
+
+            handler.handleSubmit("group-1") {}
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { updateContributionUseCase("group-1", any()) }
+            coVerify(exactly = 0) { addContributionUseCase(any(), any()) }
+
+            val successAction = emitted.filterIsInstance<AddContributionUiAction.ShowSuccess>().firstOrNull()
+            assertNotNull(successAction)
+
+            val stringRes = successAction!!.message as
+                es.pedrazamiguez.splittrip.core.common.presentation.UiText.StringResource
+            assertEquals(
+                es.pedrazamiguez.splittrip.features.contribution.R.string.contribution_edit_money_success,
+                stringRes.resId
+            )
+
+            collectJob.cancel()
+        }
+
+        @Test
         fun `passes selectedMemberId as contribution userId`() = runTest {
             coEvery { addContributionUseCase(any(), any()) } just Runs
             handler.bind(uiState, actions, this)
@@ -238,9 +282,7 @@ class ContributionSubmitHandlerTest {
             handler.handleSubmit("group-1") {}
             advanceUntilIdle()
 
-            val expectedDateTime = java.time.Instant.ofEpochMilli(dateMillis)
-                .atZone(java.time.ZoneId.systemDefault())
-                .toLocalDateTime()
+            val expectedDateTime = dateMillis.toLocalDateTimeUtc()
 
             coVerify {
                 addContributionUseCase(

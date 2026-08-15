@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.handler
 
+import es.pedrazamiguez.splittrip.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberOptionUiModel
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.SubunitOptionUiModel
@@ -17,7 +18,6 @@ import es.pedrazamiguez.splittrip.features.contribution.presentation.mapper.AddC
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.action.AddContributionUiAction
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.state.AddContributionUiState
 import java.math.BigDecimal
-import java.time.ZoneId
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
@@ -192,6 +192,7 @@ class ContributionConfigHandler(
             state.copy(
                 isLoading = false,
                 contributionId = contributionId,
+                originalContribution = contribution,
                 groupMembers = memberOptions,
                 selectedMemberId = selectedMemberId,
                 selectedMemberDisplayName = addContributionUiMapper.resolveDisplayName(
@@ -204,10 +205,8 @@ class ContributionConfigHandler(
                 amountInput = contribution?.amount?.let {
                     BigDecimal(it).movePointLeft(2).toPlainString()
                 } ?: "",
-                contributionDateMillis = contribution?.contributionDate
-                    ?.atZone(ZoneId.systemDefault())
-                    ?.toInstant()
-                    ?.toEpochMilli()
+                contributionDateMillis = contribution?.contributionDate?.toEpochMillisUtc()
+                    ?: contribution?.createdAt?.toEpochMillisUtc()
                     ?: System.currentTimeMillis(),
                 amountError = false,
                 groupCurrencyCode = currency,

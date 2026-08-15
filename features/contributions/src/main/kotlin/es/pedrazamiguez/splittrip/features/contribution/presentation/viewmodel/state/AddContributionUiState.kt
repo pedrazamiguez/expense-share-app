@@ -9,6 +9,7 @@ import kotlinx.collections.immutable.persistentListOf
 data class AddContributionUiState(
     val isLoading: Boolean = false,
     val contributionId: String? = null,
+    val originalContribution: es.pedrazamiguez.splittrip.domain.model.Contribution? = null,
     val amountInput: String = "",
     val amountError: Boolean = false,
     val groupCurrencyCode: String = "",

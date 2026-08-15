@@ -38,5 +38,6 @@
     <!-- Member Picker -->
     <string name="contribution_member_picker_title">Contributing member</string>
     <string name="contribution_member_picker_you_label">You</string>
+    <string name="contribution_edit_money_success">Contribution updated successfully!</string>
 </resources>
 

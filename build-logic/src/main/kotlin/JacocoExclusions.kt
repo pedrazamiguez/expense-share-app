@@ -204,6 +204,9 @@ object JacocoExclusions {
         
         // ── Simple delegation wrappers
         "**/domain/usecase/user/impl/UpdateUserReminderPreferencesUseCaseImpl*.*",
+        "**/domain/usecase/balance/impl/UpdateContributionUseCaseImpl*.*",
+        "**/domain/usecase/balance/impl/GetContributionUseCaseImpl*.*",
+        "**/presentation/mapper/BalancesUiMapperExt*.*",
         
         // ── Flow-combining orchestration (not unit-testable directly, tested via integration)
         "**/data/datasource/GroupDashboardDataSourceImpl*.*"
