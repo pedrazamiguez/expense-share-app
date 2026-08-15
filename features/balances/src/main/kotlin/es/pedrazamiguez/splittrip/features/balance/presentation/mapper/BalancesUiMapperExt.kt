@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.mapper
 
+import es.pedrazamiguez.splittrip.core.common.enums.GrammaticalGenderEnum
 import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
@@ -83,7 +84,7 @@ internal fun resolveCreatedByDisplayName(
     if (createdBy == currentUserId) {
         return userUiMapper.mapToSelfIdentification(
             SelfIdentificationContextEnum.AGENT,
-            es.pedrazamiguez.splittrip.core.common.enums.GrammaticalGenderEnum.FEMININE
+            GrammaticalGenderEnum.FEMININE
         )
     }
     return memberProfiles[createdBy]?.displayName

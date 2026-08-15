@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CashBanknote
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Edit
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Trash
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Wallet
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.sheet.ActionBottomSheet
@@ -18,25 +19,34 @@ import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.state.
 internal fun BalancesScreenOverlays(
     uiState: BalancesUiState,
     onEvent: (BalancesUiEvent) -> Unit,
+    onNavigateToEditContribution: (String) -> Unit,
     onContributionDeleteRequested: (ContributionUiModel) -> Unit,
     onWithdrawalDeleteRequested: (CashWithdrawalUiModel) -> Unit
 ) {
-    uiState.contributionToDelete?.let { contribution ->
+    uiState.contributionActionsTarget?.let { contribution ->
         ActionBottomSheet(
             title = contribution.actionsTitle,
             icon = TablerIcons.Outline.Wallet,
             actions = listOf(
                 SheetAction(
+                    text = stringResource(R.string.balances_edit_contribution_action),
+                    icon = TablerIcons.Outline.Edit,
+                    onClick = {
+                        onEvent(BalancesUiEvent.ContributionActionsDismissed)
+                        onNavigateToEditContribution(contribution.id)
+                    }
+                ),
+                SheetAction(
                     text = stringResource(R.string.balances_delete_contribution_action),
                     icon = TablerIcons.Outline.Trash,
                     isDestructive = true,
                     onClick = {
-                        onEvent(BalancesUiEvent.DeleteContributionDismissed)
+                        onEvent(BalancesUiEvent.ContributionActionsDismissed)
                         onContributionDeleteRequested(contribution)
                     }
                 )
             ),
-            onDismiss = { onEvent(BalancesUiEvent.DeleteContributionDismissed) }
+            onDismiss = { onEvent(BalancesUiEvent.ContributionActionsDismissed) }
         )
     }
 

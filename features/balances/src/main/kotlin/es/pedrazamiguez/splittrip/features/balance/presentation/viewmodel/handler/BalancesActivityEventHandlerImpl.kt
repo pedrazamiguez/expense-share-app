@@ -43,16 +43,16 @@ class BalancesActivityEventHandlerImpl(
 
     // ── Contribution ─────────────────────────────────────────────────────────
 
-    override fun handleDeleteContributionRequested(contribution: ContributionUiModel) {
-        _selectionState.update { it.copy(contributionToDelete = contribution) }
+    override fun handleContributionActionsRequested(contribution: ContributionUiModel) {
+        _selectionState.update { it.copy(contributionActionsTarget = contribution) }
     }
 
-    override fun handleDeleteContributionDismissed() {
-        _selectionState.update { it.copy(contributionToDelete = null) }
+    override fun handleContributionActionsDismissed() {
+        _selectionState.update { it.copy(contributionActionsTarget = null) }
     }
 
     override fun handleDeleteContributionConfirmed(groupId: String, contributionId: String) {
-        _selectionState.update { it.copy(contributionToDelete = null) }
+        _selectionState.update { it.copy(contributionActionsTarget = null) }
         scope.launch {
             try {
                 deleteContributionUseCase(groupId, contributionId)

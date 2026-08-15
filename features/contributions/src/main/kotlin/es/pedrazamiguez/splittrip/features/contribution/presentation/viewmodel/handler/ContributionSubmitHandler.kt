@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.handler
 
+import es.pedrazamiguez.splittrip.core.common.extensions.toLocalDateTimeUtc
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.parseAmountToSmallestUnit
@@ -8,11 +9,10 @@ import es.pedrazamiguez.splittrip.domain.exception.GroupArchivedException
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.service.ContributionValidationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AddContributionUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.UpdateContributionUseCase
 import es.pedrazamiguez.splittrip.features.contribution.R
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.action.AddContributionUiAction
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.state.AddContributionUiState
-import java.time.Instant
-import java.time.ZoneId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,14 +21,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-/**
- * Handles contribution submission: validation and use case delegation.
- *
- * Receives the current group currency via [groupCurrencyProvider] lambda
- * to avoid a direct handler-to-handler constructor dependency.
- */
 class ContributionSubmitHandler(
     private val addContributionUseCase: AddContributionUseCase,
+    private val updateContributionUseCase: UpdateContributionUseCase,
     private val contributionValidationService: ContributionValidationService,
     private val groupCurrencyProvider: () -> String
 ) : AddContributionEventHandler {
@@ -70,11 +65,18 @@ class ContributionSubmitHandler(
         _uiState.update { it.copy(isLoading = true) }
 
         scope.launch {
-            val localDateTime = Instant.ofEpochMilli(state.contributionDateMillis)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDateTime()
+            val localDateTime = state.contributionDateMillis.toLocalDateTimeUtc()
 
-            val contribution = Contribution(
+            val contribution = state.originalContribution?.copy(
+                groupId = groupId,
+                userId = state.selectedMemberId ?: "",
+                contributionScope = state.contributionScope,
+                subunitId = selectedSubunitId,
+                amount = amountInSmallestUnit,
+                currency = groupCurrency,
+                contributionDate = localDateTime
+            ) ?: Contribution(
+                id = if (state.isEditMode) state.contributionId ?: "" else "",
                 groupId = groupId,
                 userId = state.selectedMemberId ?: "",
                 contributionScope = state.contributionScope,
@@ -83,7 +85,7 @@ class ContributionSubmitHandler(
                 currency = groupCurrency,
                 contributionDate = localDateTime
             )
-            performSubmit(groupId, contribution, onSuccess)
+            performSubmit(groupId, contribution, state.isEditMode, onSuccess)
         }
     }
 
@@ -107,21 +109,32 @@ class ContributionSubmitHandler(
     private suspend fun performSubmit(
         groupId: String,
         contribution: Contribution,
+        isEditMode: Boolean,
         onSuccess: () -> Unit
     ) {
         try {
-            addContributionUseCase(groupId, contribution)
+            if (isEditMode) {
+                updateContributionUseCase(groupId, contribution)
+            } else {
+                addContributionUseCase(groupId, contribution)
+            }
             _uiState.update { it.copy(isLoading = false) }
             _actions.emit(
                 AddContributionUiAction.ShowSuccess(
-                    UiText.StringResource(R.string.contribution_add_money_success)
+                    UiText.StringResource(
+                        if (isEditMode) {
+                            R.string.contribution_edit_money_success
+                        } else {
+                            R.string.contribution_add_money_success
+                        }
+                    )
                 )
             )
             onSuccess()
         } catch (e: CancellationException) {
             throw e
         } catch (e: GroupArchivedException) {
-            Timber.e(e, "Group is archived, cannot add contribution")
+            Timber.e(e, "Group is archived, cannot add/edit contribution")
             _uiState.update { it.copy(isLoading = false) }
             _actions.emit(
                 AddContributionUiAction.ShowError(
@@ -131,7 +144,7 @@ class ContributionSubmitHandler(
                 )
             )
         } catch (e: Exception) {
-            Timber.e(e, "Failed to add contribution")
+            Timber.e(e, "Failed to add/edit contribution")
             _uiState.update { it.copy(isLoading = false) }
             _actions.emit(
                 AddContributionUiAction.ShowError(

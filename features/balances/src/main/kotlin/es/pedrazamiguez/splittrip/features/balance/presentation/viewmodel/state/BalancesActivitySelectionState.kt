@@ -12,6 +12,6 @@ import es.pedrazamiguez.splittrip.features.balance.presentation.model.Contributi
  * The two flows are [kotlinx.coroutines.flow.combine]d into the exposed [BalancesUiState].
  */
 data class BalancesActivitySelectionState(
-    val contributionToDelete: ContributionUiModel? = null,
+    val contributionActionsTarget: ContributionUiModel? = null,
     val withdrawalToDelete: CashWithdrawalUiModel? = null
 )

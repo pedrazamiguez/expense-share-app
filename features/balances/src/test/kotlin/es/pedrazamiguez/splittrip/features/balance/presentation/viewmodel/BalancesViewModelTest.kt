@@ -722,7 +722,7 @@ class BalancesViewModelTest {
         )
 
         @Test
-        fun `DeleteContributionRequested sets contributionToDelete in state`() = runTest(testDispatcher) {
+        fun `DeleteContributionRequested sets contributionActionsTarget in state`() = runTest(testDispatcher) {
             // Given
             every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
                 BalancesDashboardDomainModel(
@@ -743,17 +743,17 @@ class BalancesViewModelTest {
             advanceUntilIdle()
 
             // When
-            viewModel.onEvent(BalancesUiEvent.DeleteContributionRequested(testContributionUiModel))
+            viewModel.onEvent(BalancesUiEvent.ContributionActionsRequested(testContributionUiModel))
             advanceUntilIdle()
 
             // Then
-            assertEquals(testContributionUiModel, viewModel.uiState.value.contributionToDelete)
+            assertEquals(testContributionUiModel, viewModel.uiState.value.contributionActionsTarget)
 
             collectJob.cancel()
         }
 
         @Test
-        fun `DeleteContributionDismissed clears contributionToDelete`() = runTest(testDispatcher) {
+        fun `DeleteContributionDismissed clears contributionActionsTarget`() = runTest(testDispatcher) {
             // Given
             every { getBalancesDashboardFlowUseCase(any(), any(), any()) } returns flowOf(
                 BalancesDashboardDomainModel(
@@ -772,13 +772,13 @@ class BalancesViewModelTest {
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.setSelectedGroup(testGroupId)
             advanceUntilIdle()
-            viewModel.onEvent(BalancesUiEvent.DeleteContributionRequested(testContributionUiModel))
+            viewModel.onEvent(BalancesUiEvent.ContributionActionsRequested(testContributionUiModel))
 
             // When
-            viewModel.onEvent(BalancesUiEvent.DeleteContributionDismissed)
+            viewModel.onEvent(BalancesUiEvent.ContributionActionsDismissed)
 
             // Then
-            assertNull(viewModel.uiState.value.contributionToDelete)
+            assertNull(viewModel.uiState.value.contributionActionsTarget)
 
             collectJob.cancel()
         }

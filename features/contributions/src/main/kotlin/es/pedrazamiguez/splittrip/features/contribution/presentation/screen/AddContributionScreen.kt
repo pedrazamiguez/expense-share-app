@@ -12,7 +12,7 @@ fun AddContributionScreen(
     uiState: AddContributionUiState,
     onEvent: (AddContributionUiEvent) -> Unit = {}
 ) {
-    SharedTransitionSurface(sharedElementKey = SharedElementKeys.ADD_CONTRIBUTION) {
+    SharedTransitionSurface(sharedElementKey = SharedElementKeys.CONTRIBUTION_WIZARD) {
         ContributionWizard(
             uiState = uiState,
             onEvent = onEvent
