@@ -694,7 +694,7 @@ When a member overspends from the group's physical cash pool (i.e., their `spent
 **Package:** `...data.sync`
 **Visibility:** `internal` — scoped to `:data` module only. Not injectable via Koin.
 
-> **Rule:** New repositories MUST use these delegates instead of duplicating offline-first boilerplate. See [`wiki/offline-first-architecture.md`](offline-first-architecture.md) for the full architectural context and usage patterns.
+> **Rule:** New repositories MUST use these delegates instead of duplicating offline-first boilerplate. See [`docs/architecture/patterns/offline-first.md`](offline-first.md) for the full architectural context and usage patterns.
 
 ### G.1 KeyedSubscriptionTracker
 

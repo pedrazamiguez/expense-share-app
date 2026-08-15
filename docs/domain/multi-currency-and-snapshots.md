@@ -115,7 +115,7 @@ The app does **not** ask the user to enter a rate. Instead, it uses the **FIFO (
 3. **Save:** FIFO runs — 5,000 THB consumed from the airport withdrawal, 1,000 THB from the local ATM. Each withdrawal's `remainingAmount` is updated. The expense stores `cashTranches` linking it to both withdrawals.
 4. **Delete (if needed):** Deleting the expense refunds both tranches, restoring `remainingAmount` on each withdrawal.
 
-> **Scope-aware FIFO:** If the expense was a personal expense (`payerType = USER`), the FIFO algorithm queries the user's personal withdrawal pool first, then falls back to the group pool if insufficient. See [Cash Tranche FIFO & Withdrawal Pools](cash-tranche-fifo-and-withdrawal-pools.md) for the full FIFO architecture.
+> **Scope-aware FIFO:** If the expense was a personal expense (`payerType = USER`), the FIFO algorithm queries the user's personal withdrawal pool first, then falls back to the group pool if insufficient. See [Cash Tranche FIFO & Withdrawal Pools](cash-tranches-and-fifo.md) for the full FIFO architecture.
 
 ## Future Analytics (The Payoff)
 
@@ -130,5 +130,5 @@ Because we structured the data this way, we can answer questions like:
 
 ## See Also
 
-- [Cash Tranche FIFO & Withdrawal Pools](cash-tranche-fifo-and-withdrawal-pools.md) — full FIFO lifecycle, scope-aware pool selection, tranche preview UI, conflict detection
-- [Subunits & Group Composition](sub-units-and-group-composition.md) — how `withdrawalScope` (GROUP/SUBUNIT/USER) affects the FIFO pool
+- [Cash Tranche FIFO & Withdrawal Pools](cash-tranches-and-fifo.md) — full FIFO lifecycle, scope-aware pool selection, tranche preview UI, conflict detection
+- [Subunits & Group Composition](subunits-and-composition.md) — how `withdrawalScope` (GROUP/SUBUNIT/USER) affects the FIFO pool

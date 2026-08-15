@@ -148,7 +148,7 @@ All offline-first coordination patterns are encapsulated in reusable utility fun
 | `syncDeletionToCloud()` | Background sync: cloud delete. Always queues (Firestore SDK guarantees write ordering). |
 
 **Reference:** `SubunitRepositoryImpl` (cleanest, all delegates), `CashWithdrawalRepositoryImpl` (mixed with batch ops), `GroupRepositoryImpl` (`subscribeAndReconcile` only).
-**Docs:** See `wiki/offline-first-architecture.md` § "Reusable Sync Delegates" and `wiki/core-services-catalog.md` § G.
+**Docs:** See `docs/architecture/patterns/offline-first.md` § "Reusable Sync Delegates" and `docs/architecture/patterns/core-services-catalog.md` § G.
 
 ## DI Pattern (Koin)
 
@@ -222,7 +222,7 @@ When testing classes that launch background coroutines (e.g., Repositories with 
 - CPD uses `ignoreFailures = true` — duplications are informational, not blocking.
 - Pre-commit hook runs **ktlint only** (fast). Detekt, CPD, JaCoCo, and Konsist run in CI only.
 - New code must not introduce new detekt findings. Formatting must comply with ktlint / `.editorconfig`.
-- See `wiki/code-quality-and-static-analysis.md` for full details.
+- See `docs/engineering/quality-and-static-analysis.md` for full details.
 
 ## Naming Conventions
 
@@ -262,7 +262,7 @@ When testing classes that launch background coroutines (e.g., Repositories with 
 
 ## Service & Component Catalog (Quick Reference)
 
-> **Full details:** See [`wiki/core-services-catalog.md`](wiki/core-services-catalog.md) for complete method signatures, parameters, and "when to use" guidance.
+> **Full details:** See [`docs/architecture/patterns/core-services-catalog.md`](docs/architecture/patterns/core-services-catalog.md) for complete method signatures, parameters, and "when to use" guidance.
 
 Before creating any new service, utility, formatter, or UI component, **check the catalog first** to avoid duplication.
 
@@ -359,6 +359,17 @@ Comment the *why*, never the *what*. Delete redundant comments that merely resta
 ## Agent Plan Strict Stop
 
 Whenever a plan-only/planning-focused skill or command explicitly dictates that the task is completed after writing/posting the plan and that no codebase modifications should be performed, this instruction takes absolute precedence. The agent MUST NOT write code, create production files, or execute any modifications under those circumstances.
+
+## Multi-Agent Architecture & Phased SDD Pipeline
+
+Feature development follows a 5-phase Specification-Driven Development (SDD) lifecycle with specialized agent personas:
+1. **Specification Agent:** Analyzes briefs, retrieves domain invariants from `docs/domain/`, outputs formal change spec.
+2. **Architect Agent:** Validates module boundaries, UseCase contracts, and MVI state models (`docs/architecture/adrs/0003-clean-architecture.md`).
+3. **Domain Implementer:** Implements pure business logic and unit tests in `:domain` with zero platform dependencies (`docs/architecture/adrs/0002-bigdecimal-math.md`).
+4. **Infra & UI Implementer:** Connects Room persistence, Firestore sync delegates, ViewModels, and stateless Compose screens (`docs/architecture/patterns/offline-first.md`, `docs/architecture/patterns/mvi-and-stateless-screens.md`).
+5. **Auditor / QA Agent:** Verifies Konsist rules, 0 FQN violations, 600-line file limits, and executes `make fast-check` / `make check`.
+
+See `docs/ai/agent-roles-and-taxonomy.md` and `docs/ai/ai-ecosystem.md` for full details.
 
 ## String Translations
 
