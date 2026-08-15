@@ -1,6 +1,6 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl
 
-import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
@@ -117,7 +117,7 @@ class LeaveWizardUiMapperImpl(
             user = profiles[userId],
             fallbackUserId = userId,
             currentUserId = currentUserId,
-            selfIdentificationContext = SelfIdentificationContext.NOMINATIVE
+            selfIdentificationContext = SelfIdentificationContextEnum.NOMINATIVE
         )
     }
 }

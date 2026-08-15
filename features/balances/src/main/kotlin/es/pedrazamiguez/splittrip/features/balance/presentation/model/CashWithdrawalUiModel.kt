@@ -33,5 +33,6 @@ data class CashWithdrawalUiModel(
     val createdByDisplayName: String? = null,
     /** Cloud synchronization status of this cash withdrawal. */
     val syncStatus: SyncStatus = SyncStatus.SYNCED,
-    val displayName: String = memberDisplay.displayName
+    val displayName: String = memberDisplay.displayName,
+    val actionsTitle: String = ""
 )

@@ -1,6 +1,6 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
-import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum
 import es.pedrazamiguez.splittrip.core.common.extensions.localeAwareComparator
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
@@ -73,7 +73,7 @@ class AddExpenseSplitUiMapper(
             user = memberProfiles[userId],
             fallbackUserId = userId,
             currentUserId = currentUserId,
-            selfIdentificationContext = if (currentUserId != null) SelfIdentificationContext.NOMINATIVE else null
+            selfIdentificationContext = if (currentUserId != null) SelfIdentificationContextEnum.NOMINATIVE else null
         )
     }
 

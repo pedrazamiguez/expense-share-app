@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper
 
+import es.pedrazamiguez.splittrip.core.common.enums.GrammaticalGenderEnum
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.R
 import es.pedrazamiguez.splittrip.domain.model.User
@@ -15,6 +17,8 @@ class UserUiMapperTest {
 
     private val resourceProvider = mockk<ResourceProvider> {
         every { getString(R.string.user_pending_fallback) } returns "Pending member"
+        every { getString(R.string.self_identification_possessive_pronoun_feminine) } returns "tuya"
+        every { getString(R.string.self_identification_possessive_pronoun_masculine) } returns "tuyo"
     }
     private val mapper = UserUiMapper(resourceProvider)
 
@@ -81,6 +85,28 @@ class UserUiMapperTest {
                 youLabel = "You"
             )
             assertEquals("You", result)
+        }
+    }
+
+    @Nested
+    inner class MapToSelfIdentification {
+
+        @Test
+        fun `returns correct possessive pronoun for feminine gender`() {
+            val result = mapper.mapToSelfIdentification(
+                context = SelfIdentificationContextEnum.POSSESSIVE_PRONOUN,
+                gender = GrammaticalGenderEnum.FEMININE
+            )
+            assertEquals("tuya", result)
+        }
+
+        @Test
+        fun `returns correct possessive pronoun for masculine gender`() {
+            val result = mapper.mapToSelfIdentification(
+                context = SelfIdentificationContextEnum.POSSESSIVE_PRONOUN,
+                gender = GrammaticalGenderEnum.MASCULINE
+            )
+            assertEquals("tuyo", result)
         }
     }
 

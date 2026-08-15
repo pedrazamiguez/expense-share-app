@@ -1,7 +1,7 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
 import androidx.compose.ui.graphics.vector.ImageVector
-import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
@@ -257,7 +257,7 @@ class ExpenseUiMapper(
             user = memberProfiles[userId],
             fallbackUserId = userId,
             currentUserId = currentUserId,
-            selfIdentificationContext = SelfIdentificationContext.NOMINATIVE
+            selfIdentificationContext = SelfIdentificationContextEnum.NOMINATIVE
         )
     }
 
