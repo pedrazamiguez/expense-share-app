@@ -44,7 +44,9 @@ internal fun ContributionWizard(
 
     val backLabel = stringResource(R.string.contribution_wizard_back)
     val nextLabel = stringResource(R.string.contribution_wizard_next)
-    val submitLabel = stringResource(R.string.contribution_add_money_submit)
+    val submitLabel = stringResource(
+        if (uiState.isEditMode) R.string.contribution_edit_submit else R.string.contribution_add_money_submit
+    )
 
     val bottomPadding = LocalBottomPadding.current
 

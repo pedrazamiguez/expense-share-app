@@ -8,6 +8,8 @@ import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ContributionValidationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AddContributionUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetContributionUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.UpdateContributionUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
@@ -43,6 +45,7 @@ val contributionsUiModule = module {
             getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
             getGroupSubunitsUseCase = get<GetGroupSubunitsUseCase>(),
             getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
+            getContributionUseCase = get<GetContributionUseCase>(),
             authenticationService = get<AuthenticationService>(),
             addContributionUiMapper = addContributionUiMapper,
             appConfigService = appConfigService
@@ -50,6 +53,7 @@ val contributionsUiModule = module {
 
         val contributionSubmitHandler = ContributionSubmitHandler(
             addContributionUseCase = get<AddContributionUseCase>(),
+            updateContributionUseCase = get<UpdateContributionUseCase>(),
             contributionValidationService = contributionValidationService,
             groupCurrencyProvider = { contributionConfigHandler.groupCurrency }
         )

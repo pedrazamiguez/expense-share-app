@@ -1,11 +1,14 @@
 package es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.handler
 
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberOptionUiModel
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
+import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetContributionUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
@@ -13,6 +16,8 @@ import es.pedrazamiguez.splittrip.features.contribution.R
 import es.pedrazamiguez.splittrip.features.contribution.presentation.mapper.AddContributionUiMapper
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.action.AddContributionUiAction
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.state.AddContributionUiState
+import java.math.BigDecimal
+import java.time.ZoneId
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
@@ -24,16 +29,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-/**
- * Handles group configuration loading and member selection events.
- *
- * Owns [loadGroupConfig], [handleMemberSelected], and the cached
- * [groupCurrency] / [allSubunits] fields that other handlers may need.
- */
 class ContributionConfigHandler(
     private val getGroupByIdUseCase: GetGroupByIdUseCase,
     private val getGroupSubunitsUseCase: GetGroupSubunitsUseCase,
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
+    private val getContributionUseCase: GetContributionUseCase,
     private val authenticationService: AuthenticationService,
     private val addContributionUiMapper: AddContributionUiMapper,
     private val appConfigService: AppConfigService
@@ -90,7 +90,7 @@ class ContributionConfigHandler(
      * The currency symbol is already set via [setGroupCurrency] before this is called,
      * so only member/subunit data is loaded here.
      */
-    fun loadGroupConfig(groupId: String?) {
+    fun loadGroupConfig(groupId: String?, contributionId: String? = null) {
         if (groupId == null || groupId == loadedGroupId) return
 
         loadConfigJob?.cancel()
@@ -110,32 +110,25 @@ class ContributionConfigHandler(
                     currentUserId = currentUserId
                 )
 
-                val selectedMemberId = currentUserId
+                val contribution = if (contributionId != null) {
+                    getContributionUseCase(contributionId)
+                } else {
+                    null
+                }
+
+                val selectedMemberId = contribution?.userId ?: currentUserId ?: ""
                 val subunitOptions = filterSubunitsForMember(selectedMemberId)
 
                 loadedGroupId = groupId
 
-                _uiState.update {
-                    it.copy(
-                        groupMembers = memberOptions,
-                        selectedMemberId = selectedMemberId,
-                        selectedMemberDisplayName = addContributionUiMapper.resolveDisplayName(
-                            selectedMemberId,
-                            memberOptions
-                        ),
-                        subunitOptions = subunitOptions,
-                        contributionScope = PayerType.USER,
-                        selectedSubunitId = null,
-                        amountInput = "",
-                        amountError = false,
-                        groupCurrencyCode = currency,
-                        groupCurrencySymbol = addContributionUiMapper.resolveCurrencySymbol(
-                            currency
-                        )
-                    ).let { updatedState ->
-                        updatedState.copy(initialFormSnapshot = updatedState.toFormSnapshot())
-                    }
-                }
+                updateUiStateWithConfig(
+                    contributionId = contributionId,
+                    contribution = contribution,
+                    memberOptions = memberOptions,
+                    selectedMemberId = selectedMemberId,
+                    subunitOptions = subunitOptions,
+                    currency = currency
+                )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -186,4 +179,47 @@ class ContributionConfigHandler(
             .filter { memberId != null && memberId in it.memberIds }
             .map { SubunitOptionUiModel(id = it.id, name = it.name) }
             .toImmutableList()
+
+    private fun updateUiStateWithConfig(
+        contributionId: String?,
+        contribution: Contribution?,
+        memberOptions: ImmutableList<MemberOptionUiModel>,
+        selectedMemberId: String,
+        subunitOptions: ImmutableList<SubunitOptionUiModel>,
+        currency: String
+    ) {
+        _uiState.update { state ->
+            state.copy(
+                isLoading = false,
+                contributionId = contributionId,
+                groupMembers = memberOptions,
+                selectedMemberId = selectedMemberId,
+                selectedMemberDisplayName = addContributionUiMapper.resolveDisplayName(
+                    selectedMemberId,
+                    memberOptions
+                ),
+                subunitOptions = subunitOptions,
+                contributionScope = contribution?.contributionScope ?: PayerType.USER,
+                selectedSubunitId = contribution?.subunitId,
+                amountInput = contribution?.amount?.let {
+                    BigDecimal(it).movePointLeft(2).toPlainString()
+                } ?: "",
+                contributionDateMillis = contribution?.contributionDate
+                    ?.atZone(ZoneId.systemDefault())
+                    ?.toInstant()
+                    ?.toEpochMilli()
+                    ?: System.currentTimeMillis(),
+                amountError = false,
+                groupCurrencyCode = currency,
+                groupCurrencySymbol = addContributionUiMapper.resolveCurrencySymbol(currency)
+            ).let { updatedState ->
+                updatedState.copy(
+                    initialFormSnapshot = updatedState.toFormSnapshot(),
+                    formattedContributionDate = addContributionUiMapper.formatMediumDateTime(
+                        updatedState.contributionDateMillis
+                    )
+                )
+            }
+        }
+    }
 }

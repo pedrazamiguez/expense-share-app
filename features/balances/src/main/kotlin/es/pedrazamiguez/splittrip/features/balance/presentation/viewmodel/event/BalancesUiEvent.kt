@@ -8,9 +8,9 @@ sealed interface BalancesUiEvent {
     // Balance animation
     data object BalanceAnimationComplete : BalancesUiEvent
 
-    // Contribution delete flow
-    data class DeleteContributionRequested(val contribution: ContributionUiModel) : BalancesUiEvent
-    data object DeleteContributionDismissed : BalancesUiEvent
+    // Contribution actions flow
+    data class ContributionActionsRequested(val contribution: ContributionUiModel) : BalancesUiEvent
+    data object ContributionActionsDismissed : BalancesUiEvent
     data class DeleteContributionConfirmed(val contributionId: String) : BalancesUiEvent
 
     // Cash withdrawal delete flow

@@ -80,28 +80,28 @@ class BalancesActivityEventHandlerImplTest {
     inner class ContributionDeleteFlow {
 
         @Test
-        fun `handleDeleteContributionRequested sets contributionToDelete in state`() = runTest(testDispatcher) {
+        fun `handleContributionActionsRequested sets contributionActionsTarget in state`() = runTest(testDispatcher) {
             // Given
             handler.bind(selectionState, actionsFlow, this)
 
             // When
-            handler.handleDeleteContributionRequested(testContribution)
+            handler.handleContributionActionsRequested(testContribution)
 
             // Then
-            assertEquals(testContribution, selectionState.value.contributionToDelete)
+            assertEquals(testContribution, selectionState.value.contributionActionsTarget)
         }
 
         @Test
-        fun `handleDeleteContributionDismissed clears contributionToDelete`() = runTest(testDispatcher) {
+        fun `handleContributionActionsDismissed clears contributionActionsTarget`() = runTest(testDispatcher) {
             // Given
             handler.bind(selectionState, actionsFlow, this)
-            selectionState.value = BalancesActivitySelectionState(contributionToDelete = testContribution)
+            selectionState.value = BalancesActivitySelectionState(contributionActionsTarget = testContribution)
 
             // When
-            handler.handleDeleteContributionDismissed()
+            handler.handleContributionActionsDismissed()
 
             // Then
-            assertNull(selectionState.value.contributionToDelete)
+            assertNull(selectionState.value.contributionActionsTarget)
         }
 
         @Test
@@ -111,14 +111,14 @@ class BalancesActivityEventHandlerImplTest {
                 deleteContributionUseCase(testGroupId, testContribution.id)
             } just Runs
             handler.bind(selectionState, actionsFlow, this)
-            selectionState.value = BalancesActivitySelectionState(contributionToDelete = testContribution)
+            selectionState.value = BalancesActivitySelectionState(contributionActionsTarget = testContribution)
 
             // When
             handler.handleDeleteContributionConfirmed(testGroupId, testContribution.id)
             advanceUntilIdle()
 
             // Then
-            assertNull(selectionState.value.contributionToDelete)
+            assertNull(selectionState.value.contributionActionsTarget)
             coVerify(exactly = 1) { deleteContributionUseCase(testGroupId, testContribution.id) }
         }
 
@@ -272,11 +272,11 @@ class BalancesActivityEventHandlerImplTest {
             selectionState.value = BalancesActivitySelectionState(withdrawalToDelete = testWithdrawal)
 
             // When
-            handler.handleDeleteContributionRequested(testContribution)
+            handler.handleContributionActionsRequested(testContribution)
 
             // Then
             assertNotNull(selectionState.value.withdrawalToDelete)
-            assertNotNull(selectionState.value.contributionToDelete)
+            assertNotNull(selectionState.value.contributionActionsTarget)
         }
 
         @Test
@@ -284,15 +284,15 @@ class BalancesActivityEventHandlerImplTest {
             // Given
             handler.bind(selectionState, actionsFlow, this)
             selectionState.value = BalancesActivitySelectionState(
-                contributionToDelete = testContribution,
+                contributionActionsTarget = testContribution,
                 withdrawalToDelete = testWithdrawal
             )
 
             // When
-            handler.handleDeleteContributionDismissed()
+            handler.handleContributionActionsDismissed()
 
             // Then
-            assertNull(selectionState.value.contributionToDelete)
+            assertNull(selectionState.value.contributionActionsTarget)
             assertNotNull(selectionState.value.withdrawalToDelete)
         }
     }

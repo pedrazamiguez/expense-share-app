@@ -62,8 +62,9 @@
     <string name="balances_logged_by">Logged by %1$s</string>
 
     <!-- Delete Contribution -->
-    <string name="balances_contribution_actions_title">Contribution by %1$s</string>
-    <string name="balances_contribution_actions_title_you">Contribution of %1$s</string>
+    <string name="balances_contribution_actions_title">%1$s\'s contribution</string>
+    <string name="balances_contribution_actions_title_you">%1$s contribution</string>
+    <string name="balances_edit_contribution_action">Edit contribution</string>
     <string name="balances_delete_contribution_action">Delete contribution</string>
     <string name="balances_delete_contribution_dialog_title">Delete contribution?</string>
     <string name="balances_delete_contribution_dialog_text">This will permanently remove the contribution of %1$s. This action cannot be undone.</string>

@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.service.ContributionValidationService
 import es.pedrazamiguez.splittrip.domain.service.impl.ContributionValidationServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AddContributionUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.UpdateContributionUseCase
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.action.AddContributionUiAction
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.state.AddContributionUiState
 import io.mockk.Runs
@@ -33,6 +34,7 @@ class ContributionSubmitHandlerTest {
 
     private lateinit var handler: ContributionSubmitHandler
     private lateinit var addContributionUseCase: AddContributionUseCase
+    private lateinit var updateContributionUseCase: UpdateContributionUseCase
     private lateinit var contributionValidationService: ContributionValidationService
 
     private lateinit var uiState: MutableStateFlow<AddContributionUiState>
@@ -63,6 +65,7 @@ class ContributionSubmitHandlerTest {
     @BeforeEach
     fun setUp() {
         addContributionUseCase = mockk()
+        updateContributionUseCase = mockk()
         contributionValidationService = ContributionValidationServiceImpl()
 
         uiState = MutableStateFlow(validState)
@@ -70,6 +73,7 @@ class ContributionSubmitHandlerTest {
 
         handler = ContributionSubmitHandler(
             addContributionUseCase = addContributionUseCase,
+            updateContributionUseCase = updateContributionUseCase,
             contributionValidationService = contributionValidationService,
             groupCurrencyProvider = { "EUR" }
         )

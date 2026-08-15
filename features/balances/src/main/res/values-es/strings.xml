@@ -66,6 +66,7 @@
     <!-- Delete Contribution -->
     <string name="balances_contribution_actions_title">Aportación de %1$s</string>
     <string name="balances_contribution_actions_title_you">Aportación %1$s</string>
+    <string name="balances_edit_contribution_action">Editar aportación</string>
     <string name="balances_delete_contribution_action">Eliminar aportación</string>
     <string name="balances_delete_contribution_dialog_title">¿Eliminar aportación?</string>
     <string name="balances_delete_contribution_dialog_text">Se eliminará permanentemente la aportación de %1$s. Esta acción no se puede deshacer.</string>

@@ -2,8 +2,10 @@
 <resources>
     <!-- Add Money -->
     <string name="contribution_add_money_title">Añadir a la cuenta</string>
+    <string name="contribution_edit_title">Editar aportación</string>
     <string name="contribution_add_money_amount_hint">¿Cuánto vas a añadir?</string>
     <string name="contribution_add_money_submit">Añadir dinero</string>
+    <string name="contribution_edit_submit">Guardar cambios</string>
     <string name="contribution_add_money_success">¡Dinero añadido a la cuenta del grupo!</string>
     <string name="contribution_add_money_error">¡Ups! No se pudo añadir el dinero. Inténtalo de nuevo</string>
     <string name="contribution_add_money_error_amount">Introduce una cantidad válida mayor que cero</string>

@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 
 import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
+import es.pedrazamiguez.splittrip.data.sync.syncCreateToCloud
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudContributionDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalContributionDataSource
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
@@ -80,6 +81,30 @@ class ContributionRepositoryImpl(
                     Timber.w(e, "Failed to sync contribution to cloud")
                 }
             }
+        }
+    }
+
+    override suspend fun getContribution(contributionId: String): Contribution? =
+        localContributionDataSource.findContributionById(contributionId)
+
+    override suspend fun updateContribution(groupId: String, contribution: Contribution) {
+        performanceMonitor.traceAsync(PerformanceTraces.CONTRIBUTION_UPDATE) {
+            val contributionWithMetadata = contribution.copy(
+                lastUpdatedAt = LocalDateTime.now(),
+                syncStatus = SyncStatus.PENDING_SYNC
+            )
+            localContributionDataSource.saveContribution(contributionWithMetadata)
+            syncCreateToCloud(
+                scope = syncScope,
+                entityId = contributionWithMetadata.id,
+                entityLabel = "Contribution",
+                cloudWrite = { cloudContributionDataSource.addContribution(groupId, contributionWithMetadata) },
+                updateSyncStatus = { id, status -> localContributionDataSource.updateSyncStatus(id, status) },
+                getCurrentSyncStatus = { id ->
+                    localContributionDataSource.findContributionById(id)?.syncStatus ?: SyncStatus.SYNCED
+                },
+                performanceMonitor = performanceMonitor
+            )
         }
     }
 

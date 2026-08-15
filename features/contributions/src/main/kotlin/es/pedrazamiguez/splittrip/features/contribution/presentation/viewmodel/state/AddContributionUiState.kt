@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.persistentListOf
 
 data class AddContributionUiState(
     val isLoading: Boolean = false,
+    val contributionId: String? = null,
     val amountInput: String = "",
     val amountError: Boolean = false,
     val groupCurrencyCode: String = "",
@@ -28,6 +29,8 @@ data class AddContributionUiState(
     val currentStep: AddContributionStep = AddContributionStep.AMOUNT,
     val initialFormSnapshot: AddContributionFormSnapshot? = null
 ) {
+    val isEditMode: Boolean get() = contributionId != null
+
     val isDirty: Boolean
         get() = initialFormSnapshot != null && toFormSnapshot() != initialFormSnapshot
 

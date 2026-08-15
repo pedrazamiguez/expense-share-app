@@ -139,7 +139,7 @@ private fun LazyListScope.activitySection(
                     !item.contribution.isSettlementContribution &&
                     !isGroupArchived
                 ) {
-                    { onEvent(BalancesUiEvent.DeleteContributionRequested(item.contribution)) }
+                    { onEvent(BalancesUiEvent.ContributionActionsRequested(item.contribution)) }
                 } else {
                     null
                 }

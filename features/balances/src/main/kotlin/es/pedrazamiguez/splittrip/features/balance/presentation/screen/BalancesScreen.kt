@@ -26,6 +26,7 @@ fun BalancesScreen(
     uiState: BalancesUiState = BalancesUiState(),
     onEvent: (BalancesUiEvent) -> Unit = {},
     onNavigateToContribution: () -> Unit = {},
+    onNavigateToEditContribution: (String) -> Unit = {},
     onNavigateToWithdrawal: () -> Unit = {}
 ) {
     val bottomPadding = LocalBottomPadding.current
@@ -48,6 +49,7 @@ fun BalancesScreen(
     BalancesScreenOverlays(
         uiState = uiState,
         onEvent = onEvent,
+        onNavigateToEditContribution = onNavigateToEditContribution,
         onContributionDeleteRequested = { contributionPendingDelete = it },
         onWithdrawalDeleteRequested = { withdrawalPendingDelete = it }
     )
