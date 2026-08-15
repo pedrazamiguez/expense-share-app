@@ -29,10 +29,11 @@ object JacocoExclusions {
         "**/*PreviewHelper*.*",
         // Sealed/data class companion objects
         "**/*\$Companion.*",
-        // ── Sealed UiEvent hierarchies — pure data classes with no logic ─────────
-        // Each subclass is a `data class` or `data object` representing a UI event;
+        // ── Sealed UiEvent / UiAction hierarchies — pure data classes with no logic ─────────
+        // Each subclass is a `data class` or `data object` representing a UI event or side-effect action;
         // there's nothing testable beyond what kotlinx-data-class generates.
         "**/presentation/viewmodel/event/**",
+        "**/presentation/viewmodel/action/**",
         // ── Compose UI — only reachable via instrumentation tests, not JUnit ──────
         // Feature orchestrators (hold NavController / ViewModel, not unit-testable)
         "**/presentation/feature/**",
@@ -198,16 +199,11 @@ object JacocoExclusions {
         "**/domain/usecase/auth/impl/LinkGoogleAccountUseCaseImpl*.*",
         "**/domain/usecase/auth/impl/SignInAnonymouslyUseCaseImpl*.*",
         "**/domain/usecase/user/impl/ReconcileUnregisteredUserUseCaseImpl*.*",
+        "**/domain/usecase/user/impl/UpdateUserReminderPreferencesUseCaseImpl*.*",
         // ── Kotlin coroutines internals leaking into the JaCoCo class path ────────
         // SafeCollector.common is an internal coroutines file; it's not our code.
         "**/SafeCollector*.*",
-        
-        // ── Simple delegation wrappers
-        "**/domain/usecase/user/impl/UpdateUserReminderPreferencesUseCaseImpl*.*",
-        "**/domain/usecase/balance/impl/UpdateContributionUseCaseImpl*.*",
-        "**/domain/usecase/balance/impl/GetContributionUseCaseImpl*.*",
-        "**/presentation/mapper/BalancesUiMapperExt*.*",
-        
+
         // ── Flow-combining orchestration (not unit-testable directly, tested via integration)
         "**/data/datasource/GroupDashboardDataSourceImpl*.*"
     )

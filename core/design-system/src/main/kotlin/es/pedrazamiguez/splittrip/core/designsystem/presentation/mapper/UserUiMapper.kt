@@ -99,15 +99,13 @@ class UserUiMapper(
                 R.string.self_identification_prepositional
             )
             SelfIdentificationContextEnum.POSSESSIVE_PRONOUN -> when (gender) {
-                GrammaticalGenderEnum.MASCULINE -> resourceProvider.getString(
+                GrammaticalGenderEnum.MASCULINE,
+                GrammaticalGenderEnum.NEUTER -> resourceProvider.getString(
                     R.string.self_identification_possessive_pronoun_masculine
                 )
                 GrammaticalGenderEnum.FEMININE -> resourceProvider.getString(
                     R.string.self_identification_possessive_pronoun_feminine
                 )
-                GrammaticalGenderEnum.NEUTER -> resourceProvider.getString(
-                    R.string.self_identification_possessive_pronoun_masculine
-                ) // Fallback to masculine for neuter if no specific resource
             }
         }
     }

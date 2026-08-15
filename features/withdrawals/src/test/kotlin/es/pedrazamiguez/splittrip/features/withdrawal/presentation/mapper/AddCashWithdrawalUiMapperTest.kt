@@ -257,5 +257,29 @@ class AddCashWithdrawalUiMapperTest {
 
             assertEquals("", result)
         }
+
+        @Test
+        fun `resolveDisplayName returns youLabel for current user when youLabel is non-blank`() {
+            val members = listOf(
+                MemberOptionUiModel(userId = "user-1", displayName = "Andrés", isCurrentUser = true),
+                MemberOptionUiModel(userId = "user-2", displayName = "Ana", isCurrentUser = false)
+            ).toImmutableList()
+
+            val result = mapper.resolveDisplayName("user-1", members, youLabel = "Tú")
+
+            assertEquals("Tú", result)
+        }
+
+        @Test
+        fun `resolveDisplayName returns member displayName for other member when youLabel is non-blank`() {
+            val members = listOf(
+                MemberOptionUiModel(userId = "user-1", displayName = "Andrés", isCurrentUser = true),
+                MemberOptionUiModel(userId = "user-2", displayName = "Ana", isCurrentUser = false)
+            ).toImmutableList()
+
+            val result = mapper.resolveDisplayName("user-2", members, youLabel = "Tú")
+
+            assertEquals("Ana", result)
+        }
     }
 }
