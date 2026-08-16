@@ -1,6 +1,13 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.screen
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -70,6 +78,7 @@ fun ExpensesScreen(
     var selectedExpenseForMenu by remember { mutableStateOf<ExpenseUiModel?>(null) }
     var expenseToDelete by remember { mutableStateOf<ExpenseUiModel?>(null) }
     var expenseToCancel by remember { mutableStateOf<ExpenseUiModel?>(null) }
+    var isSearchBarVisible by remember { mutableStateOf(true) }
 
     val listState = rememberLazyListState(
         initialFirstVisibleItemIndex = uiState.scrollPosition,
@@ -78,6 +87,31 @@ fun ExpensesScreen(
 
     RestoreScrollEffect(listState = listState, uiState = uiState)
     TrackScrollEffect(listState = listState, onScrollPositionChanged = onScrollPositionChanged)
+
+    LaunchedEffect(listState) {
+        var previousIndex = listState.firstVisibleItemIndex
+        var previousOffset = listState.firstVisibleItemScrollOffset
+
+        snapshotFlow {
+            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+        }.collect { (currentIndex, currentOffset) ->
+            val scrollingDown = currentIndex > previousIndex ||
+                (currentIndex == previousIndex && currentOffset > previousOffset)
+            val scrollingUp = currentIndex < previousIndex ||
+                (currentIndex == previousIndex && currentOffset < previousOffset)
+
+            if (currentIndex == 0 && currentOffset == 0) {
+                isSearchBarVisible = true
+            } else if (scrollingDown) {
+                isSearchBarVisible = false
+            } else if (scrollingUp) {
+                isSearchBarVisible = true
+            }
+
+            previousIndex = currentIndex
+            previousOffset = currentOffset
+        }
+    }
 
     LaunchedEffect(actions) {
         actions?.collect { action ->
@@ -106,19 +140,36 @@ fun ExpensesScreen(
                 else -> {
                     val sharedTransitionScope = LocalSharedTransitionScope.current
                     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
+                    val showSearchBar = isSearchBarVisible || uiState.searchQuery.isNotEmpty()
                     Column(modifier = Modifier.fillMaxSize()) {
-                        ExpenseSearchBar(
-                            query = uiState.searchQuery,
-                            onQueryChange = onSearchQueryChanged,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(
-                                    start = MaterialTheme.spacing.Default,
-                                    top = MaterialTheme.spacing.Default,
-                                    end = MaterialTheme.spacing.Default,
-                                    bottom = MaterialTheme.spacing.ExtraSmall
+                        AnimatedVisibility(
+                            visible = showSearchBar,
+                            enter = expandVertically(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = Spring.StiffnessMediumLow
                                 )
-                        )
+                            ) + fadeIn(),
+                            exit = shrinkVertically(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                )
+                            ) + fadeOut()
+                        ) {
+                            ExpenseSearchBar(
+                                query = uiState.searchQuery,
+                                onQueryChange = onSearchQueryChanged,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(
+                                        start = MaterialTheme.spacing.Default,
+                                        top = MaterialTheme.spacing.Default,
+                                        end = MaterialTheme.spacing.Default,
+                                        bottom = MaterialTheme.spacing.ExtraSmall
+                                    )
+                            )
+                        }
 
                         when {
                             uiState.isSearchResultEmpty -> {

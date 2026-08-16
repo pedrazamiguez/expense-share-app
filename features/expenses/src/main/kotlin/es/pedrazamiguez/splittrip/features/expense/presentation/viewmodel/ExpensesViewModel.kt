@@ -8,6 +8,7 @@ import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.service.ExpenseSearchService
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.ExpenseUiMapper
@@ -46,7 +47,8 @@ class ExpensesViewModel(
     private val useCases: ExpensesUseCases,
     private val expenseUiMapper: ExpenseUiMapper,
     private val authenticationService: AuthenticationService,
-    private val observeGroupUseCase: ObserveGroupUseCase
+    private val observeGroupUseCase: ObserveGroupUseCase,
+    private val expenseSearchService: ExpenseSearchService
 ) : ViewModel() {
 
     private val _scrollState = MutableStateFlow(Pair(0, 0))
@@ -82,15 +84,7 @@ class ExpensesViewModel(
                     debouncedQueryFlow
                 ) { expenses, contributions, subunits, group, debouncedQuery ->
                     val totalExpensesCount = expenses.size
-                    val filteredExpenses = if (debouncedQuery.isBlank()) {
-                        expenses
-                    } else {
-                        val queryTrimmed = debouncedQuery.trim()
-                        expenses.filter { expense ->
-                            expense.title.contains(queryTrimmed, ignoreCase = true) ||
-                                (expense.notes?.contains(queryTrimmed, ignoreCase = true) == true)
-                        }
-                    }
+                    val filteredExpenses = expenseSearchService.search(expenses, debouncedQuery)
 
                     val isArchived = group?.status == GroupStatus.ARCHIVED
                     val groupMemberIds = group?.members ?: emptyList()

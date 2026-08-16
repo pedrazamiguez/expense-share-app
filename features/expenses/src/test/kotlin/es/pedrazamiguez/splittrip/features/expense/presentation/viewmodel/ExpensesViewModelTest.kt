@@ -7,6 +7,8 @@ import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.service.ExpenseSearchService
+import es.pedrazamiguez.splittrip.domain.service.impl.ExpenseSearchServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetExpenseByIdFlowUseCase
@@ -68,6 +70,7 @@ class ExpensesViewModelTest {
     private lateinit var updateExpenseUseCase: UpdateExpenseUseCase
     private lateinit var authenticationService: AuthenticationService
     private lateinit var observeGroupUseCase: ObserveGroupUseCase
+    private var expenseSearchService: ExpenseSearchService = ExpenseSearchServiceImpl()
     private lateinit var viewModel: ExpensesViewModel
 
     private val testGroupId = "group-123"
@@ -1053,6 +1056,7 @@ class ExpensesViewModelTest {
         ),
         expenseUiMapper = expenseUiMapper,
         authenticationService = authenticationService,
-        observeGroupUseCase = observeGroupUseCase
+        observeGroupUseCase = observeGroupUseCase,
+        expenseSearchService = expenseSearchService
     )
 }
