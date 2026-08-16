@@ -10,6 +10,7 @@ class ExpenseSearchServiceImpl : ExpenseSearchService {
         val queryTrimmed = query.trim()
         return expenses.filter { expense ->
             expense.title.contains(queryTrimmed, ignoreCase = true) ||
+                (expense.vendor?.contains(queryTrimmed, ignoreCase = true) == true) ||
                 (expense.notes?.contains(queryTrimmed, ignoreCase = true) == true)
         }
     }

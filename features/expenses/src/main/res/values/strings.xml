@@ -7,7 +7,7 @@
     <string name="expenses_add">Add expense</string>
     <string name="expenses_filter">Filter</string>
     <string name="expenses_back">Back</string>
-    <string name="expenses_search_placeholder">Search by title or notes…</string>
+    <string name="expenses_search_placeholder">Search expenses…</string>
     <string name="expenses_search_clear">Clear search</string>
     <string name="expenses_search_empty_title">No expenses found</string>
     <string name="expenses_search_empty_description">Try searching with different keywords</string>

@@ -144,13 +144,64 @@ class ExpenseSearchServiceImplTest {
     }
 
     @Nested
+    @DisplayName("Matching by Vendor")
+    inner class MatchVendor {
+
+        @Test
+        fun `matches vendor case-insensitively`() {
+            val dinner = Expense(id = "1", title = "Dinner", vendor = "Mercadona")
+            val coffee = Expense(id = "2", title = "Coffee", vendor = "Starbucks")
+            val expenses = listOf(dinner, coffee)
+
+            val result = service.search(expenses, "mercadona")
+
+            assertEquals(listOf(dinner), result)
+        }
+
+        @Test
+        fun `matches partial vendor name with mixed case`() {
+            val hotel = Expense(id = "1", title = "Accommodation", vendor = "Chengdu Jinjiang Hotel")
+            val flight = Expense(id = "2", title = "Flight", vendor = "Air China")
+            val expenses = listOf(hotel, flight)
+
+            val result = service.search(expenses, "CHENGDU")
+
+            assertEquals(listOf(hotel), result)
+        }
+
+        @Test
+        fun `handles null vendor safely without throwing exception`() {
+            val e1 = Expense(id = "1", title = "Bus", vendor = null)
+            val e2 = Expense(id = "2", title = "Groceries", vendor = "Carrefour")
+            val expenses = listOf(e1, e2)
+
+            val result = service.search(expenses, "carrefour")
+
+            assertEquals(listOf(e2), result)
+        }
+
+        @Test
+        fun `matches across title, vendor, and notes in different expenses`() {
+            val e1 = Expense(id = "1", title = "Chengdu Flight", vendor = "Iberia", notes = "Direct flight")
+            val e2 = Expense(id = "2", title = "Hotel Stay", vendor = "Chengdu Inn", notes = "Near downtown")
+            val e3 = Expense(id = "3", title = "Dinner", vendor = "Local Restaurant", notes = "Chengdu hotpot")
+            val e4 = Expense(id = "4", title = "Taxi", vendor = "Didi", notes = "Airport transfer")
+            val expenses = listOf(e1, e2, e3, e4)
+
+            val result = service.search(expenses, "chengdu")
+
+            assertEquals(listOf(e1, e2, e3), result)
+        }
+    }
+
+    @Nested
     @DisplayName("No Matches and Ordering")
     inner class NoMatchesAndOrdering {
 
         @Test
-        fun `returns empty list when query does not match any title or notes`() {
-            val e1 = Expense(id = "1", title = "Dinner", notes = "Pizza")
-            val e2 = Expense(id = "2", title = "Taxi", notes = "Airport")
+        fun `returns empty list when query does not match any title, vendor, or notes`() {
+            val e1 = Expense(id = "1", title = "Dinner", vendor = "Pizzeria", notes = "Pizza")
+            val e2 = Expense(id = "2", title = "Taxi", vendor = "Uber", notes = "Airport")
             val expenses = listOf(e1, e2)
 
             val result = service.search(expenses, "NonExistentKeyword")
@@ -161,7 +212,7 @@ class ExpenseSearchServiceImplTest {
         @Test
         fun `preserves original relative order of matching expenses`() {
             val e1 = Expense(id = "1", title = "Breakfast", notes = "Coffee and croissant")
-            val e2 = Expense(id = "2", title = "Lunch", notes = "Sandwich")
+            val e2 = Expense(id = "2", title = "Lunch", vendor = "Cafe", notes = "Sandwich")
             val e3 = Expense(id = "3", title = "Dinner", notes = "Steak with coffee afterwards")
             val expenses = listOf(e1, e2, e3)
 

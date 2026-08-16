@@ -923,6 +923,33 @@ class ExpensesViewModelTest {
         }
 
         @Test
+        fun `debounced search filters expenses by vendor case-insensitively`() = runTest(testDispatcher) {
+            // Given
+            val expenseWithVendor = testExpense1.copy(vendor = "Mercadona")
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(expenseWithVendor, testExpense2)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            assertEquals(2, allExpenses().size)
+
+            // When - Search for "mercadona"
+            viewModel.onEvent(ExpensesUiEvent.SearchQueryChanged("MERCADONA"))
+            advanceTimeBy(300)
+            advanceUntilIdle()
+
+            // Then - Matches via vendor
+            assertEquals(1, allExpenses().size)
+            assertEquals("Dinner", allExpenses()[0].title)
+            assertEquals(2, viewModel.uiState.value.totalExpensesCount)
+
+            collectJob.cancel()
+        }
+
+        @Test
         fun `empty search results sets isSearchResultEmpty to true`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
