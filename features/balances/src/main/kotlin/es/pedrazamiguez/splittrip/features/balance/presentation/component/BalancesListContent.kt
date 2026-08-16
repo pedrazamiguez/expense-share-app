@@ -39,6 +39,7 @@ internal fun BalancesListContent(
     bottomPadding: Dp,
     onEvent: (BalancesUiEvent) -> Unit,
     onNavigateToContribution: () -> Unit,
+    onNavigateToContributionDetail: (String) -> Unit,
     onNavigateToWithdrawal: () -> Unit,
     onShowExtrasBreakdown: () -> Unit
 ) {
@@ -52,34 +53,7 @@ internal fun BalancesListContent(
         ),
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
     ) {
-        if (uiState.isGroupArchived) {
-            item {
-                FlatCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.errorContainer
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = TablerIcons.Outline.Lock,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                        Text(
-                            text = stringResource(
-                                DesignSystemR.string.group_detail_archived_label
-                            ),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                    }
-                }
-            }
-        }
+        archivedBannerItem(uiState.isGroupArchived)
         item {
             GroupPocketBalanceCard(
                 balance = uiState.pocketBalance,
@@ -94,7 +68,42 @@ internal fun BalancesListContent(
             )
         }
         memberBalancesSection(uiState.memberBalances)
-        activitySection(uiState.activityItems, uiState.isGroupArchived, onEvent)
+        activitySection(
+            activityItems = uiState.activityItems,
+            isGroupArchived = uiState.isGroupArchived,
+            onEvent = onEvent,
+            onNavigateToContributionDetail = onNavigateToContributionDetail
+        )
+    }
+}
+
+private fun LazyListScope.archivedBannerItem(isGroupArchived: Boolean) {
+    if (!isGroupArchived) return
+    item {
+        FlatCard(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.errorContainer
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = TablerIcons.Outline.Lock,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onErrorContainer
+                )
+                Text(
+                    text = stringResource(
+                        DesignSystemR.string.group_detail_archived_label
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        }
     }
 }
 
@@ -114,7 +123,8 @@ private fun LazyListScope.memberBalancesSection(memberBalances: ImmutableList<Me
 private fun LazyListScope.activitySection(
     activityItems: ImmutableList<ActivityItemUiModel>,
     isGroupArchived: Boolean,
-    onEvent: (BalancesUiEvent) -> Unit
+    onEvent: (BalancesUiEvent) -> Unit,
+    onNavigateToContributionDetail: (String) -> Unit
 ) {
     if (activityItems.isEmpty()) return
     item {
@@ -135,6 +145,7 @@ private fun LazyListScope.activitySection(
         when (item) {
             is ActivityItemUiModel.ContributionItem -> ContributionHistoryItem(
                 contribution = item.contribution,
+                onClick = { onNavigateToContributionDetail(item.contribution.id) },
                 onLongClick = if (!item.contribution.isLinkedContribution &&
                     !item.contribution.isSettlementContribution &&
                     !isGroupArchived
