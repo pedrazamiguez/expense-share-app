@@ -55,6 +55,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.component.TrackS
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.list.DateHeaderItem
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.list.ExpenseItem
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.list.ExpenseSearchBar
+import es.pedrazamiguez.splittrip.features.expense.presentation.component.list.ExpensesTotalSummaryRow
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.ExpensesUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.ExpensesUiState
@@ -158,18 +159,39 @@ fun ExpensesScreen(
                                 )
                             ) + fadeOut()
                         ) {
-                            ExpenseSearchBar(
-                                query = uiState.searchQuery,
-                                onQueryChange = onSearchQueryChanged,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(
-                                        start = MaterialTheme.spacing.Default,
-                                        top = MaterialTheme.spacing.Default,
-                                        end = MaterialTheme.spacing.Default,
-                                        bottom = MaterialTheme.spacing.ExtraSmall
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                if (!uiState.isSearchResultEmpty) {
+                                    ExpensesTotalSummaryRow(
+                                        formattedTotalSpent = uiState.formattedTotalSpent,
+                                        visibleExpensesCount = uiState.visibleExpensesCount,
+                                        isFiltered = uiState.isFiltered,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(
+                                                start = MaterialTheme.spacing.Default,
+                                                top = MaterialTheme.spacing.Default,
+                                                end = MaterialTheme.spacing.Default,
+                                                bottom = MaterialTheme.spacing.None
+                                            )
                                     )
-                            )
+                                }
+                                ExpenseSearchBar(
+                                    query = uiState.searchQuery,
+                                    onQueryChange = onSearchQueryChanged,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(
+                                            start = MaterialTheme.spacing.Default,
+                                            top = if (!uiState.isSearchResultEmpty) {
+                                                MaterialTheme.spacing.Small
+                                            } else {
+                                                MaterialTheme.spacing.Default
+                                            },
+                                            end = MaterialTheme.spacing.Default,
+                                            bottom = MaterialTheme.spacing.ExtraSmall
+                                        )
+                                )
+                            }
                         }
 
                         when {

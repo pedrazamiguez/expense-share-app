@@ -11,6 +11,10 @@
     <string name="expenses_search_clear">Borrar búsqueda</string>
     <string name="expenses_search_empty_title">No se han encontrado gastos</string>
     <string name="expenses_search_empty_description">Prueba a buscar con otras palabras</string>
+    <plurals name="expenses_count">
+        <item quantity="one">%1$d gasto</item>
+        <item quantity="other">%1$d gastos</item>
+    </plurals>
     <string name="expense_field_title">Concepto</string>
     <string name="expense_field_title_required">¿Qué pagaste?</string>
     <string name="expense_field_amount">Importe</string>

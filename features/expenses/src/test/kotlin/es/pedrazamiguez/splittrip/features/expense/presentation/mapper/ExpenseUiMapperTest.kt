@@ -1411,6 +1411,23 @@ class ExpenseUiMapperTest {
     }
 
     @Nested
+    @DisplayName("formatTotalSpent")
+    inner class FormatTotalSpent {
+
+        @Test
+        fun `formatTotalSpent formats amount in base currency with user locale`() {
+            every { localeProvider.getCurrentLocale() } returns Locale.US
+            assertEquals("€125.50", mapper.formatTotalSpent(12550L, "EUR"))
+
+            every { localeProvider.getCurrentLocale() } returns Locale("es", "ES")
+            assertEquals("0,00\u00A0€", mapper.formatTotalSpent(0L, "EUR"))
+
+            every { localeProvider.getCurrentLocale() } returns Locale.US
+            assertEquals("${'$'}5,000.00", mapper.formatTotalSpent(500000L, "USD"))
+        }
+    }
+
+    @Nested
     @DisplayName("SyncStatus mapping")
     inner class SyncStatusMapping {
 

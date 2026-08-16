@@ -16,6 +16,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseDat
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.ExpensesUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.ExpensesUiEvent
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.ExpensesUiState
+import java.time.LocalDate
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -85,6 +86,23 @@ class ExpensesViewModel(
                 ) { expenses, contributions, subunits, group, debouncedQuery ->
                     val totalExpensesCount = expenses.size
                     val filteredExpenses = expenseSearchService.search(expenses, debouncedQuery)
+                    val isFiltered = debouncedQuery.isNotBlank()
+                    val visibleExpensesCount = filteredExpenses.size
+
+                    val groupCurrency = group?.currency
+                        ?: expenses.firstOrNull()?.groupCurrency
+                        ?: "EUR"
+
+                    val today = LocalDate.now()
+                    val totalSpentCents = filteredExpenses
+                        .filter { it.paymentStatus != PaymentStatus.CANCELLED }
+                        .filterNot {
+                            it.paymentStatus == PaymentStatus.SCHEDULED &&
+                                it.dueDate?.toLocalDate()?.isAfter(today) == true
+                        }
+                        .sumOf { it.groupAmount }
+
+                    val formattedTotalSpent = expenseUiMapper.formatTotalSpent(totalSpentCents, groupCurrency)
 
                     val isArchived = group?.status == GroupStatus.ARCHIVED
                     val groupMemberIds = group?.members ?: emptyList()
@@ -113,16 +131,49 @@ class ExpensesViewModel(
                         subunits = subunitsById,
                         groupMemberIds = groupMemberIds
                     )
-                    Triple(mappedGroups, isArchived, totalExpensesCount)
+                    ExpenseCalculationResult(
+                        mappedGroups = mappedGroups,
+                        isArchived = isArchived,
+                        totalExpensesCount = totalExpensesCount,
+                        formattedTotalSpent = formattedTotalSpent,
+                        visibleExpensesCount = visibleExpensesCount,
+                        isFiltered = isFiltered
+                    )
                 }
-                    .transformLatest { (groups, isArchived, totalExpensesCount) ->
-                        if (groups.any { it.expenses.isNotEmpty() } || totalExpensesCount > 0) {
-                            emit(UiStateUpdate.Success(groups, isArchived, totalExpensesCount))
+                    .transformLatest { result ->
+                        if (result.mappedGroups.any { it.expenses.isNotEmpty() } || result.totalExpensesCount > 0) {
+                            emit(
+                                UiStateUpdate.Success(
+                                    data = result.mappedGroups,
+                                    isGroupArchived = result.isArchived,
+                                    totalExpensesCount = result.totalExpensesCount,
+                                    formattedTotalSpent = result.formattedTotalSpent,
+                                    visibleExpensesCount = result.visibleExpensesCount,
+                                    isFiltered = result.isFiltered
+                                )
+                            )
                         } else {
                             // Grace period to avoid empty state flicker
-                            emit(UiStateUpdate.LoadingEmpty(isArchived, totalExpensesCount))
+                            emit(
+                                UiStateUpdate.LoadingEmpty(
+                                    isGroupArchived = result.isArchived,
+                                    totalExpensesCount = result.totalExpensesCount,
+                                    formattedTotalSpent = result.formattedTotalSpent,
+                                    visibleExpensesCount = result.visibleExpensesCount,
+                                    isFiltered = result.isFiltered
+                                )
+                            )
                             delay(EMPTY_STATE_GRACE_PERIOD_MS)
-                            emit(UiStateUpdate.Success(groups, isArchived, totalExpensesCount))
+                            emit(
+                                UiStateUpdate.Success(
+                                    data = result.mappedGroups,
+                                    isGroupArchived = result.isArchived,
+                                    totalExpensesCount = result.totalExpensesCount,
+                                    formattedTotalSpent = result.formattedTotalSpent,
+                                    visibleExpensesCount = result.visibleExpensesCount,
+                                    isFiltered = result.isFiltered
+                                )
+                            )
                         }
                     }
                     .catch { e ->
@@ -142,7 +193,10 @@ class ExpensesViewModel(
                                 isLoading = true,
                                 groupId = groupId,
                                 isGroupArchived = update.isGroupArchived,
-                                totalExpensesCount = update.totalExpensesCount
+                                totalExpensesCount = update.totalExpensesCount,
+                                formattedTotalSpent = update.formattedTotalSpent,
+                                visibleExpensesCount = update.visibleExpensesCount,
+                                isFiltered = update.isFiltered
                             )
 
                             is UiStateUpdate.Success -> ExpensesUiState(
@@ -150,7 +204,10 @@ class ExpensesViewModel(
                                 isLoading = false,
                                 groupId = groupId,
                                 isGroupArchived = update.isGroupArchived,
-                                totalExpensesCount = update.totalExpensesCount
+                                totalExpensesCount = update.totalExpensesCount,
+                                formattedTotalSpent = update.formattedTotalSpent,
+                                visibleExpensesCount = update.visibleExpensesCount,
+                                isFiltered = update.isFiltered
                             )
 
                             is UiStateUpdate.Error -> ExpensesUiState(
@@ -266,17 +323,32 @@ class ExpensesViewModel(
         }
     }
 
+    private data class ExpenseCalculationResult(
+        val mappedGroups: ImmutableList<ExpenseDateGroupUiModel>,
+        val isArchived: Boolean,
+        val totalExpensesCount: Int,
+        val formattedTotalSpent: String,
+        val visibleExpensesCount: Int,
+        val isFiltered: Boolean
+    )
+
     private sealed interface UiStateUpdate {
         val isGroupArchived: Boolean
         data class LoadingEmpty(
             override val isGroupArchived: Boolean,
-            val totalExpensesCount: Int = 0
+            val totalExpensesCount: Int = 0,
+            val formattedTotalSpent: String = "",
+            val visibleExpensesCount: Int = 0,
+            val isFiltered: Boolean = false
         ) : UiStateUpdate
 
         data class Success(
             val data: ImmutableList<ExpenseDateGroupUiModel>,
             override val isGroupArchived: Boolean,
-            val totalExpensesCount: Int = 0
+            val totalExpensesCount: Int = 0,
+            val formattedTotalSpent: String = "",
+            val visibleExpensesCount: Int = 0,
+            val isFiltered: Boolean = false
         ) : UiStateUpdate
 
         data class Error(override val isGroupArchived: Boolean) : UiStateUpdate

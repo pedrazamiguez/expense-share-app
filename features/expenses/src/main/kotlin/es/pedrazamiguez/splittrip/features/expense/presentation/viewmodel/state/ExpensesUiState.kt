@@ -12,7 +12,10 @@ data class ExpensesUiState(
     val groupId: String? = null,
     val isGroupArchived: Boolean = false,
     val searchQuery: String = "",
-    val totalExpensesCount: Int = 0
+    val totalExpensesCount: Int = 0,
+    val formattedTotalSpent: String = "",
+    val visibleExpensesCount: Int = 0,
+    val isFiltered: Boolean = false
 ) {
     /** True when the group has no expenses at all. */
     val isGroupEmpty: Boolean

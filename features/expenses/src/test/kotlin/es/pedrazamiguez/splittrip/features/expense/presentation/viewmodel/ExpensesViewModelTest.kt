@@ -51,6 +51,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -173,6 +174,12 @@ class ExpensesViewModelTest {
                         }.toImmutableList()
                     )
                 }.toImmutableList()
+        }
+
+        every { expenseUiMapper.formatTotalSpent(any(), any()) } answers {
+            val amount = firstArg<Long>()
+            val currency = secondArg<String>()
+            "$amount $currency"
         }
     }
 
@@ -1090,6 +1097,147 @@ class ExpensesViewModelTest {
             assertEquals(0, allExpenses().size)
             assertEquals(2, viewModel.uiState.value.totalExpensesCount)
             assertTrue(viewModel.uiState.value.isSearchResultEmpty)
+
+            collectJob.cancel()
+        }
+    }
+
+    @Nested
+    @DisplayName("TotalSpentSummary")
+    inner class TotalSpentSummary {
+
+        @Test
+        fun `total spent summary matches sum of groupAmounts when unfiltered`() = runTest(testDispatcher) {
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1, testExpense2)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals("7000 EUR", state.formattedTotalSpent)
+            assertEquals(2, state.visibleExpensesCount)
+            assertFalse(state.isFiltered)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `cancelled expenses are excluded from total spent calculation`() = runTest(testDispatcher) {
+            val cancelledExpense = testExpense2.copy(paymentStatus = PaymentStatus.CANCELLED)
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1, cancelledExpense)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals("5000 EUR", state.formattedTotalSpent)
+            assertEquals(2, state.visibleExpensesCount)
+            assertFalse(state.isFiltered)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `future scheduled expenses are excluded from total spent calculation`() = runTest(testDispatcher) {
+            val futureScheduledExpense = testExpense2.copy(
+                paymentStatus = PaymentStatus.SCHEDULED,
+                dueDate = LocalDateTime.now().plusDays(5)
+            )
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1, futureScheduledExpense)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals("5000 EUR", state.formattedTotalSpent)
+            assertEquals(2, state.visibleExpensesCount)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `past and today scheduled expenses are included in total spent calculation`() = runTest(
+            testDispatcher
+        ) {
+            val todayScheduledExpense = testExpense2.copy(
+                sourceAmount = 3000L,
+                groupAmount = 3000L,
+                paymentStatus = PaymentStatus.SCHEDULED,
+                dueDate = LocalDateTime.now()
+            )
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1, todayScheduledExpense)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals("8000 EUR", state.formattedTotalSpent)
+            assertEquals(2, state.visibleExpensesCount)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `multi-currency expenses aggregate base groupAmount`() = runTest(testDispatcher) {
+            val usdExpense = Expense(
+                id = "expense-usd",
+                groupId = testGroupId,
+                title = "USD Expense",
+                sourceAmount = 5000L,
+                sourceCurrency = "USD",
+                groupAmount = 4600L,
+                groupCurrency = "EUR",
+                paymentMethod = PaymentMethod.CREDIT_CARD,
+                createdBy = "user-1",
+                createdAt = LocalDateTime.of(2024, 1, 18, 12, 0)
+            )
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1, usdExpense)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals("9600 EUR", state.formattedTotalSpent)
+            assertEquals(2, state.visibleExpensesCount)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `searching updates total spent and visible count dynamically with isFiltered true`() = runTest(
+            testDispatcher
+        ) {
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1, testExpense2)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            viewModel.onEvent(ExpensesUiEvent.SearchQueryChanged("Dinner"))
+            advanceTimeBy(300)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertTrue(state.isFiltered)
+            assertEquals(1, state.visibleExpensesCount)
+            assertEquals("5000 EUR", state.formattedTotalSpent)
 
             collectJob.cancel()
         }
