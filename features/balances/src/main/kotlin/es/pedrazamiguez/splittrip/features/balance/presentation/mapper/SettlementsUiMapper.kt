@@ -1,6 +1,6 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.mapper
 
-import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
@@ -74,13 +74,13 @@ class SettlementsUiMapper(
                     user = memberProfiles[s.fromUserId],
                     fallbackUserId = s.fromUserId,
                     currentUserId = currentUserId,
-                    selfIdentificationContext = SelfIdentificationContext.NOMINATIVE
+                    selfIdentificationContext = SelfIdentificationContextEnum.NOMINATIVE
                 ),
                 creditorName = userUiMapper.mapToDisplayName(
                     user = memberProfiles[s.toUserId],
                     fallbackUserId = s.toUserId,
                     currentUserId = currentUserId,
-                    selfIdentificationContext = SelfIdentificationContext.NOMINATIVE
+                    selfIdentificationContext = SelfIdentificationContextEnum.NOMINATIVE
                 ),
                 formattedAmount = formatCurrencyAmount(totalAmount, s.currency.ifEmpty { currency }, locale),
                 isCurrentUserDebtor = isDebtor,

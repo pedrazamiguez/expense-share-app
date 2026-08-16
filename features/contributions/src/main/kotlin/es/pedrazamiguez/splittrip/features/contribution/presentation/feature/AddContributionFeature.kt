@@ -26,6 +26,8 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun AddContributionFeature(
+    groupId: String,
+    contributionId: String?,
     addContributionViewModel: AddContributionViewModel = koinViewModel(),
     sharedViewModel: SharedViewModel = koinViewModel(
         viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
@@ -37,15 +39,13 @@ fun AddContributionFeature(
     val navController = LocalTabNavController.current
 
     val uiState by addContributionViewModel.uiState.collectAsStateWithLifecycle()
-    val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
     val selectedGroupCurrency by sharedViewModel.selectedGroupCurrency.collectAsStateWithLifecycle()
 
     var showExitConfirmation by remember { mutableStateOf(false) }
 
     // Set group context — currency is applied synchronously, config loaded async.
-    // Replaces the previous LaunchedEffect(groupId) that was inside the Screen.
-    LaunchedEffect(selectedGroupId, selectedGroupCurrency) {
-        addContributionViewModel.setGroupContext(selectedGroupId, selectedGroupCurrency)
+    LaunchedEffect(groupId, contributionId, selectedGroupCurrency) {
+        addContributionViewModel.setGroupContext(groupId, contributionId, selectedGroupCurrency)
     }
 
     // Intercept system back — delegate to wizard navigation

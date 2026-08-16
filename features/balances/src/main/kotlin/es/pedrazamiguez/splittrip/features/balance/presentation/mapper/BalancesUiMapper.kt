@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.mapper
 
-import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
+import es.pedrazamiguez.splittrip.core.common.enums.GrammaticalGenderEnum
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum
 import es.pedrazamiguez.splittrip.core.common.extensions.localeAwareComparator
 import es.pedrazamiguez.splittrip.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
@@ -9,12 +10,10 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.forma
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatForDisplay
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.Contribution
-import es.pedrazamiguez.splittrip.domain.model.CurrencyAmount
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.GroupPocketBalance
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
@@ -22,7 +21,6 @@ import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.ActivityItemUiModel
-import es.pedrazamiguez.splittrip.features.balance.presentation.model.CashBalanceUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.CashBreakdownUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.ContributionUiModel
@@ -73,25 +71,6 @@ class BalancesUiMapper(
         )
     }
 
-    private fun resolveMemberDisplay(
-        userId: String,
-        groupMemberIds: List<String>,
-        memberProfiles: Map<String, User>,
-        currentUserId: String? = null
-    ): MemberDisplay {
-        val resolvedName = userUiMapper.mapToDisplayName(
-            user = memberProfiles[userId],
-            fallbackUserId = userId,
-            currentUserId = currentUserId,
-            selfIdentificationContext = if (currentUserId != null) SelfIdentificationContext.NOMINATIVE else null
-        )
-        return if (userId !in groupMemberIds) {
-            MemberDisplay.Former(userId, resolvedName)
-        } else {
-            MemberDisplay.Active(userId, resolvedName)
-        }
-    }
-
     fun mapContributions(
         contributions: List<Contribution>,
         groupCurrency: String,
@@ -102,50 +81,73 @@ class BalancesUiMapper(
     ): ImmutableList<ContributionUiModel> {
         val locale = localeProvider.getCurrentLocale()
         return contributions.map { contribution ->
-            val isSubunit = contribution.contributionScope == PayerType.SUBUNIT
-            val isPersonal = contribution.contributionScope == PayerType.USER
-            val isGroup = contribution.contributionScope == PayerType.GROUP
-            val scopeLabel = when {
-                isSubunit -> contribution.subunitId?.let { subunits[it]?.name }
-                isPersonal -> resourceProvider.getString(R.string.balances_contribution_scope_personal)
-                isGroup -> resourceProvider.getString(R.string.balances_contribution_scope_group)
-                else -> null
-            }
-            val createdByDisplayName = resolveCreatedByDisplayName(
+            buildContributionItem(
+                contribution = contribution,
+                groupCurrency = groupCurrency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles,
+                subunits = subunits,
+                groupMemberIds = groupMemberIds,
+                locale = locale
+            )
+        }.toImmutableList()
+    }
+
+    private fun buildContributionItem(
+        contribution: Contribution,
+        groupCurrency: String,
+        currentUserId: String?,
+        memberProfiles: Map<String, User>,
+        subunits: Map<String, Subunit>,
+        groupMemberIds: List<String>,
+        locale: Locale
+    ): ContributionUiModel {
+        val memberDisplay = resolveMemberDisplay(
+            userId = contribution.userId,
+            groupMemberIds = groupMemberIds,
+            memberProfiles = memberProfiles,
+            currentUserId = currentUserId,
+            userUiMapper = userUiMapper
+        )
+        return ContributionUiModel(
+            id = contribution.id,
+            memberDisplay = memberDisplay,
+            isCurrentUser = contribution.userId == currentUserId,
+            formattedAmount = formatCurrencyAmount(contribution.amount, contribution.currency, locale),
+            formattedEquivalentAmount = contribution.equivalentBaseAmount
+                ?.takeIf { contribution.currency != groupCurrency }
+                ?.let { formatCurrencyAmount(it, groupCurrency, locale) }
+                ?: "",
+            isForeignCurrency = contribution.currency != groupCurrency,
+            dateText = (contribution.contributionDate ?: contribution.createdAt)?.formatShortDate(locale).orEmpty(),
+            scopeLabel = when (contribution.contributionScope) {
+                PayerType.SUBUNIT -> contribution.subunitId?.let { subunits[it]?.name }
+                PayerType.USER -> resourceProvider.getString(R.string.balances_contribution_scope_personal)
+                PayerType.GROUP -> resourceProvider.getString(R.string.balances_contribution_scope_group)
+            },
+            isSubunitContribution = contribution.contributionScope == PayerType.SUBUNIT,
+            isPersonalContribution = contribution.contributionScope == PayerType.USER,
+            isGroupContribution = contribution.contributionScope == PayerType.GROUP,
+            createdByDisplayName = resolveCreatedByDisplayName(
                 createdBy = contribution.createdBy,
                 targetUserId = contribution.userId,
                 memberProfiles = memberProfiles,
-                currentUserId = currentUserId
-            )
-            val memberDisplay = resolveMemberDisplay(
-                userId = contribution.userId,
-                groupMemberIds = groupMemberIds,
-                memberProfiles = memberProfiles,
-                currentUserId = currentUserId
-            )
-            val isForeign = contribution.currency != groupCurrency
-            ContributionUiModel(
-                id = contribution.id,
-                memberDisplay = memberDisplay,
-                isCurrentUser = contribution.userId == currentUserId,
-                formattedAmount = formatCurrencyAmount(contribution.amount, contribution.currency, locale),
-                formattedEquivalentAmount = if (isForeign && contribution.equivalentBaseAmount != null) {
-                    formatCurrencyAmount(contribution.equivalentBaseAmount!!, groupCurrency, locale)
-                } else {
-                    ""
-                },
-                isForeignCurrency = isForeign,
-                dateText = (contribution.contributionDate ?: contribution.createdAt)?.formatShortDate(locale) ?: "",
-                scopeLabel = scopeLabel,
-                isSubunitContribution = isSubunit,
-                isPersonalContribution = isPersonal,
-                isGroupContribution = isGroup,
-                createdByDisplayName = createdByDisplayName,
-                isLinkedContribution = contribution.linkedExpenseId != null,
-                isSettlementContribution = contribution.linkedSettlementId != null,
-                syncStatus = contribution.syncStatus
-            )
-        }.toImmutableList()
+                currentUserId = currentUserId,
+                userUiMapper = userUiMapper
+            ),
+            isLinkedContribution = contribution.linkedExpenseId != null,
+            isSettlementContribution = contribution.linkedSettlementId != null,
+            syncStatus = contribution.syncStatus,
+            actionsTitle = if (contribution.userId == currentUserId) {
+                val you = userUiMapper.mapToSelfIdentification(
+                    SelfIdentificationContextEnum.POSSESSIVE_PRONOUN,
+                    GrammaticalGenderEnum.FEMININE
+                )
+                resourceProvider.getString(R.string.balances_contribution_actions_title_you, you)
+            } else {
+                resourceProvider.getString(R.string.balances_contribution_actions_title, memberDisplay.displayName)
+            }
+        )
     }
 
     fun mapCashWithdrawals(
@@ -158,59 +160,74 @@ class BalancesUiMapper(
     ): ImmutableList<CashWithdrawalUiModel> {
         val locale = localeProvider.getCurrentLocale()
         return withdrawals.map { withdrawal ->
-            val isForeign = withdrawal.currency != groupCurrency
-            val isSubunit = withdrawal.withdrawalScope == PayerType.SUBUNIT
-            val isPersonal = withdrawal.withdrawalScope == PayerType.USER
-            val isGroup = withdrawal.withdrawalScope == PayerType.GROUP
-            val scopeLabel = when {
-                isSubunit -> withdrawal.subunitId?.let { subunits[it]?.name }
-                isPersonal -> resourceProvider.getString(R.string.balances_withdraw_cash_scope_personal)
-                isGroup -> resourceProvider.getString(R.string.balances_withdraw_cash_scope_group)
-                else -> null
-            }
-            val createdByDisplayName = resolveCreatedByDisplayName(
+            buildCashWithdrawalItem(
+                withdrawal = withdrawal,
+                groupCurrency = groupCurrency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles,
+                subunits = subunits,
+                groupMemberIds = groupMemberIds,
+                locale = locale
+            )
+        }.toImmutableList()
+    }
+
+    private fun buildCashWithdrawalItem(
+        withdrawal: CashWithdrawal,
+        groupCurrency: String,
+        currentUserId: String?,
+        memberProfiles: Map<String, User>,
+        subunits: Map<String, Subunit>,
+        groupMemberIds: List<String>,
+        locale: Locale
+    ): CashWithdrawalUiModel {
+        val memberDisplay = resolveMemberDisplay(
+            userId = withdrawal.withdrawnBy,
+            groupMemberIds = groupMemberIds,
+            memberProfiles = memberProfiles,
+            currentUserId = currentUserId,
+            userUiMapper = userUiMapper
+        )
+        return CashWithdrawalUiModel(
+            id = withdrawal.id,
+            memberDisplay = memberDisplay,
+            isCurrentUser = withdrawal.withdrawnBy == currentUserId,
+            formattedAmount = formatCurrencyAmount(withdrawal.amountWithdrawn, withdrawal.currency, locale),
+            formattedDeducted = withdrawal.deductedBaseAmount
+                .takeIf { withdrawal.currency != groupCurrency }
+                ?.let { formatCurrencyAmount(it, groupCurrency, locale) }
+                ?: "",
+            currency = withdrawal.currency,
+            isForeignCurrency = withdrawal.currency != groupCurrency,
+            dateText = withdrawal.createdAt?.formatShortDate(locale).orEmpty(),
+            scopeLabel = when (withdrawal.withdrawalScope) {
+                PayerType.SUBUNIT -> withdrawal.subunitId?.let { subunits[it]?.name }
+                PayerType.USER -> resourceProvider.getString(R.string.balances_withdraw_cash_scope_personal)
+                PayerType.GROUP -> resourceProvider.getString(R.string.balances_withdraw_cash_scope_group)
+            },
+            isSubunitWithdrawal = withdrawal.withdrawalScope == PayerType.SUBUNIT,
+            isPersonalWithdrawal = withdrawal.withdrawalScope == PayerType.USER,
+            isGroupWithdrawal = withdrawal.withdrawalScope == PayerType.GROUP,
+            title = withdrawal.title,
+            notes = withdrawal.notes,
+            createdByDisplayName = resolveCreatedByDisplayName(
                 createdBy = withdrawal.createdBy,
                 targetUserId = withdrawal.withdrawnBy,
                 memberProfiles = memberProfiles,
-                currentUserId = currentUserId
-            )
-            val memberDisplay = resolveMemberDisplay(
-                userId = withdrawal.withdrawnBy,
-                groupMemberIds = groupMemberIds,
-                memberProfiles = memberProfiles,
-                currentUserId = currentUserId
-            )
-            CashWithdrawalUiModel(
-                id = withdrawal.id,
-                memberDisplay = memberDisplay,
-                isCurrentUser = withdrawal.withdrawnBy == currentUserId,
-                formattedAmount = formatCurrencyAmount(
-                    withdrawal.amountWithdrawn,
-                    withdrawal.currency,
-                    locale
-                ),
-                formattedDeducted = if (isForeign) {
-                    formatCurrencyAmount(
-                        withdrawal.deductedBaseAmount,
-                        groupCurrency,
-                        locale
-                    )
-                } else {
-                    ""
-                },
-                currency = withdrawal.currency,
-                isForeignCurrency = isForeign,
-                dateText = withdrawal.createdAt?.formatShortDate(locale) ?: "",
-                scopeLabel = scopeLabel,
-                isSubunitWithdrawal = isSubunit,
-                isPersonalWithdrawal = isPersonal,
-                isGroupWithdrawal = isGroup,
-                title = withdrawal.title,
-                notes = withdrawal.notes,
-                createdByDisplayName = createdByDisplayName,
-                syncStatus = withdrawal.syncStatus
-            )
-        }.toImmutableList()
+                currentUserId = currentUserId,
+                userUiMapper = userUiMapper
+            ),
+            syncStatus = withdrawal.syncStatus,
+            actionsTitle = if (withdrawal.withdrawnBy == currentUserId) {
+                val you = userUiMapper.mapToSelfIdentification(
+                    SelfIdentificationContextEnum.POSSESSIVE_PRONOUN,
+                    GrammaticalGenderEnum.FEMININE
+                )
+                resourceProvider.getString(R.string.balances_withdrawal_actions_title_you, you)
+            } else {
+                resourceProvider.getString(R.string.balances_withdrawal_actions_title, memberDisplay.displayName)
+            }
+        )
     }
 
     fun mapActivity(
@@ -356,7 +373,8 @@ class BalancesUiMapper(
             userId = balance.userId,
             groupMemberIds = groupMemberIds,
             memberProfiles = memberProfiles,
-            currentUserId = currentUserId
+            currentUserId = currentUserId,
+            userUiMapper = userUiMapper
         )
         val (cashInHand, cashInHandByCurrency, cashBreakdown) = mapCashInHandAndBreakdown(
             balance,
@@ -531,59 +549,4 @@ class BalancesUiMapper(
         if (totalUserAddOnCents <= 0L) return ""
         return formatCurrencyAmount(totalUserAddOnCents, groupCurrency, locale)
     }
-
-    private fun resolveCreatedByDisplayName(
-        createdBy: String,
-        targetUserId: String,
-        memberProfiles: Map<String, User>,
-        currentUserId: String? = null
-    ): String? {
-        if (createdBy.isBlank() || createdBy == targetUserId) return null
-        val user = memberProfiles[createdBy] ?: return null
-        return userUiMapper.mapToDisplayName(
-            user = user,
-            fallbackUserId = createdBy,
-            currentUserId = currentUserId,
-            selfIdentificationContext = if (currentUserId != null) SelfIdentificationContext.PREPOSITIONAL else null
-        )
-    }
 }
-
-private fun mapCurrencyBreakdowns(
-    amounts: List<CurrencyAmount>,
-    groupCurrency: String,
-    locale: Locale
-): ImmutableList<CurrencyBreakdownUiModel> {
-    return amounts.map { ca ->
-        CurrencyBreakdownUiModel(
-            currency = ca.currency,
-            formattedAmount = formatCurrencyAmount(ca.amountCents, ca.currency, locale),
-            formattedEquivalent = if (ca.currency != groupCurrency && ca.equivalentCents > 0) {
-                formatCurrencyAmount(ca.equivalentCents, groupCurrency, locale)
-            } else {
-                ""
-            }
-        )
-    }.toImmutableList()
-}
-
-private fun mapCashBalances(
-    balance: GroupPocketBalance,
-    locale: Locale
-): ImmutableList<CashBalanceUiModel> = balance.cashBalances.entries
-    .sortedBy { (currency, _) -> currency }
-    .map { (currency, amountCents) ->
-        val equivalent = balance.cashEquivalents[currency]
-        CashBalanceUiModel(
-            currency = currency,
-            formattedAmount = formatCurrencyAmount(amountCents, currency, locale),
-            formattedEquivalent = if (currency != balance.currency && equivalent != null && equivalent > 0) {
-                formatCurrencyAmount(equivalent, balance.currency, locale)
-            } else {
-                ""
-            }
-        )
-    }.toImmutableList()
-
-private fun formatIfPos(amount: Long, currency: String, locale: Locale): String? =
-    if (amount > 0) formatCurrencyAmount(amount, currency, locale) else null

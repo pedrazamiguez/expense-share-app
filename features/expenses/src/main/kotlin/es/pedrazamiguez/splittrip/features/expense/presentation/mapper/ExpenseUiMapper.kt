@@ -1,7 +1,7 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
 import androidx.compose.ui.graphics.vector.ImageVector
-import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
@@ -16,6 +16,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.forma
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatSourceAmount
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.model.Contribution
@@ -80,6 +81,12 @@ class ExpenseUiMapper(
                 },
                 category = category,
                 categoryText = resourceProvider.getString(category.toStringRes()),
+                subcategory = subcategory,
+                subcategoryText = if (subcategory != ExpenseSubcategory.UNSPECIFIED) {
+                    resourceProvider.getString(subcategory.toStringRes())
+                } else {
+                    null
+                },
                 vendorText = vendor,
                 paymentMethodText = resourceProvider.getString(paymentMethod.toStringRes()),
                 paymentStatusText = resourceProvider.getString(paymentStatus.toStringRes()),
@@ -160,6 +167,18 @@ class ExpenseUiMapper(
             }
             .toImmutableList()
     }
+
+    /**
+     * Formats the total spent amount for visible/filtered expenses in the group's default currency.
+     */
+    fun formatTotalSpent(
+        totalSpentCents: Long,
+        currencyCode: String
+    ): String = formatCurrencyAmount(
+        amount = totalSpentCents,
+        currencyCode = currencyCode,
+        locale = localeProvider.getCurrentLocale()
+    )
 
     /**
      * Builds scope-aware funding source info for out-of-pocket expenses.
@@ -257,7 +276,7 @@ class ExpenseUiMapper(
             user = memberProfiles[userId],
             fallbackUserId = userId,
             currentUserId = currentUserId,
-            selfIdentificationContext = SelfIdentificationContext.NOMINATIVE
+            selfIdentificationContext = SelfIdentificationContextEnum.NOMINATIVE
         )
     }
 

@@ -30,8 +30,8 @@ interface BalancesActivityEventHandler {
         scope: CoroutineScope
     )
 
-    fun handleDeleteContributionRequested(contribution: ContributionUiModel)
-    fun handleDeleteContributionDismissed()
+    fun handleContributionActionsRequested(contribution: ContributionUiModel)
+    fun handleContributionActionsDismissed()
     fun handleDeleteContributionConfirmed(groupId: String, contributionId: String)
     fun handleDeleteWithdrawalRequested(withdrawal: CashWithdrawalUiModel)
     fun handleDeleteWithdrawalDismissed()

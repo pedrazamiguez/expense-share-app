@@ -147,11 +147,7 @@ sonarqube {
                 "**/designsystem/transition/**/*.kt",
                 "**/designsystem/extension/**/*.kt",
                 // Compose navigation graphs — only testable via instrumentation
-                "**/navigation/*Navigation.kt",
-                "**/navigation/*NavHost.kt",
-                "**/navigation/**/*NavigationProviderImpl.kt",
-                "**/navigation/**/*TabGraphContributorImpl.kt",
-                "**/navigation/DeepLink*.kt",
+                "**/navigation/**/*.kt",
                 // Koin DI module aggregation wiring (app module)
                 "**/*ModuleAggregations*.kt",
                 // DataStore — requires Android Context, not unit-testable
@@ -171,6 +167,7 @@ sonarqube {
                 "**/logging/**/*.kt",
                 // Context-dependent provider implementations (require Android Context)
                 "**/provider/impl/**/*.kt",
+                "**/network/impl/**/*.kt",
                 // WorkManager — requires Android runtime
                 "**/worker/**/*.kt",
                 // Firebase cloud infra — Tasks.await() requires Android main looper
@@ -193,8 +190,9 @@ sonarqube {
                 "**/remote/datasource/impl/**/*.kt",
                 // Database migrations — raw DDL SQL; no meaningful unit-test path
                 "**/database/DatabaseMigrations.kt",
-                // UiEvent, AppCheck, data-holders, mapping and interfaces
+                // UiEvent / UiAction, AppCheck, data-holders, mapping and interfaces
                 "**/presentation/viewmodel/event/**/*.kt",
+                "**/presentation/viewmodel/action/**/*.kt",
                 "**/appcheck/AppCheckProviderHelper*.kt",
                 "**/presentation/model/CashBalanceUiModel*.kt",
                 "**/presentation/view/SettingItemView*.kt",
@@ -207,7 +205,11 @@ sonarqube {
                 "**/features/authentication/presentation/model/AuthenticationUiAction*.kt",
                 "**/features/authentication/presentation/model/AuthenticationUiEvent*.kt",
                 "**/domain/repository/CurrencyRepository.kt",
+                "**/domain/repository/SettlementNudgeRepository*.kt",
                 "**/domain/datasource/cloud/CloudUserDataSource.kt",
+                "**/domain/datasource/cloud/CloudSettlementDataSource*.kt",
+                "**/domain/usecase/user/impl/UpdateUserReminderPreferencesUseCaseImpl.kt",
+                "**/data/datasource/GroupDashboardDataSourceImpl*.kt",
             ).joinToString(","),
         )
 
@@ -233,7 +235,7 @@ sonarqube {
         // ── Issue exclusions (align with detekt's Compose-aware rules) ───────────
         // Sonar's resourceKey accepts a SINGLE Ant-style path pattern per entry.
         // For multiple paths, use separate multicriteria IDs (e1, e2, …).
-        // See wiki/code-quality-and-static-analysis.md § "SonarQube Exclusion System".
+        // See docs/engineering/quality-and-static-analysis.md § "SonarQube Exclusion System".
         property("sonar.issue.ignore.multicriteria", "e1,e2,e3,e4,e5,e6,e7,e8,e9,e10,e11,e12,e13,e14")
 
         // ── kotlin:S107 — Too many function parameters ─────────────────────

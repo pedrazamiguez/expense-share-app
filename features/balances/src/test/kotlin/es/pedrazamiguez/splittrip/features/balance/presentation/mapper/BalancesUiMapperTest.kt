@@ -72,6 +72,17 @@ class BalancesUiMapperTest {
                 es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_prepositional
             )
         } returns "you"
+        every {
+            resourceProvider.getString(
+                es.pedrazamiguez.splittrip.core.designsystem.R.string.self_identification_possessive_pronoun_feminine
+            )
+        } returns "Your"
+        every { resourceProvider.getString(R.string.balances_contribution_actions_title_you, any()) } returns
+            "You added"
+        every { resourceProvider.getString(R.string.balances_contribution_actions_title, any()) } returns "Added"
+        every { resourceProvider.getString(R.string.balances_withdrawal_actions_title_you, any()) } returns
+            "You withdrew"
+        every { resourceProvider.getString(R.string.balances_withdrawal_actions_title, any()) } returns "Withdrew"
         mapper = BalancesUiMapper(localeProvider, resourceProvider, UserUiMapper(resourceProvider))
     }
 
@@ -1438,6 +1449,98 @@ class BalancesUiMapperTest {
 
             assertEquals("You", feesSection.items[4].parentTitle)
             assertEquals(PayerType.USER, feesSection.items[4].scopeType)
+        }
+    }
+
+    @Nested
+    @DisplayName("ActionsTitle mapping")
+    inner class ActionsTitleMapping {
+
+        @Test
+        fun `maps actionsTitle for current user correctly in contributions`() {
+            every {
+                resourceProvider.getString(
+                    R.string.balances_contribution_actions_title_you,
+                    "tuya"
+                )
+            } returns "Aportación tuya"
+
+            val mockUserUiMapper = mockk<UserUiMapper>()
+            every {
+                mockUserUiMapper.mapToSelfIdentification(
+                    es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum.POSSESSIVE_PRONOUN,
+                    es.pedrazamiguez.splittrip.core.common.enums.GrammaticalGenderEnum.FEMININE
+                )
+            } returns "tuya"
+
+            every {
+                mockUserUiMapper.mapToDisplayName(
+                    user = any(),
+                    fallbackUserId = any(),
+                    currentUserId = any(),
+                    selfIdentificationContext = any()
+                )
+            } returns "You"
+
+            val customMapper = BalancesUiMapper(localeProvider, resourceProvider, mockUserUiMapper)
+
+            val contribution = Contribution(
+                id = "c1",
+                groupId = "g1",
+                userId = "u_active",
+                amount = 1000,
+                currency = "EUR",
+                createdAt = LocalDateTime.now()
+            )
+
+            val result = customMapper.mapContributions(
+                groupCurrency = "EUR",
+                contributions = listOf(contribution),
+                currentUserId = "u_active"
+            )
+
+            assertEquals(1, result.size)
+            assertEquals("Aportación tuya", result[0].actionsTitle)
+        }
+
+        @Test
+        fun `maps actionsTitle for other user correctly in contributions`() {
+            every {
+                resourceProvider.getString(
+                    R.string.balances_contribution_actions_title,
+                    "Other User"
+                )
+            } returns "Contribution by Other User"
+
+            val mockUserUiMapper = mockk<UserUiMapper>()
+            every {
+                mockUserUiMapper.mapToDisplayName(
+                    user = any(),
+                    fallbackUserId = any(),
+                    currentUserId = any(),
+                    selfIdentificationContext = any()
+                )
+            } returns "Other User"
+
+            val customMapper = BalancesUiMapper(localeProvider, resourceProvider, mockUserUiMapper)
+
+            val contribution = Contribution(
+                id = "c1",
+                groupId = "g1",
+                userId = "u_other",
+                amount = 1000,
+                currency = "EUR",
+                createdAt = LocalDateTime.now()
+            )
+
+            val result = customMapper.mapContributions(
+                groupCurrency = "EUR",
+                contributions = listOf(contribution),
+                currentUserId = "u_active"
+            )
+
+            assertEquals(1, result.size)
+            assertEquals("Contribution by Other User", result[0].actionsTitle)
         }
     }
 

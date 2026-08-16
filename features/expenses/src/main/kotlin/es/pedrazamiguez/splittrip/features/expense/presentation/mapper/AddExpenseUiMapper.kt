@@ -1,7 +1,10 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
+import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toIconVector
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toStringRes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.splittrip.domain.constant.DomainConstants
 import es.pedrazamiguez.splittrip.domain.converter.CurrencyConverter
@@ -9,6 +12,7 @@ import es.pedrazamiguez.splittrip.domain.enums.AddOnMode
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.domain.enums.AddOnValueType
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
@@ -22,6 +26,7 @@ import es.pedrazamiguez.splittrip.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitUiModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.SubcategoryUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -120,6 +125,8 @@ class AddExpenseUiMapper(
             runCatching { ExpenseCategory.fromString(it.id) }.getOrDefault(ExpenseCategory.OTHER)
         } ?: ExpenseCategory.OTHER
 
+        val subcategory = state.selectedSubcategory?.subcategory ?: ExpenseSubcategory.UNSPECIFIED
+
         val paymentStatus = state.selectedPaymentStatus?.let {
             runCatching { PaymentStatus.fromString(it.id) }.getOrDefault(PaymentStatus.FINISHED)
         } ?: PaymentStatus.FINISHED
@@ -171,6 +178,7 @@ class AddExpenseUiMapper(
             exchangeRate = internalRate,
             addOns = addOns,
             category = category,
+            subcategory = subcategory,
             vendor = state.vendor.trim().ifBlank { null },
             notes = state.notes.trim().ifBlank { null },
             paymentMethod = paymentMethod,
@@ -216,6 +224,19 @@ class AddExpenseUiMapper(
         val selectedPaymentMethod = currentState.paymentMethods.find { it.id == expense.paymentMethod.name }
         val selectedFundingSource = currentState.fundingSources.find { it.id == expense.payerType.name }
         val selectedCategory = currentState.availableCategories.find { it.id == expense.category.name }
+        val availableSubcategories = ExpenseSubcategory.forCategory(expense.category)
+            .map { sub ->
+                SubcategoryUiModel(
+                    subcategory = sub,
+                    name = UiText.StringResource(sub.toStringRes()),
+                    icon = sub.toIconVector()
+                )
+            }.toImmutableList()
+        val selectedSubcategory = if (expense.subcategory != ExpenseSubcategory.UNSPECIFIED) {
+            availableSubcategories.find { it.subcategory == expense.subcategory }
+        } else {
+            null
+        }
         val selectedPaymentStatus = currentState.availablePaymentStatuses.find { it.id == expense.paymentStatus.name }
 
         val isForeign = expense.sourceCurrency != expense.groupCurrency
@@ -269,6 +290,8 @@ class AddExpenseUiMapper(
             selectedPaymentMethod = selectedPaymentMethod,
             selectedFundingSource = selectedFundingSource,
             selectedCategory = selectedCategory,
+            selectedSubcategory = selectedSubcategory,
+            availableSubcategories = availableSubcategories,
             selectedPaymentStatus = selectedPaymentStatus,
             displayExchangeRate = displayRate,
             calculatedGroupAmount = calculatedGroupAmountString,

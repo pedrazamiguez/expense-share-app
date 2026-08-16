@@ -53,12 +53,15 @@
     <string name="balances_cash_withdrawal_by_you">Çacâtte efêttibo</string>
     <string name="balances_logged_by">Rehîttrao por %1$s</string>
     <string name="balances_contribution_actions_title">Aportaçión de %1$s</string>
+    <string name="balances_contribution_actions_title_you">Aportaçión %1$s</string>
+    <string name="balances_edit_contribution_action">Editâh aportaçión</string>
     <string name="balances_delete_contribution_action">Eliminâh aportaçión</string>
     <string name="balances_delete_contribution_dialog_title">¿Eliminâh aportaçión?</string>
     <string name="balances_delete_contribution_dialog_text">Çe eliminará permanentemente la aportaçión de %1$s. Êtta âççión no çe puede deçaçêh.</string>
     <string name="balances_delete_contribution_success">Aportaçión eliminá</string>
     <string name="balances_delete_contribution_error">Errôh al eliminâh la aportaçión</string>
     <string name="balances_withdrawal_actions_title">Retirá de %1$s</string>
+    <string name="balances_withdrawal_actions_title_you">Retirá %1$s</string>
     <string name="balances_delete_withdrawal_action">Eliminâh retirá</string>
     <string name="balances_delete_withdrawal_dialog_title">¿Eliminâh retirá?</string>
     <string name="balances_delete_withdrawal_dialog_text">Çe eliminará permanentemente la retirá de %1$s. Êtta âççión no çe puede deçaçêh.</string>

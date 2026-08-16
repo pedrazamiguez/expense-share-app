@@ -202,7 +202,7 @@ class BalancesViewModel(
         _activitySelection
     ) { dataState, selection ->
         dataState.copy(
-            contributionToDelete = selection.contributionToDelete,
+            contributionActionsTarget = selection.contributionActionsTarget,
             withdrawalToDelete = selection.withdrawalToDelete
         )
     }
@@ -225,11 +225,11 @@ class BalancesViewModel(
         when (event) {
             BalancesUiEvent.BalanceAnimationComplete -> handleBalanceAnimationComplete()
 
-            is BalancesUiEvent.DeleteContributionRequested ->
-                activityEventHandler.handleDeleteContributionRequested(event.contribution)
+            is BalancesUiEvent.ContributionActionsRequested ->
+                activityEventHandler.handleContributionActionsRequested(event.contribution)
 
-            BalancesUiEvent.DeleteContributionDismissed ->
-                activityEventHandler.handleDeleteContributionDismissed()
+            BalancesUiEvent.ContributionActionsDismissed ->
+                activityEventHandler.handleContributionActionsDismissed()
 
             is BalancesUiEvent.DeleteContributionConfirmed -> {
                 val groupId = _selectedGroupId.value ?: return

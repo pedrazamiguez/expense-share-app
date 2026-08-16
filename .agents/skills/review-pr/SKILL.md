@@ -34,14 +34,15 @@ Perform the following operations to prepare for the review:
 Do not perform a superficial checklist review. Inspect every modified and new file deeply for logic, performance, and correctness:
 
 ### 1. Hard Architectural Rules (Gating)
-- CHECK: Search for `Double` or `Float` used for currency amounts, shares, exchange rates, or percent splits — all must use `BigDecimal` with explicit `RoundingMode` and `scale`.
+- CHECK: Search for `Double` or `Float` used for currency amounts, shares, exchange rates, or percent splits — all must use `BigDecimal` with explicit `RoundingMode` and `scale` (`docs/architecture/adrs/0002-bigdecimal-math.md`).
 - CHECK: Firestore document-layer serialization uses `String` (`toPlainString()` / `toBigDecimalOrNull()`), not `Double`.
-- CHECK: Run `wc -l <path/to/file.kt>` for every modified or new production `.kt` file — none may exceed 600 lines (test files exempt).
-- CHECK: ViewModels must not inject Repositories, `Context`, `LocaleProvider`, or other ViewModels — only UseCases, Mappers, and Domain Services.
+- CHECK: Run `wc -l <path/to/file.kt>` for every modified or new production `.kt` file — none may exceed 600 lines (test files exempt, `docs/architecture/adrs/0004-mvi-state-management.md`).
+- CHECK: ViewModels must not inject Repositories, `Context`, `LocaleProvider`, or other ViewModels — only UseCases, Mappers, and Domain Services (`docs/architecture/adrs/0003-clean-architecture.md`).
 - CHECK: If a ViewModel's `onEvent()` handles >5 event categories or the file exceeds ~200 lines, verify that logic is extracted into plain Event Handler classes.
 - CHECK: Formatting is handled in UI Mappers (`*UiMapper` / `*UiMapperImpl`) via `LocaleProvider`. Never in ViewModels or Domain Services.
+- CHECK: Actionable UI components use `Modifier.debouncedClickable` (`docs/architecture/adrs/0005-debounced-ui-interactions.md`).
 - CHECK: New functionality has corresponding unit or instrumentation tests. Kotlin's `assert()` is never used — JUnit assertions only.
-- CHECK: Repositories launching coroutines inject a `CoroutineDispatcher` (default `Dispatchers.IO`) — never hardcoded.
+- CHECK: Repositories launching coroutines inject a `CoroutineDispatcher` (default `Dispatchers.IO`) — never hardcoded (`docs/architecture/adrs/0001-offline-first-sync.md`).
 
 ### 2. Deep Logic, Robustness & Edge Cases
 - CHECK: Nullability & Silent Fails — Ensure the code doesn't silently ignore unexpected null values (e.g., early returns from click/save actions without notifying the user or showing an error state).

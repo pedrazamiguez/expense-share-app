@@ -1,6 +1,6 @@
 package es.pedrazamiguez.splittrip.features.settlement.presentation.mapper
 
-import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContext
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
@@ -129,7 +129,7 @@ class MemberSpendingChartUiMapper(
             user = memberProfiles[userId],
             fallbackUserId = userId,
             currentUserId = currentUserId,
-            selfIdentificationContext = SelfIdentificationContext.NOMINATIVE
+            selfIdentificationContext = SelfIdentificationContextEnum.NOMINATIVE
         )
     }
 

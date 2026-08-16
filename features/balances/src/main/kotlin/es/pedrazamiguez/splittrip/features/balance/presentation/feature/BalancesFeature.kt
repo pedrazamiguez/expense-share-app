@@ -72,7 +72,13 @@ fun BalancesFeature(
     BalancesScreen(
         uiState = effectiveUiState,
         onEvent = balancesViewModel::onEvent,
-        onNavigateToContribution = { navController.navigate(Routes.ADD_CONTRIBUTION) },
+        onNavigateToContribution = { navController.navigate(Routes.contributionWizardRoute(selectedGroupId ?: "")) },
+        onNavigateToContributionDetail = { contributionId ->
+            navController.navigate(Routes.contributionDetailRoute(selectedGroupId ?: "", contributionId))
+        },
+        onNavigateToEditContribution = { contributionId ->
+            navController.navigate(Routes.contributionWizardRoute(selectedGroupId ?: "", contributionId))
+        },
         onNavigateToWithdrawal = { navController.navigate(Routes.ADD_CASH_WITHDRAWAL) }
     )
 }

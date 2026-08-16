@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,6 +36,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.DotsVertical
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.SheetTitleText
+import kotlinx.coroutines.launch
 
 /**
  * Represents an action item in the ActionBottomSheet.
@@ -75,6 +77,7 @@ fun ActionBottomSheet(
     icon: ImageVector = TablerIcons.Outline.DotsVertical
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -142,7 +145,10 @@ fun ActionBottomSheet(
                         containerColor = Color.Transparent
                     ),
                     modifier = Modifier.clickable(enabled = action.enabled) {
-                        action.onClick()
+                        scope.launch {
+                            sheetState.hide()
+                            action.onClick()
+                        }
                     }
                 ) {
                     Text(

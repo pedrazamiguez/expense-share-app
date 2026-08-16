@@ -23,7 +23,7 @@ internal fun BalanceCardActionButtons(
     onWithdrawCash: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val addMoneySharedModifier = fabSharedTransitionModifier(SharedElementKeys.ADD_CONTRIBUTION)
+    val addMoneySharedModifier = fabSharedTransitionModifier(SharedElementKeys.CONTRIBUTION_WIZARD)
     val withdrawSharedModifier = fabSharedTransitionModifier(SharedElementKeys.ADD_CASH_WITHDRAWAL)
     Row(
         modifier = modifier.fillMaxWidth(),

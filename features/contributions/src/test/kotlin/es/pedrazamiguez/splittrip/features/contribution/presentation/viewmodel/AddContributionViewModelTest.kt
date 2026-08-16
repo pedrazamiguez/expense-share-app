@@ -10,6 +10,8 @@ import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ContributionValidationService
 import es.pedrazamiguez.splittrip.domain.service.impl.ContributionValidationServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AddContributionUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetContributionUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.UpdateContributionUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
@@ -53,6 +55,7 @@ class AddContributionViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var addContributionUseCase: AddContributionUseCase
+    private lateinit var updateContributionUseCase: UpdateContributionUseCase
     private lateinit var getGroupByIdUseCase: GetGroupByIdUseCase
     private lateinit var getGroupSubunitsUseCase: GetGroupSubunitsUseCase
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
@@ -60,6 +63,7 @@ class AddContributionViewModelTest {
     private lateinit var contributionValidationService: ContributionValidationService
     private lateinit var addContributionUiMapper: AddContributionUiMapper
     private lateinit var appConfigService: AppConfigService
+    private lateinit var getContributionUseCase: GetContributionUseCase
     private lateinit var configHandler: ContributionConfigHandler
     private lateinit var submitHandler: ContributionSubmitHandler
     private lateinit var viewModel: AddContributionViewModel
@@ -84,9 +88,12 @@ class AddContributionViewModelTest {
     )
 
     @BeforeEach
+    @Suppress("LongMethod")
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         addContributionUseCase = mockk(relaxed = true)
+        updateContributionUseCase = mockk(relaxed = true)
+        getContributionUseCase = mockk(relaxed = true)
         getGroupByIdUseCase = mockk()
         getGroupSubunitsUseCase = mockk()
         getMemberProfilesUseCase = mockk()
@@ -94,10 +101,10 @@ class AddContributionViewModelTest {
         contributionValidationService = ContributionValidationServiceImpl()
         addContributionUiMapper = mockk(relaxed = true)
         appConfigService = mockk()
+        getContributionUseCase = mockk()
 
         every { appConfigService.defaultCurrencyCode } returns MutableStateFlow("EUR")
         every { addContributionUiMapper.resolveCurrencySymbol(any()) } returns "€"
-        every { addContributionUiMapper.formatMediumDateTime(any()) } returns "11 Aug 2026, 10:00"
         every {
             addContributionUiMapper.formatInputAmountWithCurrency(any(), any())
         } returns "100,00 €"
@@ -132,11 +139,13 @@ class AddContributionViewModelTest {
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             authenticationService = authenticationService,
             addContributionUiMapper = addContributionUiMapper,
-            appConfigService = appConfigService
+            appConfigService = appConfigService,
+            getContributionUseCase = getContributionUseCase
         )
 
         submitHandler = ContributionSubmitHandler(
             addContributionUseCase = addContributionUseCase,
+            updateContributionUseCase = updateContributionUseCase,
             contributionValidationService = contributionValidationService,
             groupCurrencyProvider = { configHandler.groupCurrency }
         )
@@ -167,7 +176,7 @@ class AddContributionViewModelTest {
                 coEvery { authenticationService.currentUserId() } returns "user-1"
                 coEvery { getGroupSubunitsUseCase("group-1") } returns listOf(testSubunit)
 
-                viewModel.setGroupContext("group-1", "EUR")
+                viewModel.setGroupContext("group-1", null, "EUR")
                 advanceUntilIdle()
 
                 val state = viewModel.uiState.value
@@ -188,7 +197,7 @@ class AddContributionViewModelTest {
                 coEvery { authenticationService.currentUserId() } returns "user-1"
                 coEvery { getGroupSubunitsUseCase("group-1") } returns emptyList()
 
-                viewModel.setGroupContext("group-1", "EUR")
+                viewModel.setGroupContext("group-1", null, "EUR")
                 advanceUntilIdle()
 
                 val state = viewModel.uiState.value
@@ -201,7 +210,7 @@ class AddContributionViewModelTest {
 
         @Test
         fun `null groupId is a no-op`() = runTest(testDispatcher) {
-            viewModel.setGroupContext(null, null)
+            viewModel.setGroupContext(null, null, null)
             advanceUntilIdle()
 
             assertTrue(viewModel.uiState.value.subunitOptions.isEmpty())
@@ -218,7 +227,7 @@ class AddContributionViewModelTest {
                 viewModel.actions.collect { emitted.add(it) }
             }
 
-            viewModel.setGroupContext("group-1", "EUR")
+            viewModel.setGroupContext("group-1", null, "EUR")
             advanceUntilIdle()
 
             assertTrue(emitted.any { it is AddContributionUiAction.ShowError })
@@ -241,7 +250,7 @@ class AddContributionViewModelTest {
                     otherSubunit
                 )
 
-                viewModel.setGroupContext("group-1", "EUR")
+                viewModel.setGroupContext("group-1", null, "EUR")
                 advanceUntilIdle()
 
                 assertEquals(1, viewModel.uiState.value.subunitOptions.size)
@@ -255,7 +264,7 @@ class AddContributionViewModelTest {
                 coEvery { authenticationService.currentUserId() } returns "user-1"
                 coEvery { getGroupSubunitsUseCase("group-1") } returns emptyList()
 
-                viewModel.setGroupContext("group-1", "EUR")
+                viewModel.setGroupContext("group-1", null, "EUR")
                 advanceUntilIdle()
 
                 coVerify { getMemberProfilesUseCase(listOf("user-1", "user-2")) }
@@ -294,7 +303,7 @@ class AddContributionViewModelTest {
                 subunitForUser2Only
             )
 
-            viewModel.setGroupContext("group-1", "EUR")
+            viewModel.setGroupContext("group-1", null, "EUR")
             advanceUntilIdle()
 
             // user-1 is in testSubunit and subunitForUser2Only is not for user-1
@@ -332,7 +341,7 @@ class AddContributionViewModelTest {
             coEvery { getGroupByIdUseCase("group-1") } returns testGroup
             coEvery { authenticationService.currentUserId() } returns "user-1"
             coEvery { getGroupSubunitsUseCase("group-1") } returns listOf(testSubunit)
-            viewModel.setGroupContext("group-1", "EUR")
+            viewModel.setGroupContext("group-1", null, "EUR")
             advanceUntilIdle()
         }
     }
@@ -349,22 +358,6 @@ class AddContributionViewModelTest {
 
             assertEquals("50", viewModel.uiState.value.amountInput)
             assertFalse(viewModel.uiState.value.amountError)
-        }
-    }
-
-    // ── ContributionDateChanged ─────────────────────────────────────────────
-
-    @Nested
-    @DisplayName("ContributionDateChanged")
-    inner class ContributionDateChanged {
-
-        @Test
-        fun `updates contributionDateMillis and formattedContributionDate`() = runTest(testDispatcher) {
-            val dateMillis = 1691740800000L
-            viewModel.onEvent(AddContributionUiEvent.ContributionDateChanged(dateMillis))
-
-            assertEquals(dateMillis, viewModel.uiState.value.contributionDateMillis)
-            assertEquals("11 Aug 2026, 10:00", viewModel.uiState.value.formattedContributionDate)
         }
     }
 
@@ -413,7 +406,7 @@ class AddContributionViewModelTest {
             coEvery { getGroupByIdUseCase("group-1") } returns testGroup
             coEvery { authenticationService.currentUserId() } returns "user-1"
             coEvery { getGroupSubunitsUseCase("group-1") } returns emptyList()
-            viewModel.setGroupContext("group-1", "EUR")
+            viewModel.setGroupContext("group-1", null, "EUR")
             advanceUntilIdle()
         }
     }
@@ -427,7 +420,7 @@ class AddContributionViewModelTest {
             coEvery { getGroupByIdUseCase("group-1") } returns testGroup
             coEvery { authenticationService.currentUserId() } returns "user-1"
             coEvery { getGroupSubunitsUseCase("group-1") } returns emptyList()
-            viewModel.setGroupContext("group-1", "EUR")
+            viewModel.setGroupContext("group-1", null, "EUR")
             advanceUntilIdle()
 
             viewModel.onEvent(AddContributionUiEvent.UpdateAmount("100"))
@@ -465,7 +458,7 @@ class AddContributionViewModelTest {
             coEvery { getGroupByIdUseCase("group-1") } returns testGroup
             coEvery { getGroupSubunitsUseCase("group-1") } returns emptyList()
             every { authenticationService.currentUserId() } returns "user-1"
-            viewModel.setGroupContext("group-1", "EUR")
+            viewModel.setGroupContext("group-1", null, "EUR")
             advanceUntilIdle()
 
             // Make it dirty by updating the amount input
@@ -508,7 +501,7 @@ class AddContributionViewModelTest {
             coEvery { getGroupByIdUseCase("group-1") } returns testGroup
             coEvery { getGroupSubunitsUseCase("group-1") } returns emptyList()
             every { authenticationService.currentUserId() } returns "user-1"
-            viewModel.setGroupContext("group-1", "EUR")
+            viewModel.setGroupContext("group-1", null, "EUR")
             advanceUntilIdle()
 
             // Make it dirty
@@ -532,7 +525,7 @@ class AddContributionViewModelTest {
             coEvery { getGroupByIdUseCase("group-1") } returns testGroup
             coEvery { authenticationService.currentUserId() } returns "user-1"
             coEvery { getGroupSubunitsUseCase("group-1") } returns emptyList()
-            viewModel.setGroupContext("group-1", "EUR")
+            viewModel.setGroupContext("group-1", null, "EUR")
             advanceUntilIdle()
 
             // Advance to last step
@@ -725,7 +718,7 @@ class AddContributionViewModelTest {
             coEvery { getGroupByIdUseCase("group-1") } returns testGroup
             coEvery { authenticationService.currentUserId() } returns "user-1"
             coEvery { getGroupSubunitsUseCase("group-1") } returns listOf(testSubunit)
-            viewModel.setGroupContext("group-1", "EUR")
+            viewModel.setGroupContext("group-1", null, "EUR")
             advanceUntilIdle()
             if (amount != null) {
                 viewModel.onEvent(AddContributionUiEvent.UpdateAmount(amount))

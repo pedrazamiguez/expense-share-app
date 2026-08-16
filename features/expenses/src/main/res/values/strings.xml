@@ -7,6 +7,14 @@
     <string name="expenses_add">Add expense</string>
     <string name="expenses_filter">Filter</string>
     <string name="expenses_back">Back</string>
+    <string name="expenses_search_placeholder">Search expenses…</string>
+    <string name="expenses_search_clear">Clear search</string>
+    <string name="expenses_search_empty_title">No expenses found</string>
+    <string name="expenses_search_empty_description">Try searching with different keywords</string>
+    <plurals name="expenses_count">
+        <item quantity="one">%1$d expense</item>
+        <item quantity="other">%1$d expenses</item>
+    </plurals>
     <string name="expense_field_title">Title</string>
     <string name="expense_field_title_required">What did you pay for?</string>
     <string name="expense_field_amount">Amount</string>
@@ -94,6 +102,7 @@
 
     
     <string name="add_expense_category_title">Category</string>
+    <string name="add_expense_subcategory_title">Subcategory</string>
     <string name="add_expense_vendor_label">Company / Vendor (optional)</string>
     <string name="add_expense_vendor_helper">Where did you buy this?</string>
     <string name="add_expense_notes_label">Notes (optional)</string>

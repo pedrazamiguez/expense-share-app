@@ -30,11 +30,54 @@ private fun ExpensesScreenEmptyPreview() {
 @Composable
 private fun ExpensesScreenWithDataPreview() {
     ExpenseListPreviewHelper { expenseGroups ->
+        val count = expenseGroups.sumOf { it.expenses.size }
         ExpensesScreen(
             uiState = ExpensesUiState(
                 isLoading = false,
                 groupId = "group-1",
-                expenseGroups = expenseGroups
+                expenseGroups = expenseGroups,
+                totalExpensesCount = count,
+                formattedTotalSpent = "€125.50",
+                visibleExpensesCount = count,
+                isFiltered = false
+            )
+        )
+    }
+}
+
+@PreviewComplete
+@Composable
+private fun ExpensesScreenSearchActivePreview() {
+    ExpenseListPreviewHelper { expenseGroups ->
+        val count = expenseGroups.sumOf { it.expenses.size }
+        ExpensesScreen(
+            uiState = ExpensesUiState(
+                isLoading = false,
+                groupId = "group-1",
+                searchQuery = "Dinner",
+                expenseGroups = expenseGroups,
+                totalExpensesCount = count,
+                formattedTotalSpent = "€50.00",
+                visibleExpensesCount = count,
+                isFiltered = true
+            )
+        )
+    }
+}
+
+@PreviewComplete
+@Composable
+private fun ExpensesScreenEmptySearchPreview() {
+    PreviewThemeWrapper {
+        ExpensesScreen(
+            uiState = ExpensesUiState(
+                isLoading = false,
+                groupId = "group-1",
+                searchQuery = "Nonexistent",
+                totalExpensesCount = 5,
+                formattedTotalSpent = "€0.00",
+                visibleExpensesCount = 0,
+                isFiltered = true
             )
         )
     }

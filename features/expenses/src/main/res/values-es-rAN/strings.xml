@@ -8,6 +8,14 @@
     <string name="expenses_add">Añadîh gâtto</string>
     <string name="expenses_filter">Firtrâh</string>
     <string name="expenses_back">Borbêh</string>
+    <string name="expenses_search_placeholder">Bûccâh gâttô…</string>
+    <string name="expenses_search_clear">Borrâh búqqueda</string>
+    <string name="expenses_search_empty_title">No çe an encontrao gâttô</string>
+    <string name="expenses_search_empty_description">Prueba a bûccâh con otrâ palabrâ</string>
+    <plurals name="expenses_count">
+        <item quantity="one">%1$d gâtto</item>
+        <item quantity="other">%1$d gâttô</item>
+    </plurals>
     <string name="expense_field_title">Conçêtto</string>
     <string name="expense_field_title_required">¿Qué pagâtte?</string>
     <string name="expense_field_amount">Importe</string>
@@ -82,6 +90,7 @@
     <string name="payment_status_refundable">Pagao (Reemborçable)</string>
     <string name="expense_detail_on_hold">Retenío</string>
     <string name="add_expense_category_title">Categoría</string>
+    <string name="add_expense_subcategory_title">Çûccategoría</string>
     <string name="add_expense_vendor_label">Empreça / Comerçio (ôççionâh)</string>
     <string name="add_expense_vendor_helper">¿Dónde comprâtte êtto?</string>
     <string name="add_expense_notes_label">Notâ (ôççionâh)</string>

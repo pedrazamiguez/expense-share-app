@@ -23,7 +23,7 @@ data class BalancesUiState(
     val previousBalance: String = "",
     val balanceRollingUp: Boolean = true,
     /** Item pending deletion — drives `ActionBottomSheet` and `DestructiveConfirmationDialog` visibility. */
-    val contributionToDelete: ContributionUiModel? = null,
+    val contributionActionsTarget: ContributionUiModel? = null,
     /** Item pending deletion — drives `ActionBottomSheet` and `DestructiveConfirmationDialog` visibility. */
     val withdrawalToDelete: CashWithdrawalUiModel? = null,
     val isGroupArchived: Boolean = false,

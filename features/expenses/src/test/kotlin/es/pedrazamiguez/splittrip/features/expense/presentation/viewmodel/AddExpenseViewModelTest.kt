@@ -14,6 +14,7 @@ import es.pedrazamiguez.splittrip.domain.model.Currency
 import es.pedrazamiguez.splittrip.domain.model.ExtractionCapability
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.GroupExpenseConfig
+import es.pedrazamiguez.splittrip.domain.model.ReceiptAttachment
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.result.ExchangeRateWithStaleness
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
@@ -332,7 +333,7 @@ class AddExpenseViewModelTest {
             coEvery { this@mockk(any()) } answers {
                 val uri = firstArg<String>()
                 Result.success(
-                    es.pedrazamiguez.splittrip.domain.model.ReceiptAttachment(
+                    ReceiptAttachment(
                         localUri = uri,
                         mimeType = "image/webp",
                         capturedAtMillis = 1716000000000L
@@ -342,6 +343,7 @@ class AddExpenseViewModelTest {
         }
         val formHandler = FormEventHandler(
             addExpenseUiMapper = addExpenseUiMapper,
+            addExpenseOptionsUiMapper = addExpenseOptionsMapper,
             attachReceiptUseCase = attachReceiptUseCase
         )
 

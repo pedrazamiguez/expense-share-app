@@ -32,5 +32,6 @@ data class ContributionUiModel(
     val isSettlementContribution: Boolean = false,
     /** Cloud synchronization status of this contribution. */
     val syncStatus: SyncStatus = SyncStatus.SYNCED,
-    val displayName: String = memberDisplay.displayName
+    val displayName: String = memberDisplay.displayName,
+    val actionsTitle: String = ""
 )

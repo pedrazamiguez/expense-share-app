@@ -15,9 +15,11 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.Share
 import es.pedrazamiguez.splittrip.features.contribution.R
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.AddContributionViewModel
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.event.AddContributionUiEvent
+import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.state.AddContributionUiState
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.koin.androidx.compose.koinViewModel
 
-class AddContributionScreenUiProviderImpl(override val route: String = Routes.ADD_CONTRIBUTION) :
+class AddContributionScreenUiProviderImpl(override val route: String = Routes.CONTRIBUTION_WIZARD) :
     ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -32,12 +34,27 @@ class AddContributionScreenUiProviderImpl(override val route: String = Routes.AD
         val vm: AddContributionViewModel? = backStackEntry?.let {
             koinViewModel(viewModelStoreOwner = it)
         }
+        val uiState by (
+            vm?.uiState ?: MutableStateFlow(
+                AddContributionUiState()
+            )
+            ).collectAsStateWithLifecycle()
+        val titleResId = if (uiState.isEditMode) {
+            R.string.contribution_edit_title
+        } else {
+            R.string.contribution_add_money_title
+        }
 
         DynamicTopAppBar(
-            title = stringResource(R.string.contribution_add_money_title),
+            title = stringResource(titleResId),
             subtitle = groupName,
-            onBack = { vm?.onEvent(AddContributionUiEvent.PreviousStep) ?: navController.popBackStack() },
-            onBackLongPress = { vm?.onEvent(AddContributionUiEvent.CloseWizard) },
+            onBack = {
+                vm?.onEvent(AddContributionUiEvent.PreviousStep)
+                    ?: navController.popBackStack()
+            },
+            onBackLongPress = {
+                vm?.onEvent(AddContributionUiEvent.CloseWizard)
+            },
             pinned = true
         )
     }

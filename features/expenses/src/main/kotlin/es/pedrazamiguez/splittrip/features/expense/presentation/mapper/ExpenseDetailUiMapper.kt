@@ -6,13 +6,13 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Receipt
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReceiptRefund
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toIconVector
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toStringRes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.AddOnMode
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.enums.SplitType
@@ -108,6 +108,12 @@ class ExpenseDetailUiMapper(
                 title = expense.title,
                 category = expense.category,
                 categoryText = resourceProvider.getString(expense.category.toStringRes()),
+                subcategory = expense.subcategory,
+                subcategoryText = if (expense.subcategory != ExpenseSubcategory.UNSPECIFIED) {
+                    resourceProvider.getString(expense.subcategory.toStringRes())
+                } else {
+                    null
+                },
                 formattedGroupAmount = formattingHelper.formatCentsWithCurrency(
                     expense.groupAmount,
                     expense.groupCurrency

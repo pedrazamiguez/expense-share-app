@@ -26,6 +26,8 @@ fun BalancesScreen(
     uiState: BalancesUiState = BalancesUiState(),
     onEvent: (BalancesUiEvent) -> Unit = {},
     onNavigateToContribution: () -> Unit = {},
+    onNavigateToContributionDetail: (String) -> Unit = {},
+    onNavigateToEditContribution: (String) -> Unit = {},
     onNavigateToWithdrawal: () -> Unit = {}
 ) {
     val bottomPadding = LocalBottomPadding.current
@@ -40,6 +42,7 @@ fun BalancesScreen(
         bottomPadding = bottomPadding,
         onEvent = onEvent,
         onNavigateToContribution = onNavigateToContribution,
+        onNavigateToContributionDetail = onNavigateToContributionDetail,
         onNavigateToWithdrawal = onNavigateToWithdrawal,
         onShowExtrasBreakdown = { showExtrasBreakdown = true },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
@@ -48,6 +51,7 @@ fun BalancesScreen(
     BalancesScreenOverlays(
         uiState = uiState,
         onEvent = onEvent,
+        onNavigateToEditContribution = onNavigateToEditContribution,
         onContributionDeleteRequested = { contributionPendingDelete = it },
         onWithdrawalDeleteRequested = { withdrawalPendingDelete = it }
     )

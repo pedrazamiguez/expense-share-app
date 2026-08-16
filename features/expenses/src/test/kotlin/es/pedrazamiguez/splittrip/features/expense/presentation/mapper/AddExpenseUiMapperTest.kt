@@ -1,7 +1,11 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
+import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Car
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.splittrip.domain.constant.DomainConstants
@@ -9,6 +13,7 @@ import es.pedrazamiguez.splittrip.domain.enums.AddOnMode
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.domain.enums.AddOnValueType
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
@@ -24,6 +29,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.model.FundingSou
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitTypeUiModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.SubcategoryUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.EntitySplitFlattenDelegate
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import io.mockk.every
@@ -66,10 +72,7 @@ class AddExpenseUiMapperTest {
         resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
 
-        val formattingHelper =
-            es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper(
-                localeProvider
-            )
+        val formattingHelper = FormattingHelper(localeProvider)
         val splitPreviewService = SplitPreviewServiceImpl()
         val remainderDistributionService = RemainderDistributionServiceImpl()
         val userUiMapper = mockk<UserUiMapper>(relaxed = true)
@@ -445,26 +448,33 @@ class AddExpenseUiMapperTest {
     inner class MapToDomainExtended {
 
         @Test
-        fun `maps category from selected category UI model`() {
+        fun `maps category and subcategory from selected UI models`() {
+            val subcategoryUiModel = SubcategoryUiModel(
+                subcategory = ExpenseSubcategory.TAXI_RIDESHARE,
+                name = UiText.DynamicString("Taxi"),
+                icon = TablerIcons.Outline.Car
+            )
             val state = AddExpenseUiState(
-                expenseTitle = "Groceries",
-                sourceAmount = "50.00",
+                expenseTitle = "Taxi ride",
+                sourceAmount = "15.00",
                 selectedCurrency = eurUi,
                 groupCurrency = eurUi,
                 displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
                 selectedPaymentMethod = cashPaymentMethod,
-                selectedCategory = CategoryUiModel(id = "FOOD", displayText = "Food")
+                selectedCategory = CategoryUiModel(id = "TRANSPORT", displayText = "Transport"),
+                selectedSubcategory = subcategoryUiModel
             )
 
             val result = mapper.mapToDomain(state, "group-123")
 
             assertTrue(result.isSuccess)
-            assertEquals(ExpenseCategory.FOOD, result.getOrThrow().category)
+            assertEquals(ExpenseCategory.TRANSPORT, result.getOrThrow().category)
+            assertEquals(ExpenseSubcategory.TAXI_RIDESHARE, result.getOrThrow().subcategory)
         }
 
         @Test
-        fun `defaults category to OTHER when null`() {
+        fun `defaults category to OTHER and subcategory to UNSPECIFIED when null`() {
             val state = AddExpenseUiState(
                 expenseTitle = "Test",
                 sourceAmount = "10.00",
@@ -473,13 +483,15 @@ class AddExpenseUiMapperTest {
                 displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
                 selectedPaymentMethod = cashPaymentMethod,
-                selectedCategory = null
+                selectedCategory = null,
+                selectedSubcategory = null
             )
 
             val result = mapper.mapToDomain(state, "group-123")
 
             assertTrue(result.isSuccess)
             assertEquals(ExpenseCategory.OTHER, result.getOrThrow().category)
+            assertEquals(ExpenseSubcategory.UNSPECIFIED, result.getOrThrow().subcategory)
         }
 
         @Test

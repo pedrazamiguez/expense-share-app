@@ -8,8 +8,11 @@ import es.pedrazamiguez.splittrip.domain.usecase.user.ReconcileUnregisteredUserU
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -78,5 +81,43 @@ class LinkEmailPasswordUseCaseTest {
         coVerify(exactly = 1) { authenticationService.linkEmailPassword(email, password) }
         coVerify(exactly = 1) { userRepository.saveUser(any()) }
         coVerify(exactly = 1) { reconcileUnregisteredUserUseCase(email, userId) }
+    }
+
+    @Test
+    fun `creates new user profile when existing profile is null and creation timestamp is present`() = runTest {
+        val slot = slot<User>()
+        coEvery { authenticationService.linkEmailPassword(email, password) } returns Result.success(Unit)
+        coEvery { userRepository.getCurrentUserProfile() } returns null
+        coEvery { authenticationService.getCurrentUserCreationTimestamp() } returns 1672531199000L
+        coEvery { userRepository.saveUser(capture(slot)) } returns Result.success(Unit)
+
+        val result = useCase(email, password)
+
+        assertTrue(result.isSuccess)
+        val savedUser = slot.captured
+        assertEquals(userId, savedUser.userId)
+        assertEquals(email, savedUser.email)
+        assertEquals("email", savedUser.displayName)
+        assertNull(savedUser.profileImagePath)
+        assertNotNull(savedUser.createdAt)
+    }
+
+    @Test
+    fun `creates new user profile when existing profile is null and creation timestamp is null`() = runTest {
+        val slot = slot<User>()
+        coEvery { authenticationService.linkEmailPassword(email, password) } returns Result.success(Unit)
+        coEvery { userRepository.getCurrentUserProfile() } returns null
+        coEvery { authenticationService.getCurrentUserCreationTimestamp() } returns null
+        coEvery { userRepository.saveUser(capture(slot)) } returns Result.success(Unit)
+
+        val result = useCase(email, password)
+
+        assertTrue(result.isSuccess)
+        val savedUser = slot.captured
+        assertEquals(userId, savedUser.userId)
+        assertEquals(email, savedUser.email)
+        assertEquals("email", savedUser.displayName)
+        assertNull(savedUser.profileImagePath)
+        assertNotNull(savedUser.createdAt)
     }
 }

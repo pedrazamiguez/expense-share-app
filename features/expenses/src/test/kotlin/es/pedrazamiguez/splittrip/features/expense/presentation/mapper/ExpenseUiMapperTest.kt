@@ -10,6 +10,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.forma
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
@@ -935,29 +936,6 @@ class ExpenseUiMapperTest {
         }
 
         @Test
-        fun `resolves CONTRIBUTION category text`() {
-            every { resourceProvider.getString(CommonR.string.expense_category_contribution) } returns
-                "Contribution"
-
-            val expense = Expense(id = "cat-5", category = ExpenseCategory.CONTRIBUTION)
-
-            val result = mapper.map(expense)
-
-            assertEquals("Contribution", result.categoryText)
-        }
-
-        @Test
-        fun `resolves REFUND category text`() {
-            every { resourceProvider.getString(CommonR.string.expense_category_refund) } returns "Refund"
-
-            val expense = Expense(id = "cat-6", category = ExpenseCategory.REFUND)
-
-            val result = mapper.map(expense)
-
-            assertEquals("Refund", result.categoryText)
-        }
-
-        @Test
         fun `resolves ACTIVITIES category text`() {
             every { resourceProvider.getString(CommonR.string.expense_category_activities) } returns "Activities"
 
@@ -1073,21 +1051,21 @@ class ExpenseUiMapperTest {
         }
 
         @Test
-        fun `maps CONTRIBUTION category enum`() {
-            val expense = Expense(id = "cenum-8", category = ExpenseCategory.CONTRIBUTION)
+        fun `maps subcategory and subcategoryText when specified`() {
+            every {
+                resourceProvider.getString(CommonR.string.expense_subcategory_international_flight)
+            } returns "International Flight"
+
+            val expense = Expense(
+                id = "subcat-1",
+                category = ExpenseCategory.TRANSPORT,
+                subcategory = ExpenseSubcategory.INTERNATIONAL_FLIGHT
+            )
 
             val result = mapper.map(expense)
 
-            assertEquals(ExpenseCategory.CONTRIBUTION, result.category)
-        }
-
-        @Test
-        fun `maps REFUND category enum`() {
-            val expense = Expense(id = "cenum-9", category = ExpenseCategory.REFUND)
-
-            val result = mapper.map(expense)
-
-            assertEquals(ExpenseCategory.REFUND, result.category)
+            assertEquals(ExpenseSubcategory.INTERNATIONAL_FLIGHT, result.subcategory)
+            assertEquals("International Flight", result.subcategoryText)
         }
 
         @Test
@@ -1407,6 +1385,23 @@ class ExpenseUiMapperTest {
             val result = mapper.map(expense)
 
             assertEquals("${'$'}12,345.67", result.formattedAmount)
+        }
+    }
+
+    @Nested
+    @DisplayName("formatTotalSpent")
+    inner class FormatTotalSpent {
+
+        @Test
+        fun `formatTotalSpent formats amount in base currency with user locale`() {
+            every { localeProvider.getCurrentLocale() } returns Locale.US
+            assertEquals("€125.50", mapper.formatTotalSpent(12550L, "EUR"))
+
+            every { localeProvider.getCurrentLocale() } returns Locale("es", "ES")
+            assertEquals("0,00\u00A0€", mapper.formatTotalSpent(0L, "EUR"))
+
+            every { localeProvider.getCurrentLocale() } returns Locale.US
+            assertEquals("${'$'}5,000.00", mapper.formatTotalSpent(500000L, "USD"))
         }
     }
 

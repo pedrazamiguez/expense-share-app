@@ -18,7 +18,15 @@ object Routes {
     const val BALANCES = "balances"
     const val YOUR_BALANCE = "your_balance"
     const val CATEGORY_SPENDING = "category_spending"
-    const val ADD_CONTRIBUTION = "add_contribution"
+    const val CONTRIBUTION_WIZARD_ARG_GROUP_ID = "groupId"
+    const val CONTRIBUTION_WIZARD_ARG_CONTRIBUTION_ID = "contributionId"
+    const val CONTRIBUTION_WIZARD =
+        "contribution_wizard/{$CONTRIBUTION_WIZARD_ARG_GROUP_ID}" +
+            "?$CONTRIBUTION_WIZARD_ARG_CONTRIBUTION_ID={$CONTRIBUTION_WIZARD_ARG_CONTRIBUTION_ID}"
+    const val CONTRIBUTION_DETAIL_ARG_GROUP_ID = "groupId"
+    const val CONTRIBUTION_DETAIL_ARG_CONTRIBUTION_ID = "contributionId"
+    const val CONTRIBUTION_DETAIL =
+        "contribution_detail/{$CONTRIBUTION_DETAIL_ARG_GROUP_ID}/{$CONTRIBUTION_DETAIL_ARG_CONTRIBUTION_ID}"
     const val ADD_CASH_WITHDRAWAL = "add_cash_withdrawal"
     const val SETTINGS = "settings"
     const val SETTINGS_DEFAULT_CURRENCY = "settings_default_currency"
@@ -61,4 +69,12 @@ object Routes {
         val base = "receipt_viewer/$encodedUri"
         return if (mimeType != null) "$base?mimeType=${Uri.encode(mimeType)}" else base
     }
+
+    fun contributionWizardRoute(groupId: String, contributionId: String? = null): String {
+        val base = "contribution_wizard/$groupId"
+        return if (contributionId != null) "$base?contributionId=$contributionId" else base
+    }
+
+    fun contributionDetailRoute(groupId: String, contributionId: String): String =
+        "contribution_detail/$groupId/$contributionId"
 }

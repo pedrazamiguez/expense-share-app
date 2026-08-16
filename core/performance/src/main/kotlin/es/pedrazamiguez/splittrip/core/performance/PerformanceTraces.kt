@@ -12,6 +12,7 @@ object PerformanceTraces {
     const val GROUP_CREATE_FIRESTORE_BATCH = "group_create_firestore_batch"
     const val GROUP_IMAGE_UPLOAD = "group_image_upload"
     const val CONTRIBUTION_ADD = "contribution_add"
+    const val CONTRIBUTION_UPDATE = "contribution_update"
     const val WITHDRAWAL_ADD = "withdrawal_add"
 
     const val SYNC_CREATE_TO_CLOUD = "sync_create_to_cloud"

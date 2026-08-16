@@ -27,7 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
  * - **Body / label / caption** → `bodyMedium` / `bodySmall` / `bodyLarge` / `labelLarge` / `labelSmall` → **Manrope**
  * - **Sheet / feature titles** → `titleLarge` → **Manrope**
  *
- * See `wiki/horizon-narrative-design-language.md §3.3` for full usage guidance.
+ * See `docs/design-system/horizon-narrative-design.md §3.3` for full usage guidance.
  */
 
 // ─── Private helpers ─────────────────────────────────────────────────────────

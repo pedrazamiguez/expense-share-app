@@ -7,6 +7,10 @@ interface ContributionRepository {
 
     suspend fun addContribution(groupId: String, contribution: Contribution)
 
+    suspend fun updateContribution(groupId: String, contribution: Contribution)
+
+    suspend fun getContribution(contributionId: String): Contribution?
+
     fun getGroupContributionsFlow(groupId: String): Flow<List<Contribution>>
 
     suspend fun deleteContribution(groupId: String, contributionId: String)

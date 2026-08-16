@@ -66,11 +66,11 @@ class AddContributionViewModel(
      * Currency is applied **synchronously** so the symbol is visible on frame 1.
      * Group config (members, subunits) is loaded asynchronously.
      */
-    fun setGroupContext(groupId: String?, currency: String?) {
+    fun setGroupContext(groupId: String?, contributionId: String?, currency: String?) {
         configHandler.setGroupCurrency(currency)
-        if (groupId != currentGroupId) {
+        if (groupId != currentGroupId || _uiState.value.contributionId != contributionId) {
             currentGroupId = groupId
-            configHandler.loadGroupConfig(groupId)
+            configHandler.loadGroupConfig(groupId, contributionId)
         }
     }
 

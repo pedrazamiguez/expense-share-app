@@ -7,6 +7,7 @@ import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetContributionUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
@@ -43,6 +44,7 @@ class ContributionConfigHandlerTest {
     private lateinit var authenticationService: AuthenticationService
     private lateinit var addContributionUiMapper: AddContributionUiMapper
     private lateinit var appConfigService: AppConfigService
+    private lateinit var getContributionUseCase: GetContributionUseCase
 
     private lateinit var uiState: MutableStateFlow<AddContributionUiState>
     private lateinit var actions: MutableSharedFlow<AddContributionUiAction>
@@ -72,6 +74,7 @@ class ContributionConfigHandlerTest {
         authenticationService = mockk()
         addContributionUiMapper = mockk(relaxed = true)
         appConfigService = mockk()
+        getContributionUseCase = mockk()
 
         uiState = MutableStateFlow(AddContributionUiState())
         actions = MutableSharedFlow(extraBufferCapacity = 1)
@@ -85,7 +88,8 @@ class ContributionConfigHandlerTest {
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             authenticationService = authenticationService,
             addContributionUiMapper = addContributionUiMapper,
-            appConfigService = appConfigService
+            appConfigService = appConfigService,
+            getContributionUseCase = getContributionUseCase
         )
 
         // Default stubs

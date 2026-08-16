@@ -9,6 +9,7 @@ import es.pedrazamiguez.splittrip.domain.enums.AddOnMode
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.domain.enums.AddOnValueType
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
@@ -28,6 +29,7 @@ fun Expense.toDocument(expenseId: String, groupId: String, groupDocRef: Document
         groupRef = groupDocRef,
         title = title,
         expenseCategory = category.name,
+        expenseSubcategory = subcategory.name.takeUnless { subcategory == ExpenseSubcategory.UNSPECIFIED },
         vendor = vendor,
         amountCents = sourceAmount,
         currency = sourceCurrency,
@@ -72,6 +74,9 @@ fun ExpenseDocument.toDomain(): Expense {
         category = runCatching { ExpenseCategory.fromString(expenseCategory) }.getOrDefault(
             ExpenseCategory.OTHER
         ),
+        subcategory = expenseSubcategory?.let {
+            runCatching { ExpenseSubcategory.fromString(it) }.getOrDefault(ExpenseSubcategory.UNSPECIFIED)
+        } ?: ExpenseSubcategory.UNSPECIFIED,
         vendor = vendor,
         notes = notes,
         sourceAmount = amountCents,

@@ -9,6 +9,7 @@ data class ExpenseDocument(
     val groupRef: DocumentReference? = null,
     val operationDate: Timestamp? = null,
     val expenseCategory: String = "OTHER",
+    val expenseSubcategory: String? = null,
     val title: String = "",
     val description: String? = null,
     val vendor: String? = null,

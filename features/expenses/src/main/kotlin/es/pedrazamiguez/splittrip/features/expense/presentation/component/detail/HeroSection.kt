@@ -28,8 +28,8 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.CaptionText
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toIconVector
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.features.expense.R
-import es.pedrazamiguez.splittrip.features.expense.presentation.extensions.toIconVector
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseDetailUiModel
 
 private val HERO_AMOUNT_SIZE = 40.sp
@@ -55,6 +55,12 @@ internal fun HeroSection(
                     icon = expense.category.toIconVector(),
                     label = expense.categoryText
                 )
+                if (expense.subcategoryText != null && expense.subcategory != ExpenseSubcategory.UNSPECIFIED) {
+                    CategoryChip(
+                        icon = expense.subcategory.toIconVector(),
+                        label = expense.subcategoryText
+                    )
+                }
                 MethodChip(
                     icon = expense.paymentMethodIcon,
                     label = expense.paymentMethodText
