@@ -7,6 +7,10 @@
     <string name="expenses_add">Añadir gasto</string>
     <string name="expenses_filter">Filtrar</string>
     <string name="expenses_back">Volver</string>
+    <string name="expenses_search_placeholder">Buscar por concepto o notas…</string>
+    <string name="expenses_search_clear">Borrar búsqueda</string>
+    <string name="expenses_search_empty_title">No se han encontrado gastos</string>
+    <string name="expenses_search_empty_description">Prueba a buscar con otras palabras</string>
     <string name="expense_field_title">Concepto</string>
     <string name="expense_field_title_required">¿Qué pagaste?</string>
     <string name="expense_field_amount">Importe</string>

@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -51,6 +52,7 @@ class ExpensesViewModel(
     private val _scrollState = MutableStateFlow(Pair(0, 0))
     private val _selectedGroupId = MutableStateFlow<String?>(null)
     private val _refreshTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    private val _searchQuery = MutableStateFlow("")
 
     // Actions for one-shot events like success/error messages
     private val _actions = MutableSharedFlow<ExpensesUiAction>()
@@ -62,6 +64,11 @@ class ExpensesViewModel(
             val groupFlow = observeGroupUseCase(groupId)
             val currentUserId = authenticationService.currentUserId()
 
+            val debouncedQueryFlow = _searchQuery
+                .debounce { query ->
+                    if (query.isBlank()) 0L else SEARCH_DEBOUNCE_MS
+                }
+
             // Merge: emit once immediately (Unit), plus on every explicit refresh
             merge(
                 flowOf(Unit),
@@ -71,15 +78,27 @@ class ExpensesViewModel(
                     useCases.getGroupExpensesFlowUseCase(groupId),
                     useCases.getGroupContributionsFlowUseCase(groupId),
                     useCases.getGroupSubunitsFlowUseCase(groupId),
-                    groupFlow
-                ) { expenses, contributions, subunits, group ->
+                    groupFlow,
+                    debouncedQueryFlow
+                ) { expenses, contributions, subunits, group, debouncedQuery ->
+                    val totalExpensesCount = expenses.size
+                    val filteredExpenses = if (debouncedQuery.isBlank()) {
+                        expenses
+                    } else {
+                        val queryTrimmed = debouncedQuery.trim()
+                        expenses.filter { expense ->
+                            expense.title.contains(queryTrimmed, ignoreCase = true) ||
+                                (expense.notes?.contains(queryTrimmed, ignoreCase = true) == true)
+                        }
+                    }
+
                     val isArchived = group?.status == GroupStatus.ARCHIVED
                     val groupMemberIds = group?.members ?: emptyList()
 
                     // Collect ALL unique user IDs: group members + expense creators + payers
                     val allUserIds = buildSet {
                         addAll(groupMemberIds)
-                        expenses.forEach {
+                        filteredExpenses.forEach {
                             add(it.createdBy)
                             it.payerId?.let { payerId -> add(payerId) }
                         }
@@ -93,23 +112,23 @@ class ExpensesViewModel(
                     val subunitsById = subunits.associateBy { it.id }
 
                     val mappedGroups = expenseUiMapper.mapGroupedByDate(
-                        expenses = expenses,
+                        expenses = filteredExpenses,
                         memberProfiles = memberProfiles,
                         currentUserId = currentUserId,
                         pairedContributions = pairedContributions,
                         subunits = subunitsById,
                         groupMemberIds = groupMemberIds
                     )
-                    Pair(mappedGroups, isArchived)
+                    Triple(mappedGroups, isArchived, totalExpensesCount)
                 }
-                    .transformLatest { (groups, isArchived) ->
-                        if (groups.any { it.expenses.isNotEmpty() }) {
-                            emit(UiStateUpdate.Success(groups, isArchived))
+                    .transformLatest { (groups, isArchived, totalExpensesCount) ->
+                        if (groups.any { it.expenses.isNotEmpty() } || totalExpensesCount > 0) {
+                            emit(UiStateUpdate.Success(groups, isArchived, totalExpensesCount))
                         } else {
                             // Grace period to avoid empty state flicker
-                            emit(UiStateUpdate.LoadingEmpty(isArchived))
+                            emit(UiStateUpdate.LoadingEmpty(isArchived, totalExpensesCount))
                             delay(EMPTY_STATE_GRACE_PERIOD_MS)
-                            emit(UiStateUpdate.Success(groups, isArchived))
+                            emit(UiStateUpdate.Success(groups, isArchived, totalExpensesCount))
                         }
                     }
                     .catch { e ->
@@ -128,14 +147,16 @@ class ExpensesViewModel(
                             is UiStateUpdate.LoadingEmpty -> ExpensesUiState(
                                 isLoading = true,
                                 groupId = groupId,
-                                isGroupArchived = update.isGroupArchived
+                                isGroupArchived = update.isGroupArchived,
+                                totalExpensesCount = update.totalExpensesCount
                             )
 
                             is UiStateUpdate.Success -> ExpensesUiState(
                                 expenseGroups = update.data,
                                 isLoading = false,
                                 groupId = groupId,
-                                isGroupArchived = update.isGroupArchived
+                                isGroupArchived = update.isGroupArchived,
+                                totalExpensesCount = update.totalExpensesCount
                             )
 
                             is UiStateUpdate.Error -> ExpensesUiState(
@@ -147,7 +168,7 @@ class ExpensesViewModel(
                     }
             }
         }
-        .combineWithScroll(_scrollState)
+        .combineWithSearchAndScroll(_searchQuery, _scrollState)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(
@@ -172,11 +193,16 @@ class ExpensesViewModel(
             ExpensesUiEvent.ExpenseAdded -> {
                 viewModelScope.launch { _actions.emit(ExpensesUiAction.ScrollToTop) }
             }
+
+            is ExpensesUiEvent.SearchQueryChanged -> {
+                _searchQuery.value = event.query
+            }
         }
     }
 
     fun setSelectedGroup(groupId: String?) {
         if (groupId != _selectedGroupId.value) {
+            _searchQuery.value = ""
             _selectedGroupId.value = groupId
         }
     }
@@ -248,20 +274,35 @@ class ExpensesViewModel(
 
     private sealed interface UiStateUpdate {
         val isGroupArchived: Boolean
-        data class LoadingEmpty(override val isGroupArchived: Boolean) : UiStateUpdate
+        data class LoadingEmpty(
+            override val isGroupArchived: Boolean,
+            val totalExpensesCount: Int = 0
+        ) : UiStateUpdate
+
         data class Success(
             val data: ImmutableList<ExpenseDateGroupUiModel>,
-            override val isGroupArchived: Boolean
+            override val isGroupArchived: Boolean,
+            val totalExpensesCount: Int = 0
         ) : UiStateUpdate
+
         data class Error(override val isGroupArchived: Boolean) : UiStateUpdate
     }
 
-    private fun Flow<ExpensesUiState>.combineWithScroll(scrollFlow: StateFlow<Pair<Int, Int>>): Flow<ExpensesUiState> =
-        combine(this, scrollFlow) { state, scroll ->
-            state.copy(scrollPosition = scroll.first, scrollOffset = scroll.second)
+    private fun Flow<ExpensesUiState>.combineWithSearchAndScroll(
+        searchQueryFlow: StateFlow<String>,
+        scrollFlow: StateFlow<Pair<Int, Int>>
+    ): Flow<ExpensesUiState> =
+        combine(this, searchQueryFlow, scrollFlow) { state, query, scroll ->
+            state.copy(
+                searchQuery = query,
+                scrollPosition = scroll.first,
+                scrollOffset = scroll.second
+            )
         }
 
     companion object {
+        private const val SEARCH_DEBOUNCE_MS = 300L
+
         // Grace period before showing the empty state.
         // On cold start, Room emits an empty list instantly while the cloud sync
         // runs in the background. transformLatest will cancel this delay the moment

@@ -4,8 +4,11 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -25,6 +28,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Edit
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Receipt
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReceiptRefund
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Search
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Trash
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
@@ -41,6 +45,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.component.Restor
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.TrackScrollEffect
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.list.DateHeaderItem
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.list.ExpenseItem
+import es.pedrazamiguez.splittrip.features.expense.presentation.component.list.ExpenseSearchBar
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.ExpensesUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.ExpensesUiState
@@ -56,7 +61,8 @@ fun ExpensesScreen(
     onEditExpenseClick: (String) -> Unit = {},
     onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> },
     onDeleteExpense: (expenseId: String) -> Unit = {},
-    onCancelExpense: (expenseId: String) -> Unit = {}
+    onCancelExpense: (expenseId: String) -> Unit = {},
+    onSearchQueryChanged: (String) -> Unit = {}
 ) {
     val bottomPadding = LocalBottomPadding.current
     val scrollBehavior = rememberConnectedScrollBehavior()
@@ -90,7 +96,7 @@ fun ExpensesScreen(
             loadingContent = { ShimmerLoadingList() }
         ) {
             when {
-                uiState.isEmpty -> {
+                uiState.isGroupEmpty -> {
                     EmptyStateView(
                         title = stringResource(R.string.expenses_not_found),
                         icon = TablerIcons.Outline.Receipt
@@ -100,42 +106,69 @@ fun ExpensesScreen(
                 else -> {
                     val sharedTransitionScope = LocalSharedTransitionScope.current
                     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(
-                            start = MaterialTheme.spacing.Default,
-                            top = MaterialTheme.spacing.Default,
-                            end = MaterialTheme.spacing.Default,
-                            bottom = MaterialTheme.spacing.Default + bottomPadding
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
-                    ) {
-                        uiState.expenseGroups.forEach { dateGroup ->
-                            stickyHeader(key = "header-${dateGroup.dateText}") {
-                                DateHeaderItem(
-                                    dateText = dateGroup.dateText,
-                                    formattedDayTotal = dateGroup.formattedDayTotal
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        ExpenseSearchBar(
+                            query = uiState.searchQuery,
+                            onQueryChange = onSearchQueryChanged,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    start = MaterialTheme.spacing.Default,
+                                    top = MaterialTheme.spacing.Default,
+                                    end = MaterialTheme.spacing.Default,
+                                    bottom = MaterialTheme.spacing.ExtraSmall
+                                )
+                        )
+
+                        when {
+                            uiState.isSearchResultEmpty -> {
+                                EmptyStateView(
+                                    title = stringResource(R.string.expenses_search_empty_title),
+                                    description = stringResource(R.string.expenses_search_empty_description),
+                                    icon = TablerIcons.Outline.Search
                                 )
                             }
 
-                            items(items = dateGroup.expenses, key = { it.id }) { expense ->
-                                ExpenseItem(
-                                    expenseUiModel = expense,
-                                    modifier = Modifier
-                                        .animateItem()
-                                        .sharedElementAnimation(
-                                            key = "expense-${expense.id}",
-                                            sharedTransitionScope = sharedTransitionScope,
-                                            animatedVisibilityScope = animatedVisibilityScope
-                                        ),
-                                    onClick = onExpenseClicked,
-                                    onLongClick = {
-                                        if (!uiState.isGroupArchived) {
-                                            selectedExpenseForMenu = expense
+                            else -> {
+                                LazyColumn(
+                                    state = listState,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(
+                                        start = MaterialTheme.spacing.Default,
+                                        top = MaterialTheme.spacing.Small,
+                                        end = MaterialTheme.spacing.Default,
+                                        bottom = MaterialTheme.spacing.Default + bottomPadding
+                                    ),
+                                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
+                                ) {
+                                    uiState.expenseGroups.forEach { dateGroup ->
+                                        stickyHeader(key = "header-${dateGroup.dateText}") {
+                                            DateHeaderItem(
+                                                dateText = dateGroup.dateText,
+                                                formattedDayTotal = dateGroup.formattedDayTotal
+                                            )
+                                        }
+
+                                        items(items = dateGroup.expenses, key = { it.id }) { expense ->
+                                            ExpenseItem(
+                                                expenseUiModel = expense,
+                                                modifier = Modifier
+                                                    .animateItem()
+                                                    .sharedElementAnimation(
+                                                        key = "expense-${expense.id}",
+                                                        sharedTransitionScope = sharedTransitionScope,
+                                                        animatedVisibilityScope = animatedVisibilityScope
+                                                    ),
+                                                onClick = onExpenseClicked,
+                                                onLongClick = {
+                                                    if (!uiState.isGroupArchived) {
+                                                        selectedExpenseForMenu = expense
+                                                    }
+                                                }
+                                            )
                                         }
                                     }
-                                )
+                                }
                             }
                         }
                     }
