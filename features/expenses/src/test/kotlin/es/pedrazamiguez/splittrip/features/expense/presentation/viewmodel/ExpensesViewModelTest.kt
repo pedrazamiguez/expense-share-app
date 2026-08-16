@@ -950,6 +950,32 @@ class ExpensesViewModelTest {
         }
 
         @Test
+        fun `debounced search matches diacritics, punctuation, and multiple spaces`() = runTest(testDispatcher) {
+            // Given
+            val expedition = testExpense1.copy(title = "Expedición a la selva")
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(expedition, testExpense2)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            assertEquals(2, allExpenses().size)
+
+            // When - Search with unaccented, dot-separated, multi-spaced query
+            viewModel.onEvent(ExpensesUiEvent.SearchQueryChanged("expedicion    a.la. selva"))
+            advanceTimeBy(300)
+            advanceUntilIdle()
+
+            // Then - Matches Expedición a la selva
+            assertEquals(1, allExpenses().size)
+            assertEquals("Expedición a la selva", allExpenses()[0].title)
+
+            collectJob.cancel()
+        }
+
+        @Test
         fun `empty search results sets isSearchResultEmpty to true`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
@@ -1042,7 +1068,6 @@ class ExpensesViewModelTest {
             every { getGroupExpensesFlowUseCase(testGroupId) } returns expensesFlow
             coEvery { deleteExpenseUseCase(testGroupId, "expense-1") } coAnswers {
                 expensesFlow.value = listOf(testExpense2, testExpense3)
-                Unit
             }
 
             viewModel = createViewModel()

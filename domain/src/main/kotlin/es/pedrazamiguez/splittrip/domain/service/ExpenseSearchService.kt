@@ -11,8 +11,9 @@ interface ExpenseSearchService {
     /**
      * Filters the given list of [Expense] items matching the provided search [query].
      *
-     * If [query] is blank, returns the original [expenses] list unchanged.
-     * Otherwise, performs a case-insensitive search matching against expense title, vendor, and notes.
+     * If [query] is blank (or consists only of punctuation/whitespace), returns the original [expenses] list unchanged.
+     * Otherwise, performs an accent-insensitive, punctuation-tolerant, and whitespace-normalized search
+     * matching against expense title, vendor, and notes.
      *
      * @param expenses The list of domain expenses to search within.
      * @param query The search query string.

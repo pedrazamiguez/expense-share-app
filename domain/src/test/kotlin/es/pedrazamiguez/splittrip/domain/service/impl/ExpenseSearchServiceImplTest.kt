@@ -195,6 +195,145 @@ class ExpenseSearchServiceImplTest {
     }
 
     @Nested
+    @DisplayName("Diacritics and Accents")
+    inner class DiacriticsAndAccents {
+
+        @Test
+        fun `matches unaccented query against accented title`() {
+            val jungle = Expense(id = "1", title = "Expedición a la selva")
+            val beach = Expense(id = "2", title = "Día en la playa")
+            val expenses = listOf(jungle, beach)
+
+            val result = service.search(expenses, "expedicion")
+
+            assertEquals(listOf(jungle), result)
+        }
+
+        @Test
+        fun `matches accented query against unaccented title`() {
+            val jungle = Expense(id = "1", title = "Expedicion a la selva")
+            val beach = Expense(id = "2", title = "Dia en la playa")
+            val expenses = listOf(jungle, beach)
+
+            val result = service.search(expenses, "expedición")
+
+            assertEquals(listOf(jungle), result)
+        }
+
+        @Test
+        fun `matches German umlauts and diaeresis`() {
+            val train = Expense(id = "1", title = "München Hbf Ticket")
+            val bus = Expense(id = "2", title = "Berlin Bus")
+            val expenses = listOf(train, bus)
+
+            val result = service.search(expenses, "munchen")
+
+            assertEquals(listOf(train), result)
+        }
+
+        @Test
+        fun `matches tildes and cedillas in Portuguese and Spanish`() {
+            val cafe = Expense(id = "1", title = "Açaí Bowl", vendor = "São Paulo Bar")
+            val restaurant = Expense(id = "2", title = "Restaurante El Niño")
+            val expenses = listOf(cafe, restaurant)
+
+            val resultSao = service.search(expenses, "sao paulo")
+            val resultAcai = service.search(expenses, "acai")
+            val resultNino = service.search(expenses, "nino")
+
+            assertEquals(listOf(cafe), resultSao)
+            assertEquals(listOf(cafe), resultAcai)
+            assertEquals(listOf(restaurant), resultNino)
+        }
+
+        @Test
+        fun `matches diacritics in notes and vendor`() {
+            val e1 = Expense(id = "1", title = "Dinner", vendor = "Café Central", notes = "Tapas con jalapeño")
+            val e2 = Expense(id = "2", title = "Lunch", vendor = "Burger Joint", notes = "Simple meal")
+            val expenses = listOf(e1, e2)
+
+            val resultVendor = service.search(expenses, "cafe")
+            val resultNotes = service.search(expenses, "jalapeno")
+
+            assertEquals(listOf(e1), resultVendor)
+            assertEquals(listOf(e1), resultNotes)
+        }
+    }
+
+    @Nested
+    @DisplayName("Punctuation and Symbols")
+    inner class PunctuationAndSymbols {
+
+        @Test
+        fun `matches dot-separated query against space-separated title`() {
+            val jungle = Expense(id = "1", title = "Expedición a la selva")
+            val expenses = listOf(jungle)
+
+            val result = service.search(expenses, "a.la.selva")
+
+            assertEquals(listOf(jungle), result)
+        }
+
+        @Test
+        fun `matches query when title contains exclamation marks or question marks`() {
+            val party = Expense(id = "1", title = "¡Fiesta de Bienvenida!")
+            val expenses = listOf(party)
+
+            val result = service.search(expenses, "fiesta de bienvenida")
+
+            assertEquals(listOf(party), result)
+        }
+
+        @Test
+        fun `matches query with mixed punctuation and symbols against title`() {
+            val flight = Expense(id = "1", title = "Flight: MAD -> BCN (Terminal 4)")
+            val expenses = listOf(flight)
+
+            val result = service.search(expenses, "flight mad bcn terminal 4")
+
+            assertEquals(listOf(flight), result)
+        }
+
+        @Test
+        fun `punctuation only query returns original list unmodified`() {
+            val e1 = Expense(id = "1", title = "Hotel")
+            val e2 = Expense(id = "2", title = "Dinner")
+            val expenses = listOf(e1, e2)
+
+            val resultDots = service.search(expenses, "...")
+            val resultMixed = service.search(expenses, "!?!? -- ,,")
+
+            assertEquals(expenses, resultDots)
+            assertEquals(expenses, resultMixed)
+        }
+    }
+
+    @Nested
+    @DisplayName("Whitespace Normalization")
+    inner class WhitespaceNormalization {
+
+        @Test
+        fun `matches query with multiple consecutive spaces and punctuation`() {
+            val jungle = Expense(id = "1", title = "Expedición a la selva")
+            val expenses = listOf(jungle)
+
+            val result = service.search(expenses, "expedición    a la. selva")
+
+            assertEquals(listOf(jungle), result)
+        }
+
+        @Test
+        fun `matches query when target title contains multiple spaces`() {
+            val museum = Expense(id = "1", title = "Prado   Museum    Tour")
+            val expenses = listOf(museum)
+
+            val result = service.search(expenses, "prado museum tour")
+
+            assertEquals(listOf(museum), result)
+        }
+    }
+
+    @Nested
     @DisplayName("No Matches and Ordering")
     inner class NoMatchesAndOrdering {
 
