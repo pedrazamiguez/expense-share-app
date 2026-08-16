@@ -73,6 +73,9 @@ fun BalancesFeature(
         uiState = effectiveUiState,
         onEvent = balancesViewModel::onEvent,
         onNavigateToContribution = { navController.navigate(Routes.contributionWizardRoute(selectedGroupId ?: "")) },
+        onNavigateToContributionDetail = { contributionId ->
+            navController.navigate(Routes.contributionDetailRoute(selectedGroupId ?: "", contributionId))
+        },
         onNavigateToEditContribution = { contributionId ->
             navController.navigate(Routes.contributionWizardRoute(selectedGroupId ?: "", contributionId))
         },

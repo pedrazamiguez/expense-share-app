@@ -40,5 +40,31 @@
     <string name="contribution_member_picker_title">Miembro contribuyente</string>
     <string name="contribution_member_picker_you_label">Tú</string>
     <string name="contribution_edit_money_success">¡Aportación actualizada correctamente!</string>
+
+    <!-- Contribution Detail -->
+    <string name="contribution_detail_title">Detalle de la aportación</string>
+    <string name="contribution_detail_error_loading">Error al cargar la aportación</string>
+    <string name="contribution_detail_delete_title">Eliminar aportación</string>
+    <string name="contribution_detail_delete_warning">¿Seguro que deseas eliminar esta aportación? Esta acción no se puede deshacer.</string>
+    <string name="contribution_detail_deleted_successfully">Aportación eliminada correctamente</string>
+    <string name="contribution_detail_delete_error">No se pudo eliminar la aportación. Inténtalo de nuevo</string>
+    <string name="contribution_detail_action_edit">Editar aportación</string>
+    <string name="contribution_detail_action_delete">Eliminar aportación</string>
+    <string name="contribution_detail_scope_section_title">Ámbito y atribución</string>
+    <string name="contribution_detail_linked_expense_title">Vinculada a un gasto</string>
+    <string name="contribution_detail_linked_expense_desc">Esta aportación se generó automáticamente a partir de un gasto de bolsillo.</string>
+    <string name="contribution_detail_settlement_title">Aportación de liquidación</string>
+    <string name="contribution_detail_settlement_desc">Esta aportación se generó a partir de una liquidación de deudas del grupo.</string>
+    <string name="contribution_detail_rate_label">Tipo de cambio: %1$s</string>
+    <string name="contribution_detail_amount_in_currency">Importe en %1$s</string>
+    <string name="contribution_detail_contributed_by_you">Aportado por ti</string>
+    <string name="contribution_detail_contributed_by">Aportado por %1$s</string>
+    <string name="contribution_detail_created_by_you">Añadido por ti</string>
+    <string name="contribution_detail_created_by">Añadido por %1$s</string>
+    <string name="contribution_detail_scope_personal">Personal</string>
+    <string name="contribution_detail_scope_group">Grupo</string>
+    <string name="contribution_detail_scope_personal_desc">Fondos reservados específicamente para gastos personales</string>
+    <string name="contribution_detail_scope_group_desc">Fondos del fondo común disponibles para todos los gastos del grupo</string>
+    <string name="contribution_detail_scope_subunit_desc">Fondos reservados para la subunidad %1$s</string>
 </resources>
 

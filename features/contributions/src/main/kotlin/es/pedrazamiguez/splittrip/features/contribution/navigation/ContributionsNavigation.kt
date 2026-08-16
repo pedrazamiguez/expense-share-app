@@ -6,9 +6,12 @@ import androidx.navigation.navArgument
 import es.pedrazamiguez.splittrip.core.designsystem.extension.sharedComposable
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes.CONTRIBUTION_DETAIL_ARG_CONTRIBUTION_ID
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes.CONTRIBUTION_DETAIL_ARG_GROUP_ID
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes.CONTRIBUTION_WIZARD_ARG_CONTRIBUTION_ID
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes.CONTRIBUTION_WIZARD_ARG_GROUP_ID
 import es.pedrazamiguez.splittrip.features.contribution.presentation.feature.AddContributionFeature
+import es.pedrazamiguez.splittrip.features.contribution.presentation.feature.ContributionDetailFeature
 
 fun NavGraphBuilder.contributionsGraph() {
     sharedComposable(
@@ -33,6 +36,22 @@ fun NavGraphBuilder.contributionsGraph() {
             onContributionSuccess = {
                 navController.popBackStack()
             }
+        )
+    }
+
+    sharedComposable(
+        route = Routes.CONTRIBUTION_DETAIL,
+        arguments = listOf(
+            navArgument(CONTRIBUTION_DETAIL_ARG_GROUP_ID) { type = NavType.StringType },
+            navArgument(CONTRIBUTION_DETAIL_ARG_CONTRIBUTION_ID) { type = NavType.StringType }
+        )
+    ) { backStackEntry ->
+        val groupId = backStackEntry.arguments?.getString(CONTRIBUTION_DETAIL_ARG_GROUP_ID) ?: return@sharedComposable
+        val contributionId =
+            backStackEntry.arguments?.getString(CONTRIBUTION_DETAIL_ARG_CONTRIBUTION_ID) ?: return@sharedComposable
+        ContributionDetailFeature(
+            groupId = groupId,
+            contributionId = contributionId
         )
     }
 }

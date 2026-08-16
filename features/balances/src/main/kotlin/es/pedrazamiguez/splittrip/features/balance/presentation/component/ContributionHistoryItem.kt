@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -36,30 +37,30 @@ import es.pedrazamiguez.splittrip.features.balance.presentation.model.Contributi
 fun ContributionHistoryItem(
     contribution: ContributionUiModel,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
     /** Null for linked (auto-generated) contributions — they must not be deletable. */
     onLongClick: (() -> Unit)? = null
 ) {
     val haptics = LocalHapticFeedback.current
-    val isLinked = contribution.isLinkedContribution
-    val isSettlement = contribution.isSettlementContribution
+    val isFormer = contribution.memberDisplay is MemberDisplay.Former
+    val itemModifier = if (isFormer) modifier.alpha(0.6f) else modifier
 
-    val cardModifier = if (onLongClick != null) {
+    val cardModifier = if (onClick != null || onLongClick != null) {
         Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
             .debouncedCombinedClickable(
-                onClick = {},
-                onLongClick = {
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onLongClick()
+                onClick = { onClick?.invoke() },
+                onLongClick = onLongClick?.let { action ->
+                    {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        action()
+                    }
                 }
             )
     } else {
         Modifier.fillMaxWidth()
     }
-
-    val isFormer = contribution.memberDisplay is MemberDisplay.Former
-    val itemModifier = if (isFormer) modifier.alpha(0.6f) else modifier
 
     Box(modifier = itemModifier) {
         FlatCard(modifier = cardModifier) {
@@ -71,11 +72,10 @@ fun ContributionHistoryItem(
                 horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
             ) {
                 Icon(
-                    imageVector = when {
-                        isSettlement -> TablerIcons.Outline.BasketUp
-                        isLinked -> TablerIcons.Outline.CreditCardPay
-                        else -> TablerIcons.Outline.Wallet
-                    },
+                    imageVector = resolveContributionIcon(
+                        isSettlement = contribution.isSettlementContribution,
+                        isLinked = contribution.isLinkedContribution
+                    ),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
@@ -102,3 +102,10 @@ fun ContributionHistoryItem(
         SyncStatusBadge(syncStatus = contribution.syncStatus)
     }
 }
+
+private fun resolveContributionIcon(isSettlement: Boolean, isLinked: Boolean): ImageVector =
+    when {
+        isSettlement -> TablerIcons.Outline.BasketUp
+        isLinked -> TablerIcons.Outline.CreditCardPay
+        else -> TablerIcons.Outline.Wallet
+    }
