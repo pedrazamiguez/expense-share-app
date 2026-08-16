@@ -162,6 +162,18 @@ class ExpenseUiMapper(
     }
 
     /**
+     * Formats the total spent amount for visible/filtered expenses in the group's default currency.
+     */
+    fun formatTotalSpent(
+        totalSpentCents: Long,
+        currencyCode: String
+    ): String = formatCurrencyAmount(
+        amount = totalSpentCents,
+        currencyCode = currencyCode,
+        locale = localeProvider.getCurrentLocale()
+    )
+
+    /**
      * Builds scope-aware funding source info for out-of-pocket expenses.
      *
      * Uses the paired contribution's scope when available to determine:
