@@ -1,12 +1,14 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.model.ReceiptAttachment
 import es.pedrazamiguez.splittrip.domain.usecase.expense.AttachReceiptUseCase
 import es.pedrazamiguez.splittrip.features.expense.R
+import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -31,6 +33,7 @@ import timber.log.Timber
 @Suppress("TooManyFunctions")
 class FormEventHandler(
     private val addExpenseUiMapper: AddExpenseUiMapper,
+    private val addExpenseOptionsUiMapper: AddExpenseOptionsUiMapper,
     private val attachReceiptUseCase: AttachReceiptUseCase
 ) : AddExpenseEventHandler {
 
@@ -161,7 +164,24 @@ class FormEventHandler(
     fun handleCategorySelected(categoryId: String) {
         val selectedCategory = _uiState.value.availableCategories
             .find { it.id == categoryId } ?: return
-        _uiState.update { it.copy(selectedCategory = selectedCategory) }
+        val categoryEnum = runCatching { ExpenseCategory.fromString(categoryId) }.getOrDefault(ExpenseCategory.OTHER)
+        val availableSubcategories = addExpenseOptionsUiMapper.mapSubcategories(categoryEnum)
+        _uiState.update {
+            it.copy(
+                selectedCategory = selectedCategory,
+                selectedSubcategory = null,
+                availableSubcategories = availableSubcategories
+            )
+        }
+    }
+
+    fun handleSubcategorySelected(subcategoryId: String?) {
+        val selectedSubcategory = if (subcategoryId == null) {
+            null
+        } else {
+            _uiState.value.availableSubcategories.find { it.subcategory.name == subcategoryId }
+        }
+        _uiState.update { it.copy(selectedSubcategory = selectedSubcategory) }
     }
 
     fun handleVendorChanged(vendor: String) {

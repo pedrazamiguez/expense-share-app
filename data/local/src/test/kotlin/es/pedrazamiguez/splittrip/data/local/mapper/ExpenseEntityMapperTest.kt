@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.local.mapper
 
 import es.pedrazamiguez.splittrip.data.local.entity.ExpenseEntity
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
@@ -35,6 +36,7 @@ class ExpenseEntityMapperTest {
         groupCurrency = "EUR",
         exchangeRate = "0.9",
         category = "FOOD",
+        subcategory = "RESTAURANT",
         vendor = "Restaurant",
         notes = "Team lunch",
         paymentMethod = "CREDIT_CARD",
@@ -75,6 +77,7 @@ class ExpenseEntityMapperTest {
             val expense = fullEntity.toDomain()
 
             assertEquals(ExpenseCategory.FOOD, expense.category)
+            assertEquals(ExpenseSubcategory.RESTAURANT, expense.subcategory)
             assertEquals(PaymentMethod.CREDIT_CARD, expense.paymentMethod)
             assertEquals(PaymentStatus.FINISHED, expense.paymentStatus)
             assertEquals(SplitType.EXACT, expense.splitType)
@@ -93,6 +96,20 @@ class ExpenseEntityMapperTest {
             val entity = fullEntity.copy(category = "NONEXISTENT")
             val expense = entity.toDomain()
             assertEquals(ExpenseCategory.OTHER, expense.category)
+        }
+
+        @Test
+        fun `null subcategory defaults to UNSPECIFIED`() {
+            val entity = fullEntity.copy(subcategory = null)
+            val expense = entity.toDomain()
+            assertEquals(ExpenseSubcategory.UNSPECIFIED, expense.subcategory)
+        }
+
+        @Test
+        fun `invalid subcategory defaults to UNSPECIFIED`() {
+            val entity = fullEntity.copy(subcategory = "NONEXISTENT")
+            val expense = entity.toDomain()
+            assertEquals(ExpenseSubcategory.UNSPECIFIED, expense.subcategory)
         }
 
         @Test
@@ -259,6 +276,7 @@ class ExpenseEntityMapperTest {
             groupCurrency = "EUR",
             exchangeRate = BigDecimal.ONE,
             category = ExpenseCategory.FOOD,
+            subcategory = ExpenseSubcategory.RESTAURANT,
             vendor = "Bistro",
             notes = null,
             paymentMethod = PaymentMethod.CASH,
@@ -305,6 +323,7 @@ class ExpenseEntityMapperTest {
             val entity = fullExpense.toEntity()
 
             assertEquals("FOOD", entity.category)
+            assertEquals("RESTAURANT", entity.subcategory)
             assertEquals("CASH", entity.paymentMethod)
             assertEquals("SCHEDULED", entity.paymentStatus)
             assertEquals("PERCENT", entity.splitType)

@@ -285,6 +285,9 @@ class AddExpenseViewModel(
             is AddExpenseUiEvent.CategorySelected ->
                 formEventHandler.handleCategorySelected(event.categoryId)
 
+            is AddExpenseUiEvent.SubcategorySelected ->
+                formEventHandler.handleSubcategorySelected(event.subcategoryId)
+
             is AddExpenseUiEvent.VendorChanged ->
                 formEventHandler.handleVendorChanged(event.vendor)
 

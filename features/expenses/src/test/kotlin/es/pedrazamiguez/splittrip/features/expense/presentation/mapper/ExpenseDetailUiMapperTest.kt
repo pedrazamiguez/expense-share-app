@@ -9,6 +9,7 @@ import es.pedrazamiguez.splittrip.domain.enums.AddOnMode
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.domain.enums.AddOnValueType
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
@@ -113,6 +114,19 @@ class ExpenseDetailUiMapperTest {
             val result = mapper.map(baseExpense, memberProfiles, currentUserId)
 
             assertEquals(ExpenseCategory.FOOD, result.category)
+        }
+
+        @Test
+        fun `maps subcategory and subcategoryText when specified`() {
+            val expense = baseExpense.copy(
+                category = ExpenseCategory.FOOD,
+                subcategory = ExpenseSubcategory.RESTAURANT
+            )
+
+            val result = mapper.map(expense, memberProfiles, currentUserId)
+
+            assertEquals(ExpenseSubcategory.RESTAURANT, result.subcategory)
+            assertEquals("translated_string", result.subcategoryText)
         }
 
         @Test

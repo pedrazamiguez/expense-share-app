@@ -117,20 +117,28 @@ from urllib.request import Request, urlopen
 
 
 def download_svg(tabler_name: str, style: str) -> str:
-    """Download a Tabler SVG from GitHub."""
+    """Download a Tabler SVG from GitHub with retry and timeout."""
+    import time
     url = TABLER_RAW_URL.format(style=style, name=tabler_name)
     print(f"  Downloading {url} …")
     req = Request(url, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"})
-    try:
-        with urlopen(req) as resp:
-            content = resp.read().decode("utf-8")
-    except HTTPError as exc:
-        if exc.code == 404:
-            print(f"  ✗ Icon '{tabler_name}' not found in Tabler ({style} style).")
-            print(f"    Browse available icons at https://tabler.io/icons")
-            sys.exit(1)
-        raise
-    return content
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            with urlopen(req, timeout=20) as resp:
+                return resp.read().decode("utf-8")
+        except HTTPError as exc:
+            if exc.code == 404:
+                print(f"  ✗ Icon '{tabler_name}' not found in Tabler ({style} style).")
+                print(f"    Browse available icons at https://tabler.io/icons")
+                sys.exit(1)
+            raise
+        except Exception as e:
+            if attempt == max_retries - 1:
+                raise
+            print(f"    Retry {attempt + 1}/{max_retries} after error: {e}")
+            time.sleep(2)
+    return ""
 
 
 def extract_paths(svg_content: str) -> list[str]:

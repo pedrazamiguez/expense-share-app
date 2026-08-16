@@ -102,6 +102,7 @@
 
     
     <string name="add_expense_category_title">Category</string>
+    <string name="add_expense_subcategory_title">Subcategory</string>
     <string name="add_expense_vendor_label">Company / Vendor (optional)</string>
     <string name="add_expense_vendor_helper">Where did you buy this?</string>
     <string name="add_expense_notes_label">Notes (optional)</string>

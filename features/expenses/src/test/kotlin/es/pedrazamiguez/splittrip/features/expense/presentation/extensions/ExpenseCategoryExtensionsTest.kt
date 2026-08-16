@@ -5,9 +5,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Bed
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Car
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Category
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Coin
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.MasksTheater
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReceiptRefund
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Run
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Shield
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ShoppingBag
@@ -25,16 +23,6 @@ class ExpenseCategoryExtensionsTest {
 
     @Nested
     inner class StringResMapping {
-
-        @Test
-        fun `CONTRIBUTION maps to contribution string resource`() {
-            assertEquals(CommonR.string.expense_category_contribution, ExpenseCategory.CONTRIBUTION.toStringRes())
-        }
-
-        @Test
-        fun `REFUND maps to refund string resource`() {
-            assertEquals(CommonR.string.expense_category_refund, ExpenseCategory.REFUND.toStringRes())
-        }
 
         @Test
         fun `TRANSPORT maps to transport string resource`() {
@@ -87,16 +75,6 @@ class ExpenseCategoryExtensionsTest {
     inner class IconVectorMapping {
 
         @Test
-        fun `CONTRIBUTION maps to Coin icon`() {
-            assertSame(TablerIcons.Outline.Coin, ExpenseCategory.CONTRIBUTION.toIconVector())
-        }
-
-        @Test
-        fun `REFUND maps to ReceiptRefund icon`() {
-            assertSame(TablerIcons.Outline.ReceiptRefund, ExpenseCategory.REFUND.toIconVector())
-        }
-
-        @Test
         fun `TRANSPORT maps to Car icon`() {
             assertSame(TablerIcons.Outline.Car, ExpenseCategory.TRANSPORT.toIconVector())
         }
@@ -145,11 +123,9 @@ class ExpenseCategoryExtensionsTest {
 
         @Test
         fun `icon vectors are cached — same reference returned on repeated calls`() {
-            // TablerIcons backing fields cache the built ImageVector after first access;
-            // assertSame verifies referential identity, not just structural equality.
             assertSame(
-                ExpenseCategory.CONTRIBUTION.toIconVector(),
-                ExpenseCategory.CONTRIBUTION.toIconVector()
+                ExpenseCategory.TRANSPORT.toIconVector(),
+                ExpenseCategory.TRANSPORT.toIconVector()
             )
         }
     }

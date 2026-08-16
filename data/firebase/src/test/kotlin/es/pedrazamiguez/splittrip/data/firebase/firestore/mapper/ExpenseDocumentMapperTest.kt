@@ -10,6 +10,7 @@ import es.pedrazamiguez.splittrip.domain.enums.AddOnMode
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.domain.enums.AddOnValueType
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
@@ -48,6 +49,7 @@ class ExpenseDocumentMapperTest {
         groupCurrency = "USD",
         exchangeRate = BigDecimal("1.20"),
         category = ExpenseCategory.FOOD,
+        subcategory = ExpenseSubcategory.RESTAURANT,
         vendor = "Restaurant XYZ",
         notes = "Birthday dinner",
         paymentMethod = PaymentMethod.CREDIT_CARD,
@@ -118,9 +120,18 @@ class ExpenseDocumentMapperTest {
             val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
 
             assertEquals("FOOD", document.expenseCategory)
+            assertEquals("RESTAURANT", document.expenseSubcategory)
             assertEquals("CREDIT_CARD", document.paymentMethod)
             assertEquals("FINISHED", document.paymentStatus)
             assertEquals("EQUAL", document.splitType)
+        }
+
+        @Test
+        fun `omits expenseSubcategory in document when UNSPECIFIED`() {
+            val expense = fullExpense.copy(subcategory = ExpenseSubcategory.UNSPECIFIED)
+            val document = expense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+
+            assertNull(document.expenseSubcategory)
         }
 
         @Test
@@ -216,6 +227,7 @@ class ExpenseDocumentMapperTest {
             groupId = testGroupId,
             title = "Dinner",
             expenseCategory = "FOOD",
+            expenseSubcategory = "RESTAURANT",
             vendor = "Restaurant XYZ",
             notes = "Birthday dinner",
             amountCents = 5000L,
@@ -307,15 +319,25 @@ class ExpenseDocumentMapperTest {
             val expense = fullDocument.toDomain()
 
             assertEquals(ExpenseCategory.FOOD, expense.category)
+            assertEquals(ExpenseSubcategory.RESTAURANT, expense.subcategory)
             assertEquals(PaymentMethod.CREDIT_CARD, expense.paymentMethod)
             assertEquals(PaymentStatus.FINISHED, expense.paymentStatus)
             assertEquals(SplitType.EQUAL, expense.splitType)
         }
 
         @Test
+        fun `null subcategory defaults to UNSPECIFIED`() {
+            val document = fullDocument.copy(expenseSubcategory = null)
+            val expense = document.toDomain()
+
+            assertEquals(ExpenseSubcategory.UNSPECIFIED, expense.subcategory)
+        }
+
+        @Test
         fun `falls back to default enums for invalid strings`() {
             val documentWithBadEnums = fullDocument.copy(
                 expenseCategory = "INVALID_CATEGORY",
+                expenseSubcategory = "INVALID_SUBCATEGORY",
                 paymentMethod = "INVALID_METHOD",
                 paymentStatus = "INVALID_STATUS",
                 splitType = "INVALID_SPLIT"
@@ -324,6 +346,7 @@ class ExpenseDocumentMapperTest {
             val expense = documentWithBadEnums.toDomain()
 
             assertEquals(ExpenseCategory.OTHER, expense.category)
+            assertEquals(ExpenseSubcategory.UNSPECIFIED, expense.subcategory)
             assertEquals(PaymentMethod.OTHER, expense.paymentMethod)
             assertEquals(PaymentStatus.FINISHED, expense.paymentStatus)
             assertEquals(SplitType.EQUAL, expense.splitType)

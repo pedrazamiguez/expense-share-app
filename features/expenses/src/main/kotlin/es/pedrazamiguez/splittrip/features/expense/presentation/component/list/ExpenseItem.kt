@@ -34,11 +34,11 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CirclePlus
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.icon.CategorySatelliteIcon
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.BodyText
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.SecondaryBodyText
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toIconVector
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseUiModel
@@ -86,21 +86,11 @@ fun ExpenseItem(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val contentDescription = expenseUiModel.categoryText.takeIf { it.isNotBlank() }
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(MaterialTheme.shapes.medium)
-                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = expenseUiModel.category.toIconVector(),
-                            contentDescription = contentDescription,
-                            modifier = Modifier.size(22.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    CategorySatelliteIcon(
+                        category = expenseUiModel.category,
+                        subcategory = expenseUiModel.subcategory,
+                        contentDescription = expenseUiModel.categoryText.takeIf { it.isNotBlank() }
+                    )
 
                     Column(
                         modifier = Modifier

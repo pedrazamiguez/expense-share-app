@@ -11,6 +11,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.
  * Step 6: Category selection.
  * Auto-advances to the next step after a category is selected.
  */
+@Suppress("UnusedParameter")
 @Composable
 fun CategoryStep(
     uiState: AddExpenseUiState,
@@ -24,7 +25,11 @@ fun CategoryStep(
             selectedCategory = uiState.selectedCategory,
             onCategorySelected = { categoryId ->
                 onEvent(AddExpenseUiEvent.CategorySelected(categoryId))
-                onAutoAdvance()
+            },
+            availableSubcategories = uiState.availableSubcategories,
+            selectedSubcategory = uiState.selectedSubcategory,
+            onSubcategorySelected = { subcategoryId ->
+                onEvent(AddExpenseUiEvent.SubcategorySelected(subcategoryId))
             }
         )
     }

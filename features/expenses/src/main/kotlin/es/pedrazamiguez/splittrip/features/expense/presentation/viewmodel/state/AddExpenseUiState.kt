@@ -15,6 +15,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentMet
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitTypeUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitUiModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.SubcategoryUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.WithdrawalPoolOptionUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -47,6 +48,7 @@ data class AddExpenseUiState(
      */
     val fundingSourceHint: UiText? = null,
     val selectedCategory: CategoryUiModel? = null,
+    val selectedSubcategory: SubcategoryUiModel? = null,
     val selectedPaymentStatus: PaymentStatusUiModel? = null,
 
     // Calculated / Display Data
@@ -145,6 +147,7 @@ data class AddExpenseUiState(
     val paymentMethods: ImmutableList<PaymentMethodUiModel> = persistentListOf(),
     val fundingSources: ImmutableList<FundingSourceUiModel> = persistentListOf(),
     val availableCategories: ImmutableList<CategoryUiModel> = persistentListOf(),
+    val availableSubcategories: ImmutableList<SubcategoryUiModel> = persistentListOf(),
     val availablePaymentStatuses: ImmutableList<PaymentStatusUiModel> = persistentListOf(),
 
     // Split Configuration
@@ -240,6 +243,7 @@ data class AddExpenseUiState(
         dueDateMillis = dueDateMillis,
         isAiModeActive = isAiModeActive,
         selectedCategory = selectedCategory,
+        selectedSubcategory = selectedSubcategory,
         selectedPaymentStatus = selectedPaymentStatus,
         selectedCurrency = selectedCurrency,
         selectedPaymentMethod = selectedPaymentMethod,
@@ -381,6 +385,7 @@ data class AddExpenseFormSnapshot(
     val dueDateMillis: Long?,
     val isAiModeActive: Boolean,
     val selectedCategory: CategoryUiModel?,
+    val selectedSubcategory: SubcategoryUiModel?,
     val selectedPaymentStatus: PaymentStatusUiModel?,
     val selectedCurrency: CurrencyUiModel?,
     val selectedPaymentMethod: PaymentMethodUiModel?,

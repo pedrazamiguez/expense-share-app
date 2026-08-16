@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.data.local.converter.AddOnListConverter
 import es.pedrazamiguez.splittrip.data.local.converter.CashTrancheListConverter
 import es.pedrazamiguez.splittrip.data.local.entity.ExpenseEntity
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
@@ -34,6 +35,9 @@ fun ExpenseEntity.toDomain(): Expense {
         category = category?.let {
             runCatching { ExpenseCategory.fromString(it) }.getOrDefault(ExpenseCategory.OTHER)
         } ?: ExpenseCategory.OTHER,
+        subcategory = subcategory?.let {
+            runCatching { ExpenseSubcategory.fromString(it) }.getOrDefault(ExpenseSubcategory.UNSPECIFIED)
+        } ?: ExpenseSubcategory.UNSPECIFIED,
         vendor = vendor,
         notes = notes,
         paymentMethod = PaymentMethod.entries.find { it.name == paymentMethod } ?: PaymentMethod.OTHER,
@@ -74,6 +78,7 @@ fun Expense.toEntity(): ExpenseEntity {
         expectedGroupAmount = expectedGroupAmount,
         exchangeRate = exchangeRate.toPlainString(),
         category = category.name,
+        subcategory = subcategory.name,
         vendor = vendor,
         notes = notes,
         paymentMethod = paymentMethod.name,
