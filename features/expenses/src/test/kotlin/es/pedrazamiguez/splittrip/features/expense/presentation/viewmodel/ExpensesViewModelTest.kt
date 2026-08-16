@@ -7,6 +7,8 @@ import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.service.ExpenseSearchService
+import es.pedrazamiguez.splittrip.domain.service.impl.ExpenseSearchServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetExpenseByIdFlowUseCase
@@ -32,6 +34,7 @@ import java.time.LocalDateTime
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
@@ -67,6 +70,7 @@ class ExpensesViewModelTest {
     private lateinit var updateExpenseUseCase: UpdateExpenseUseCase
     private lateinit var authenticationService: AuthenticationService
     private lateinit var observeGroupUseCase: ObserveGroupUseCase
+    private var expenseSearchService: ExpenseSearchService = ExpenseSearchServiceImpl()
     private lateinit var viewModel: ExpensesViewModel
 
     private val testGroupId = "group-123"
@@ -94,6 +98,20 @@ class ExpensesViewModelTest {
         paymentMethod = PaymentMethod.CASH,
         createdBy = "user-2",
         createdAt = LocalDateTime.of(2024, 1, 16, 10, 0)
+    )
+
+    private val testExpense3 = Expense(
+        id = "expense-3",
+        groupId = testGroupId,
+        title = "Groceries",
+        notes = "Supermarket snacks and drinks",
+        sourceAmount = 1500L,
+        sourceCurrency = "EUR",
+        groupAmount = 1500L,
+        groupCurrency = "EUR",
+        paymentMethod = PaymentMethod.CREDIT_CARD,
+        createdBy = "user-1",
+        createdAt = LocalDateTime.of(2024, 1, 17, 14, 0)
     )
 
     /** Helper to flatten all expenses from grouped state for easy assertion. */
@@ -817,6 +835,266 @@ class ExpensesViewModelTest {
         }
     }
 
+    @Nested
+    inner class SearchExpenses {
+
+        @Test
+        fun `searchQuery updates immediately in uiState`() = runTest(testDispatcher) {
+            // Given
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1, testExpense2)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            // When
+            viewModel.onEvent(ExpensesUiEvent.SearchQueryChanged("Din"))
+            testScheduler.runCurrent()
+
+            // Then - Query is updated synchronously in state without waiting for debounce
+            assertEquals("Din", viewModel.uiState.value.searchQuery)
+            // But list is not filtered yet (debounce hasn't passed)
+            assertEquals(2, allExpenses().size)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `debounced search filters expenses by title case-insensitively`() = runTest(testDispatcher) {
+            // Given
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1, testExpense2)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Before search - all 2 expenses visible
+            assertEquals(2, allExpenses().size)
+            assertEquals(2, viewModel.uiState.value.totalExpensesCount)
+
+            // When - Type "din" (lowercase for "Dinner")
+            viewModel.onEvent(ExpensesUiEvent.SearchQueryChanged("din"))
+            advanceTimeBy(150) // Half debounce time
+
+            // Still not filtered yet due to 300ms debounce
+            assertEquals(2, allExpenses().size)
+
+            // Advance past debounce (300ms total)
+            advanceTimeBy(150)
+            advanceUntilIdle()
+
+            // Then - Only Dinner is in filtered list, total count is still 2
+            assertEquals(1, allExpenses().size)
+            assertEquals("Dinner", allExpenses()[0].title)
+            assertEquals(2, viewModel.uiState.value.totalExpensesCount)
+            assertFalse(viewModel.uiState.value.isSearchResultEmpty)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `debounced search filters expenses by notes case-insensitively`() = runTest(testDispatcher) {
+            // Given
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1, testExpense2, testExpense3)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            assertEquals(3, allExpenses().size)
+
+            // When - Search for "snacks" (in notes of testExpense3 "Groceries")
+            viewModel.onEvent(ExpensesUiEvent.SearchQueryChanged("SNACKS"))
+            advanceTimeBy(300)
+            advanceUntilIdle()
+
+            // Then - Groceries matches via notes
+            assertEquals(1, allExpenses().size)
+            assertEquals("Groceries", allExpenses()[0].title)
+            assertEquals(3, viewModel.uiState.value.totalExpensesCount)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `debounced search filters expenses by vendor case-insensitively`() = runTest(testDispatcher) {
+            // Given
+            val expenseWithVendor = testExpense1.copy(vendor = "Mercadona")
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(expenseWithVendor, testExpense2)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            assertEquals(2, allExpenses().size)
+
+            // When - Search for "mercadona"
+            viewModel.onEvent(ExpensesUiEvent.SearchQueryChanged("MERCADONA"))
+            advanceTimeBy(300)
+            advanceUntilIdle()
+
+            // Then - Matches via vendor
+            assertEquals(1, allExpenses().size)
+            assertEquals("Dinner", allExpenses()[0].title)
+            assertEquals(2, viewModel.uiState.value.totalExpensesCount)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `debounced search matches diacritics, punctuation, and multiple spaces`() = runTest(testDispatcher) {
+            // Given
+            val expedition = testExpense1.copy(title = "Expedición a la selva")
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(expedition, testExpense2)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            assertEquals(2, allExpenses().size)
+
+            // When - Search with unaccented, dot-separated, multi-spaced query
+            viewModel.onEvent(ExpensesUiEvent.SearchQueryChanged("expedicion    a.la. selva"))
+            advanceTimeBy(300)
+            advanceUntilIdle()
+
+            // Then - Matches Expedición a la selva
+            assertEquals(1, allExpenses().size)
+            assertEquals("Expedición a la selva", allExpenses()[0].title)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `empty search results sets isSearchResultEmpty to true`() = runTest(testDispatcher) {
+            // Given
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1, testExpense2)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            // When - Search for non-matching query
+            viewModel.onEvent(ExpensesUiEvent.SearchQueryChanged("NonExistentQuery"))
+            advanceTimeBy(300)
+            advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertEquals(0, allExpenses().size)
+            assertEquals(2, state.totalExpensesCount)
+            assertFalse(state.isGroupEmpty)
+            assertTrue(state.isSearchResultEmpty)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `clearing search query restores full list immediately with 0ms debounce`() = runTest(testDispatcher) {
+            // Given
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1, testExpense2)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Search first
+            viewModel.onEvent(ExpensesUiEvent.SearchQueryChanged("Dinner"))
+            advanceTimeBy(300)
+            advanceUntilIdle()
+            assertEquals(1, allExpenses().size)
+
+            // When - Clear search
+            viewModel.onEvent(ExpensesUiEvent.SearchQueryChanged(""))
+            // No debounce delay needed for blank/cleared query
+            advanceUntilIdle()
+
+            // Then - Instantly restored
+            assertEquals("", viewModel.uiState.value.searchQuery)
+            assertEquals(2, allExpenses().size)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `changing selected group resets search query to empty`() = runTest(testDispatcher) {
+            // Given
+            val group1Id = "group-1"
+            val group2Id = "group-2"
+            every { getGroupExpensesFlowUseCase(group1Id) } returns flowOf(listOf(testExpense1))
+            every { getGroupExpensesFlowUseCase(group2Id) } returns flowOf(listOf(testExpense2))
+
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.setSelectedGroup(group1Id)
+            advanceUntilIdle()
+
+            viewModel.onEvent(ExpensesUiEvent.SearchQueryChanged("Dinner"))
+            advanceTimeBy(300)
+            advanceUntilIdle()
+            assertEquals("Dinner", viewModel.uiState.value.searchQuery)
+
+            // When - Switch to group 2
+            viewModel.setSelectedGroup(group2Id)
+            advanceUntilIdle()
+
+            // Then - Search query is reset
+            assertEquals("", viewModel.uiState.value.searchQuery)
+            assertEquals(1, allExpenses().size)
+            assertEquals("Taxi", allExpenses()[0].title)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `deleting expense while search active updates filtered list and total count`() = runTest(testDispatcher) {
+            // Given
+            val expensesFlow = MutableStateFlow(listOf(testExpense1, testExpense2, testExpense3))
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns expensesFlow
+            coEvery { deleteExpenseUseCase(testGroupId, "expense-1") } coAnswers {
+                expensesFlow.value = listOf(testExpense2, testExpense3)
+            }
+
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Search for "Dinner" (matches expense-1)
+            viewModel.onEvent(ExpensesUiEvent.SearchQueryChanged("Dinner"))
+            advanceTimeBy(300)
+            advanceUntilIdle()
+            assertEquals(1, allExpenses().size)
+            assertEquals(3, viewModel.uiState.value.totalExpensesCount)
+
+            // When - Delete expense-1
+            viewModel.onEvent(ExpensesUiEvent.DeleteExpense("expense-1"))
+            advanceUntilIdle()
+
+            // Then - Filtered list is now empty for "Dinner", total count is 2
+            assertEquals(0, allExpenses().size)
+            assertEquals(2, viewModel.uiState.value.totalExpensesCount)
+            assertTrue(viewModel.uiState.value.isSearchResultEmpty)
+
+            collectJob.cancel()
+        }
+    }
+
     private fun createViewModel() = ExpensesViewModel(
         useCases = ExpensesUseCases(
             getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
@@ -830,6 +1108,7 @@ class ExpensesViewModelTest {
         ),
         expenseUiMapper = expenseUiMapper,
         authenticationService = authenticationService,
-        observeGroupUseCase = observeGroupUseCase
+        observeGroupUseCase = observeGroupUseCase,
+        expenseSearchService = expenseSearchService
     )
 }

@@ -104,6 +104,9 @@ fun ExpensesFeature(
         },
         onCancelExpense = { expenseId ->
             expensesViewModel.onEvent(ExpensesUiEvent.CancelExpense(expenseId))
+        },
+        onSearchQueryChanged = { query ->
+            expensesViewModel.onEvent(ExpensesUiEvent.SearchQueryChanged(query))
         }
     )
 }

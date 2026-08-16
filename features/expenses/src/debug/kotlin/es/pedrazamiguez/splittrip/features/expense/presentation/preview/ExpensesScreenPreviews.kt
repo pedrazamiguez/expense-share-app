@@ -34,7 +34,39 @@ private fun ExpensesScreenWithDataPreview() {
             uiState = ExpensesUiState(
                 isLoading = false,
                 groupId = "group-1",
-                expenseGroups = expenseGroups
+                expenseGroups = expenseGroups,
+                totalExpensesCount = expenseGroups.sumOf { it.expenses.size }
+            )
+        )
+    }
+}
+
+@PreviewComplete
+@Composable
+private fun ExpensesScreenSearchActivePreview() {
+    ExpenseListPreviewHelper { expenseGroups ->
+        ExpensesScreen(
+            uiState = ExpensesUiState(
+                isLoading = false,
+                groupId = "group-1",
+                searchQuery = "Dinner",
+                expenseGroups = expenseGroups,
+                totalExpensesCount = expenseGroups.sumOf { it.expenses.size }
+            )
+        )
+    }
+}
+
+@PreviewComplete
+@Composable
+private fun ExpensesScreenEmptySearchPreview() {
+    PreviewThemeWrapper {
+        ExpensesScreen(
+            uiState = ExpensesUiState(
+                isLoading = false,
+                groupId = "group-1",
+                searchQuery = "Nonexistent",
+                totalExpensesCount = 5
             )
         )
     }

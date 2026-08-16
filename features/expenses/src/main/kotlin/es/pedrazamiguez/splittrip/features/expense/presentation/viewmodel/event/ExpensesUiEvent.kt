@@ -6,4 +6,5 @@ sealed interface ExpensesUiEvent {
     data class DeleteExpense(val expenseId: String) : ExpensesUiEvent
     data class CancelExpense(val expenseId: String) : ExpensesUiEvent
     data object ExpenseAdded : ExpensesUiEvent
+    data class SearchQueryChanged(val query: String) : ExpensesUiEvent
 }

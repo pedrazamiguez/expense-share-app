@@ -13,6 +13,7 @@ import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.splittrip.domain.service.ExpenseSearchService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseValidationService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
 import es.pedrazamiguez.splittrip.domain.service.RemainderDistributionService
@@ -154,7 +155,8 @@ val expensesUiModule = module {
             useCases = expensesUseCases,
             expenseUiMapper = get<ExpenseUiMapper>(),
             authenticationService = get<AuthenticationService>(),
-            observeGroupUseCase = get<ObserveGroupUseCase>()
+            observeGroupUseCase = get<ObserveGroupUseCase>(),
+            expenseSearchService = get<ExpenseSearchService>()
         )
     }
 
