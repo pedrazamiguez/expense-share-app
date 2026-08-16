@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.model
 import androidx.compose.ui.graphics.vector.ImageVector
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 
 data class ExpenseUiModel(
@@ -12,6 +13,8 @@ data class ExpenseUiModel(
     val formattedOriginalAmount: String? = null,
     val category: ExpenseCategory = ExpenseCategory.OTHER,
     val categoryText: String = "",
+    val subcategory: ExpenseSubcategory = ExpenseSubcategory.UNSPECIFIED,
+    val subcategoryText: String? = null,
     val vendorText: String? = null,
     val paymentMethodText: String = "",
     val paymentStatusText: String = "",

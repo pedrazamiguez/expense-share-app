@@ -1,16 +1,22 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChefHat
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.model.ReceiptAttachment
 import es.pedrazamiguez.splittrip.domain.usecase.expense.AttachReceiptUseCase
+import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.CategoryUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.FundingSourceUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentStatusUiModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.SubcategoryUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import io.mockk.coEvery
@@ -36,6 +42,7 @@ class FormEventHandlerTest {
 
     private lateinit var handler: FormEventHandler
     private lateinit var addExpenseUiMapper: AddExpenseUiMapper
+    private lateinit var addExpenseOptionsUiMapper: AddExpenseOptionsUiMapper
     private lateinit var attachReceiptUseCase: AttachReceiptUseCase
     private lateinit var uiState: MutableStateFlow<AddExpenseUiState>
     private lateinit var actions: MutableSharedFlow<AddExpenseUiAction>
@@ -53,11 +60,13 @@ class FormEventHandlerTest {
     @BeforeEach
     fun setUp() {
         addExpenseUiMapper = mockk(relaxed = true)
+        addExpenseOptionsUiMapper = mockk(relaxed = true)
         attachReceiptUseCase = mockk(relaxed = true)
         capturedPostActions.clear()
 
         handler = FormEventHandler(
             addExpenseUiMapper = addExpenseUiMapper,
+            addExpenseOptionsUiMapper = addExpenseOptionsUiMapper,
             attachReceiptUseCase = attachReceiptUseCase
         )
         handler.setFormPostCallback { capturedPostActions.add(it) }
@@ -295,10 +304,23 @@ class FormEventHandlerTest {
     inner class CategorySelected {
 
         @Test
-        fun `selects category`() = runTest {
+        fun `selects category, resets subcategory, and maps available subcategories`() = runTest {
+            val subcategoryUiModel = SubcategoryUiModel(
+                subcategory = ExpenseSubcategory.RESTAURANT,
+                name = UiText.DynamicString("Restaurant"),
+                icon = TablerIcons.Outline.ChefHat
+            )
+            every { addExpenseOptionsUiMapper.mapSubcategories(ExpenseCategory.FOOD) } returns
+                persistentListOf(subcategoryUiModel)
+
+            uiState.value = uiState.value.copy(selectedSubcategory = subcategoryUiModel)
+
             handler.handleCategorySelected("FOOD")
 
             assertEquals(foodCategory, uiState.value.selectedCategory)
+            assertNull(uiState.value.selectedSubcategory)
+            assertEquals(1, uiState.value.availableSubcategories.size)
+            assertEquals(subcategoryUiModel, uiState.value.availableSubcategories.first())
         }
 
         @Test
@@ -308,6 +330,43 @@ class FormEventHandlerTest {
             handler.handleCategorySelected("NONEXISTENT")
 
             assertEquals(before, uiState.value.selectedCategory)
+        }
+    }
+
+    @Nested
+    inner class SubcategorySelected {
+
+        @Test
+        fun `selects subcategory from available list`() = runTest {
+            val subcategoryUiModel = SubcategoryUiModel(
+                subcategory = ExpenseSubcategory.RESTAURANT,
+                name = UiText.DynamicString("Restaurant"),
+                icon = TablerIcons.Outline.ChefHat
+            )
+            uiState.value = uiState.value.copy(
+                availableSubcategories = persistentListOf(subcategoryUiModel)
+            )
+
+            handler.handleSubcategorySelected(ExpenseSubcategory.RESTAURANT.name)
+
+            assertEquals(subcategoryUiModel, uiState.value.selectedSubcategory)
+        }
+
+        @Test
+        fun `clears subcategory when null passed`() = runTest {
+            val subcategoryUiModel = SubcategoryUiModel(
+                subcategory = ExpenseSubcategory.RESTAURANT,
+                name = UiText.DynamicString("Restaurant"),
+                icon = TablerIcons.Outline.ChefHat
+            )
+            uiState.value = uiState.value.copy(
+                availableSubcategories = persistentListOf(subcategoryUiModel),
+                selectedSubcategory = subcategoryUiModel
+            )
+
+            handler.handleSubcategorySelected(null)
+
+            assertNull(uiState.value.selectedSubcategory)
         }
     }
 

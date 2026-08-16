@@ -16,6 +16,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.forma
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatSourceAmount
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.model.Contribution
@@ -80,6 +81,12 @@ class ExpenseUiMapper(
                 },
                 category = category,
                 categoryText = resourceProvider.getString(category.toStringRes()),
+                subcategory = subcategory,
+                subcategoryText = if (subcategory != ExpenseSubcategory.UNSPECIFIED) {
+                    resourceProvider.getString(subcategory.toStringRes())
+                } else {
+                    null
+                },
                 vendorText = vendor,
                 paymentMethodText = resourceProvider.getString(paymentMethod.toStringRes()),
                 paymentStatusText = resourceProvider.getString(paymentStatus.toStringRes()),

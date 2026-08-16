@@ -27,6 +27,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.model.FundingSou
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitTypeUiModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.SubcategoryUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseStep
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -189,6 +190,7 @@ class ConfigEventHandler(
                 fundingSources = defaults.mappedFundingSources,
                 selectedFundingSource = defaults.defaultFundingSource,
                 availableCategories = defaults.reorderedCategories,
+                availableSubcategories = defaults.availableSubcategories,
                 availablePaymentStatuses = defaults.mappedPaymentStatuses,
                 selectedCurrency = defaults.initialCurrency,
                 selectedPaymentMethod = defaults.defaultPaymentMethod,
@@ -294,6 +296,11 @@ class ConfigEventHandler(
             } ?: reorderedCategories.find { it.id == ExpenseCategory.OTHER.name }
                 ?: reorderedCategories.lastOrNull()
 
+        val defaultCategoryEnum = defaultCategory?.id?.let { catId ->
+            runCatching { ExpenseCategory.fromString(catId) }.getOrNull()
+        } ?: ExpenseCategory.OTHER
+        val availableSubcategories = addExpenseOptionsMapper.mapSubcategories(defaultCategoryEnum)
+
         val mappedPaymentStatuses = addExpenseOptionsMapper.mapPaymentStatuses(
             PaymentStatus.entries
         )
@@ -332,6 +339,7 @@ class ConfigEventHandler(
             mappedFundingSources = mappedFundingSources,
             defaultFundingSource = defaultFundingSource,
             reorderedCategories = reorderedCategories,
+            availableSubcategories = availableSubcategories,
             defaultCategory = defaultCategory,
             mappedPaymentStatuses = mappedPaymentStatuses,
             defaultPaymentStatus = defaultPaymentStatus,
@@ -388,15 +396,15 @@ class ConfigEventHandler(
     }
 
     /**
-     * Reorders a list so that items matching [recentIds] appear first (in MRU order),
-     * followed by the remaining items in their original order.
+     * Returns `items` reordered so that any element whose ID is in `recentIds` appears
+     * first, in the order specified by `recentIds`. Elements not in `recentIds` follow
+     * in their original order.
      */
     private fun <T> reorderByRecent(
-        items: ImmutableList<T>,
+        items: List<T>,
         recentIds: List<String>,
         idSelector: (T) -> String
     ): ImmutableList<T> {
-        if (recentIds.isEmpty()) return items
         val recentIdSet = recentIds.toSet()
         val recent = recentIds.mapNotNull { id -> items.find { idSelector(it) == id } }
         val rest = items.filter { idSelector(it) !in recentIdSet }
@@ -415,6 +423,7 @@ class ConfigEventHandler(
         val mappedFundingSources: ImmutableList<FundingSourceUiModel>,
         val defaultFundingSource: FundingSourceUiModel?,
         val reorderedCategories: ImmutableList<CategoryUiModel>,
+        val availableSubcategories: ImmutableList<SubcategoryUiModel>,
         val defaultCategory: CategoryUiModel?,
         val mappedPaymentStatuses: ImmutableList<PaymentStatusUiModel>,
         val defaultPaymentStatus: PaymentStatusUiModel?,

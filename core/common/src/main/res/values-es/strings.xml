@@ -6,8 +6,7 @@
     <string name="support_email_app_version">Versión de la aplicación: %1$s</string>
     <string name="support_email_os_version">Versión del SO: Android %1$s (API %2$s)</string>
     <string name="support_email_device">Dispositivo: %1$s</string>
-<!-- Expense Categories --><string name="expense_category_contribution">Aportación</string>
-    <string name="expense_category_refund">Reembolso</string>
+    <!-- Expense Categories -->
     <string name="expense_category_transport">Transporte</string>
     <string name="expense_category_food">Comida y Restaurantes</string>
     <string name="expense_category_lodging">Alojamiento</string>
@@ -17,5 +16,54 @@
     <string name="expense_category_shopping">Compras</string>
     <string name="expense_category_other">Otros</string>
 
-    
-    </resources>
+    <!-- Expense Subcategories -->
+    <string name="expense_subcategory_international_flight">Vuelo internacional</string>
+    <string name="expense_subcategory_domestic_flight">Vuelo nacional</string>
+    <string name="expense_subcategory_train">Tren</string>
+    <string name="expense_subcategory_bus">Autobús</string>
+    <string name="expense_subcategory_taxi_rideshare">Taxi y VTC</string>
+    <string name="expense_subcategory_car_rental">Alquiler de coche</string>
+    <string name="expense_subcategory_motorbike_rental">Alquiler de moto</string>
+    <string name="expense_subcategory_fuel">Combustible</string>
+    <string name="expense_subcategory_tolls_parking">Peajes y aparcamiento</string>
+    <string name="expense_subcategory_ferry_boat">Ferry y barco</string>
+    <string name="expense_subcategory_public_transit">Transporte público</string>
+    <string name="expense_subcategory_restaurant">Restaurante</string>
+    <string name="expense_subcategory_street_food">Comida callejera</string>
+    <string name="expense_subcategory_groceries_supermarket">Supermercado</string>
+    <string name="expense_subcategory_cafe_breakfast">Café y desayuno</string>
+    <string name="expense_subcategory_bar_drinks">Bar y copas</string>
+    <string name="expense_subcategory_delivery">Comida a domicilio</string>
+    <string name="expense_subcategory_hotel">Hotel</string>
+    <string name="expense_subcategory_hostel">Hostal / Albergue</string>
+    <string name="expense_subcategory_vacation_rental">Apartamento turístico</string>
+    <string name="expense_subcategory_resort">Resort</string>
+    <string name="expense_subcategory_camping">Camping</string>
+    <string name="expense_subcategory_homestay">Alojamiento familiar</string>
+    <string name="expense_subcategory_museum_culture">Museo y cultura</string>
+    <string name="expense_subcategory_tour_excursion">Tour y excursión</string>
+    <string name="expense_subcategory_nature_park">Parque natural</string>
+    <string name="expense_subcategory_water_sports">Deportes acuáticos</string>
+    <string name="expense_subcategory_adventure_sports">Deportes de aventura</string>
+    <string name="expense_subcategory_spa_wellness">Spa y bienestar</string>
+    <string name="expense_subcategory_tickets_attractions">Entradas y atracciones</string>
+    <string name="expense_subcategory_concert_festival">Concierto y festival</string>
+    <string name="expense_subcategory_nightlife_club">Discoteca y fiesta</string>
+    <string name="expense_subcategory_cinema_theater">Cine y teatro</string>
+    <string name="expense_subcategory_games_arcade">Juegos y recreativos</string>
+    <string name="expense_subcategory_sports_event">Evento deportivo</string>
+    <string name="expense_subcategory_clothing">Ropa y moda</string>
+    <string name="expense_subcategory_souvenirs_gifts">Recuerdos y regalos</string>
+    <string name="expense_subcategory_electronics">Electrónica</string>
+    <string name="expense_subcategory_pharmacy_health">Farmacia y salud</string>
+    <string name="expense_subcategory_convenience_store">Tienda 24h</string>
+    <string name="expense_subcategory_travel_insurance">Seguro de viaje</string>
+    <string name="expense_subcategory_medical_health">Seguro médico</string>
+    <string name="expense_subcategory_vehicle_insurance">Seguro de vehículo</string>
+    <string name="expense_subcategory_equipment_insurance">Seguro de equipamiento</string>
+    <string name="expense_subcategory_tips_gratuities">Propinas</string>
+    <string name="expense_subcategory_sim_communications">SIM y conectividad</string>
+    <string name="expense_subcategory_laundry">Lavandería</string>
+    <string name="expense_subcategory_fees_surcharges">Comisiones y recargos</string>
+    <string name="expense_subcategory_unspecified">Sin especificar</string>
+</resources>

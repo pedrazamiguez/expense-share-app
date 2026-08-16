@@ -1,11 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.enums
 
 enum class ExpenseCategory {
-    // Expenses that add money
-    CONTRIBUTION,
-    REFUND,
-
-    // Expenses that subtract money
     TRANSPORT,
     FOOD,
     LODGING,

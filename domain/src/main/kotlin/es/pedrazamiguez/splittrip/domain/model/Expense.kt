@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.domain.model
 
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
@@ -30,6 +31,7 @@ data class Expense(
     val addOns: List<AddOn> = emptyList(),
 
     val category: ExpenseCategory = ExpenseCategory.OTHER,
+    val subcategory: ExpenseSubcategory = ExpenseSubcategory.UNSPECIFIED,
     val vendor: String? = null,
     val notes: String? = null,
     val paymentMethod: PaymentMethod = PaymentMethod.OTHER,

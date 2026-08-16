@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CreditCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -16,6 +17,8 @@ data class ExpenseDetailUiModel(
     val title: String = "",
     val category: ExpenseCategory = ExpenseCategory.OTHER,
     val categoryText: String = "",
+    val subcategory: ExpenseSubcategory = ExpenseSubcategory.UNSPECIFIED,
+    val subcategoryText: String? = null,
     val payerDisplay: MemberDisplay = MemberDisplay.Active("", ""),
     val creatorDisplay: MemberDisplay = MemberDisplay.Active("", ""),
 

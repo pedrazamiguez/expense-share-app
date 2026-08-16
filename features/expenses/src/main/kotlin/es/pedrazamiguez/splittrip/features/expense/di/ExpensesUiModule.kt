@@ -283,6 +283,7 @@ val expensesUiModule = module {
 
         val formEventHandler = FormEventHandler(
             addExpenseUiMapper = addExpenseUiMapper,
+            addExpenseOptionsUiMapper = addExpenseOptionsUiMapper,
             attachReceiptUseCase = get<AttachReceiptUseCase>()
         )
 

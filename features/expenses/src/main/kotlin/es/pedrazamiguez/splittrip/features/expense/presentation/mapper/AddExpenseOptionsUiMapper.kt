@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
+import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.extension.resolveLocalizedName
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toIconVector
@@ -8,6 +9,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.Forma
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatDisplay
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
@@ -25,6 +27,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.model.FundingSou
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitTypeUiModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.SubcategoryUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.WithdrawalPoolOptionUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -80,16 +83,26 @@ class AddExpenseOptionsUiMapper(
             }.toImmutableList()
 
     /**
-     * Maps a list of [ExpenseCategory] enums to UI models, filtering out
-     * non-user-selectable categories (CONTRIBUTION, REFUND).
+     * Maps a list of [ExpenseCategory] enums to UI models.
      */
     fun mapCategories(categories: List<ExpenseCategory>): ImmutableList<CategoryUiModel> =
-        categories
-            .filter { it != ExpenseCategory.CONTRIBUTION && it != ExpenseCategory.REFUND }
-            .map { category ->
-                CategoryUiModel(
-                    id = category.name,
-                    displayText = resourceProvider.getString(category.toStringRes())
+        categories.map { category ->
+            CategoryUiModel(
+                id = category.name,
+                displayText = resourceProvider.getString(category.toStringRes())
+            )
+        }.toImmutableList()
+
+    /**
+     * Maps available subcategories for a given [ExpenseCategory] to UI models.
+     */
+    fun mapSubcategories(category: ExpenseCategory): ImmutableList<SubcategoryUiModel> =
+        ExpenseSubcategory.forCategory(category)
+            .map { subcategory ->
+                SubcategoryUiModel(
+                    subcategory = subcategory,
+                    name = UiText.StringResource(subcategory.toStringRes()),
+                    icon = subcategory.toIconVector()
                 )
             }.toImmutableList()
 

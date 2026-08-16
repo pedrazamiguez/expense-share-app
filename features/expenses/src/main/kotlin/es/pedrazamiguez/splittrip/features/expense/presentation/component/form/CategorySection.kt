@@ -5,26 +5,33 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import es.pedrazamiguez.splittrip.core.common.presentation.asString
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.SectionHeadingText
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.form.chips.CondensedChips
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.CategoryUiModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.SubcategoryUiModel
 import kotlinx.collections.immutable.ImmutableList
 
 /**
- * Category selection using condensed chips.
+ * Category selection using condensed chips with optional subcategory selection.
  */
 @Composable
 internal fun CategorySection(
     availableCategories: ImmutableList<CategoryUiModel>,
     selectedCategory: CategoryUiModel?,
     onCategorySelected: (String) -> Unit,
+    availableSubcategories: ImmutableList<SubcategoryUiModel>,
+    selectedSubcategory: SubcategoryUiModel?,
+    onSubcategorySelected: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
 
     Column(
         modifier = modifier,
@@ -43,5 +50,27 @@ internal fun CategorySection(
             itemLabel = { it.displayText },
             visibleCount = 6
         )
+
+        if (availableSubcategories.isNotEmpty()) {
+            SectionHeadingText(text = stringResource(R.string.add_expense_subcategory_title))
+
+            CondensedChips(
+                items = availableSubcategories,
+                selectedId = selectedSubcategory?.subcategory?.name,
+                onItemSelected = { subcategoryId ->
+                    val newSubcategoryId = if (selectedSubcategory?.subcategory?.name == subcategoryId) {
+                        null
+                    } else {
+                        subcategoryId
+                    }
+                    onSubcategorySelected(newSubcategoryId)
+                    focusManager.clearFocus()
+                },
+                itemId = { it.subcategory.name },
+                itemLabel = { it.name.asString(context) },
+                itemIcon = { it.icon },
+                visibleCount = 6
+            )
+        }
     }
 }
