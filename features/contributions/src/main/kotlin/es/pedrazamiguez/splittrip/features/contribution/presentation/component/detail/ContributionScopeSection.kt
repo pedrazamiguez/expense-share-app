@@ -18,14 +18,11 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.BasketUp
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Category
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CreditCardPay
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SectionCard
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.CaptionText
-import es.pedrazamiguez.splittrip.domain.enums.PayerType
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.SecondaryBodyText
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toIconVector
 import es.pedrazamiguez.splittrip.features.contribution.R
 import es.pedrazamiguez.splittrip.features.contribution.presentation.model.ContributionDetailUiModel
 
@@ -45,11 +42,7 @@ internal fun ContributionScopeSection(
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
         ) {
             Icon(
-                imageVector = when (contribution.scopeType) {
-                    PayerType.USER -> TablerIcons.Outline.User
-                    PayerType.GROUP -> TablerIcons.Outline.UsersGroup
-                    PayerType.SUBUNIT -> TablerIcons.Outline.Category
-                },
+                imageVector = contribution.scopeType.toIconVector(),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
@@ -65,9 +58,9 @@ internal fun ContributionScopeSection(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 if (contribution.scopeDescription.isNotBlank()) {
-                    CaptionText(
+                    SecondaryBodyText(
                         text = contribution.scopeDescription,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        maxLines = Int.MAX_VALUE
                     )
                 }
             }
@@ -98,9 +91,9 @@ internal fun ContributionScopeSection(
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        CaptionText(
+                        SecondaryBodyText(
                             text = stringResource(R.string.contribution_detail_linked_expense_desc),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            maxLines = Int.MAX_VALUE
                         )
                     }
                 }
@@ -132,9 +125,9 @@ internal fun ContributionScopeSection(
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        CaptionText(
+                        SecondaryBodyText(
                             text = stringResource(R.string.contribution_detail_settlement_desc),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            maxLines = Int.MAX_VALUE
                         )
                     }
                 }
