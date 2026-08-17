@@ -6,6 +6,17 @@
     <string name="expenses_error_loading">Failed to load expenses</string>
     <string name="expenses_add">Add expense</string>
     <string name="expenses_filter">Filter</string>
+    <string name="expenses_filter_title">Filter expenses</string>
+    <string name="expenses_filter_reset">Reset</string>
+    <string name="expenses_filter_apply">Apply filters</string>
+    <string name="expenses_filter_apply_count">Apply filters (%1$d)</string>
+    <string name="expenses_filter_section_category">Category</string>
+    <string name="expenses_filter_section_members">Members</string>
+    <string name="expenses_filter_section_date_range">Date range</string>
+    <string name="expenses_filter_button_cd">Filter expenses</string>
+    <string name="expenses_filter_category_placeholder">Category filter options will appear here</string>
+    <string name="expenses_filter_members_placeholder">Member filter options will appear here</string>
+    <string name="expenses_filter_date_range_placeholder">Date range filter options will appear here</string>
     <string name="expenses_back">Back</string>
     <string name="expenses_search_placeholder">Search expenses…</string>
     <string name="expenses_search_clear">Clear search</string>

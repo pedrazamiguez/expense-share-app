@@ -1,0 +1,337 @@
+package es.pedrazamiguez.splittrip.domain.service.impl
+
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
+import es.pedrazamiguez.splittrip.domain.model.Expense
+import es.pedrazamiguez.splittrip.domain.model.ExpenseFilterCriteria
+import es.pedrazamiguez.splittrip.domain.model.ExpenseSplit
+import es.pedrazamiguez.splittrip.domain.service.ExpenseFilterService
+import es.pedrazamiguez.splittrip.domain.service.ExpenseSearchService
+import java.time.LocalDate
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+
+class ExpenseFilterServiceImplTest {
+
+    private lateinit var searchService: ExpenseSearchService
+    private lateinit var filterService: ExpenseFilterService
+
+    private val baseDate = LocalDate.of(2024, 6, 15)
+
+    private val expense1 = Expense(
+        id = "exp-1",
+        title = "Dinner at Italian Place",
+        category = ExpenseCategory.FOOD,
+        subcategory = ExpenseSubcategory.RESTAURANT,
+        payerId = "user-1",
+        splits = listOf(
+            ExpenseSplit(userId = "user-1", amountCents = 2500L),
+            ExpenseSplit(userId = "user-2", amountCents = 2500L)
+        ),
+        createdAt = baseDate.atTime(20, 0)
+    )
+
+    private val expense2 = Expense(
+        id = "exp-2",
+        title = "Supermarket Groceries",
+        category = ExpenseCategory.FOOD,
+        subcategory = ExpenseSubcategory.GROCERIES_SUPERMARKET,
+        payerId = "user-2",
+        splits = listOf(
+            ExpenseSplit(userId = "user-1", amountCents = 1500L),
+            ExpenseSplit(userId = "user-2", amountCents = 1500L)
+        ),
+        createdAt = baseDate.plusDays(2).atTime(11, 0)
+    )
+
+    private val expense3 = Expense(
+        id = "exp-3",
+        title = "Museum Tickets",
+        category = ExpenseCategory.ACTIVITIES,
+        subcategory = ExpenseSubcategory.MUSEUM_CULTURE,
+        payerId = "user-3",
+        splits = listOf(
+            ExpenseSplit(userId = "user-3", amountCents = 3000L),
+            ExpenseSplit(userId = "user-1", amountCents = 0L, isExcluded = true)
+        ),
+        createdAt = baseDate.plusDays(5).atTime(15, 0)
+    )
+
+    private val expense4 = Expense(
+        id = "exp-4",
+        title = "Flight to Rome",
+        category = ExpenseCategory.TRANSPORT,
+        subcategory = ExpenseSubcategory.DOMESTIC_FLIGHT,
+        payerId = "user-1",
+        splits = listOf(
+            ExpenseSplit(userId = "user-1", amountCents = 10000L)
+        ),
+        createdAt = baseDate.minusDays(10).atTime(8, 0)
+    )
+
+    private val allExpenses = listOf(expense1, expense2, expense3, expense4)
+
+    @BeforeEach
+    fun setUp() {
+        searchService = ExpenseSearchServiceImpl()
+        filterService = ExpenseFilterServiceImpl(expenseSearchService = searchService)
+    }
+
+    @Nested
+    @DisplayName("Inactive / Empty Filter Criteria")
+    inner class InactiveCriteria {
+
+        @Test
+        fun `empty criteria returns all expenses unmodified`() {
+            val criteria = ExpenseFilterCriteria()
+
+            val result = filterService.filter(allExpenses, criteria)
+
+            assertEquals(allExpenses, result)
+            assertFalse(criteria.isActive)
+            assertEquals(0, criteria.activeFilterCount)
+        }
+
+        @Test
+        fun `criteria with empty collections and null dates returns all expenses`() {
+            val criteria = ExpenseFilterCriteria(
+                searchQuery = "   ",
+                selectedCategories = emptySet(),
+                selectedSubcategories = emptySet(),
+                selectedMemberIds = emptySet(),
+                startDate = null,
+                endDate = null
+            )
+
+            val result = filterService.filter(allExpenses, criteria)
+
+            assertEquals(allExpenses, result)
+            assertFalse(criteria.isActive)
+        }
+    }
+
+    @Nested
+    @DisplayName("Search Query Filtering")
+    inner class SearchQueryFiltering {
+
+        @Test
+        fun `filters expenses matching search query`() {
+            val criteria = ExpenseFilterCriteria(searchQuery = "groceries")
+
+            val result = filterService.filter(allExpenses, criteria)
+
+            assertEquals(listOf(expense2), result)
+            assertTrue(criteria.isSearchFiltered)
+            assertTrue(criteria.isActive)
+            assertEquals(0, criteria.activeFilterCount)
+        }
+    }
+
+    @Nested
+    @DisplayName("Category & Subcategory Filtering")
+    inner class CategoryFiltering {
+
+        @Test
+        fun `filters by category only`() {
+            val criteria = ExpenseFilterCriteria(
+                selectedCategories = setOf(ExpenseCategory.FOOD)
+            )
+
+            val result = filterService.filter(allExpenses, criteria)
+
+            assertEquals(listOf(expense1, expense2), result)
+            assertTrue(criteria.isCategoryFiltered)
+            assertEquals(1, criteria.activeFilterCount)
+        }
+
+        @Test
+        fun `filters by subcategory only`() {
+            val criteria = ExpenseFilterCriteria(
+                selectedSubcategories = setOf(ExpenseSubcategory.RESTAURANT)
+            )
+
+            val result = filterService.filter(allExpenses, criteria)
+
+            assertEquals(listOf(expense1), result)
+            assertTrue(criteria.isCategoryFiltered)
+        }
+
+        @Test
+        fun `filters by category or subcategory union`() {
+            val criteria = ExpenseFilterCriteria(
+                selectedCategories = setOf(ExpenseCategory.ACTIVITIES),
+                selectedSubcategories = setOf(ExpenseSubcategory.DOMESTIC_FLIGHT)
+            )
+
+            val result = filterService.filter(allExpenses, criteria)
+
+            assertEquals(listOf(expense3, expense4), result)
+        }
+    }
+
+    @Nested
+    @DisplayName("Member / Payer Filtering")
+    inner class MemberFiltering {
+
+        @Test
+        fun `matches when member is payer`() {
+            val criteria = ExpenseFilterCriteria(
+                selectedMemberIds = setOf("user-3")
+            )
+
+            val result = filterService.filter(allExpenses, criteria)
+
+            assertEquals(listOf(expense3), result)
+            assertTrue(criteria.isMemberFiltered)
+            assertEquals(1, criteria.activeFilterCount)
+        }
+
+        @Test
+        fun `matches when member is participant in split`() {
+            val criteria = ExpenseFilterCriteria(
+                selectedMemberIds = setOf("user-2")
+            )
+
+            val result = filterService.filter(allExpenses, criteria)
+
+            assertEquals(listOf(expense1, expense2), result)
+        }
+
+        @Test
+        fun `does not match when member is excluded from split and not payer`() {
+            val criteria = ExpenseFilterCriteria(
+                selectedMemberIds = setOf("user-1")
+            )
+
+            // user-1 is payer for exp-1, exp-4, and participant in exp-2, but excluded in exp-3
+            val result = filterService.filter(allExpenses, criteria)
+
+            assertEquals(listOf(expense1, expense2, expense4), result)
+        }
+    }
+
+    @Nested
+    @DisplayName("Date Range Filtering")
+    inner class DateRangeFiltering {
+
+        @Test
+        fun `filters by start date only inclusive`() {
+            val criteria = ExpenseFilterCriteria(
+                startDate = baseDate
+            )
+
+            val result = filterService.filter(allExpenses, criteria)
+
+            assertEquals(listOf(expense1, expense2, expense3), result)
+            assertTrue(criteria.isDateFiltered)
+            assertEquals(1, criteria.activeFilterCount)
+        }
+
+        @Test
+        fun `filters by end date only inclusive`() {
+            val criteria = ExpenseFilterCriteria(
+                endDate = baseDate.plusDays(2)
+            )
+
+            val result = filterService.filter(allExpenses, criteria)
+
+            assertEquals(listOf(expense1, expense2, expense4), result)
+        }
+
+        @Test
+        fun `filters by both start and end date range`() {
+            val criteria = ExpenseFilterCriteria(
+                startDate = baseDate,
+                endDate = baseDate.plusDays(3)
+            )
+
+            val result = filterService.filter(allExpenses, criteria)
+
+            assertEquals(listOf(expense1, expense2), result)
+        }
+
+        @Test
+        fun `excludes expense with null createdAt when date range active`() {
+            val nullDateExpense = expense1.copy(id = "exp-null-date", createdAt = null)
+            val criteria = ExpenseFilterCriteria(startDate = baseDate)
+
+            val result = filterService.filter(listOf(nullDateExpense), criteria)
+
+            assertTrue(result.isEmpty())
+        }
+    }
+
+    @Nested
+    @DisplayName("Combined Filter Criteria (Logical AND)")
+    inner class CombinedFiltering {
+
+        @Test
+        fun `combines search query, category, member, and date range`() {
+            val criteria = ExpenseFilterCriteria(
+                searchQuery = "Italian",
+                selectedCategories = setOf(ExpenseCategory.FOOD),
+                selectedMemberIds = setOf("user-1"),
+                startDate = baseDate.minusDays(1),
+                endDate = baseDate.plusDays(1)
+            )
+
+            val result = filterService.filter(allExpenses, criteria)
+
+            assertEquals(listOf(expense1), result)
+            assertEquals(3, criteria.activeFilterCount)
+            assertTrue(criteria.isActive)
+        }
+
+        @Test
+        fun `returns empty list when combination has no matches`() {
+            val criteria = ExpenseFilterCriteria(
+                searchQuery = "Flight",
+                selectedCategories = setOf(ExpenseCategory.FOOD)
+            )
+
+            val result = filterService.filter(allExpenses, criteria)
+
+            assertTrue(result.isEmpty())
+        }
+
+        @Test
+        fun `clearNonSearchFilters preserves search query and resets other dimensions`() {
+            val criteria = ExpenseFilterCriteria(
+                searchQuery = "Dinner",
+                selectedCategories = setOf(ExpenseCategory.FOOD),
+                selectedMemberIds = setOf("user-1"),
+                startDate = baseDate,
+                endDate = baseDate.plusDays(5)
+            )
+
+            val cleared = criteria.clearNonSearchFilters()
+
+            assertEquals("Dinner", cleared.searchQuery)
+            assertTrue(cleared.selectedCategories.isEmpty())
+            assertTrue(cleared.selectedSubcategories.isEmpty())
+            assertTrue(cleared.selectedMemberIds.isEmpty())
+            assertEquals(null, cleared.startDate)
+            assertEquals(null, cleared.endDate)
+            assertEquals(0, cleared.activeFilterCount)
+            assertTrue(cleared.isActive)
+        }
+
+        @Test
+        fun `clearAll resets all criteria to defaults`() {
+            val criteria = ExpenseFilterCriteria(
+                searchQuery = "Dinner",
+                selectedCategories = setOf(ExpenseCategory.FOOD)
+            )
+
+            val cleared = criteria.clearAll()
+
+            assertEquals(ExpenseFilterCriteria(), cleared)
+            assertFalse(cleared.isActive)
+        }
+    }
+}

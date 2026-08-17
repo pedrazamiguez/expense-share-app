@@ -72,7 +72,8 @@ fun ExpensesScreen(
     onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> },
     onDeleteExpense: (expenseId: String) -> Unit = {},
     onCancelExpense: (expenseId: String) -> Unit = {},
-    onSearchQueryChanged: (String) -> Unit = {}
+    onSearchQueryChanged: (String) -> Unit = {},
+    onFilterClick: () -> Unit = {}
 ) {
     val bottomPadding = LocalBottomPadding.current
     val scrollBehavior = rememberConnectedScrollBehavior()
@@ -178,6 +179,8 @@ fun ExpensesScreen(
                                 ExpenseSearchBar(
                                     query = uiState.searchQuery,
                                     onQueryChange = onSearchQueryChanged,
+                                    activeFilterCount = uiState.activeFilterCount,
+                                    onFilterClick = onFilterClick,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(

@@ -7,6 +7,17 @@
     <string name="expenses_error_loading">No çe pudieron cargâh lô gâttô</string>
     <string name="expenses_add">Añadîh gâtto</string>
     <string name="expenses_filter">Firtrâh</string>
+    <string name="expenses_filter_title">Firtrâh gâttô</string>
+    <string name="expenses_filter_reset">Rêttableçêh</string>
+    <string name="expenses_filter_apply">Aplicâh firtrô</string>
+    <string name="expenses_filter_apply_count">Aplicâh firtrô (%1$d)</string>
+    <string name="expenses_filter_section_category">Categoría</string>
+    <string name="expenses_filter_section_members">Miembrô</string>
+    <string name="expenses_filter_section_date_range">Rango de fexâ</string>
+    <string name="expenses_filter_button_cd">Firtrâh gâttô</string>
+    <string name="expenses_filter_category_placeholder">Lâ ôççionê de firtro por categoría apareçerán aquí</string>
+    <string name="expenses_filter_members_placeholder">Lâ ôççionê de firtro por miembrô apareçerán aquí</string>
+    <string name="expenses_filter_date_range_placeholder">Lâ ôççionê de firtro por fexâ apareçerán aquí</string>
     <string name="expenses_back">Borbêh</string>
     <string name="expenses_search_placeholder">Bûccâh gâttô…</string>
     <string name="expenses_search_clear">Borrâh búqqueda</string>

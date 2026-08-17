@@ -522,3 +522,22 @@ val TablerIcons.Outline.AdjustmentsDown: ImageVector
     ).build().also { _AdjustmentsDown = it }
 
 private var _AdjustmentsDown: ImageVector? = null
+
+val TablerIcons.Outline.Filter: ImageVector
+    get() = _Filter ?: ImageVector.Builder(
+        name = "Outline.Filter",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).addPath(
+        pathData = addPathNodes(
+            "M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z"
+        ),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 2f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round
+    ).build().also { _Filter = it }
+
+private var _Filter: ImageVector? = null
