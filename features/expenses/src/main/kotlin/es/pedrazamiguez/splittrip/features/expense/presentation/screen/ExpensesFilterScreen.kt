@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -23,6 +25,9 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.AlignJustified
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Receipt
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.SecondaryButton
@@ -37,6 +42,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.component.filter
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.ExpensesFilterUiState
 
 private val STICKY_ACTION_BAR_BOTTOM_SPACING = 116.dp
+private val ICON_SIZE = 18.dp
 
 @Suppress("LongMethod")
 @Composable
@@ -75,6 +81,7 @@ fun ExpensesFilterScreen(
 
                 item(key = "member_section") {
                     MemberFilterSection(
+                        availableMembers = uiState.availableMembers,
                         criteria = uiState.draftCriteria,
                         onCriteriaChange = onUpdateDraft,
                         modifier = Modifier.fillMaxWidth()
@@ -107,19 +114,35 @@ fun ExpensesFilterScreen(
                         ),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = pluralStringResource(
-                            R.plurals.expenses_filter_matching_count,
-                            uiState.matchingExpensesCount,
-                            uiState.matchingExpensesCount
-                        ),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Row(
                         modifier = Modifier.padding(
                             top = MaterialTheme.spacing.Small,
                             bottom = MaterialTheme.spacing.Large
+                        ),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
+                    ) {
+                        Icon(
+                            imageVector = if (uiState.canReset) {
+                                TablerIcons.Outline.AlignJustified
+                            } else {
+                                TablerIcons.Outline.Receipt
+                            },
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(ICON_SIZE)
                         )
-                    )
+                        Text(
+                            text = pluralStringResource(
+                                R.plurals.expenses_filter_matching_count,
+                                uiState.matchingExpensesCount,
+                                uiState.matchingExpensesCount
+                            ),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium),
