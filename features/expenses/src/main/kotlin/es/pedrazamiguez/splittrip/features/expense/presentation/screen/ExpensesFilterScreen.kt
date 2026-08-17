@@ -41,7 +41,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.component.filter
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.filter.MemberFilterSection
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.ExpensesFilterUiState
 
-private val STICKY_ACTION_BAR_BOTTOM_SPACING = 116.dp
+private val STICKY_ACTION_BAR_BOTTOM_SPACING = 132.dp
 private val ICON_SIZE = 18.dp
 
 @Suppress("LongMethod")
@@ -99,6 +99,7 @@ fun ExpensesFilterScreen(
 
             Surface(
                 color = MaterialTheme.colorScheme.surface,
+                shadowElevation = MaterialTheme.spacing.Large,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
