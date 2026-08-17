@@ -367,7 +367,11 @@ val expensesUiModule = module {
     viewModel {
         ExpensesFilterViewModel(
             getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>(),
-            expenseFilterService = get<ExpenseFilterService>()
+            expenseFilterService = get<ExpenseFilterService>(),
+            observeGroupUseCase = get<ObserveGroupUseCase>(),
+            getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
+            authenticationService = get<AuthenticationService>(),
+            userUiMapper = get<UserUiMapper>()
         )
     }
 }

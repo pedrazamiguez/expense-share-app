@@ -15,8 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.AlignJustified
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Receipt
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Search
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.AnimatedAmount
 import es.pedrazamiguez.splittrip.features.expense.R
 
@@ -39,7 +39,7 @@ fun ExpensesTotalSummaryRow(
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
         ) {
             Icon(
-                imageVector = if (isFiltered) TablerIcons.Outline.Search else TablerIcons.Outline.Receipt,
+                imageVector = if (isFiltered) TablerIcons.Outline.AlignJustified else TablerIcons.Outline.Receipt,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(ICON_SIZE)

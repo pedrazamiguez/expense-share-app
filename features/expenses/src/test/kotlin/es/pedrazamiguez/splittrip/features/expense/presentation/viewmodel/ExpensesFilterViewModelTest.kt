@@ -1,17 +1,27 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.ExpenseFilterCriteria
+import es.pedrazamiguez.splittrip.domain.model.ExpenseSplit
+import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.model.User
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseFilterService
 import es.pedrazamiguez.splittrip.domain.service.impl.ExpenseFilterServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.ExpenseSearchServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.ExpensesFilterUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.ExpensesFilterUiEvent
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.time.LocalDateTime
@@ -41,6 +51,10 @@ class ExpensesFilterViewModelTest {
 
     private lateinit var getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase
     private lateinit var expenseFilterService: ExpenseFilterService
+    private lateinit var observeGroupUseCase: ObserveGroupUseCase
+    private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
+    private lateinit var authenticationService: AuthenticationService
+    private lateinit var userUiMapper: UserUiMapper
     private lateinit var viewModel: ExpensesFilterViewModel
 
     private val testGroupId = "group-123"
@@ -54,7 +68,12 @@ class ExpensesFilterViewModelTest {
         sourceAmount = 5000L,
         groupAmount = 5000L,
         paymentMethod = PaymentMethod.CREDIT_CARD,
+        payerId = "user-1",
         createdBy = "user-1",
+        splits = listOf(
+            ExpenseSplit(userId = "user-1", amountCents = 2500L),
+            ExpenseSplit(userId = "user-2", amountCents = 2500L)
+        ),
         createdAt = LocalDateTime.of(2024, 1, 15, 12, 30)
     )
 
@@ -67,7 +86,12 @@ class ExpensesFilterViewModelTest {
         sourceAmount = 2000L,
         groupAmount = 2000L,
         paymentMethod = PaymentMethod.CASH,
+        payerId = "user-2",
         createdBy = "user-2",
+        splits = listOf(
+            ExpenseSplit(userId = "user-2", amountCents = 1000L),
+            ExpenseSplit(userId = "user-3", amountCents = 1000L)
+        ),
         createdAt = LocalDateTime.of(2024, 1, 16, 10, 0)
     )
 
@@ -80,22 +104,69 @@ class ExpensesFilterViewModelTest {
         sourceAmount = 3000L,
         groupAmount = 3000L,
         paymentMethod = PaymentMethod.CREDIT_CARD,
+        payerId = "user-3",
         createdBy = "user-1",
+        splits = listOf(
+            ExpenseSplit(userId = "user-3", amountCents = 3000L)
+        ),
         createdAt = LocalDateTime.of(2024, 1, 17, 14, 0)
     )
 
     private val allExpenses = listOf(expense1, expense2, expense3)
 
+    private val testGroup = Group(
+        id = testGroupId,
+        name = "Trip to Madrid",
+        currency = "EUR",
+        members = listOf("user-2", "user-1", "user-3")
+    )
+
+    private val user1Profile = User(userId = "user-1", email = "user1@test.com", displayName = "John Doe")
+    private val user2Profile = User(userId = "user-2", email = "ana@test.com", displayName = "Ana")
+    private val user3Profile = User(userId = "user-3", email = "carlos@test.com", displayName = "Carlos")
+
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         getGroupExpensesFlowUseCase = mockk()
+        observeGroupUseCase = mockk()
+        getMemberProfilesUseCase = mockk()
+        authenticationService = mockk()
+        userUiMapper = mockk()
         expenseFilterService = ExpenseFilterServiceImpl(expenseSearchService = ExpenseSearchServiceImpl())
 
         every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(allExpenses)
+        every { observeGroupUseCase(testGroupId) } returns flowOf(testGroup)
+        every { authenticationService.currentUserId() } returns "user-1"
+        coEvery { getMemberProfilesUseCase(any()) } returns mapOf(
+            "user-1" to user1Profile,
+            "user-2" to user2Profile,
+            "user-3" to user3Profile
+        )
+
+        every {
+            userUiMapper.mapToDisplayName(
+                user = any(),
+                fallbackUserId = any(),
+                currentUserId = any(),
+                youLabel = any(),
+                selfIdentificationContext = any(),
+                gender = any()
+            )
+        } answers {
+            val user = firstArg<User?>()
+            val fallback = secondArg<String>()
+            val current = thirdArg<String?>()
+            if (fallback == current) "You" else user?.displayName ?: fallback
+        }
+
         viewModel = ExpensesFilterViewModel(
             getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
-            expenseFilterService = expenseFilterService
+            expenseFilterService = expenseFilterService,
+            observeGroupUseCase = observeGroupUseCase,
+            getMemberProfilesUseCase = getMemberProfilesUseCase,
+            authenticationService = authenticationService,
+            userUiMapper = userUiMapper
         )
     }
 
@@ -129,6 +200,54 @@ class ExpensesFilterViewModelTest {
 
             collectJob.cancel()
         }
+
+        @Test
+        fun `setting group loads available members with current user first and alphabetical order`() =
+            runTest(testDispatcher) {
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+                viewModel.setSelectedGroup(testGroupId)
+                advanceUntilIdle()
+
+                val state = viewModel.uiState.value
+                assertEquals(3, state.availableMembers.size)
+
+                // Current user first
+                assertEquals("user-1", state.availableMembers[0].userId)
+                assertEquals("You", state.availableMembers[0].displayName)
+                assertTrue(state.availableMembers[0].isCurrentUser)
+
+                // Remaining members sorted alphabetically
+                assertEquals("user-2", state.availableMembers[1].userId)
+                assertEquals("Ana", state.availableMembers[1].displayName)
+                assertFalse(state.availableMembers[1].isCurrentUser)
+
+                assertEquals("user-3", state.availableMembers[2].userId)
+                assertEquals("Carlos", state.availableMembers[2].displayName)
+                assertFalse(state.availableMembers[2].isCurrentUser)
+
+                collectJob.cancel()
+            }
+
+        @Test
+        fun `available members self-identification passes NOMINATIVE context`() =
+            runTest(testDispatcher) {
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+                viewModel.setSelectedGroup(testGroupId)
+                advanceUntilIdle()
+
+                coVerify {
+                    userUiMapper.mapToDisplayName(
+                        user = user1Profile,
+                        fallbackUserId = "user-1",
+                        currentUserId = "user-1",
+                        selfIdentificationContext = SelfIdentificationContextEnum.NOMINATIVE
+                    )
+                }
+
+                collectJob.cancel()
+            }
 
         @Test
         fun `initialize sets draft criteria and calculates match count`() = runTest(testDispatcher) {
@@ -236,31 +355,94 @@ class ExpensesFilterViewModelTest {
             }
 
         @Test
-        fun `resetDraft clears non-search filter dimensions`() = runTest(testDispatcher) {
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setSelectedGroup(testGroupId)
-            advanceUntilIdle()
+        fun `selecting single member filter recalculates match count dynamically`() =
+            runTest(testDispatcher) {
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+                viewModel.setSelectedGroup(testGroupId)
+                advanceUntilIdle()
 
-            val initialCriteria = ExpenseFilterCriteria(
-                searchQuery = "Din",
-                selectedCategories = setOf(ExpenseCategory.FOOD),
-                selectedSubcategories = setOf(ExpenseSubcategory.RESTAURANT)
-            )
-            viewModel.onEvent(ExpensesFilterUiEvent.Initialize(initialCriteria))
-            advanceUntilIdle()
+                viewModel.onEvent(
+                    ExpensesFilterUiEvent.UpdateDraft(
+                        ExpenseFilterCriteria(selectedMemberIds = setOf("user-1"))
+                    )
+                )
+                advanceUntilIdle()
 
-            viewModel.onEvent(ExpensesFilterUiEvent.ResetDraft)
-            advanceUntilIdle()
+                val state = viewModel.uiState.value
+                assertEquals(1, state.matchingExpensesCount)
+                assertTrue(state.canReset)
 
-            val state = viewModel.uiState.value
-            assertEquals("Din", state.draftCriteria.searchQuery)
-            assertTrue(state.draftCriteria.selectedCategories.isEmpty())
-            assertTrue(state.draftCriteria.selectedSubcategories.isEmpty())
-            assertEquals(0, state.draftCriteria.activeFilterCount)
-            assertFalse(state.canReset)
+                collectJob.cancel()
+            }
 
-            collectJob.cancel()
-        }
+        @Test
+        fun `selecting multi-member filter performs union matching`() =
+            runTest(testDispatcher) {
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+                viewModel.setSelectedGroup(testGroupId)
+                advanceUntilIdle()
+
+                viewModel.onEvent(
+                    ExpensesFilterUiEvent.UpdateDraft(
+                        ExpenseFilterCriteria(selectedMemberIds = setOf("user-1", "user-2"))
+                    )
+                )
+                advanceUntilIdle()
+
+                val state = viewModel.uiState.value
+                // expense1 matches user-1 and user-2, expense2 matches user-2 -> 2 expenses
+                assertEquals(2, state.matchingExpensesCount)
+                assertTrue(state.canReset)
+
+                collectJob.cancel()
+            }
+
+        @Test
+        fun `graceful fallback when member profiles are missing`() =
+            runTest(testDispatcher) {
+                coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+                viewModel.setSelectedGroup(testGroupId)
+                advanceUntilIdle()
+
+                val state = viewModel.uiState.value
+                assertEquals(3, state.availableMembers.size)
+                assertEquals("user-1", state.availableMembers[0].userId)
+                assertTrue(state.availableMembers[0].isCurrentUser)
+
+                collectJob.cancel()
+            }
+
+        @Test
+        fun `resetDraft clears non-search filter dimensions including selected members`() =
+            runTest(testDispatcher) {
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+                viewModel.setSelectedGroup(testGroupId)
+                advanceUntilIdle()
+
+                val initialCriteria = ExpenseFilterCriteria(
+                    searchQuery = "Din",
+                    selectedCategories = setOf(ExpenseCategory.FOOD),
+                    selectedSubcategories = setOf(ExpenseSubcategory.RESTAURANT),
+                    selectedMemberIds = setOf("user-1", "user-2")
+                )
+                viewModel.onEvent(ExpensesFilterUiEvent.Initialize(initialCriteria))
+                advanceUntilIdle()
+
+                viewModel.onEvent(ExpensesFilterUiEvent.ResetDraft)
+                advanceUntilIdle()
+
+                val state = viewModel.uiState.value
+                assertEquals("Din", state.draftCriteria.searchQuery)
+                assertTrue(state.draftCriteria.selectedCategories.isEmpty())
+                assertTrue(state.draftCriteria.selectedSubcategories.isEmpty())
+                assertTrue(state.draftCriteria.selectedMemberIds.isEmpty())
+                assertEquals(0, state.draftCriteria.activeFilterCount)
+                assertFalse(state.canReset)
+
+                collectJob.cancel()
+            }
     }
 
     @Nested
@@ -279,7 +461,10 @@ class ExpensesFilterViewModelTest {
                 viewModel.setSelectedGroup(testGroupId)
                 advanceUntilIdle()
 
-                val filterCriteria = ExpenseFilterCriteria(selectedCategories = setOf(ExpenseCategory.FOOD))
+                val filterCriteria = ExpenseFilterCriteria(
+                    selectedCategories = setOf(ExpenseCategory.FOOD),
+                    selectedMemberIds = setOf("user-1")
+                )
                 viewModel.onEvent(ExpensesFilterUiEvent.UpdateDraft(filterCriteria))
                 advanceUntilIdle()
 
@@ -309,7 +494,8 @@ class ExpensesFilterViewModelTest {
                 val initialCriteria = ExpenseFilterCriteria(
                     searchQuery = "Din",
                     selectedCategories = setOf(ExpenseCategory.FOOD),
-                    selectedSubcategories = setOf(ExpenseSubcategory.RESTAURANT)
+                    selectedSubcategories = setOf(ExpenseSubcategory.RESTAURANT),
+                    selectedMemberIds = setOf("user-1")
                 )
                 viewModel.onEvent(ExpensesFilterUiEvent.Initialize(initialCriteria))
                 advanceUntilIdle()
@@ -322,6 +508,7 @@ class ExpensesFilterViewModelTest {
                 assertEquals("Din", action.clearedCriteria.searchQuery)
                 assertTrue(action.clearedCriteria.selectedCategories.isEmpty())
                 assertTrue(action.clearedCriteria.selectedSubcategories.isEmpty())
+                assertTrue(action.clearedCriteria.selectedMemberIds.isEmpty())
 
                 actionsJob.cancel()
                 collectJob.cancel()
@@ -336,7 +523,8 @@ class ExpensesFilterViewModelTest {
         fun `expenseFilterCriteria can be stored and retrieved from SavedStateHandle without error`() {
             val criteria = ExpenseFilterCriteria(
                 searchQuery = "groceries",
-                selectedCategories = setOf(ExpenseCategory.FOOD)
+                selectedCategories = setOf(ExpenseCategory.FOOD),
+                selectedMemberIds = setOf("user-1")
             )
             val handle = SavedStateHandle()
             handle["initialFilterCriteria"] = criteria

@@ -3,12 +3,19 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberOptionUiModel
 import es.pedrazamiguez.splittrip.domain.model.ExpenseFilterCriteria
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseFilterService
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.ExpensesFilterUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.ExpensesFilterUiEvent
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.ExpensesFilterUiState
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +32,11 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExpensesFilterViewModel(
     private val getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase,
-    private val expenseFilterService: ExpenseFilterService
+    private val expenseFilterService: ExpenseFilterService,
+    private val observeGroupUseCase: ObserveGroupUseCase,
+    private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
+    private val authenticationService: AuthenticationService,
+    private val userUiMapper: UserUiMapper
 ) : ViewModel() {
 
     private val _selectedGroupId = MutableStateFlow<String?>(null)
@@ -39,13 +50,48 @@ class ExpensesFilterViewModel(
         .filterNotNull()
         .flatMapLatest { groupId ->
             combine(
+                observeGroupUseCase(groupId),
                 getGroupExpensesFlowUseCase(groupId),
                 _draftCriteria
-            ) { expenses, draft ->
+            ) { group, expenses, draft ->
                 val totalExpensesCount = expenses.size
                 val matchingExpenses = expenseFilterService.filter(expenses, draft)
+                val currentUserId = authenticationService.currentUserId()
+
+                val groupMemberIds = group?.members ?: emptyList()
+                val allUserIds = buildSet {
+                    addAll(groupMemberIds)
+                    expenses.forEach { expense ->
+                        add(expense.createdBy)
+                        expense.payerId?.let { add(it) }
+                        expense.splits.forEach { split ->
+                            add(split.userId)
+                        }
+                    }
+                }.toList()
+
+                val memberProfiles = getMemberProfilesUseCase(allUserIds)
+                val availableMembers = allUserIds.map { userId ->
+                    val user = memberProfiles[userId]
+                    val displayName = userUiMapper.mapToDisplayName(
+                        user = user,
+                        fallbackUserId = userId,
+                        currentUserId = currentUserId,
+                        selfIdentificationContext = SelfIdentificationContextEnum.NOMINATIVE
+                    )
+                    MemberOptionUiModel(
+                        userId = userId,
+                        displayName = displayName,
+                        isCurrentUser = userId == currentUserId
+                    )
+                }.sortedWith(
+                    compareByDescending<MemberOptionUiModel> { it.isCurrentUser }
+                        .thenBy(String.CASE_INSENSITIVE_ORDER) { it.displayName }
+                ).toImmutableList()
+
                 ExpensesFilterUiState(
                     draftCriteria = draft,
+                    availableMembers = availableMembers,
                     matchingExpensesCount = matchingExpenses.size,
                     totalExpensesCount = totalExpensesCount,
                     isLoading = false,
