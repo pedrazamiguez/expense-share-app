@@ -137,7 +137,7 @@ class ExpenseFilterServiceImplTest {
     inner class CategoryFiltering {
 
         @Test
-        fun `filters by category only`() {
+        fun `filters by parent category matching all subcategories when no subcategories are selected`() {
             val criteria = ExpenseFilterCriteria(
                 selectedCategories = setOf(ExpenseCategory.FOOD)
             )
@@ -150,8 +150,9 @@ class ExpenseFilterServiceImplTest {
         }
 
         @Test
-        fun `filters by subcategory only`() {
+        fun `refines parent category to only selected subcategories`() {
             val criteria = ExpenseFilterCriteria(
+                selectedCategories = setOf(ExpenseCategory.FOOD),
                 selectedSubcategories = setOf(ExpenseSubcategory.RESTAURANT)
             )
 
@@ -162,7 +163,37 @@ class ExpenseFilterServiceImplTest {
         }
 
         @Test
-        fun `filters by category or subcategory union`() {
+        fun `multiple categories with partial subcategory refinement (OR union)`() {
+            val criteria = ExpenseFilterCriteria(
+                selectedCategories = setOf(ExpenseCategory.FOOD, ExpenseCategory.ACTIVITIES),
+                selectedSubcategories = setOf(ExpenseSubcategory.RESTAURANT)
+            )
+
+            val result = filterService.filter(allExpenses, criteria)
+
+            assertEquals(listOf(expense1, expense3), result)
+        }
+
+        @Test
+        fun `deselecting parent category clears matching for that category`() {
+            val initialCriteria = ExpenseFilterCriteria(
+                selectedCategories = setOf(ExpenseCategory.FOOD, ExpenseCategory.ACTIVITIES),
+                selectedSubcategories = setOf(ExpenseSubcategory.RESTAURANT)
+            )
+            val updatedCriteria = initialCriteria.copy(
+                selectedCategories = initialCriteria.selectedCategories - ExpenseCategory.FOOD,
+                selectedSubcategories = initialCriteria.selectedSubcategories.filterNot {
+                    it.parentCategory == ExpenseCategory.FOOD
+                }.toSet()
+            )
+
+            val result = filterService.filter(allExpenses, updatedCriteria)
+
+            assertEquals(listOf(expense3), result)
+        }
+
+        @Test
+        fun `orphan subcategory matches even if parent category is not in selectedCategories`() {
             val criteria = ExpenseFilterCriteria(
                 selectedCategories = setOf(ExpenseCategory.ACTIVITIES),
                 selectedSubcategories = setOf(ExpenseSubcategory.DOMESTIC_FLIGHT)
@@ -171,6 +202,37 @@ class ExpenseFilterServiceImplTest {
             val result = filterService.filter(allExpenses, criteria)
 
             assertEquals(listOf(expense3, expense4), result)
+        }
+
+        @Test
+        fun `expense with unspecified subcategory matches parent category when no subcategories selected`() {
+            val unspecifiedSubcategoryExpense = expense1.copy(
+                id = "exp-unspecified-sub",
+                subcategory = ExpenseSubcategory.UNSPECIFIED
+            )
+            val criteria = ExpenseFilterCriteria(
+                selectedCategories = setOf(ExpenseCategory.FOOD)
+            )
+
+            val result = filterService.filter(listOf(unspecifiedSubcategoryExpense), criteria)
+
+            assertEquals(listOf(unspecifiedSubcategoryExpense), result)
+        }
+
+        @Test
+        fun `expense with unspecified subcategory does not match when specific subcategories are selected`() {
+            val unspecifiedSubcategoryExpense = expense1.copy(
+                id = "exp-unspecified-sub",
+                subcategory = ExpenseSubcategory.UNSPECIFIED
+            )
+            val criteria = ExpenseFilterCriteria(
+                selectedCategories = setOf(ExpenseCategory.FOOD),
+                selectedSubcategories = setOf(ExpenseSubcategory.RESTAURANT)
+            )
+
+            val result = filterService.filter(listOf(unspecifiedSubcategoryExpense), criteria)
+
+            assertTrue(result.isEmpty())
         }
     }
 

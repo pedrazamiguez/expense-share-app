@@ -255,7 +255,7 @@ class ExpensesViewModel(
             }
 
             ExpensesUiEvent.ClearFilters -> {
-                _filterCriteria.update { it.clearAll() }
+                _filterCriteria.update { it.clearNonSearchFilters() }
             }
         }
     }

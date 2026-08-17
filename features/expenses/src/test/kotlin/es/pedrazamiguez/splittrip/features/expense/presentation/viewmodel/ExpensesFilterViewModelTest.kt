@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.ExpenseFilterCriteria
@@ -49,6 +50,7 @@ class ExpensesFilterViewModelTest {
         groupId = testGroupId,
         title = "Dinner",
         category = ExpenseCategory.FOOD,
+        subcategory = ExpenseSubcategory.RESTAURANT,
         sourceAmount = 5000L,
         groupAmount = 5000L,
         paymentMethod = PaymentMethod.CREDIT_CARD,
@@ -61,6 +63,7 @@ class ExpensesFilterViewModelTest {
         groupId = testGroupId,
         title = "Taxi",
         category = ExpenseCategory.TRANSPORT,
+        subcategory = ExpenseSubcategory.TAXI_RIDESHARE,
         sourceAmount = 2000L,
         groupAmount = 2000L,
         paymentMethod = PaymentMethod.CASH,
@@ -68,7 +71,20 @@ class ExpensesFilterViewModelTest {
         createdAt = LocalDateTime.of(2024, 1, 16, 10, 0)
     )
 
-    private val allExpenses = listOf(expense1, expense2)
+    private val expense3 = Expense(
+        id = "exp-3",
+        groupId = testGroupId,
+        title = "Groceries",
+        category = ExpenseCategory.FOOD,
+        subcategory = ExpenseSubcategory.GROCERIES_SUPERMARKET,
+        sourceAmount = 3000L,
+        groupAmount = 3000L,
+        paymentMethod = PaymentMethod.CREDIT_CARD,
+        createdBy = "user-1",
+        createdAt = LocalDateTime.of(2024, 1, 17, 14, 0)
+    )
+
+    private val allExpenses = listOf(expense1, expense2, expense3)
 
     @BeforeEach
     fun setUp() {
@@ -106,8 +122,8 @@ class ExpensesFilterViewModelTest {
 
             val state = viewModel.uiState.value
             assertFalse(state.isLoading)
-            assertEquals(2, state.totalExpensesCount)
-            assertEquals(2, state.matchingExpensesCount)
+            assertEquals(3, state.totalExpensesCount)
+            assertEquals(3, state.matchingExpensesCount)
             assertEquals(testGroupId, state.groupId)
             assertFalse(state.canReset)
 
@@ -128,8 +144,8 @@ class ExpensesFilterViewModelTest {
 
             val state = viewModel.uiState.value
             assertEquals(initialCriteria, state.draftCriteria)
-            assertEquals(1, state.matchingExpensesCount)
-            assertEquals(2, state.totalExpensesCount)
+            assertEquals(2, state.matchingExpensesCount)
+            assertEquals(3, state.totalExpensesCount)
             assertTrue(state.canReset)
 
             collectJob.cancel()
@@ -149,7 +165,7 @@ class ExpensesFilterViewModelTest {
             advanceUntilIdle()
 
             assertEquals(firstCriteria, viewModel.uiState.value.draftCriteria)
-            assertEquals(1, viewModel.uiState.value.matchingExpensesCount)
+            assertEquals(2, viewModel.uiState.value.matchingExpensesCount)
 
             collectJob.cancel()
         }
@@ -175,6 +191,51 @@ class ExpensesFilterViewModelTest {
         }
 
         @Test
+        fun `updating draft with category selection recalculates matching count in real time`() =
+            runTest(testDispatcher) {
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+                viewModel.setSelectedGroup(testGroupId)
+                advanceUntilIdle()
+
+                viewModel.onEvent(
+                    ExpensesFilterUiEvent.UpdateDraft(
+                        ExpenseFilterCriteria(selectedCategories = setOf(ExpenseCategory.FOOD))
+                    )
+                )
+                advanceUntilIdle()
+
+                val state = viewModel.uiState.value
+                assertEquals(2, state.matchingExpensesCount)
+                assertTrue(state.canReset)
+
+                collectJob.cancel()
+            }
+
+        @Test
+        fun `selecting subcategory refines match count in real time`() =
+            runTest(testDispatcher) {
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+                viewModel.setSelectedGroup(testGroupId)
+                advanceUntilIdle()
+
+                viewModel.onEvent(
+                    ExpensesFilterUiEvent.UpdateDraft(
+                        ExpenseFilterCriteria(
+                            selectedCategories = setOf(ExpenseCategory.FOOD),
+                            selectedSubcategories = setOf(ExpenseSubcategory.RESTAURANT)
+                        )
+                    )
+                )
+                advanceUntilIdle()
+
+                val state = viewModel.uiState.value
+                assertEquals(1, state.matchingExpensesCount)
+                assertTrue(state.canReset)
+
+                collectJob.cancel()
+            }
+
+        @Test
         fun `resetDraft clears non-search filter dimensions`() = runTest(testDispatcher) {
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.setSelectedGroup(testGroupId)
@@ -182,7 +243,8 @@ class ExpensesFilterViewModelTest {
 
             val initialCriteria = ExpenseFilterCriteria(
                 searchQuery = "Din",
-                selectedCategories = setOf(ExpenseCategory.FOOD)
+                selectedCategories = setOf(ExpenseCategory.FOOD),
+                selectedSubcategories = setOf(ExpenseSubcategory.RESTAURANT)
             )
             viewModel.onEvent(ExpensesFilterUiEvent.Initialize(initialCriteria))
             advanceUntilIdle()
@@ -193,6 +255,7 @@ class ExpensesFilterViewModelTest {
             val state = viewModel.uiState.value
             assertEquals("Din", state.draftCriteria.searchQuery)
             assertTrue(state.draftCriteria.selectedCategories.isEmpty())
+            assertTrue(state.draftCriteria.selectedSubcategories.isEmpty())
             assertEquals(0, state.draftCriteria.activeFilterCount)
             assertFalse(state.canReset)
 
@@ -205,30 +268,64 @@ class ExpensesFilterViewModelTest {
     inner class ActionEmissions {
 
         @Test
-        fun `applyFilters emits ApplyAndNavigateBack action with current draft criteria`() = runTest(testDispatcher) {
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            val actions = mutableListOf<ExpensesFilterUiAction>()
-            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.actions.collect { actions.add(it) }
+        fun `applyFilters emits ApplyAndNavigateBack action with current draft criteria`() =
+            runTest(testDispatcher) {
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+                val actions = mutableListOf<ExpensesFilterUiAction>()
+                val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                    viewModel.actions.collect { actions.add(it) }
+                }
+
+                viewModel.setSelectedGroup(testGroupId)
+                advanceUntilIdle()
+
+                val filterCriteria = ExpenseFilterCriteria(selectedCategories = setOf(ExpenseCategory.FOOD))
+                viewModel.onEvent(ExpensesFilterUiEvent.UpdateDraft(filterCriteria))
+                advanceUntilIdle()
+
+                viewModel.onEvent(ExpensesFilterUiEvent.ApplyFilters)
+                advanceUntilIdle()
+
+                assertEquals(1, actions.size)
+                val action = actions.first() as ExpensesFilterUiAction.ApplyAndNavigateBack
+                assertEquals(filterCriteria, action.appliedCriteria)
+
+                actionsJob.cancel()
+                collectJob.cancel()
             }
 
-            viewModel.setSelectedGroup(testGroupId)
-            advanceUntilIdle()
+        @Test
+        fun `resetDraft emits FiltersReset action with cleared criteria`() =
+            runTest(testDispatcher) {
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+                val actions = mutableListOf<ExpensesFilterUiAction>()
+                val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                    viewModel.actions.collect { actions.add(it) }
+                }
 
-            val filterCriteria = ExpenseFilterCriteria(selectedCategories = setOf(ExpenseCategory.FOOD))
-            viewModel.onEvent(ExpensesFilterUiEvent.UpdateDraft(filterCriteria))
-            advanceUntilIdle()
+                viewModel.setSelectedGroup(testGroupId)
+                advanceUntilIdle()
 
-            viewModel.onEvent(ExpensesFilterUiEvent.ApplyFilters)
-            advanceUntilIdle()
+                val initialCriteria = ExpenseFilterCriteria(
+                    searchQuery = "Din",
+                    selectedCategories = setOf(ExpenseCategory.FOOD),
+                    selectedSubcategories = setOf(ExpenseSubcategory.RESTAURANT)
+                )
+                viewModel.onEvent(ExpensesFilterUiEvent.Initialize(initialCriteria))
+                advanceUntilIdle()
 
-            assertEquals(1, actions.size)
-            val action = actions.first() as ExpensesFilterUiAction.ApplyAndNavigateBack
-            assertEquals(filterCriteria, action.appliedCriteria)
+                viewModel.onEvent(ExpensesFilterUiEvent.ResetDraft)
+                advanceUntilIdle()
 
-            actionsJob.cancel()
-            collectJob.cancel()
-        }
+                assertEquals(1, actions.size)
+                val action = actions.first() as ExpensesFilterUiAction.FiltersReset
+                assertEquals("Din", action.clearedCriteria.searchQuery)
+                assertTrue(action.clearedCriteria.selectedCategories.isEmpty())
+                assertTrue(action.clearedCriteria.selectedSubcategories.isEmpty())
+
+                actionsJob.cancel()
+                collectJob.cancel()
+            }
     }
 
     @Nested

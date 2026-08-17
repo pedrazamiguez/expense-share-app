@@ -52,6 +52,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.transition.LocalSharedTransi
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.RestoreScrollEffect
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.TrackScrollEffect
+import es.pedrazamiguez.splittrip.features.expense.presentation.component.dialog.ResetFiltersConfirmationDialog
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.list.DateHeaderItem
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.list.ExpenseItem
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.list.ExpenseSearchBar
@@ -73,7 +74,8 @@ fun ExpensesScreen(
     onDeleteExpense: (expenseId: String) -> Unit = {},
     onCancelExpense: (expenseId: String) -> Unit = {},
     onSearchQueryChanged: (String) -> Unit = {},
-    onFilterClick: () -> Unit = {}
+    onFilterClick: () -> Unit = {},
+    onResetFilters: () -> Unit = {}
 ) {
     val bottomPadding = LocalBottomPadding.current
     val scrollBehavior = rememberConnectedScrollBehavior()
@@ -81,6 +83,7 @@ fun ExpensesScreen(
     var selectedExpenseForMenu by remember { mutableStateOf<ExpenseUiModel?>(null) }
     var expenseToDelete by remember { mutableStateOf<ExpenseUiModel?>(null) }
     var expenseToCancel by remember { mutableStateOf<ExpenseUiModel?>(null) }
+    var showResetFiltersDialog by remember { mutableStateOf(false) }
     var isSearchBarVisible by remember { mutableStateOf(true) }
 
     val listState = rememberLazyListState(
@@ -181,6 +184,11 @@ fun ExpensesScreen(
                                     onQueryChange = onSearchQueryChanged,
                                     activeFilterCount = uiState.activeFilterCount,
                                     onFilterClick = onFilterClick,
+                                    onFilterLongClick = {
+                                        if (uiState.activeFilterCount > 0) {
+                                            showResetFiltersDialog = true
+                                        }
+                                    },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(
@@ -319,6 +327,16 @@ fun ExpensesScreen(
             onConfirm = {
                 onCancelExpense(expense.id)
                 expenseToCancel = null
+            }
+        )
+    }
+
+    if (showResetFiltersDialog) {
+        ResetFiltersConfirmationDialog(
+            onDismiss = { showResetFiltersDialog = false },
+            onConfirm = {
+                onResetFilters()
+                showResetFiltersDialog = false
             }
         )
     }

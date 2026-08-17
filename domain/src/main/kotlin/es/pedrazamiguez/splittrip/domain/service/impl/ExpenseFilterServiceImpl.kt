@@ -48,15 +48,27 @@ class ExpenseFilterServiceImpl(
         val hasCategories = criteria.selectedCategories.isNotEmpty()
         val hasSubcategories = criteria.selectedSubcategories.isNotEmpty()
 
-        return when {
-            hasCategories && hasSubcategories -> {
-                expense.category in criteria.selectedCategories ||
-                    expense.subcategory in criteria.selectedSubcategories
+        if (!hasCategories && !hasSubcategories) return true
+
+        val expenseCategory = expense.category
+        val expenseSubcategory = expense.subcategory
+
+        // 1. Expense matches a selected parent category
+        if (expenseCategory in criteria.selectedCategories) {
+            val selectedSubcategoriesForThisCategory = criteria.selectedSubcategories
+                .filter { it.parentCategory == expenseCategory }
+
+            return if (selectedSubcategoriesForThisCategory.isEmpty()) {
+                // No subcategory refinement -> all expenses in this category match
+                true
+            } else {
+                // Refined by subcategories -> expense must match one of the selected subcategories
+                expenseSubcategory in selectedSubcategoriesForThisCategory
             }
-            hasCategories -> expense.category in criteria.selectedCategories
-            hasSubcategories -> expense.subcategory in criteria.selectedSubcategories
-            else -> true
         }
+
+        // 2. Expense matches an orphan selected subcategory (if parent category was not explicitly selected)
+        return expenseSubcategory in criteria.selectedSubcategories
     }
 
     private fun matchesMember(expense: Expense, selectedMemberIds: Set<String>): Boolean {

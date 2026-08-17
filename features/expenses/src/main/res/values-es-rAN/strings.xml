@@ -11,11 +11,19 @@
     <string name="expenses_filter_reset">Rêttableçêh</string>
     <string name="expenses_filter_apply">Aplicâh firtrô</string>
     <string name="expenses_filter_apply_count">Aplicâh firtrô (%1$d)</string>
+    <string name="expenses_filter_reset_dialog_title">¿Rêttableçêh firtrô?</string>
+    <string name="expenses_filter_reset_dialog_message">¿Çeguro que quierê rêttableçêh tôh lô firtrô aplicáô?</string>
+    <string name="expenses_filter_reset_dialog_confirm">Rêttableçêh</string>
+    <string name="expenses_filter_reset_dialog_dismiss">Cançelâh</string>
+    <plurals name="expenses_filter_matching_count">
+        <item quantity="one">%1$d gâtto encontrao</item>
+        <item quantity="other">%1$d gâttô encontráô</item>
+    </plurals>
     <string name="expenses_filter_section_category">Categoría</string>
+    <string name="expenses_filter_subcategories_title">Çûccategoríâ</string>
     <string name="expenses_filter_section_members">Miembrô</string>
     <string name="expenses_filter_section_date_range">Rango de fexâ</string>
     <string name="expenses_filter_button_cd">Firtrâh gâttô</string>
-    <string name="expenses_filter_category_placeholder">Lâ ôççionê de firtro por categoría apareçerán aquí</string>
     <string name="expenses_filter_members_placeholder">Lâ ôççionê de firtro por miembrô apareçerán aquí</string>
     <string name="expenses_filter_date_range_placeholder">Lâ ôççionê de firtro por fexâ apareçerán aquí</string>
     <string name="expenses_back">Borbêh</string>
