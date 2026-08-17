@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.model.Expense
@@ -227,6 +228,24 @@ class ExpensesFilterViewModelTest {
 
             actionsJob.cancel()
             collectJob.cancel()
+        }
+    }
+
+    @Nested
+    @DisplayName("SavedStateHandle Integration")
+    inner class SavedStateHandleIntegration {
+
+        @Test
+        fun `expenseFilterCriteria can be stored and retrieved from SavedStateHandle without error`() {
+            val criteria = ExpenseFilterCriteria(
+                searchQuery = "groceries",
+                selectedCategories = setOf(ExpenseCategory.FOOD)
+            )
+            val handle = SavedStateHandle()
+            handle["initialFilterCriteria"] = criteria
+
+            val retrieved = handle.get<ExpenseFilterCriteria>("initialFilterCriteria")
+            assertEquals(criteria, retrieved)
         }
     }
 }

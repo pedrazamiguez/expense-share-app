@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.domain.model
 
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
+import java.io.Serializable
 import java.time.LocalDate
 
 data class ExpenseFilterCriteria(
@@ -11,7 +12,7 @@ data class ExpenseFilterCriteria(
     val selectedMemberIds: Set<String> = emptySet(),
     val startDate: LocalDate? = null,
     val endDate: LocalDate? = null
-) {
+) : Serializable {
     val isCategoryFiltered: Boolean
         get() = selectedCategories.isNotEmpty() || selectedSubcategories.isNotEmpty()
 
@@ -46,4 +47,8 @@ data class ExpenseFilterCriteria(
     )
 
     fun clearAll(): ExpenseFilterCriteria = ExpenseFilterCriteria()
+
+    companion object {
+        private const val serialVersionUID: Long = 1L
+    }
 }
