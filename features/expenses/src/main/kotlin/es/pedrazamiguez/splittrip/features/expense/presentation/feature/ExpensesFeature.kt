@@ -127,6 +127,9 @@ fun ExpensesFeature(
                 uiState.filterCriteria
             )
             navController.navigate(Routes.expensesFilterRoute())
+        },
+        onResetFilters = {
+            expensesViewModel.onEvent(ExpensesUiEvent.ClearFilters)
         }
     )
 }

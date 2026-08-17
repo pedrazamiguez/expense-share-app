@@ -1283,7 +1283,7 @@ class ExpensesViewModelTest {
         }
 
         @Test
-        fun `ClearFilters resets all filter criteria`() = runTest(testDispatcher) {
+        fun `ClearFilters resets all filter criteria while preserving search query`() = runTest(testDispatcher) {
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
                 listOf(testExpense1, testExpense2)
             )
@@ -1306,11 +1306,11 @@ class ExpensesViewModelTest {
 
             // Then
             val state = viewModel.uiState.value
-            assertEquals(ExpenseFilterCriteria(), state.filterCriteria)
-            assertEquals("", state.searchQuery)
+            assertEquals(ExpenseFilterCriteria(searchQuery = "Din"), state.filterCriteria)
+            assertEquals("Din", state.searchQuery)
             assertEquals(0, state.activeFilterCount)
-            assertFalse(state.isFiltered)
-            assertEquals(2, allExpenses().size)
+            assertTrue(state.isFiltered)
+            assertEquals(1, allExpenses().size)
 
             collectJob.cancel()
         }

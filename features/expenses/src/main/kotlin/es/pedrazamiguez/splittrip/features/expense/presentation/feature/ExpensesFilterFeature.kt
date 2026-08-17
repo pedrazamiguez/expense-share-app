@@ -55,6 +55,9 @@ fun ExpensesFilterFeature(
         onUpdateDraft = { criteria ->
             filterViewModel.onEvent(ExpensesFilterUiEvent.UpdateDraft(criteria))
         },
+        onResetFilters = {
+            filterViewModel.onEvent(ExpensesFilterUiEvent.ResetDraft)
+        },
         onApplyFilters = {
             filterViewModel.onEvent(ExpensesFilterUiEvent.ApplyFilters)
         }

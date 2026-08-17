@@ -52,9 +52,9 @@ fun CategorySatelliteIcon(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .offset(x = 2.dp, y = 2.dp)
-                    .size(18.dp)
+                    .size(22.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                     .border(
                         width = 1.5.dp,
                         color = MaterialTheme.colorScheme.surface,
@@ -65,8 +65,8 @@ fun CategorySatelliteIcon(
                 Icon(
                     imageVector = subcategory.toIconVector(),
                     contentDescription = null,
-                    modifier = Modifier.size(10.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    modifier = Modifier.size(12.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

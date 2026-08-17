@@ -10,6 +10,14 @@
     <string name="expenses_filter_reset">Reset</string>
     <string name="expenses_filter_apply">Apply filters</string>
     <string name="expenses_filter_apply_count">Apply filters (%1$d)</string>
+    <string name="expenses_filter_reset_dialog_title">Reset filters?</string>
+    <string name="expenses_filter_reset_dialog_message">Are you sure you want to reset all applied filters?</string>
+    <string name="expenses_filter_reset_dialog_confirm">Reset</string>
+    <string name="expenses_filter_reset_dialog_dismiss">Cancel</string>
+    <plurals name="expenses_filter_matching_count">
+        <item quantity="one">%1$d expense found</item>
+        <item quantity="other">%1$d expenses found</item>
+    </plurals>
     <string name="expenses_filter_section_category">Category</string>
     <string name="expenses_filter_subcategories_title">Subcategories</string>
     <string name="expenses_filter_section_members">Members</string>

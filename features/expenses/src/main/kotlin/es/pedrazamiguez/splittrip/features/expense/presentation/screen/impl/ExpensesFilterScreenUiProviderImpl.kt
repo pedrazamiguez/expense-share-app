@@ -5,6 +5,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModelStoreOwner
@@ -15,6 +18,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUi
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.splittrip.features.expense.R
+import es.pedrazamiguez.splittrip.features.expense.presentation.component.dialog.ResetFiltersConfirmationDialog
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.ExpensesFilterViewModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.ExpensesFilterUiEvent
 import org.koin.androidx.compose.koinViewModel
@@ -42,13 +46,15 @@ class ExpensesFilterScreenUiProviderImpl(
             false
         }
 
+        var showResetDialog by remember { mutableStateOf(false) }
+
         DynamicTopAppBar(
             title = stringResource(R.string.expenses_filter_title),
             subtitle = groupName,
             onBack = { navController.popBackStack() },
             actions = {
                 TextButton(
-                    onClick = { vm?.onEvent(ExpensesFilterUiEvent.ResetDraft) },
+                    onClick = { showResetDialog = true },
                     enabled = canReset
                 ) {
                     Text(text = stringResource(R.string.expenses_filter_reset))
@@ -56,5 +62,15 @@ class ExpensesFilterScreenUiProviderImpl(
             },
             pinned = true
         )
+
+        if (showResetDialog) {
+            ResetFiltersConfirmationDialog(
+                onDismiss = { showResetDialog = false },
+                onConfirm = {
+                    vm?.onEvent(ExpensesFilterUiEvent.ResetDraft)
+                    showResetDialog = false
+                }
+            )
+        }
     }
 }
