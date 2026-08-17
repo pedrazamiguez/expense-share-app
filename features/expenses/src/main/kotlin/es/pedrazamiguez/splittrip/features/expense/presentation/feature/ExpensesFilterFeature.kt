@@ -19,6 +19,7 @@ import org.koin.androidx.compose.koinViewModel
 fun ExpensesFilterFeature(
     initialCriteria: ExpenseFilterCriteria = ExpenseFilterCriteria(),
     onApplyFilters: (ExpenseFilterCriteria) -> Unit = {},
+    onFiltersReset: (ExpenseFilterCriteria) -> Unit = {},
     onNavigateBack: () -> Unit = {},
     filterViewModel: ExpensesFilterViewModel = koinViewModel(),
     sharedViewModel: SharedViewModel = koinViewModel(
@@ -41,6 +42,10 @@ fun ExpensesFilterFeature(
             when (action) {
                 is ExpensesFilterUiAction.ApplyAndNavigateBack -> {
                     onApplyFilters(action.appliedCriteria)
+                }
+
+                is ExpensesFilterUiAction.FiltersReset -> {
+                    onFiltersReset(action.clearedCriteria)
                 }
 
                 ExpensesFilterUiAction.NavigateBack -> {

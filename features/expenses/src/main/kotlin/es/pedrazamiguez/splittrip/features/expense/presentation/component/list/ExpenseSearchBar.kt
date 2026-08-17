@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -71,37 +70,41 @@ fun ExpenseSearchBar(
                     }
                 }
                 Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .debouncedCombinedClickable(
-                            onClick = onFilterClick,
-                            onLongClick = {
-                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onFilterLongClick()
-                            }
-                        ),
+                    modifier = Modifier.size(40.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = TablerIcons.Outline.Filter,
-                        contentDescription = stringResource(R.string.expenses_filter_button_cd),
-                        tint = if (activeFilterCount > 0) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .debouncedCombinedClickable(
+                                onClick = onFilterClick,
+                                onLongClick = {
+                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onFilterLongClick()
+                                }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = TablerIcons.Outline.Filter,
+                            contentDescription = stringResource(R.string.expenses_filter_button_cd),
+                            tint = if (activeFilterCount > 0) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                    }
                     if (activeFilterCount > 0) {
                         Box(
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)
-                                .offset(x = 2.dp, y = 2.dp)
                                 .sizeIn(minWidth = 16.dp, minHeight = 16.dp)
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.secondaryContainer)
+                                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                                 .border(
-                                    width = 1.dp,
+                                    width = 1.5.dp,
                                     color = MaterialTheme.colorScheme.surface,
                                     shape = CircleShape
                                 )
@@ -111,7 +114,7 @@ fun ExpenseSearchBar(
                             Text(
                                 text = activeFilterCount.toString(),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }

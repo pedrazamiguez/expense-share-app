@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -77,7 +76,11 @@ class ExpensesFilterViewModel(
             }
 
             ExpensesFilterUiEvent.ResetDraft -> {
-                _draftCriteria.update { it.clearNonSearchFilters() }
+                val cleared = _draftCriteria.value.clearNonSearchFilters()
+                _draftCriteria.value = cleared
+                viewModelScope.launch {
+                    _actions.emit(ExpensesFilterUiAction.FiltersReset(cleared))
+                }
             }
 
             ExpensesFilterUiEvent.ApplyFilters -> {

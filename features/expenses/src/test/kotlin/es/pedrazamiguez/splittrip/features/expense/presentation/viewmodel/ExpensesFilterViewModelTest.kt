@@ -293,6 +293,39 @@ class ExpensesFilterViewModelTest {
                 actionsJob.cancel()
                 collectJob.cancel()
             }
+
+        @Test
+        fun `resetDraft emits FiltersReset action with cleared criteria`() =
+            runTest(testDispatcher) {
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+                val actions = mutableListOf<ExpensesFilterUiAction>()
+                val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                    viewModel.actions.collect { actions.add(it) }
+                }
+
+                viewModel.setSelectedGroup(testGroupId)
+                advanceUntilIdle()
+
+                val initialCriteria = ExpenseFilterCriteria(
+                    searchQuery = "Din",
+                    selectedCategories = setOf(ExpenseCategory.FOOD),
+                    selectedSubcategories = setOf(ExpenseSubcategory.RESTAURANT)
+                )
+                viewModel.onEvent(ExpensesFilterUiEvent.Initialize(initialCriteria))
+                advanceUntilIdle()
+
+                viewModel.onEvent(ExpensesFilterUiEvent.ResetDraft)
+                advanceUntilIdle()
+
+                assertEquals(1, actions.size)
+                val action = actions.first() as ExpensesFilterUiAction.FiltersReset
+                assertEquals("Din", action.clearedCriteria.searchQuery)
+                assertTrue(action.clearedCriteria.selectedCategories.isEmpty())
+                assertTrue(action.clearedCriteria.selectedSubcategories.isEmpty())
+
+                actionsJob.cancel()
+                collectJob.cancel()
+            }
     }
 
     @Nested

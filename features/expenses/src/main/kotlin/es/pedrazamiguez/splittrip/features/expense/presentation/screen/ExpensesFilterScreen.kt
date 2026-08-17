@@ -36,7 +36,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.component.filter
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.filter.MemberFilterSection
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.ExpensesFilterUiState
 
-private val STICKY_ACTION_BAR_BOTTOM_SPACING = 100.dp
+private val STICKY_ACTION_BAR_BOTTOM_SPACING = 116.dp
 
 @Suppress("LongMethod")
 @Composable
@@ -105,8 +105,7 @@ fun ExpensesFilterScreen(
                             top = MaterialTheme.spacing.Small,
                             bottom = bottomPadding
                         ),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = pluralStringResource(
@@ -115,7 +114,11 @@ fun ExpensesFilterScreen(
                             uiState.matchingExpensesCount
                         ),
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(
+                            top = MaterialTheme.spacing.Small,
+                            bottom = MaterialTheme.spacing.Large
+                        )
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
