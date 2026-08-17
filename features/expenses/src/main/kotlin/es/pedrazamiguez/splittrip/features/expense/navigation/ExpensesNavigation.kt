@@ -6,14 +6,34 @@ import androidx.navigation.navArgument
 import es.pedrazamiguez.splittrip.core.designsystem.extension.sharedComposable
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
+import es.pedrazamiguez.splittrip.domain.model.ExpenseFilterCriteria
 import es.pedrazamiguez.splittrip.features.expense.presentation.feature.AddExpenseFeature
 import es.pedrazamiguez.splittrip.features.expense.presentation.feature.ExpenseDetailFeature
 import es.pedrazamiguez.splittrip.features.expense.presentation.feature.ExpensesFeature
+import es.pedrazamiguez.splittrip.features.expense.presentation.feature.ExpensesFilterFeature
 import es.pedrazamiguez.splittrip.features.expense.presentation.feature.ReceiptViewerFeature
 
+@Suppress("LongMethod")
 fun NavGraphBuilder.expensesGraph() {
     sharedComposable(route = Routes.EXPENSES) {
         ExpensesFeature()
+    }
+
+    sharedComposable(route = Routes.EXPENSES_FILTER) {
+        val navController = LocalTabNavController.current
+        val initialCriteria = navController.previousBackStackEntry
+            ?.savedStateHandle
+            ?.get<ExpenseFilterCriteria>("initialFilterCriteria") ?: ExpenseFilterCriteria()
+        ExpensesFilterFeature(
+            initialCriteria = initialCriteria,
+            onApplyFilters = { appliedCriteria ->
+                navController.previousBackStackEntry?.savedStateHandle?.set("appliedFilterCriteria", appliedCriteria)
+                navController.popBackStack()
+            },
+            onNavigateBack = {
+                navController.popBackStack()
+            }
+        )
     }
 
     sharedComposable(route = Routes.ADD_EXPENSE) {

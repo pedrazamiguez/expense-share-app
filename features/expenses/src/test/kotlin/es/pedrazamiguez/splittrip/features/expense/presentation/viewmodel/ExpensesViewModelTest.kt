@@ -5,9 +5,12 @@ import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.model.Expense
+import es.pedrazamiguez.splittrip.domain.model.ExpenseFilterCriteria
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.service.ExpenseFilterService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseSearchService
+import es.pedrazamiguez.splittrip.domain.service.impl.ExpenseFilterServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.ExpenseSearchServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.DeleteExpenseUseCase
@@ -72,6 +75,8 @@ class ExpensesViewModelTest {
     private lateinit var authenticationService: AuthenticationService
     private lateinit var observeGroupUseCase: ObserveGroupUseCase
     private var expenseSearchService: ExpenseSearchService = ExpenseSearchServiceImpl()
+    private var expenseFilterService: ExpenseFilterService =
+        ExpenseFilterServiceImpl(expenseSearchService = expenseSearchService)
     private lateinit var viewModel: ExpensesViewModel
 
     private val testGroupId = "group-123"
@@ -1243,6 +1248,74 @@ class ExpensesViewModelTest {
         }
     }
 
+    @Nested
+    @DisplayName("FilterCriteriaEvents")
+    inner class FilterCriteriaEvents {
+
+        @Test
+        fun `FilterCriteriaChanged updates filterCriteria and filters list`() = runTest(testDispatcher) {
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1, testExpense2, testExpense3)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            assertEquals(3, allExpenses().size)
+            assertEquals(0, viewModel.uiState.value.activeFilterCount)
+            assertFalse(viewModel.uiState.value.isFiltered)
+
+            // When
+            val criteria = ExpenseFilterCriteria(
+                selectedMemberIds = setOf("user-2")
+            )
+            viewModel.onEvent(ExpensesUiEvent.FilterCriteriaChanged(criteria))
+            advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertEquals(criteria, state.filterCriteria)
+            assertEquals(1, state.activeFilterCount)
+            assertTrue(state.isFiltered)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `ClearFilters resets all filter criteria`() = runTest(testDispatcher) {
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1, testExpense2)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            val criteria = ExpenseFilterCriteria(
+                searchQuery = "Din",
+                selectedMemberIds = setOf("user-1")
+            )
+            viewModel.onEvent(ExpensesUiEvent.FilterCriteriaChanged(criteria))
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.isFiltered)
+
+            // When
+            viewModel.onEvent(ExpensesUiEvent.ClearFilters)
+            advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertEquals(ExpenseFilterCriteria(), state.filterCriteria)
+            assertEquals("", state.searchQuery)
+            assertEquals(0, state.activeFilterCount)
+            assertFalse(state.isFiltered)
+            assertEquals(2, allExpenses().size)
+
+            collectJob.cancel()
+        }
+    }
+
     private fun createViewModel() = ExpensesViewModel(
         useCases = ExpensesUseCases(
             getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
@@ -1257,6 +1330,6 @@ class ExpensesViewModelTest {
         expenseUiMapper = expenseUiMapper,
         authenticationService = authenticationService,
         observeGroupUseCase = observeGroupUseCase,
-        expenseSearchService = expenseSearchService
+        expenseFilterService = expenseFilterService
     )
 }

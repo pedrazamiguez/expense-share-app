@@ -13,7 +13,7 @@ import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseCalculatorService
-import es.pedrazamiguez.splittrip.domain.service.ExpenseSearchService
+import es.pedrazamiguez.splittrip.domain.service.ExpenseFilterService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseValidationService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
 import es.pedrazamiguez.splittrip.domain.service.RemainderDistributionService
@@ -58,10 +58,12 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.ExpenseUi
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.PaymentStatusBadgeUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.screen.impl.AddExpenseScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.expense.presentation.screen.impl.ExpenseDetailScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.expense.presentation.screen.impl.ExpensesFilterScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.expense.presentation.screen.impl.ExpensesScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.expense.presentation.screen.impl.ReceiptViewerScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.AddExpenseViewModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.ExpenseDetailViewModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.ExpensesFilterViewModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.ExpensesUseCases
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.ExpensesViewModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.AddOnCrudDelegate
@@ -156,7 +158,7 @@ val expensesUiModule = module {
             expenseUiMapper = get<ExpenseUiMapper>(),
             authenticationService = get<AuthenticationService>(),
             observeGroupUseCase = get<ObserveGroupUseCase>(),
-            expenseSearchService = get<ExpenseSearchService>()
+            expenseFilterService = get<ExpenseFilterService>()
         )
     }
 
@@ -331,6 +333,7 @@ val expensesUiModule = module {
     single(named("editExpenseProvider")) { AddExpenseScreenUiProviderImpl(Routes.EDIT_EXPENSE) } bind
         ScreenUiProvider::class
     single { ExpenseDetailScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { ExpensesFilterScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { ReceiptViewerScreenUiProviderImpl() } bind ScreenUiProvider::class
 
     single {
@@ -358,6 +361,13 @@ val expensesUiModule = module {
             observeGroupUseCase = get<ObserveGroupUseCase>(),
             exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
             remainderDistributionService = get<RemainderDistributionService>()
+        )
+    }
+
+    viewModel {
+        ExpensesFilterViewModel(
+            getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>(),
+            expenseFilterService = get<ExpenseFilterService>()
         )
     }
 }
