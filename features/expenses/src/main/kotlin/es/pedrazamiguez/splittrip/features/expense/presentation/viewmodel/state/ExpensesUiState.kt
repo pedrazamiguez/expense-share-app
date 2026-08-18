@@ -16,6 +16,7 @@ data class ExpensesUiState(
     val filterCriteria: ExpenseFilterCriteria = ExpenseFilterCriteria(),
     val totalExpensesCount: Int = 0,
     val formattedTotalSpent: String = "",
+    val formattedTotalScheduled: String? = null,
     val visibleExpensesCount: Int = 0,
     val isFiltered: Boolean = false
 ) {

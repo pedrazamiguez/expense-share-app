@@ -9,5 +9,6 @@ import kotlinx.collections.immutable.ImmutableList
 data class ExpenseDateGroupUiModel(
     val dateText: String,
     val formattedDayTotal: String,
-    val expenses: ImmutableList<ExpenseUiModel>
+    val expenses: ImmutableList<ExpenseUiModel>,
+    val formattedDayScheduled: String? = null
 )

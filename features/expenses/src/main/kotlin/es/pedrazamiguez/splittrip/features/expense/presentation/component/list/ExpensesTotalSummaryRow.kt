@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.component.list
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
@@ -16,18 +17,21 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.AlignJustified
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Receipt
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.AnimatedAmount
 import es.pedrazamiguez.splittrip.features.expense.R
 
 private val ICON_SIZE = 18.dp
+private val SCHEDULED_ICON_SIZE = 12.dp
 
 @Composable
 fun ExpensesTotalSummaryRow(
     formattedTotalSpent: String,
     visibleExpensesCount: Int,
     isFiltered: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    formattedTotalScheduled: String? = null
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -56,12 +60,33 @@ fun ExpensesTotalSummaryRow(
             )
         }
 
-        AnimatedAmount(
-            formattedAmount = formattedTotalSpent,
-            shouldAnimate = false,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        Column(horizontalAlignment = Alignment.End) {
+            AnimatedAmount(
+                formattedAmount = formattedTotalSpent,
+                shouldAnimate = false,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            if (formattedTotalScheduled != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.ExtraSmall)
+                ) {
+                    Icon(
+                        imageVector = TablerIcons.Outline.Calendar,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(SCHEDULED_ICON_SIZE)
+                    )
+                    Text(
+                        text = formattedTotalScheduled,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
     }
 }
