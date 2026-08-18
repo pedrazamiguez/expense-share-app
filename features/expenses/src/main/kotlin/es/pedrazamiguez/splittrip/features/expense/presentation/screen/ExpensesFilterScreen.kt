@@ -39,6 +39,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.component.dialog
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.filter.CategoryFilterSection
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.filter.DateRangeFilterSection
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.filter.MemberFilterSection
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.DateRangePreset
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.ExpensesFilterUiState
 
 private val STICKY_ACTION_BAR_BOTTOM_SPACING = 132.dp
@@ -49,6 +50,7 @@ private val ICON_SIZE = 18.dp
 fun ExpensesFilterScreen(
     uiState: ExpensesFilterUiState = ExpensesFilterUiState(),
     onUpdateDraft: (ExpenseFilterCriteria) -> Unit = {},
+    onPresetSelected: (DateRangePreset) -> Unit = {},
     onResetFilters: () -> Unit = {},
     onApplyFilters: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -69,7 +71,7 @@ fun ExpensesFilterScreen(
                     end = MaterialTheme.spacing.Default,
                     bottom = STICKY_ACTION_BAR_BOTTOM_SPACING + bottomPadding
                 ),
-                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Large)
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.ExtraLarge)
             ) {
                 item(key = "category_section") {
                     CategoryFilterSection(
@@ -91,6 +93,8 @@ fun ExpensesFilterScreen(
                 item(key = "date_range_section") {
                     DateRangeFilterSection(
                         criteria = uiState.draftCriteria,
+                        activePreset = uiState.activePreset,
+                        onPresetSelected = onPresetSelected,
                         onCriteriaChange = onUpdateDraft,
                         oldestExpenseDate = uiState.oldestExpenseDate,
                         newestExpenseDate = uiState.newestExpenseDate,

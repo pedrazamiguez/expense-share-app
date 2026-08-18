@@ -6,7 +6,10 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMa
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberOptionUiModel
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.User
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.DateRangePreset
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
@@ -23,6 +26,41 @@ class ExpensesFilterUiMapper(
 
     fun formatFilterDate(date: LocalDate?): String {
         return formattingHelper.formatShortDate(date)
+    }
+
+    fun calculatePresetRange(
+        preset: DateRangePreset,
+        today: LocalDate = LocalDate.now()
+    ): Pair<LocalDate, LocalDate> = when (preset) {
+        DateRangePreset.TODAY -> today to today
+        DateRangePreset.YESTERDAY -> {
+            val yesterday = today.minusDays(1)
+            yesterday to yesterday
+        }
+        DateRangePreset.THIS_WEEK -> {
+            val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+            startOfWeek to today
+        }
+        DateRangePreset.LAST_15_DAYS -> {
+            val start = today.minusDays(14)
+            start to today
+        }
+        DateRangePreset.THIS_MONTH -> {
+            val startOfMonth = today.withDayOfMonth(1)
+            startOfMonth to today
+        }
+    }
+
+    fun findMatchingPreset(
+        startDate: LocalDate?,
+        endDate: LocalDate?,
+        today: LocalDate = LocalDate.now()
+    ): DateRangePreset? {
+        if (startDate == null || endDate == null) return null
+        return DateRangePreset.entries.firstOrNull { preset ->
+            val (presetStart, presetEnd) = calculatePresetRange(preset, today)
+            startDate == presetStart && endDate == presetEnd
+        }
     }
 
     fun mapAvailableMembers(

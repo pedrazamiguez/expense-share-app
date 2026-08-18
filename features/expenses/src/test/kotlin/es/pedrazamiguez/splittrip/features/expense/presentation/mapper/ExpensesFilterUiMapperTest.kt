@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.Forma
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.User
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.DateRangePreset
 import io.mockk.every
 import io.mockk.mockk
 import java.time.LocalDate
@@ -147,6 +148,93 @@ class ExpensesFilterUiMapperTest {
 
             assertEquals("user-2", result[2].userId)
             assertEquals("Carlos", result[2].displayName)
+        }
+    }
+
+    @Nested
+    @DisplayName("calculatePresetRange")
+    inner class CalculatePresetRanges {
+
+        private val anchor = LocalDate.of(2026, 8, 18) // Tuesday
+
+        @Test
+        fun `calculates TODAY range`() {
+            val (start, end) = mapper.calculatePresetRange(DateRangePreset.TODAY, anchor)
+            assertEquals(anchor, start)
+            assertEquals(anchor, end)
+        }
+
+        @Test
+        fun `calculates YESTERDAY range`() {
+            val (start, end) = mapper.calculatePresetRange(DateRangePreset.YESTERDAY, anchor)
+            assertEquals(LocalDate.of(2026, 8, 17), start)
+            assertEquals(LocalDate.of(2026, 8, 17), end)
+        }
+
+        @Test
+        fun `calculates THIS_WEEK range from Monday`() {
+            val (start, end) = mapper.calculatePresetRange(DateRangePreset.THIS_WEEK, anchor)
+            assertEquals(LocalDate.of(2026, 8, 17), start) // Monday
+            assertEquals(anchor, end)
+        }
+
+        @Test
+        fun `calculates LAST_15_DAYS range`() {
+            val (start, end) = mapper.calculatePresetRange(DateRangePreset.LAST_15_DAYS, anchor)
+            assertEquals(LocalDate.of(2026, 8, 4), start)
+            assertEquals(anchor, end)
+        }
+
+        @Test
+        fun `calculates THIS_MONTH range`() {
+            val (start, end) = mapper.calculatePresetRange(DateRangePreset.THIS_MONTH, anchor)
+            assertEquals(LocalDate.of(2026, 8, 1), start)
+            assertEquals(anchor, end)
+        }
+    }
+
+    @Nested
+    @DisplayName("findMatchingPreset")
+    inner class FindMatchingPreset {
+
+        private val anchor = LocalDate.of(2026, 8, 18)
+
+        @Test
+        fun `returns null when start or end is null`() {
+            assertNull(mapper.findMatchingPreset(null, anchor, anchor))
+            assertNull(mapper.findMatchingPreset(anchor, null, anchor))
+            assertNull(mapper.findMatchingPreset(null, null, anchor))
+        }
+
+        @Test
+        fun `identifies matching presets correctly`() {
+            assertEquals(
+                DateRangePreset.TODAY,
+                mapper.findMatchingPreset(anchor, anchor, anchor)
+            )
+            assertEquals(
+                DateRangePreset.YESTERDAY,
+                mapper.findMatchingPreset(LocalDate.of(2026, 8, 17), LocalDate.of(2026, 8, 17), anchor)
+            )
+            assertEquals(
+                DateRangePreset.THIS_WEEK,
+                mapper.findMatchingPreset(LocalDate.of(2026, 8, 17), anchor, anchor)
+            )
+            assertEquals(
+                DateRangePreset.LAST_15_DAYS,
+                mapper.findMatchingPreset(LocalDate.of(2026, 8, 4), anchor, anchor)
+            )
+            assertEquals(
+                DateRangePreset.THIS_MONTH,
+                mapper.findMatchingPreset(LocalDate.of(2026, 8, 1), anchor, anchor)
+            )
+        }
+
+        @Test
+        fun `returns null when dates do not match any preset`() {
+            val customStart = LocalDate.of(2026, 7, 1)
+            val customEnd = LocalDate.of(2026, 7, 10)
+            assertNull(mapper.findMatchingPreset(customStart, customEnd, anchor))
         }
     }
 }

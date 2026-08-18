@@ -77,6 +77,7 @@ class ExpensesFilterViewModel(
                 val (oldestDate, newestDate) = expensesFilterUiMapper.extractDateBounds(expenses)
                 val formattedStartDate = expensesFilterUiMapper.formatFilterDate(draft.startDate)
                 val formattedEndDate = expensesFilterUiMapper.formatFilterDate(draft.endDate)
+                val activePreset = expensesFilterUiMapper.findMatchingPreset(draft.startDate, draft.endDate)
 
                 ExpensesFilterUiState(
                     draftCriteria = draft,
@@ -88,7 +89,8 @@ class ExpensesFilterViewModel(
                     oldestExpenseDate = oldestDate,
                     newestExpenseDate = newestDate,
                     formattedStartDate = formattedStartDate,
-                    formattedEndDate = formattedEndDate
+                    formattedEndDate = formattedEndDate,
+                    activePreset = activePreset
                 )
             }
         }
@@ -112,6 +114,19 @@ class ExpensesFilterViewModel(
 
             is ExpensesFilterUiEvent.UpdateDraft -> {
                 _draftCriteria.value = event.criteria
+            }
+
+            is ExpensesFilterUiEvent.DatePresetSelected -> {
+                val currentActive = expensesFilterUiMapper.findMatchingPreset(
+                    _draftCriteria.value.startDate,
+                    _draftCriteria.value.endDate
+                )
+                if (currentActive == event.preset) {
+                    _draftCriteria.value = _draftCriteria.value.copy(startDate = null, endDate = null)
+                } else {
+                    val (start, end) = expensesFilterUiMapper.calculatePresetRange(event.preset)
+                    _draftCriteria.value = _draftCriteria.value.copy(startDate = start, endDate = end)
+                }
             }
 
             ExpensesFilterUiEvent.ResetDraft -> {
