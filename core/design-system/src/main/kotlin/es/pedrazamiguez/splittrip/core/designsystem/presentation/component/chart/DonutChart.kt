@@ -1,8 +1,8 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.chart
 
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
@@ -23,7 +23,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.delay
 
 private const val ANIMATION_DELAY_MS = 300L
-private const val ANIMATION_DURATION_MS = 1000
 
 @Composable
 fun DonutChart(
@@ -40,16 +39,16 @@ fun DonutChart(
 
     val total = remember(data) { data.sumOf { it.value.toDouble() }.toFloat().coerceAtLeast(1f) }
 
-    val animationSpec = tween<Float>(
-        durationMillis = ANIMATION_DURATION_MS,
-        easing = FastOutSlowInEasing
+    val bouncySpringSpec = spring<Float>(
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = 100f
     )
 
     val animatedSweepAngles = data.mapIndexed { index, item ->
         val targetAngle = if (isAnimated) (item.value / total) * 360f else 0f
         animateFloatAsState(
             targetValue = targetAngle,
-            animationSpec = animationSpec,
+            animationSpec = bouncySpringSpec,
             label = "slice_angle_$index"
         )
     }

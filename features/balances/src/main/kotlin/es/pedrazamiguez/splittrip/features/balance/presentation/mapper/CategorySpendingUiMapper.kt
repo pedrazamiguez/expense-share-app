@@ -8,6 +8,8 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toSt
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.CategorySpendingUiModel
+import es.pedrazamiguez.splittrip.features.balance.presentation.model.SubcategorySpendingUiModel
+import kotlin.math.roundToInt
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
@@ -20,30 +22,49 @@ class CategorySpendingUiMapper(
 
         val positiveExpenses = expenses.filter { it.groupAmount > 0 }
 
-        val categoryTotals = positiveExpenses
-            .groupBy { it.category }
-            .mapValues { (_, categoryExpenses) ->
-                categoryExpenses.sumOf { it.groupAmount }
-            }
+        val categoryGroups = positiveExpenses.groupBy { it.category }
 
-        val globalTotal = categoryTotals.values.sum()
+        val globalTotal = positiveExpenses.sumOf { it.groupAmount }
 
-        val sortedCategories = categoryTotals.entries
-            .sortedByDescending { it.value }
+        val sortedCategories = categoryGroups.entries
+            .sortedByDescending { (_, categoryExpenses) -> categoryExpenses.sumOf { it.groupAmount } }
 
-        return sortedCategories.mapIndexed { index, (category, amount) ->
+        return sortedCategories.mapIndexed { index, (category, categoryExpenses) ->
+            val amount = categoryExpenses.sumOf { it.groupAmount }
             val progress = if (globalTotal > 0L) {
                 amount.toFloat() / globalTotal.toFloat()
             } else {
                 0f
             }
 
+            val subcategories = categoryExpenses
+                .groupBy { it.subcategory }
+                .mapValues { (_, subcategoryExpenses) -> subcategoryExpenses.sumOf { it.groupAmount } }
+                .entries
+                .sortedByDescending { it.value }
+                .map { (subcategory, subAmount) ->
+                    val percentageOfCategory = if (amount > 0L) {
+                        (subAmount.toFloat() / amount.toFloat() * 100f).roundToInt()
+                    } else {
+                        0
+                    }
+                    SubcategorySpendingUiModel(
+                        subcategoryName = resourceProvider.getString(subcategory.toStringRes()),
+                        subcategoryIcon = subcategory.toIconVector(),
+                        formattedAmount = formatCurrencyAmount(subAmount, groupCurrency, locale),
+                        percentageOfCategory = percentageOfCategory,
+                        rawAmountCents = subAmount
+                    )
+                }
+                .toImmutableList()
+
             CategorySpendingUiModel(
                 categoryName = resourceProvider.getString(category.toStringRes()),
                 categoryIcon = category.toIconVector(),
                 formattedAmount = formatCurrencyAmount(amount, groupCurrency, locale),
                 progress = progress,
-                color = ChartColors[index % ChartColors.size]
+                color = ChartColors[index % ChartColors.size],
+                subcategories = subcategories
             )
         }.toImmutableList()
     }
