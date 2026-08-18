@@ -3,11 +3,16 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.extensions
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.vector.ImageVector
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.BrandAlipay
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.BrandBebo
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.BrandPaypal
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.BrandPaypay
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.BrandVivaldi
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.BrandWechat
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.BuildingBank
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CashBanknote
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CreditCard
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Qrcode
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Wallet
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.features.expense.R
 
@@ -28,14 +33,14 @@ fun PaymentMethod.toStringRes(): Int = when (this) {
 
 fun PaymentMethod.toIconVector(): ImageVector = when (this) {
     PaymentMethod.CASH -> TablerIcons.Outline.CashBanknote
-    PaymentMethod.BIZUM -> TablerIcons.Outline.Qrcode
-    PaymentMethod.PIX -> TablerIcons.Outline.Qrcode
+    PaymentMethod.BIZUM -> TablerIcons.Outline.BrandBebo
+    PaymentMethod.PIX -> TablerIcons.Outline.BrandPaypay
     PaymentMethod.CREDIT_CARD -> TablerIcons.Outline.CreditCard
     PaymentMethod.DEBIT_CARD -> TablerIcons.Outline.CreditCard
     PaymentMethod.BANK_TRANSFER -> TablerIcons.Outline.BuildingBank
-    PaymentMethod.PAYPAL -> TablerIcons.Outline.Wallet
-    PaymentMethod.VENMO -> TablerIcons.Outline.Wallet
-    PaymentMethod.ALIPAY -> TablerIcons.Outline.Qrcode
-    PaymentMethod.WECHAT_PAY -> TablerIcons.Outline.Qrcode
-    PaymentMethod.OTHER -> TablerIcons.Outline.Wallet
+    PaymentMethod.PAYPAL -> TablerIcons.Outline.BrandPaypal
+    PaymentMethod.VENMO -> TablerIcons.Outline.BrandVivaldi
+    PaymentMethod.ALIPAY -> TablerIcons.Outline.BrandAlipay
+    PaymentMethod.WECHAT_PAY -> TablerIcons.Outline.BrandWechat
+    PaymentMethod.OTHER -> TablerIcons.Outline.Qrcode
 }

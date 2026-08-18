@@ -120,6 +120,8 @@
 
     <!-- Category Spending -->
     <string name="balances_category_spending_title">Category spending</string>
+    <string name="balances_category_expand">Show subcategories for %1$s</string>
+    <string name="balances_category_collapse">Hide subcategories for %1$s</string>
 
 </resources>
 

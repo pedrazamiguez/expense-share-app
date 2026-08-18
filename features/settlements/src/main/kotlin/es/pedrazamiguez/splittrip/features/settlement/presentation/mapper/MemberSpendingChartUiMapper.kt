@@ -29,11 +29,50 @@ class MemberSpendingChartUiMapper(
                 .thenBy { resolveDisplayName(it.userId, memberProfiles, currentUserId) }
         )
 
+        val analysis = analyzeMemberSpends(sortedMembers, cashOnly)
+
+        val bars = sortedMembers.mapIndexed { index, balance ->
+            MemberSpendingBarUiModel(
+                userId = balance.userId,
+                displayName = resolveDisplayName(balance.userId, memberProfiles, currentUserId),
+                isCurrentUser = balance.userId == currentUserId,
+                allowanceCents = analysis.allowances[index] ?: 0L,
+                formattedAllowance = formatCurrencyAmount(
+                    amount = analysis.allowances[index] ?: 0L,
+                    currencyCode = groupCurrencyCode,
+                    locale = localeProvider.getCurrentLocale()
+                ),
+                formattedTotalSpent = formatCurrencyAmount(
+                    amount = if (cashOnly) balance.cashSpent else balance.totalSpent,
+                    currencyCode = groupCurrencyCode,
+                    locale = localeProvider.getCurrentLocale()
+                ),
+                ownSpendingCents = analysis.ownSpends[index] ?: 0L,
+                spilloverSegments = (analysis.spilloverAllocations[index] ?: emptyList()).toImmutableList(),
+                memberColorIndex = index
+            )
+        }.toImmutableList()
+
+        return MemberSpendingChartUiModel(
+            bars = bars,
+            formattedGroupTotal = formatCurrencyAmount(
+                amount = analysis.totalAllowance,
+                currencyCode = groupCurrencyCode,
+                locale = localeProvider.getCurrentLocale()
+            ),
+            isCashOnly = cashOnly,
+            hasCashExpenses = memberBalances.any { it.withdrawn > 0L }
+        )
+    }
+
+    private fun analyzeMemberSpends(
+        sortedMembers: List<MemberBalance>,
+        cashOnly: Boolean
+    ): SpendAnalysis {
         val capacities = mutableListOf<Pair<Int, Long>>()
         val overspenders = mutableListOf<Pair<Int, Long>>()
         val ownSpends = mutableMapOf<Int, Long>()
         val allowances = mutableMapOf<Int, Long>()
-
         var totalAllowance = 0L
 
         sortedMembers.forEachIndexed { index, balance ->
@@ -57,38 +96,20 @@ class MemberSpendingChartUiMapper(
 
         val spilloverAllocations = buildSpilloverAllocations(overspenders, capacities)
 
-        val bars = sortedMembers.mapIndexed { index, balance ->
-            MemberSpendingBarUiModel(
-                userId = balance.userId,
-                displayName = resolveDisplayName(balance.userId, memberProfiles, currentUserId),
-                isCurrentUser = balance.userId == currentUserId,
-                allowanceCents = allowances[index] ?: 0L,
-                formattedAllowance = formatCurrencyAmount(
-                    amount = allowances[index] ?: 0L,
-                    currencyCode = groupCurrencyCode,
-                    locale = localeProvider.getCurrentLocale()
-                ),
-                formattedTotalSpent = formatCurrencyAmount(
-                    amount = if (cashOnly) balance.cashSpent else balance.totalSpent,
-                    currencyCode = groupCurrencyCode,
-                    locale = localeProvider.getCurrentLocale()
-                ),
-                ownSpendingCents = ownSpends[index] ?: 0L,
-                spilloverSegments = (spilloverAllocations[index] ?: emptyList()).toImmutableList(),
-                memberColorIndex = index
-            )
-        }.toImmutableList()
-
-        return MemberSpendingChartUiModel(
-            bars = bars,
-            formattedGroupTotal = formatCurrencyAmount(
-                amount = totalAllowance,
-                currencyCode = groupCurrencyCode,
-                locale = localeProvider.getCurrentLocale()
-            ),
-            isCashOnly = cashOnly
+        return SpendAnalysis(
+            allowances = allowances,
+            ownSpends = ownSpends,
+            totalAllowance = totalAllowance,
+            spilloverAllocations = spilloverAllocations
         )
     }
+
+    private data class SpendAnalysis(
+        val allowances: Map<Int, Long>,
+        val ownSpends: Map<Int, Long>,
+        val totalAllowance: Long,
+        val spilloverAllocations: Map<Int, List<SpilloverSegment>>
+    )
 
     private fun buildSpilloverAllocations(
         overspenders: List<Pair<Int, Long>>,

@@ -7,6 +7,7 @@ import io.mockk.every
 import io.mockk.mockk
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -190,5 +191,41 @@ class MemberSpendingChartUiMapperTest {
         assertEquals(0L, result.bars[0].allowanceCents)
         assertEquals(0L, result.bars[0].ownSpendingCents)
         assertTrue(result.bars[0].spilloverSegments.isEmpty())
+    }
+
+    @Test
+    fun `toChartUiModel - hasCashExpenses is true when member has withdrawn cash`() {
+        val balances = listOf(
+            MemberBalance(userId = "1", withdrawn = 1000L, cashSpent = 500L, totalSpent = 500L),
+            MemberBalance(userId = "2", withdrawn = 0L, cashSpent = 0L, totalSpent = 0L)
+        )
+
+        val result = mapper.toChartUiModel(
+            memberBalances = balances,
+            cashOnly = true,
+            currentUserId = "1",
+            memberProfiles = emptyMap(),
+            groupCurrencyCode = "USD"
+        )
+
+        assertTrue(result.hasCashExpenses)
+    }
+
+    @Test
+    fun `toChartUiModel - hasCashExpenses is false when no member has withdrawn cash`() {
+        val balances = listOf(
+            MemberBalance(userId = "1", withdrawn = 0L, cashSpent = 0L, totalSpent = 500L),
+            MemberBalance(userId = "2", withdrawn = 0L, cashSpent = 0L, totalSpent = 300L)
+        )
+
+        val result = mapper.toChartUiModel(
+            memberBalances = balances,
+            cashOnly = false,
+            currentUserId = "1",
+            memberProfiles = emptyMap(),
+            groupCurrencyCode = "USD"
+        )
+
+        assertFalse(result.hasCashExpenses)
     }
 }

@@ -23,6 +23,7 @@ core/design-system/src/main/kotlin/es/pedrazamiguez/splittrip/core/designsystem/
 ├── outline/
 │   ├── NavigationIcons.kt          ← Arrows, chevrons, people, home
 │   ├── ActionIcons.kt              ← Plus, edit, trash, search, check, etc.
+│   ├── BrandIcons.kt               ← Brand & proxy logos (PayPal, Alipay, WeChat, etc.)
 │   ├── FinanceIcons.kt             ← Credit card, wallet, cash, currency, etc.
 │   ├── StatusIcons.kt              ← Alert, info, lock, shield, clock, eye
 │   ├── ContentIcons.kt             ← Mail, bell, camera, photo, etc.
@@ -197,6 +198,7 @@ If the script is unavailable, follow these steps:
 |---|---|---|
 | Navigation, people, arrows | `NavigationIcons.kt` | ArrowLeft, ChevronDown, User, Home |
 | CRUD actions, controls | `ActionIcons.kt` | Plus, Edit, Trash, Search, Check |
+| Brands, payment logos | `BrandIcons.kt` | BrandPaypal, BrandAlipay, BrandWechat |
 | Money, payments, data | `FinanceIcons.kt` | CreditCard, Wallet, Cash, ChartBar |
 | Alerts, security, status | `StatusIcons.kt` | AlertTriangle, Lock, Shield, Eye |
 | Communication, media | `ContentIcons.kt` | Mail, Bell, Camera, Photo |

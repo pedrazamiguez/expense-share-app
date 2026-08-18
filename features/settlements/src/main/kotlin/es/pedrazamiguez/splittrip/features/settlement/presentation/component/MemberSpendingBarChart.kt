@@ -47,10 +47,12 @@ internal fun MemberSpendingBarChart(
                         }
                     )
                 )
-                Switch(
-                    checked = isCashOnly,
-                    onCheckedChange = onToggle
-                )
+                if (chart.hasCashExpenses) {
+                    Switch(
+                        checked = isCashOnly,
+                        onCheckedChange = onToggle
+                    )
+                }
             }
 
             val globalMax = chart.bars.maxOfOrNull { it.allowanceCents } ?: 0L

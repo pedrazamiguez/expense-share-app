@@ -28,6 +28,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.extensions.toStr
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseDateGroupUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentBadgeData
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import kotlinx.collections.immutable.ImmutableList
@@ -133,7 +134,8 @@ class ExpenseUiMapper(
         currentUserId: String? = null,
         pairedContributions: Map<String, Contribution> = emptyMap(),
         subunits: Map<String, Subunit> = emptyMap(),
-        groupMemberIds: List<String> = emptyList()
+        groupMemberIds: List<String> = emptyList(),
+        today: LocalDate = LocalDate.now()
     ): ImmutableList<ExpenseDateGroupUiModel> {
         if (expenses.isEmpty()) return emptyList<ExpenseDateGroupUiModel>().toImmutableList()
 
@@ -150,16 +152,40 @@ class ExpenseUiMapper(
 
                 val dayTotalCents = dayExpenses
                     .filter { it.paymentStatus != PaymentStatus.CANCELLED }
+                    .filterNot {
+                        it.paymentStatus == PaymentStatus.SCHEDULED &&
+                            it.dueDate?.toLocalDate()?.isAfter(today) == true
+                    }
                     .sumOf { it.groupAmount }
+
+                val dayScheduledCents = dayExpenses
+                    .filter { it.paymentStatus != PaymentStatus.CANCELLED }
+                    .filter {
+                        it.paymentStatus == PaymentStatus.SCHEDULED &&
+                            it.dueDate?.toLocalDate()?.isAfter(today) == true
+                    }
+                    .sumOf { it.groupAmount }
+
                 val formattedDayTotal = formatCurrencyAmount(
                     amount = dayTotalCents,
                     currencyCode = groupCurrencyCode,
                     locale = appLocale
                 )
 
+                val formattedDayScheduled = if (dayScheduledCents > 0L) {
+                    formatCurrencyAmount(
+                        amount = dayScheduledCents,
+                        currencyCode = groupCurrencyCode,
+                        locale = appLocale
+                    )
+                } else {
+                    null
+                }
+
                 ExpenseDateGroupUiModel(
                     dateText = dateText,
                     formattedDayTotal = formattedDayTotal,
+                    formattedDayScheduled = formattedDayScheduled,
                     expenses = dayExpenses.map {
                         map(it, memberProfiles, currentUserId, pairedContributions, subunits, groupMemberIds)
                     }.toImmutableList()
@@ -176,6 +202,18 @@ class ExpenseUiMapper(
         currencyCode: String
     ): String = formatCurrencyAmount(
         amount = totalSpentCents,
+        currencyCode = currencyCode,
+        locale = localeProvider.getCurrentLocale()
+    )
+
+    /**
+     * Formats the total pending scheduled amount for visible/filtered expenses in the group's default currency.
+     */
+    fun formatScheduledAmount(
+        totalScheduledCents: Long,
+        currencyCode: String
+    ): String = formatCurrencyAmount(
+        amount = totalScheduledCents,
         currencyCode = currencyCode,
         locale = localeProvider.getCurrentLocale()
     )
