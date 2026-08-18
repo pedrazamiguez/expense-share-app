@@ -92,6 +92,10 @@ fun ExpensesFilterScreen(
                     DateRangeFilterSection(
                         criteria = uiState.draftCriteria,
                         onCriteriaChange = onUpdateDraft,
+                        oldestExpenseDate = uiState.oldestExpenseDate,
+                        newestExpenseDate = uiState.newestExpenseDate,
+                        formattedStartDate = uiState.formattedStartDate,
+                        formattedEndDate = uiState.formattedEndDate,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

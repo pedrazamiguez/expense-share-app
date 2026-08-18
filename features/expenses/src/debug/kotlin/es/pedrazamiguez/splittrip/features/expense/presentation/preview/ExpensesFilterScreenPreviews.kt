@@ -9,6 +9,7 @@ import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
 import es.pedrazamiguez.splittrip.domain.model.ExpenseFilterCriteria
 import es.pedrazamiguez.splittrip.features.expense.presentation.screen.ExpensesFilterScreen
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.ExpensesFilterUiState
+import java.time.LocalDate
 import kotlinx.collections.immutable.persistentListOf
 
 private val sampleMembers = persistentListOf(
@@ -88,6 +89,28 @@ private fun ExpensesFilterScreenMemberFilterPreview() {
                 availableMembers = sampleMembers,
                 draftCriteria = ExpenseFilterCriteria(
                     selectedMemberIds = setOf("user-1", "user-2")
+                )
+            )
+        )
+    }
+}
+
+@PreviewComplete
+@Composable
+private fun ExpensesFilterScreenDateRangePreview() {
+    PreviewThemeWrapper {
+        ExpensesFilterScreen(
+            uiState = ExpensesFilterUiState(
+                isLoading = false,
+                groupId = "group-1",
+                totalExpensesCount = 10,
+                matchingExpensesCount = 5,
+                availableMembers = sampleMembers,
+                formattedStartDate = "1 Jun",
+                formattedEndDate = "15 Jun",
+                draftCriteria = ExpenseFilterCriteria(
+                    startDate = LocalDate.of(2026, 6, 1),
+                    endDate = LocalDate.of(2026, 6, 15)
                 )
             )
         )

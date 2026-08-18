@@ -22,6 +22,11 @@
     <string name="expenses_filter_subcategories_title">Subcategories</string>
     <string name="expenses_filter_section_members">Members</string>
     <string name="expenses_filter_section_date_range">Date range</string>
+    <string name="expenses_filter_date_from">From</string>
+    <string name="expenses_filter_date_to">To</string>
+    <string name="expenses_filter_date_select">Select date</string>
+    <string name="expenses_filter_date_clear_start_cd">Clear start date</string>
+    <string name="expenses_filter_date_clear_end_cd">Clear end date</string>
     <string name="expenses_filter_button_cd">Filter expenses</string>
     <string name="expenses_filter_members_placeholder">Member filter options will appear here</string>
     <string name="expenses_filter_date_range_placeholder">Date range filter options will appear here</string>

@@ -157,7 +157,7 @@ class AddExpenseUiMapper(
         } ?: PayerType.GROUP
 
         val payerId = if (payerType == PayerType.USER) state.currentUserId else null
-        val createdAt = state.expenseDateMillis?.let {
+        val operationDate = state.expenseDateMillis?.let {
             LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneOffset.UTC)
         }
 
@@ -189,7 +189,7 @@ class AddExpenseUiMapper(
             splits = splits,
             payerType = payerType,
             payerId = payerId,
-            createdAt = createdAt
+            operationDate = operationDate
         )
         Result.success(expense)
     } catch (e: Exception) {
@@ -271,8 +271,9 @@ class AddExpenseUiMapper(
             currentUserId = currentState.currentUserId
         )
 
+        val effectiveExpenseDate = expense.effectiveDate
         val expenseDateMillis =
-            expense.createdAt?.toInstant(ZoneOffset.UTC)?.toEpochMilli() ?: currentState.expenseDateMillis
+            effectiveExpenseDate?.toInstant(ZoneOffset.UTC)?.toEpochMilli() ?: currentState.expenseDateMillis
         val formattedExpenseDate =
             expenseDateMillis?.let { formatExpenseDateForDisplay(it) } ?: currentState.formattedExpenseDate
 

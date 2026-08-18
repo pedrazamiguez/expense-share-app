@@ -23,6 +23,11 @@
     <string name="expenses_filter_subcategories_title">Çûccategoríâ</string>
     <string name="expenses_filter_section_members">Miembrô</string>
     <string name="expenses_filter_section_date_range">Rango de fexâ</string>
+    <string name="expenses_filter_date_from">Dêdde</string>
+    <string name="expenses_filter_date_to">Âtta</string>
+    <string name="expenses_filter_date_select">Çelêççionâh fexa</string>
+    <string name="expenses_filter_date_clear_start_cd">Borrâh fexa de iniçio</string>
+    <string name="expenses_filter_date_clear_end_cd">Borrâh fexa de fin</string>
     <string name="expenses_filter_button_cd">Firtrâh gâttô</string>
     <string name="expenses_filter_members_placeholder">Lâ ôççionê de firtro por miembrô apareçerán aquí</string>
     <string name="expenses_filter_date_range_placeholder">Lâ ôççionê de firtro por fexâ apareçerán aquí</string>

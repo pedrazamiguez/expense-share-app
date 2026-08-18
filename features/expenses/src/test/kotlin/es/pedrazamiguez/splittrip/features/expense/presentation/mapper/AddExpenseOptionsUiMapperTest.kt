@@ -400,7 +400,7 @@ class AddExpenseOptionsUiMapperTest {
         @BeforeEach
         fun stubFormattingHelper() {
             every { formattingHelper.formatShortDate(date) } returns "10 Jan"
-            every { formattingHelper.formatShortDate(null) } returns ""
+            every { formattingHelper.formatShortDate(null as LocalDateTime?) } returns ""
             every { formattingHelper.formatCentsWithCurrency(any(), sourceCurrency) } answers {
                 "THB ${firstArg<Long>() / 100}"
             }

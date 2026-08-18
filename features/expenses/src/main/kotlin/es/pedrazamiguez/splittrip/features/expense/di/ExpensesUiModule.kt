@@ -55,6 +55,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpens
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.ExpenseDetailUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.ExpenseUiMapper
+import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.ExpensesFilterUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.PaymentStatusBadgeUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.screen.impl.AddExpenseScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.expense.presentation.screen.impl.ExpenseDetailScreenUiProviderImpl
@@ -347,6 +348,13 @@ val expensesUiModule = module {
         )
     }
 
+    factory {
+        ExpensesFilterUiMapper(
+            formattingHelper = get<FormattingHelper>(),
+            userUiMapper = get<UserUiMapper>()
+        )
+    }
+
     viewModel {
         ExpenseDetailViewModel(
             getExpenseByIdFlowUseCase = get<GetExpenseByIdFlowUseCase>(),
@@ -371,7 +379,7 @@ val expensesUiModule = module {
             observeGroupUseCase = get<ObserveGroupUseCase>(),
             getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
             authenticationService = get<AuthenticationService>(),
-            userUiMapper = get<UserUiMapper>()
+            expensesFilterUiMapper = get<ExpensesFilterUiMapper>()
         )
     }
 }

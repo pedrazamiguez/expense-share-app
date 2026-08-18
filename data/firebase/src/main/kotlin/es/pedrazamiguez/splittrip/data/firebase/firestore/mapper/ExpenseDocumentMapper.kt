@@ -37,9 +37,7 @@ fun Expense.toDocument(expenseId: String, groupId: String, groupDocRef: Document
         groupAmountCents = groupAmount,
         expectedGroupAmountCents = expectedGroupAmount,
         exchangeRate = exchangeRate.toPlainString(),
-        operationDate = LocalDateTime
-            .now()
-            .toTimestampUtc(),
+        operationDate = (operationDate ?: createdAt)?.toTimestampUtc(),
         paymentMethod = paymentMethod.name,
         paymentStatus = paymentStatus.name,
         dueDate = dueDate.toTimestampUtc(),
@@ -57,8 +55,8 @@ fun Expense.toDocument(expenseId: String, groupId: String, groupDocRef: Document
         payerId = payerId,
         createdBy = userId,
         lastUpdatedBy = userId,
-        createdAt = createdAt?.toTimestampUtc(),
-        lastUpdatedAt = lastUpdatedAt?.toTimestampUtc(),
+        createdAt = (createdAt ?: LocalDateTime.now()).toTimestampUtc(),
+        lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc(),
         // Only include the attachment in the Firestore document once it has a remote URL.
         // The local URI is an on-device path with no meaning on other devices.
         attachments = buildReceiptAttachmentDocuments(receiptAttachment)
@@ -103,6 +101,7 @@ fun ExpenseDocument.toDomain(): Expense {
         createdBy = createdBy,
         payerType = resolvedPayerType,
         payerId = payerId.takeUnless { resolvedPayerType == PayerType.GROUP },
+        operationDate = operationDate?.toLocalDateTimeUtc() ?: createdAt.toLocalDateTimeUtc(),
         createdAt = createdAt.toLocalDateTimeUtc(),
         lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc(),
         // Restore the first attachment as a ReceiptAttachment if it has a remote URL.

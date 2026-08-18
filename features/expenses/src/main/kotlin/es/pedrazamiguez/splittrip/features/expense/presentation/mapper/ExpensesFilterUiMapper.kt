@@ -1,0 +1,51 @@
+package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
+
+import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberOptionUiModel
+import es.pedrazamiguez.splittrip.domain.model.Expense
+import es.pedrazamiguez.splittrip.domain.model.User
+import java.time.LocalDate
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
+
+class ExpensesFilterUiMapper(
+    private val formattingHelper: FormattingHelper,
+    private val userUiMapper: UserUiMapper
+) {
+
+    fun extractDateBounds(expenses: List<Expense>): Pair<LocalDate?, LocalDate?> {
+        val dates = expenses.mapNotNull { it.effectiveDate?.toLocalDate() }
+        if (dates.isEmpty()) return null to null
+        return dates.minOrNull() to dates.maxOrNull()
+    }
+
+    fun formatFilterDate(date: LocalDate?): String {
+        return formattingHelper.formatShortDate(date)
+    }
+
+    fun mapAvailableMembers(
+        allUserIds: List<String>,
+        memberProfiles: Map<String, User>,
+        currentUserId: String?
+    ): ImmutableList<MemberOptionUiModel> {
+        return allUserIds.map { userId ->
+            val user = memberProfiles[userId]
+            val displayName = userUiMapper.mapToDisplayName(
+                user = user,
+                fallbackUserId = userId,
+                currentUserId = currentUserId,
+                selfIdentificationContext = SelfIdentificationContextEnum.NOMINATIVE
+            )
+            MemberOptionUiModel(
+                userId = userId,
+                displayName = displayName,
+                isCurrentUser = userId == currentUserId
+            )
+        }.sortedWith(
+            compareByDescending<MemberOptionUiModel> { it.isCurrentUser }
+                .thenBy(String.CASE_INSENSITIVE_ORDER) { it.displayName }
+        ).toImmutableList()
+    }
+}

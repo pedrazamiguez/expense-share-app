@@ -20,12 +20,21 @@ import java.time.ZoneOffset
 fun AppDatePickerDialog(
     initialDateMillis: Long?,
     onDismiss: () -> Unit,
-    onDateSelected: (Long) -> Unit
+    onDateSelected: (Long) -> Unit,
+    minDate: LocalDate? = null,
+    maxDate: LocalDate? = null
 ) {
-    val currentLocalDateMillis = LocalDate.now()
+    val todayUtcMillis = LocalDate.now()
         .atStartOfDay()
         .toInstant(ZoneOffset.UTC)
         .toEpochMilli()
+
+    val minMillis = minDate?.atStartOfDay()?.toInstant(ZoneOffset.UTC)?.toEpochMilli()
+    val maxMillis = maxDate?.atStartOfDay()?.toInstant(ZoneOffset.UTC)?.toEpochMilli() ?: todayUtcMillis
+
+    val minYear = minDate?.year
+    val maxYear = maxDate?.year ?: LocalDate.now().year
+
     val initialSelected = initialDateMillis?.let {
         Instant.ofEpochMilli(it)
             .atZone(ZoneId.systemDefault())
@@ -33,16 +42,27 @@ fun AppDatePickerDialog(
             .atStartOfDay()
             .toInstant(ZoneOffset.UTC)
             .toEpochMilli()
+    } ?: run {
+        if (todayUtcMillis in (minMillis ?: Long.MIN_VALUE)..maxMillis) {
+            todayUtcMillis
+        } else {
+            minMillis ?: maxMillis
+        }
     }
+
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = initialSelected ?: currentLocalDateMillis,
+        initialSelectedDateMillis = initialSelected,
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                return utcTimeMillis <= currentLocalDateMillis
+                val afterMin = minMillis?.let { utcTimeMillis >= it } ?: true
+                val beforeMax = utcTimeMillis <= maxMillis
+                return afterMin && beforeMax
             }
 
             override fun isSelectableYear(year: Int): Boolean {
-                return year <= LocalDate.now().year
+                val afterMinYear = minYear?.let { year >= it } ?: true
+                val beforeMaxYear = year <= maxYear
+                return afterMinYear && beforeMaxYear
             }
         }
     )
