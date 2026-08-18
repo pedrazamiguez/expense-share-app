@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter
 
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -10,6 +11,16 @@ fun LocalDateTime.formatShortDate(locale: Locale): String {
 }
 
 fun LocalDateTime.formatMediumDate(locale: Locale): String {
+    val formatter = DateTimeFormatter.ofPattern("MMMM yyyy", locale)
+    return format(formatter)
+}
+
+fun LocalDate.formatShortDate(locale: Locale): String {
+    val formatter = DateTimeFormatter.ofPattern("d MMM", locale)
+    return format(formatter)
+}
+
+fun LocalDate.formatMediumDate(locale: Locale): String {
     val formatter = DateTimeFormatter.ofPattern("MMMM yyyy", locale)
     return format(formatter)
 }

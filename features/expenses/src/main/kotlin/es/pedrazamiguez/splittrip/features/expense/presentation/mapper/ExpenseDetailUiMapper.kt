@@ -146,7 +146,7 @@ class ExpenseDetailUiMapper(
                 ),
                 payerDisplay = payerDisplay,
                 creatorDisplay = creatorDisplay,
-                dateText = formattingHelper.formatShortDate(expense.createdAt),
+                dateText = formattingHelper.formatShortDate(expense.effectiveDate),
                 secondaryDateText = resolveSecondaryDateText(expense, formattingHelper),
                 secondaryDateIcon = resolveSecondaryDateIcon(expense),
                 vendorText = expense.vendor?.takeIf { it.isNotBlank() },

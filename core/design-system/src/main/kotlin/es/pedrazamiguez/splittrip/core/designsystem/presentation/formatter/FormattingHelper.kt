@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import java.math.BigDecimal
+import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -104,4 +105,22 @@ class FormattingHelper(
      */
     fun formatShortDate(date: LocalDateTime?): String =
         date?.formatShortDate(locale = localeProvider.getCurrentLocale()) ?: ""
+
+    /**
+     * Formats a [LocalDate] to a short human-readable date (e.g., "10 Jan").
+     *
+     * @param date The date to format. Returns an empty string if null.
+     * @return Locale-aware short date string.
+     */
+    fun formatShortDate(date: LocalDate?): String =
+        date?.formatShortDate(locale = localeProvider.getCurrentLocale()) ?: ""
+
+    /**
+     * Formats a [LocalDate] to a medium human-readable date (e.g., "January 2026").
+     *
+     * @param date The date to format. Returns an empty string if null.
+     * @return Locale-aware medium date string.
+     */
+    fun formatMediumDate(date: LocalDate?): String =
+        date?.formatMediumDate(locale = localeProvider.getCurrentLocale()) ?: ""
 }

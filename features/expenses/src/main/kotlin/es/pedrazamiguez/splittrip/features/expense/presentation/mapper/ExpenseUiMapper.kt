@@ -92,7 +92,7 @@ class ExpenseUiMapper(
                 paymentStatusText = resourceProvider.getString(paymentStatus.toStringRes()),
                 paidByText = resourceProvider.getString(R.string.paid_by, resolvedName),
                 creatorDisplay = creatorDisplay,
-                dateText = createdAt?.formatShortDate(appLocale) ?: "",
+                dateText = effectiveDate?.formatShortDate(appLocale) ?: "",
                 badgeText = badgeData?.text,
                 badgeIcon = badgeIcon,
                 isBadgeUrgent = badgeData?.isPassed == true,
@@ -121,10 +121,10 @@ class ExpenseUiMapper(
         }.toImmutableList()
 
     /**
-     * Groups expenses by date (from createdAt) and produces date headers
+     * Groups expenses by date (from effectiveDate) and produces date headers
      * with the formatted daily total in the group's default currency.
      *
-     * Expenses are already sorted DESC by createdAt from the DAO.
+     * Expenses are already sorted DESC by effectiveDate from the DAO.
      * The groupCurrencyCode is taken from the first expense in the list.
      */
     fun mapGroupedByDate(
@@ -141,7 +141,7 @@ class ExpenseUiMapper(
         val groupCurrencyCode = expenses.first().groupCurrency
 
         return expenses
-            .groupBy { it.createdAt?.toLocalDate() }
+            .groupBy { it.effectiveDate?.toLocalDate() }
             .map { (date, dayExpenses) ->
                 val dateText = date?.let {
                     LocalDateTime.of(it, LocalTime.MIDNIGHT)

@@ -57,6 +57,7 @@ fun ExpenseEntity.toDomain(): Expense {
         createdBy = createdBy,
         payerType = resolvedPayerType,
         payerId = payerId.takeUnless { resolvedPayerType == PayerType.GROUP },
+        operationDate = operationDateMillis?.toLocalDateTimeUtc() ?: createdAtMillis?.toLocalDateTimeUtc(),
         createdAt = createdAtMillis?.toLocalDateTimeUtc(),
         lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc(),
         syncStatus = SyncStatus.fromStringOrDefault(syncStatus)
@@ -92,6 +93,7 @@ fun Expense.toEntity(): ExpenseEntity {
         payerType = payerType.name,
         payerId = payerId,
         splitType = splitType.name,
+        operationDateMillis = operationDate?.toEpochMillisUtc(),
         createdAtMillis = effectiveCreatedAtMillis,
         lastUpdatedAtMillis = effectiveLastUpdatedAtMillis,
         cashTranchesJson = cashTrancheConverter.fromCashTrancheList(cashTranches.ifEmpty { null }),

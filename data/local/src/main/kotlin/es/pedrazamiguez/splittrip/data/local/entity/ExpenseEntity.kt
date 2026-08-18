@@ -46,6 +46,7 @@ data class ExpenseEntity(
     val payerType: String,
     val payerId: String? = null,
     val splitType: String = "EQUAL",
+    val operationDateMillis: Long? = null,
     val createdAtMillis: Long?,
     val lastUpdatedAtMillis: Long?,
     val cashTranchesJson: String? = null,

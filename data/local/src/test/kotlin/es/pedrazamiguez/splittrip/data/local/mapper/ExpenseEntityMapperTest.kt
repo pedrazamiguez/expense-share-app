@@ -148,11 +148,31 @@ class ExpenseEntityMapperTest {
         }
 
         @Test
-        fun `null timestamps map to null`() {
-            val entity = fullEntity.copy(createdAtMillis = null, lastUpdatedAtMillis = null)
+        fun `maps operationDate when operationDateMillis is present`() {
+            val opTimestamp = LocalDateTime.of(2026, 3, 10, 15, 0, 0)
+            val opTimestampMillis = opTimestamp.toInstant(ZoneOffset.UTC).toEpochMilli()
+            val entity = fullEntity.copy(operationDateMillis = opTimestampMillis)
             val expense = entity.toDomain()
+            assertEquals(opTimestamp, expense.operationDate)
+            assertEquals(opTimestamp, expense.effectiveDate)
+        }
+
+        @Test
+        fun `falls back to createdAt for operationDate when operationDateMillis is null`() {
+            val entity = fullEntity.copy(operationDateMillis = null)
+            val expense = entity.toDomain()
+            assertEquals(testTimestamp, expense.operationDate)
+            assertEquals(testTimestamp, expense.effectiveDate)
+        }
+
+        @Test
+        fun `null timestamps map to null`() {
+            val entity = fullEntity.copy(operationDateMillis = null, createdAtMillis = null, lastUpdatedAtMillis = null)
+            val expense = entity.toDomain()
+            assertNull(expense.operationDate)
             assertNull(expense.createdAt)
             assertNull(expense.lastUpdatedAt)
+            assertNull(expense.effectiveDate)
         }
 
         @Test
@@ -349,6 +369,21 @@ class ExpenseEntityMapperTest {
             val expense = fullExpense.copy(lastUpdatedAt = null)
             val entity = expense.toEntity()
             assertEquals(entity.createdAtMillis, entity.lastUpdatedAtMillis)
+        }
+
+        @Test
+        fun `maps operationDate to operationDateMillis when present`() {
+            val opDate = LocalDateTime.of(2026, 3, 12, 14, 0, 0)
+            val expense = fullExpense.copy(operationDate = opDate)
+            val entity = expense.toEntity()
+            assertEquals(opDate.toInstant(ZoneOffset.UTC).toEpochMilli(), entity.operationDateMillis)
+        }
+
+        @Test
+        fun `maps null operationDate to null operationDateMillis`() {
+            val expense = fullExpense.copy(operationDate = null)
+            val entity = expense.toEntity()
+            assertNull(entity.operationDateMillis)
         }
     }
 

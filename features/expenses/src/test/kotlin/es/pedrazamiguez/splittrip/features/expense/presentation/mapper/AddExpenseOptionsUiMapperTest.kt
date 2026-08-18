@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignR
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toIconVector
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toStringRes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
@@ -242,6 +243,7 @@ class AddExpenseOptionsUiMapperTest {
             assertEquals(1, result.size)
             assertEquals("FOOD", result[0].id)
             assertEquals("Food & Restaurants", result[0].displayText)
+            assertEquals(ExpenseCategory.FOOD.toIconVector(), result[0].icon)
         }
 
         @Test
@@ -400,7 +402,7 @@ class AddExpenseOptionsUiMapperTest {
         @BeforeEach
         fun stubFormattingHelper() {
             every { formattingHelper.formatShortDate(date) } returns "10 Jan"
-            every { formattingHelper.formatShortDate(null) } returns ""
+            every { formattingHelper.formatShortDate(null as LocalDateTime?) } returns ""
             every { formattingHelper.formatCentsWithCurrency(any(), sourceCurrency) } answers {
                 "THB ${firstArg<Long>() / 100}"
             }

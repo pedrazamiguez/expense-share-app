@@ -14,6 +14,7 @@ object Routes {
     const val GROUPS = "groups"
     const val CREATE_GROUP = "create_group"
     const val EXPENSES = "expenses"
+    const val EXPENSES_FILTER = "expenses_filter"
     const val ADD_EXPENSE = "add_expense"
     const val BALANCES = "balances"
     const val YOUR_BALANCE = "your_balance"
@@ -54,6 +55,8 @@ object Routes {
     fun editGroupRoute(groupId: String) = "edit_group/$groupId"
 
     fun expenseDetailRoute(expenseId: String) = "expense_detail/$expenseId"
+
+    fun expensesFilterRoute() = EXPENSES_FILTER
 
     fun editExpenseRoute(expenseId: String) = "edit_expense/$expenseId"
 

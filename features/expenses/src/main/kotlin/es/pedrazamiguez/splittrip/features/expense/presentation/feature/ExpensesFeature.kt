@@ -12,6 +12,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalTabNavContro
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.notification.LocalTopPillController
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
+import es.pedrazamiguez.splittrip.domain.model.ExpenseFilterCriteria
 import es.pedrazamiguez.splittrip.features.expense.presentation.screen.ExpensesScreen
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.ExpensesViewModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.ExpensesUiAction
@@ -77,6 +78,18 @@ fun ExpensesFeature(
         }
     }
 
+    LaunchedEffect(currentBackStackEntry) {
+        currentBackStackEntry?.savedStateHandle?.getStateFlow<ExpenseFilterCriteria?>(
+            "appliedFilterCriteria",
+            null
+        )?.collectLatest { appliedCriteria ->
+            if (appliedCriteria != null) {
+                expensesViewModel.onEvent(ExpensesUiEvent.FilterCriteriaChanged(appliedCriteria))
+                currentBackStackEntry.savedStateHandle.remove<ExpenseFilterCriteria>("appliedFilterCriteria")
+            }
+        }
+    }
+
     // Prevent stale data flash during group transition
     val isTransitioning = selectedGroupId != null && selectedGroupId != uiState.groupId
     val effectiveUiState = remember(uiState, isTransitioning) {
@@ -107,6 +120,16 @@ fun ExpensesFeature(
         },
         onSearchQueryChanged = { query ->
             expensesViewModel.onEvent(ExpensesUiEvent.SearchQueryChanged(query))
+        },
+        onFilterClick = {
+            navController.currentBackStackEntry?.savedStateHandle?.set(
+                "initialFilterCriteria",
+                uiState.filterCriteria
+            )
+            navController.navigate(Routes.expensesFilterRoute())
+        },
+        onResetFilters = {
+            expensesViewModel.onEvent(ExpensesUiEvent.ClearFilters)
         }
     )
 }

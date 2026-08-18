@@ -7,8 +7,9 @@ import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
+import es.pedrazamiguez.splittrip.domain.model.ExpenseFilterCriteria
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
-import es.pedrazamiguez.splittrip.domain.service.ExpenseSearchService
+import es.pedrazamiguez.splittrip.domain.service.ExpenseFilterService
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.ExpenseUiMapper
@@ -49,13 +50,13 @@ class ExpensesViewModel(
     private val expenseUiMapper: ExpenseUiMapper,
     private val authenticationService: AuthenticationService,
     private val observeGroupUseCase: ObserveGroupUseCase,
-    private val expenseSearchService: ExpenseSearchService
+    private val expenseFilterService: ExpenseFilterService
 ) : ViewModel() {
 
     private val _scrollState = MutableStateFlow(Pair(0, 0))
     private val _selectedGroupId = MutableStateFlow<String?>(null)
     private val _refreshTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-    private val _searchQuery = MutableStateFlow("")
+    private val _filterCriteria = MutableStateFlow(ExpenseFilterCriteria())
 
     // Actions for one-shot events like success/error messages
     private val _actions = MutableSharedFlow<ExpensesUiAction>()
@@ -67,9 +68,9 @@ class ExpensesViewModel(
             val groupFlow = observeGroupUseCase(groupId)
             val currentUserId = authenticationService.currentUserId()
 
-            val debouncedQueryFlow = _searchQuery
-                .debounce { query ->
-                    if (query.isBlank()) 0L else SEARCH_DEBOUNCE_MS
+            val debouncedCriteriaFlow = _filterCriteria
+                .debounce { criteria ->
+                    if (criteria.searchQuery.isBlank()) 0L else SEARCH_DEBOUNCE_MS
                 }
 
             // Merge: emit once immediately (Unit), plus on every explicit refresh
@@ -82,11 +83,11 @@ class ExpensesViewModel(
                     useCases.getGroupContributionsFlowUseCase(groupId),
                     useCases.getGroupSubunitsFlowUseCase(groupId),
                     groupFlow,
-                    debouncedQueryFlow
-                ) { expenses, contributions, subunits, group, debouncedQuery ->
+                    debouncedCriteriaFlow
+                ) { expenses, contributions, subunits, group, debouncedCriteria ->
                     val totalExpensesCount = expenses.size
-                    val filteredExpenses = expenseSearchService.search(expenses, debouncedQuery)
-                    val isFiltered = debouncedQuery.isNotBlank()
+                    val filteredExpenses = expenseFilterService.filter(expenses, debouncedCriteria)
+                    val isFiltered = debouncedCriteria.isActive
                     val visibleExpensesCount = filteredExpenses.size
 
                     val groupCurrency = group?.currency
@@ -219,7 +220,7 @@ class ExpensesViewModel(
                     }
             }
         }
-        .combineWithSearchAndScroll(_searchQuery, _scrollState)
+        .combineWithFilterAndScroll(_filterCriteria, _scrollState)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(
@@ -246,14 +247,22 @@ class ExpensesViewModel(
             }
 
             is ExpensesUiEvent.SearchQueryChanged -> {
-                _searchQuery.value = event.query
+                _filterCriteria.update { it.copy(searchQuery = event.query) }
+            }
+
+            is ExpensesUiEvent.FilterCriteriaChanged -> {
+                _filterCriteria.value = event.criteria
+            }
+
+            ExpensesUiEvent.ClearFilters -> {
+                _filterCriteria.update { it.clearNonSearchFilters() }
             }
         }
     }
 
     fun setSelectedGroup(groupId: String?) {
         if (groupId != _selectedGroupId.value) {
-            _searchQuery.value = ""
+            _filterCriteria.value = ExpenseFilterCriteria()
             _selectedGroupId.value = groupId
         }
     }
@@ -354,13 +363,14 @@ class ExpensesViewModel(
         data class Error(override val isGroupArchived: Boolean) : UiStateUpdate
     }
 
-    private fun Flow<ExpensesUiState>.combineWithSearchAndScroll(
-        searchQueryFlow: StateFlow<String>,
+    private fun Flow<ExpensesUiState>.combineWithFilterAndScroll(
+        filterCriteriaFlow: StateFlow<ExpenseFilterCriteria>,
         scrollFlow: StateFlow<Pair<Int, Int>>
     ): Flow<ExpensesUiState> =
-        combine(this, searchQueryFlow, scrollFlow) { state, query, scroll ->
+        combine(this, filterCriteriaFlow, scrollFlow) { state, criteria, scroll ->
             state.copy(
-                searchQuery = query,
+                searchQuery = criteria.searchQuery,
+                filterCriteria = criteria,
                 scrollPosition = scroll.first,
                 scrollOffset = scroll.second
             )

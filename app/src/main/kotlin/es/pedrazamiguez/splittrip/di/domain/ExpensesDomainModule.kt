@@ -11,6 +11,7 @@ import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.splittrip.domain.service.ExpenseFilterService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseSearchService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseValidationService
 import es.pedrazamiguez.splittrip.domain.service.GroupMembershipService
@@ -22,6 +23,7 @@ import es.pedrazamiguez.splittrip.domain.service.addon.AddOnResolverFactory
 import es.pedrazamiguez.splittrip.domain.service.impl.AddOnCalculationServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.ExchangeRateCalculationServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.ExpenseCalculatorServiceImpl
+import es.pedrazamiguez.splittrip.domain.service.impl.ExpenseFilterServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.ExpenseSearchServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.ExpenseValidationServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.RemainderDistributionServiceImpl
@@ -109,6 +111,7 @@ val expensesDomainModule = module {
     factory { AddOnResolverFactory() }
     factory<ExpenseCalculatorService> { ExpenseCalculatorServiceImpl() }
     factory<ExpenseSearchService> { ExpenseSearchServiceImpl() }
+    factory<ExpenseFilterService> { ExpenseFilterServiceImpl(expenseSearchService = get<ExpenseSearchService>()) }
     factory<AddOnCalculationService> { AddOnCalculationServiceImpl(addOnResolverFactory = get<AddOnResolverFactory>()) }
     factory<ExchangeRateCalculationService> { ExchangeRateCalculationServiceImpl() }
     factory<RemainderDistributionService> { RemainderDistributionServiceImpl() }
