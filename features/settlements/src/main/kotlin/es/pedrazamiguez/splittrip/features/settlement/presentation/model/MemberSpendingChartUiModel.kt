@@ -5,5 +5,6 @@ import kotlinx.collections.immutable.ImmutableList
 data class MemberSpendingChartUiModel(
     val bars: ImmutableList<MemberSpendingBarUiModel>,
     val formattedGroupTotal: String,
-    val isCashOnly: Boolean
+    val isCashOnly: Boolean,
+    val hasCashExpenses: Boolean
 )

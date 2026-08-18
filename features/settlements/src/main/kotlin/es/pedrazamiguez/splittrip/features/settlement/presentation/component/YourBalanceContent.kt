@@ -4,11 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
@@ -16,7 +14,6 @@ import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPaddin
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.InlineWarningBanner
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.sheet.CashBreakdownBottomSheet
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.CaptionText
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.splittrip.features.settlement.R
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.MemberSpendingChartUiModel
 import es.pedrazamiguez.splittrip.features.settlement.presentation.model.PersonalPositionUiModel
@@ -25,7 +22,6 @@ import es.pedrazamiguez.splittrip.features.settlement.presentation.viewmodel.eve
 import kotlinx.collections.immutable.ImmutableList
 
 @Suppress("LongMethod")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun YourBalanceContent(
     personalPosition: PersonalPositionUiModel,
@@ -38,11 +34,10 @@ internal fun YourBalanceContent(
     isOffline: Boolean = false
 ) {
     val bottomPadding = LocalBottomPadding.current
-    val scrollBehavior = rememberConnectedScrollBehavior()
     val spacing = MaterialTheme.spacing
 
     LazyColumn(
-        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(
             start = spacing.Default,
             end = spacing.Default,
@@ -65,6 +60,15 @@ internal fun YourBalanceContent(
                 onShowCashBreakdown = { onEvent(YourBalanceUiEvent.ShowCashBreakdown) }
             )
         }
+        item(key = "spending_chart") {
+            chart?.let {
+                MemberSpendingBarChart(
+                    chart = it,
+                    isCashOnly = isCashOnly,
+                    onToggle = { cashOnly -> onEvent(YourBalanceUiEvent.ChartModeToggled(cashOnly)) }
+                )
+            }
+        }
         item(key = "activity_breakdown") {
             YourBalanceActivityBreakdown(personalPosition = personalPosition)
         }
@@ -73,15 +77,6 @@ internal fun YourBalanceContent(
                 CaptionText(
                     text = stringResource(R.string.your_balance_negative_cash_hint),
                     color = MaterialTheme.colorScheme.error
-                )
-            }
-        }
-        item(key = "spending_chart") {
-            chart?.let {
-                MemberSpendingBarChart(
-                    chart = it,
-                    isCashOnly = isCashOnly,
-                    onToggle = { cashOnly -> onEvent(YourBalanceUiEvent.ChartModeToggled(cashOnly)) }
                 )
             }
         }

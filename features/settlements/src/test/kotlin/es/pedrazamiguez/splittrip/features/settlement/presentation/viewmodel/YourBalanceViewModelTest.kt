@@ -98,7 +98,12 @@ class YourBalanceViewModelTest {
         every { settlementConsensusUiMapper.toConsensusItems(any(), any(), any(), any(), any(), any(), any()) } returns
             persistentListOf()
         every { memberSpendingChartUiMapper.toChartUiModel(any(), any(), any(), any(), any()) } returns
-            MemberSpendingChartUiModel(bars = persistentListOf(), formattedGroupTotal = "Total", isCashOnly = true)
+            MemberSpendingChartUiModel(
+                bars = persistentListOf(),
+                formattedGroupTotal = "Total",
+                isCashOnly = true,
+                hasCashExpenses = true
+            )
         every { actionDelegate.localState } returns MutableStateFlow(LocalUiState())
 
         mapper = YourBalanceUiMapper(localeProvider, resourceProvider)
