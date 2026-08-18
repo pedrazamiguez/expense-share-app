@@ -145,7 +145,7 @@ class ExpenseDocumentMapperTest {
         }
 
         @Test
-        fun `createdAt and lastUpdatedAt are null when domain timestamps are null`() {
+        fun `createdAt and lastUpdatedAt default to now when domain timestamps are null`() {
             val expenseWithoutTimestamps = fullExpense.copy(createdAt = null, lastUpdatedAt = null)
 
             val document = expenseWithoutTimestamps.toDocument(
@@ -155,8 +155,26 @@ class ExpenseDocumentMapperTest {
                 testUserId
             )
 
-            assertNull(document.createdAt)
-            assertNull(document.lastUpdatedAt)
+            assertNotNull(document.createdAt)
+            assertNotNull(document.lastUpdatedAt)
+        }
+
+        @Test
+        fun `maps operationDate when present`() {
+            val opDate = LocalDateTime.of(2026, 1, 10, 10, 0, 0)
+            val opFirebaseTimestamp = opDate.toTimestampUtc()!!
+            val expense = fullExpense.copy(operationDate = opDate)
+            val document = expense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+
+            assertEquals(opFirebaseTimestamp, document.operationDate)
+        }
+
+        @Test
+        fun `falls back to createdAt for operationDate when operationDate is null`() {
+            val expense = fullExpense.copy(operationDate = null, createdAt = testTimestamp)
+            val document = expense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+
+            assertEquals(testFirebaseTimestamp, document.operationDate)
         }
 
         @Test
@@ -364,6 +382,7 @@ class ExpenseDocumentMapperTest {
         @Test
         fun `null timestamps map to null domain fields`() {
             val documentWithNullTimestamps = fullDocument.copy(
+                operationDate = null,
                 createdAt = null,
                 lastUpdatedAt = null,
                 dueDate = null
@@ -371,9 +390,30 @@ class ExpenseDocumentMapperTest {
 
             val expense = documentWithNullTimestamps.toDomain()
 
+            assertNull(expense.operationDate)
             assertNull(expense.createdAt)
             assertNull(expense.lastUpdatedAt)
             assertNull(expense.dueDate)
+            assertNull(expense.effectiveDate)
+        }
+
+        @Test
+        fun `maps operationDate when present in document`() {
+            val opTimestamp = LocalDateTime.of(2026, 1, 10, 10, 0, 0)
+            val document = fullDocument.copy(operationDate = opTimestamp.toTimestampUtc())
+            val expense = document.toDomain()
+
+            assertEquals(opTimestamp, expense.operationDate)
+            assertEquals(opTimestamp, expense.effectiveDate)
+        }
+
+        @Test
+        fun `falls back to createdAt for operationDate when operationDate is null in document`() {
+            val document = fullDocument.copy(operationDate = null, createdAt = testFirebaseTimestamp)
+            val expense = document.toDomain()
+
+            assertEquals(testTimestamp, expense.operationDate)
+            assertEquals(testTimestamp, expense.effectiveDate)
         }
 
         @Test

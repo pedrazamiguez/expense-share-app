@@ -48,6 +48,7 @@ internal fun CategorySection(
             },
             itemId = { it.id },
             itemLabel = { it.displayText },
+            itemIcon = { it.icon },
             visibleCount = 6
         )
 

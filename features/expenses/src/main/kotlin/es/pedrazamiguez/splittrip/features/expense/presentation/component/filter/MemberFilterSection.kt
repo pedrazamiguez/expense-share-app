@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.component.filter
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +14,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Check
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.chip.PassportChip
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SectionCard
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.CardSectionLabelText
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberOptionUiModel
 import es.pedrazamiguez.splittrip.domain.model.ExpenseFilterCriteria
 import es.pedrazamiguez.splittrip.features.expense.R
@@ -29,10 +30,12 @@ fun MemberFilterSection(
 ) {
     if (availableMembers.isEmpty()) return
 
-    SectionCard(
-        title = stringResource(R.string.expenses_filter_section_members),
-        modifier = modifier
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
     ) {
+        CardSectionLabelText(text = stringResource(R.string.expenses_filter_section_members))
+
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small),

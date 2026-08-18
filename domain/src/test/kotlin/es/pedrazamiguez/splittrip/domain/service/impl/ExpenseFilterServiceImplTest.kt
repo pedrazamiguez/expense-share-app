@@ -318,13 +318,45 @@ class ExpenseFilterServiceImplTest {
         }
 
         @Test
-        fun `excludes expense with null createdAt when date range active`() {
-            val nullDateExpense = expense1.copy(id = "exp-null-date", createdAt = null)
+        fun `excludes expense with null effectiveDate when date range active`() {
+            val nullDateExpense = expense1.copy(id = "exp-null-date", operationDate = null, createdAt = null)
             val criteria = ExpenseFilterCriteria(startDate = baseDate)
 
             val result = filterService.filter(listOf(nullDateExpense), criteria)
 
             assertTrue(result.isEmpty())
+        }
+
+        @Test
+        fun `uses operationDate over createdAt when operationDate is present`() {
+            val expenseWithBoth = expense1.copy(
+                id = "exp-op-date",
+                operationDate = baseDate.plusDays(10).atTime(12, 0),
+                createdAt = baseDate.minusDays(5).atTime(12, 0)
+            )
+            val criteriaMatchingOpDate = ExpenseFilterCriteria(startDate = baseDate.plusDays(9))
+            val criteriaMatchingCreatedAt =
+                ExpenseFilterCriteria(startDate = baseDate.minusDays(6), endDate = baseDate.minusDays(1))
+
+            val resultOp = filterService.filter(listOf(expenseWithBoth), criteriaMatchingOpDate)
+            val resultCreated = filterService.filter(listOf(expenseWithBoth), criteriaMatchingCreatedAt)
+
+            assertEquals(listOf(expenseWithBoth), resultOp)
+            assertTrue(resultCreated.isEmpty())
+        }
+
+        @Test
+        fun `falls back to createdAt when operationDate is null`() {
+            val expenseWithCreatedAtOnly = expense1.copy(
+                id = "exp-created-only",
+                operationDate = null,
+                createdAt = baseDate.atTime(12, 0)
+            )
+            val criteria = ExpenseFilterCriteria(startDate = baseDate, endDate = baseDate)
+
+            val result = filterService.filter(listOf(expenseWithCreatedAtOnly), criteria)
+
+            assertEquals(listOf(expenseWithCreatedAtOnly), result)
         }
     }
 

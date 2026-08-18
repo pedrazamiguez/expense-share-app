@@ -33,10 +33,14 @@ fun CategoryChips(
                 label = category.displayText,
                 selected = isSelected,
                 onClick = { onCategorySelected(category.id) },
-                leadingIcon = if (isSelected) {
-                    { Icon(TablerIcons.Outline.Check, contentDescription = null) }
-                } else {
-                    null
+                leadingIcon = when {
+                    isSelected -> {
+                        { Icon(TablerIcons.Outline.Check, contentDescription = null) }
+                    }
+                    category.icon != null -> {
+                        { Icon(category.icon, contentDescription = null) }
+                    }
+                    else -> null
                 }
             )
         }

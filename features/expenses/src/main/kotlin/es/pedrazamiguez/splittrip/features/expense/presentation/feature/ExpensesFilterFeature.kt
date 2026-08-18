@@ -60,6 +60,9 @@ fun ExpensesFilterFeature(
         onUpdateDraft = { criteria ->
             filterViewModel.onEvent(ExpensesFilterUiEvent.UpdateDraft(criteria))
         },
+        onPresetSelected = { preset ->
+            filterViewModel.onEvent(ExpensesFilterUiEvent.DatePresetSelected(preset))
+        },
         onResetFilters = {
             filterViewModel.onEvent(ExpensesFilterUiEvent.ResetDraft)
         },

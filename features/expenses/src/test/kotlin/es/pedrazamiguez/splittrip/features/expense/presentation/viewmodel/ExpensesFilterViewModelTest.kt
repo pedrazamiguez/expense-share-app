@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import es.pedrazamiguez.splittrip.core.common.enums.SelfIdentificationContextEnum
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseSubcategory
@@ -18,12 +19,14 @@ import es.pedrazamiguez.splittrip.domain.service.impl.ExpenseSearchServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
+import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.ExpensesFilterUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.ExpensesFilterUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.ExpensesFilterUiEvent
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -55,6 +58,8 @@ class ExpensesFilterViewModelTest {
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
     private lateinit var authenticationService: AuthenticationService
     private lateinit var userUiMapper: UserUiMapper
+    private lateinit var formattingHelper: FormattingHelper
+    private lateinit var expensesFilterUiMapper: ExpensesFilterUiMapper
     private lateinit var viewModel: ExpensesFilterViewModel
 
     private val testGroupId = "group-123"
@@ -133,6 +138,17 @@ class ExpensesFilterViewModelTest {
         getMemberProfilesUseCase = mockk()
         authenticationService = mockk()
         userUiMapper = mockk()
+        formattingHelper = mockk {
+            every { formatShortDate(any<LocalDate>()) } answers {
+                val date = firstArg<LocalDate>()
+                "${date.dayOfMonth} ${date.month.name.take(3)}"
+            }
+            every { formatShortDate(null as LocalDate?) } returns ""
+        }
+        expensesFilterUiMapper = ExpensesFilterUiMapper(
+            formattingHelper = formattingHelper,
+            userUiMapper = userUiMapper
+        )
         expenseFilterService = ExpenseFilterServiceImpl(expenseSearchService = ExpenseSearchServiceImpl())
 
         every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(allExpenses)
@@ -166,7 +182,7 @@ class ExpensesFilterViewModelTest {
             observeGroupUseCase = observeGroupUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             authenticationService = authenticationService,
-            userUiMapper = userUiMapper
+            expensesFilterUiMapper = expensesFilterUiMapper
         )
     }
 
@@ -532,5 +548,50 @@ class ExpensesFilterViewModelTest {
             val retrieved = handle.get<ExpenseFilterCriteria>("initialFilterCriteria")
             assertEquals(criteria, retrieved)
         }
+    }
+
+    @Nested
+    @DisplayName("Date Range Filtering and Bounds")
+    inner class DateRangeFilteringAndBounds {
+
+        @Test
+        fun `populates oldestExpenseDate and newestExpenseDate from group expenses`() =
+            runTest(testDispatcher) {
+                viewModel.setSelectedGroup(testGroupId)
+                val collectJob = launch(UnconfinedTestDispatcher(testScheduler)) {
+                    viewModel.uiState.collect {}
+                }
+                advanceUntilIdle()
+
+                val state = viewModel.uiState.value
+                assertEquals(LocalDate.of(2024, 1, 15), state.oldestExpenseDate)
+                assertEquals(LocalDate.of(2024, 1, 17), state.newestExpenseDate)
+
+                collectJob.cancel()
+            }
+
+        @Test
+        fun `formats startDate and endDate in state when present in draftCriteria`() =
+            runTest(testDispatcher) {
+                viewModel.setSelectedGroup(testGroupId)
+                val collectJob = launch(UnconfinedTestDispatcher(testScheduler)) {
+                    viewModel.uiState.collect {}
+                }
+                advanceUntilIdle()
+
+                val criteria = ExpenseFilterCriteria(
+                    startDate = LocalDate.of(2024, 1, 16),
+                    endDate = LocalDate.of(2024, 1, 17)
+                )
+                viewModel.onEvent(ExpensesFilterUiEvent.UpdateDraft(criteria))
+                advanceUntilIdle()
+
+                val state = viewModel.uiState.value
+                assertEquals("16 JAN", state.formattedStartDate)
+                assertEquals("17 JAN", state.formattedEndDate)
+                assertEquals(2, state.matchingExpensesCount)
+
+                collectJob.cancel()
+            }
     }
 }

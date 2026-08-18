@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.chip.PassportChip
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SectionCard
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.CardSectionLabelText
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toIconVector
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.extensions.toStringRes
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
@@ -34,79 +34,76 @@ fun CategoryFilterSection(
     onCriteriaChange: (ExpenseFilterCriteria) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    SectionCard(
-        title = stringResource(R.string.expenses_filter_section_category),
-        modifier = modifier
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
-        ) {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small),
-                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
-            ) {
-                ExpenseCategory.entries.forEach { category ->
-                    val isSelected = category in criteria.selectedCategories
-                    PassportChip(
-                        label = stringResource(category.toStringRes()),
-                        selected = isSelected,
-                        onClick = {
-                            onCriteriaChange(toggleCategory(criteria, category))
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = category.toIconVector(),
-                                contentDescription = null
-                            )
-                        }
-                    )
-                }
-            }
+        CardSectionLabelText(text = stringResource(R.string.expenses_filter_section_category))
 
-            AnimatedVisibility(
-                visible = criteria.selectedCategories.isNotEmpty(),
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
+        ) {
+            ExpenseCategory.entries.forEach { category ->
+                val isSelected = category in criteria.selectedCategories
+                PassportChip(
+                    label = stringResource(category.toStringRes()),
+                    selected = isSelected,
+                    onClick = {
+                        onCriteriaChange(toggleCategory(criteria, category))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = category.toIconVector(),
+                            contentDescription = null
+                        )
+                    }
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = criteria.selectedCategories.isNotEmpty(),
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
             ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
-                ) {
-                    criteria.selectedCategories.forEach { selectedCategory ->
-                        val subcategories = ExpenseSubcategory.forCategory(selectedCategory)
-                        if (subcategories.isNotEmpty()) {
-                            Column(
+                criteria.selectedCategories.forEach { selectedCategory ->
+                    val subcategories = ExpenseSubcategory.forCategory(selectedCategory)
+                    if (subcategories.isNotEmpty()) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
+                        ) {
+                            Text(
+                                text = stringResource(selectedCategory.toStringRes()),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            FlowRow(
                                 modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small),
                                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
                             ) {
-                                Text(
-                                    text = stringResource(selectedCategory.toStringRes()),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                FlowRow(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small),
-                                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
-                                ) {
-                                    subcategories.forEach { subcategory ->
-                                        val isSubSelected = subcategory in criteria.selectedSubcategories
-                                        PassportChip(
-                                            label = stringResource(subcategory.toStringRes()),
-                                            selected = isSubSelected,
-                                            onClick = {
-                                                onCriteriaChange(toggleSubcategory(criteria, subcategory))
-                                            },
-                                            leadingIcon = {
-                                                Icon(
-                                                    imageVector = subcategory.toIconVector(),
-                                                    contentDescription = null
-                                                )
-                                            }
-                                        )
-                                    }
+                                subcategories.forEach { subcategory ->
+                                    val isSubSelected = subcategory in criteria.selectedSubcategories
+                                    PassportChip(
+                                        label = stringResource(subcategory.toStringRes()),
+                                        selected = isSubSelected,
+                                        onClick = {
+                                            onCriteriaChange(toggleSubcategory(criteria, subcategory))
+                                        },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = subcategory.toIconVector(),
+                                                contentDescription = null
+                                            )
+                                        }
+                                    )
                                 }
                             }
                         }

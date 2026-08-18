@@ -12,7 +12,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ExpenseDao {
 
-    @Query("SELECT * FROM expenses WHERE groupId = :groupId ORDER BY createdAtMillis DESC")
+    @Query(
+        "SELECT * FROM expenses WHERE groupId = :groupId ORDER BY COALESCE(operationDateMillis, createdAtMillis) DESC"
+    )
     fun getExpensesByGroupIdFlow(groupId: String): Flow<List<ExpenseEntity>>
 
     @Query("SELECT * FROM expenses WHERE id = :expenseId")

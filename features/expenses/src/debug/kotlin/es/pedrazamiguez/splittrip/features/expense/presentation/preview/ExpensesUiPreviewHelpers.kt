@@ -8,12 +8,16 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMa
 import es.pedrazamiguez.splittrip.core.designsystem.preview.MappedPreview
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Expense
+import es.pedrazamiguez.splittrip.domain.model.ExpenseFilterCriteria
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.ExpenseUiMapper
+import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.ExpensesFilterUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.PaymentStatusBadgeUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseDateGroupUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseUiModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.ExpensesFilterUiState
+import java.time.LocalDate
 import kotlinx.collections.immutable.ImmutableList
 
 private fun buildExpenseUiMapper(localeProvider: LocaleProvider, resourceProvider: ResourceProvider): ExpenseUiMapper =
@@ -26,6 +30,14 @@ private fun buildExpenseUiMapper(localeProvider: LocaleProvider, resourceProvide
         ),
         userUiMapper = UserUiMapper(resourceProvider)
     )
+
+private fun buildExpensesFilterUiMapper(
+    localeProvider: LocaleProvider,
+    resourceProvider: ResourceProvider
+): ExpensesFilterUiMapper = ExpensesFilterUiMapper(
+    formattingHelper = FormattingHelper(localeProvider),
+    userUiMapper = UserUiMapper(resourceProvider)
+)
 
 @Composable
 fun ExpenseItemPreviewHelper(
@@ -64,6 +76,52 @@ fun ExpenseListPreviewHelper(
         },
         transform = { mapper, domain ->
             mapper.mapGroupedByDate(domain, memberProfiles, currentUserId, pairedContributions, subunits)
+        },
+        content = content
+    )
+}
+
+@Composable
+fun ExpensesFilterPreviewHelper(
+    draftCriteria: ExpenseFilterCriteria = ExpenseFilterCriteria(),
+    matchingExpensesCount: Int = 10,
+    totalExpensesCount: Int = 10,
+    allUserIds: List<String> = listOf("user-1", "user-2", "user-3"),
+    memberProfiles: Map<String, User> = emptyMap(),
+    currentUserId: String? = "user-1",
+    oldestExpenseDate: LocalDate? = null,
+    newestExpenseDate: LocalDate? = null,
+    today: LocalDate = LocalDate.now(),
+    content: @Composable (ExpensesFilterUiState) -> Unit
+) {
+    MappedPreview(
+        domain = draftCriteria,
+        mapper = { localeProvider, resourceProvider ->
+            buildExpensesFilterUiMapper(localeProvider, resourceProvider)
+        },
+        transform = { mapper, domain ->
+            val availableMembers = mapper.mapAvailableMembers(
+                allUserIds = allUserIds,
+                memberProfiles = memberProfiles,
+                currentUserId = currentUserId
+            )
+            val formattedStartDate = mapper.formatFilterDate(domain.startDate)
+            val formattedEndDate = mapper.formatFilterDate(domain.endDate)
+            val activePreset = mapper.findMatchingPreset(domain.startDate, domain.endDate, today)
+
+            ExpensesFilterUiState(
+                draftCriteria = domain,
+                availableMembers = availableMembers,
+                matchingExpensesCount = matchingExpensesCount,
+                totalExpensesCount = totalExpensesCount,
+                isLoading = false,
+                groupId = "group-1",
+                oldestExpenseDate = oldestExpenseDate,
+                newestExpenseDate = newestExpenseDate,
+                formattedStartDate = formattedStartDate,
+                formattedEndDate = formattedEndDate,
+                activePreset = activePreset
+            )
         },
         content = content
     )

@@ -82,7 +82,7 @@ class ExpenseFilterServiceImpl(
         startDate: LocalDate?,
         endDate: LocalDate?
     ): Boolean {
-        val expenseDate = expense.createdAt?.toLocalDate() ?: return false
+        val expenseDate = expense.effectiveDate?.toLocalDate() ?: return false
         if (startDate != null && expenseDate.isBefore(startDate)) return false
         if (endDate != null && expenseDate.isAfter(endDate)) return false
         return true

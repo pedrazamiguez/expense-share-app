@@ -44,7 +44,11 @@ data class Expense(
     val createdBy: String = "",
     val payerType: PayerType = PayerType.GROUP,
     val payerId: String? = null,
+    val operationDate: LocalDateTime? = null,
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null,
     val syncStatus: SyncStatus = SyncStatus.SYNCED
-)
+) {
+    val effectiveDate: LocalDateTime?
+        get() = operationDate ?: createdAt
+}
