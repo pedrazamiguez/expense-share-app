@@ -1,11 +1,13 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.component.filter
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -18,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.extension.debouncedClickable
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
@@ -33,7 +36,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-@Suppress("LongMethod", "LongParameterList")
+@Suppress("LongMethod", "LongParameterList", "CognitiveComplexMethod")
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DateRangeFilterSection(
@@ -74,73 +77,87 @@ fun DateRangeFilterSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
         ) {
-            StyledOutlinedTextField(
-                value = formattedStartDate,
-                onValueChange = {},
-                readOnly = true,
-                label = stringResource(R.string.expenses_filter_date_from),
-                placeholder = stringResource(R.string.expenses_filter_date_start_placeholder),
-                trailingIcon = {
-                    if (criteria.startDate != null) {
-                        IconButton(
-                            onClick = { onCriteriaChange(criteria.copy(startDate = null)) },
-                            modifier = Modifier.size(24.dp)
-                        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                StyledOutlinedTextField(
+                    value = formattedStartDate,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = stringResource(R.string.expenses_filter_date_from),
+                    placeholder = stringResource(R.string.expenses_filter_date_start_placeholder),
+                    trailingIcon = {
+                        if (criteria.startDate != null) {
+                            IconButton(
+                                onClick = { onCriteriaChange(criteria.copy(startDate = null)) },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = TablerIcons.Outline.X,
+                                    contentDescription = stringResource(
+                                        R.string.expenses_filter_date_clear_start_cd
+                                    ),
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
                             Icon(
-                                imageVector = TablerIcons.Outline.X,
-                                contentDescription = stringResource(
-                                    R.string.expenses_filter_date_clear_start_cd
-                                ),
-                                modifier = Modifier.size(16.dp),
+                                imageVector = TablerIcons.Outline.Calendar,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    } else {
-                        Icon(
-                            imageVector = TablerIcons.Outline.Calendar,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                onClick = { showStartDatePicker = true },
-                modifier = Modifier.weight(1f)
-            )
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(end = if (criteria.startDate != null) 48.dp else 0.dp)
+                        .debouncedClickable { showStartDatePicker = true }
+                )
+            }
 
-            StyledOutlinedTextField(
-                value = formattedEndDate,
-                onValueChange = {},
-                readOnly = true,
-                label = stringResource(R.string.expenses_filter_date_to),
-                placeholder = stringResource(R.string.expenses_filter_date_end_placeholder),
-                trailingIcon = {
-                    if (criteria.endDate != null) {
-                        IconButton(
-                            onClick = { onCriteriaChange(criteria.copy(endDate = null)) },
-                            modifier = Modifier.size(24.dp)
-                        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                StyledOutlinedTextField(
+                    value = formattedEndDate,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = stringResource(R.string.expenses_filter_date_to),
+                    placeholder = stringResource(R.string.expenses_filter_date_end_placeholder),
+                    trailingIcon = {
+                        if (criteria.endDate != null) {
+                            IconButton(
+                                onClick = { onCriteriaChange(criteria.copy(endDate = null)) },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = TablerIcons.Outline.X,
+                                    contentDescription = stringResource(
+                                        R.string.expenses_filter_date_clear_end_cd
+                                    ),
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
                             Icon(
-                                imageVector = TablerIcons.Outline.X,
-                                contentDescription = stringResource(
-                                    R.string.expenses_filter_date_clear_end_cd
-                                ),
-                                modifier = Modifier.size(16.dp),
+                                imageVector = TablerIcons.Outline.Calendar,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    } else {
-                        Icon(
-                            imageVector = TablerIcons.Outline.Calendar,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                onClick = { showEndDatePicker = true },
-                modifier = Modifier.weight(1f)
-            )
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(end = if (criteria.endDate != null) 48.dp else 0.dp)
+                        .debouncedClickable { showEndDatePicker = true }
+                )
+            }
         }
     }
 

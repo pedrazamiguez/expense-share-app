@@ -89,7 +89,8 @@ class AddExpenseOptionsUiMapper(
         categories.map { category ->
             CategoryUiModel(
                 id = category.name,
-                displayText = resourceProvider.getString(category.toStringRes())
+                displayText = resourceProvider.getString(category.toStringRes()),
+                icon = category.toIconVector()
             )
         }.toImmutableList()
 
