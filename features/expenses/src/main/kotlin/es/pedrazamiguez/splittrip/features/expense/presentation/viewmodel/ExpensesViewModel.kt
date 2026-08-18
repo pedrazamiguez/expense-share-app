@@ -95,15 +95,20 @@ class ExpensesViewModel(
                         ?: "EUR"
 
                     val today = LocalDate.now()
-                    val totalSpentCents = filteredExpenses
-                        .filter { it.paymentStatus != PaymentStatus.CANCELLED }
-                        .filterNot {
-                            it.paymentStatus == PaymentStatus.SCHEDULED &&
-                                it.dueDate?.toLocalDate()?.isAfter(today) == true
-                        }
-                        .sumOf { it.groupAmount }
+                    val activeExpenses = filteredExpenses.filter { it.paymentStatus != PaymentStatus.CANCELLED }
+                    val (futureScheduledExpenses, settledExpenses) = activeExpenses.partition {
+                        it.paymentStatus == PaymentStatus.SCHEDULED &&
+                            it.dueDate?.toLocalDate()?.isAfter(today) == true
+                    }
+                    val totalSpentCents = settledExpenses.sumOf { it.groupAmount }
+                    val totalScheduledCents = futureScheduledExpenses.sumOf { it.groupAmount }
 
                     val formattedTotalSpent = expenseUiMapper.formatTotalSpent(totalSpentCents, groupCurrency)
+                    val formattedTotalScheduled = if (totalScheduledCents > 0L) {
+                        expenseUiMapper.formatScheduledAmount(totalScheduledCents, groupCurrency)
+                    } else {
+                        null
+                    }
 
                     val isArchived = group?.status == GroupStatus.ARCHIVED
                     val groupMemberIds = group?.members ?: emptyList()
@@ -137,6 +142,7 @@ class ExpensesViewModel(
                         isArchived = isArchived,
                         totalExpensesCount = totalExpensesCount,
                         formattedTotalSpent = formattedTotalSpent,
+                        formattedTotalScheduled = formattedTotalScheduled,
                         visibleExpensesCount = visibleExpensesCount,
                         isFiltered = isFiltered
                     )
@@ -149,6 +155,7 @@ class ExpensesViewModel(
                                     isGroupArchived = result.isArchived,
                                     totalExpensesCount = result.totalExpensesCount,
                                     formattedTotalSpent = result.formattedTotalSpent,
+                                    formattedTotalScheduled = result.formattedTotalScheduled,
                                     visibleExpensesCount = result.visibleExpensesCount,
                                     isFiltered = result.isFiltered
                                 )
@@ -160,6 +167,7 @@ class ExpensesViewModel(
                                     isGroupArchived = result.isArchived,
                                     totalExpensesCount = result.totalExpensesCount,
                                     formattedTotalSpent = result.formattedTotalSpent,
+                                    formattedTotalScheduled = result.formattedTotalScheduled,
                                     visibleExpensesCount = result.visibleExpensesCount,
                                     isFiltered = result.isFiltered
                                 )
@@ -171,6 +179,7 @@ class ExpensesViewModel(
                                     isGroupArchived = result.isArchived,
                                     totalExpensesCount = result.totalExpensesCount,
                                     formattedTotalSpent = result.formattedTotalSpent,
+                                    formattedTotalScheduled = result.formattedTotalScheduled,
                                     visibleExpensesCount = result.visibleExpensesCount,
                                     isFiltered = result.isFiltered
                                 )
@@ -196,6 +205,7 @@ class ExpensesViewModel(
                                 isGroupArchived = update.isGroupArchived,
                                 totalExpensesCount = update.totalExpensesCount,
                                 formattedTotalSpent = update.formattedTotalSpent,
+                                formattedTotalScheduled = update.formattedTotalScheduled,
                                 visibleExpensesCount = update.visibleExpensesCount,
                                 isFiltered = update.isFiltered
                             )
@@ -207,6 +217,7 @@ class ExpensesViewModel(
                                 isGroupArchived = update.isGroupArchived,
                                 totalExpensesCount = update.totalExpensesCount,
                                 formattedTotalSpent = update.formattedTotalSpent,
+                                formattedTotalScheduled = update.formattedTotalScheduled,
                                 visibleExpensesCount = update.visibleExpensesCount,
                                 isFiltered = update.isFiltered
                             )
@@ -337,6 +348,7 @@ class ExpensesViewModel(
         val isArchived: Boolean,
         val totalExpensesCount: Int,
         val formattedTotalSpent: String,
+        val formattedTotalScheduled: String?,
         val visibleExpensesCount: Int,
         val isFiltered: Boolean
     )
@@ -347,6 +359,7 @@ class ExpensesViewModel(
             override val isGroupArchived: Boolean,
             val totalExpensesCount: Int = 0,
             val formattedTotalSpent: String = "",
+            val formattedTotalScheduled: String? = null,
             val visibleExpensesCount: Int = 0,
             val isFiltered: Boolean = false
         ) : UiStateUpdate
@@ -356,6 +369,7 @@ class ExpensesViewModel(
             override val isGroupArchived: Boolean,
             val totalExpensesCount: Int = 0,
             val formattedTotalSpent: String = "",
+            val formattedTotalScheduled: String? = null,
             val visibleExpensesCount: Int = 0,
             val isFiltered: Boolean = false
         ) : UiStateUpdate

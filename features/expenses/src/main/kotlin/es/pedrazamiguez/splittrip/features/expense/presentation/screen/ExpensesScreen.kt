@@ -167,6 +167,7 @@ fun ExpensesScreen(
                                 if (!uiState.isSearchResultEmpty) {
                                     ExpensesTotalSummaryRow(
                                         formattedTotalSpent = uiState.formattedTotalSpent,
+                                        formattedTotalScheduled = uiState.formattedTotalScheduled,
                                         visibleExpensesCount = uiState.visibleExpensesCount,
                                         isFiltered = uiState.isFiltered,
                                         modifier = Modifier
@@ -230,7 +231,8 @@ fun ExpensesScreen(
                                         stickyHeader(key = "header-${dateGroup.dateText}") {
                                             DateHeaderItem(
                                                 dateText = dateGroup.dateText,
-                                                formattedDayTotal = dateGroup.formattedDayTotal
+                                                formattedDayTotal = dateGroup.formattedDayTotal,
+                                                formattedDayScheduled = dateGroup.formattedDayScheduled
                                             )
                                         }
 

@@ -24,6 +24,7 @@ import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.extensions.toStringRes
 import io.mockk.every
 import io.mockk.mockk
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -476,6 +477,7 @@ class ExpenseUiMapperTest {
             assertEquals(2, result[0].expenses.size)
             // day total = 2000 + 500 = 2500 cents = €25.00
             assertEquals("€25.00", result[0].formattedDayTotal)
+            assertNull(result[0].formattedDayScheduled)
         }
 
         @Test
@@ -523,6 +525,53 @@ class ExpenseUiMapperTest {
 
             assertEquals(1, result.size)
             assertEquals("", result[0].dateText)
+        }
+
+        @Test
+        fun `excludes future scheduled expenses and cancelled expenses from day total`() {
+            val today = LocalDate.of(2025, 3, 15)
+            val date = LocalDateTime.of(2025, 3, 15, 10, 0)
+            val expenses = listOf(
+                Expense(
+                    id = "1",
+                    groupAmount = 2000,
+                    groupCurrency = "EUR",
+                    paymentStatus = PaymentStatus.FINISHED,
+                    createdAt = date
+                ),
+                Expense(
+                    id = "2",
+                    groupAmount = 5000,
+                    groupCurrency = "EUR",
+                    paymentStatus = PaymentStatus.SCHEDULED,
+                    dueDate = LocalDateTime.of(2025, 3, 20, 10, 0),
+                    createdAt = date.plusHours(1)
+                ),
+                Expense(
+                    id = "3",
+                    groupAmount = 1000,
+                    groupCurrency = "EUR",
+                    paymentStatus = PaymentStatus.SCHEDULED,
+                    dueDate = LocalDateTime.of(2025, 3, 15, 8, 0),
+                    createdAt = date.plusHours(2)
+                ),
+                Expense(
+                    id = "4",
+                    groupAmount = 3000,
+                    groupCurrency = "EUR",
+                    paymentStatus = PaymentStatus.CANCELLED,
+                    createdAt = date.plusHours(3)
+                )
+            )
+
+            val result = mapper.mapGroupedByDate(expenses = expenses, today = today)
+
+            assertEquals(1, result.size)
+            assertEquals(4, result[0].expenses.size)
+            // Settled: 2000 (finished) + 1000 (scheduled due today) = 3000 cents = €30.00
+            assertEquals("€30.00", result[0].formattedDayTotal)
+            // Scheduled: 5000 cents = €50.00
+            assertEquals("€50.00", result[0].formattedDayScheduled)
         }
     }
 
@@ -1402,6 +1451,29 @@ class ExpenseUiMapperTest {
 
             every { localeProvider.getCurrentLocale() } returns Locale.US
             assertEquals("${'$'}5,000.00", mapper.formatTotalSpent(500000L, "USD"))
+        }
+    }
+
+    @Nested
+    @DisplayName("formatScheduledAmount")
+    inner class FormatScheduledAmount {
+
+        @Test
+        fun `formatScheduledAmount formats amount in US locale`() {
+            every { localeProvider.getCurrentLocale() } returns Locale.US
+
+            val result = mapper.formatScheduledAmount(23400L, "EUR")
+
+            assertEquals("€234.00", result)
+        }
+
+        @Test
+        fun `formatScheduledAmount formats amount in Spanish locale`() {
+            every { localeProvider.getCurrentLocale() } returns Locale("es", "ES")
+
+            val result = mapper.formatScheduledAmount(23400L, "EUR")
+
+            assertEquals("234,00\u00A0€", result)
         }
     }
 

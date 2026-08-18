@@ -138,7 +138,11 @@ class ExpensesViewModelTest {
         authenticationService = mockk()
         observeGroupUseCase = mockk()
 
-        // Default mock for group and member profiles
+        stubDefaultUseCases()
+        stubExpenseUiMapper()
+    }
+
+    private fun stubDefaultUseCases() {
         coEvery { getGroupByIdUseCase(any()) } returns Group(
             id = testGroupId,
             name = "Test Group",
@@ -156,9 +160,9 @@ class ExpensesViewModelTest {
             )
         )
         every { authenticationService.currentUserId() } returns "current-user-id"
-        every { authenticationService.currentUserId() } returns "current-user-id"
+    }
 
-        // Mock the mapper to return predictable grouped UI models
+    private fun stubExpenseUiMapper() {
         every { expenseUiMapper.mapGroupedByDate(any(), any(), any(), any(), any()) } answers {
             val expenses = firstArg<List<Expense>>()
             expenses.groupBy { it.createdAt?.toLocalDate() }
@@ -182,6 +186,12 @@ class ExpensesViewModelTest {
         }
 
         every { expenseUiMapper.formatTotalSpent(any(), any()) } answers {
+            val amount = firstArg<Long>()
+            val currency = secondArg<String>()
+            "$amount $currency"
+        }
+
+        every { expenseUiMapper.formatScheduledAmount(any(), any()) } answers {
             val amount = firstArg<Long>()
             val currency = secondArg<String>()
             "$amount $currency"
@@ -1149,50 +1159,52 @@ class ExpensesViewModelTest {
         }
 
         @Test
-        fun `future scheduled expenses are excluded from total spent calculation`() = runTest(testDispatcher) {
-            val futureScheduledExpense = testExpense2.copy(
-                paymentStatus = PaymentStatus.SCHEDULED,
-                dueDate = LocalDateTime.now().plusDays(5)
-            )
-            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
-                listOf(testExpense1, futureScheduledExpense)
-            )
-            viewModel = createViewModel()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setSelectedGroup(testGroupId)
-            advanceUntilIdle()
+        fun `future scheduled expenses are excluded from total spent and set in formattedTotalScheduled`() =
+            runTest(testDispatcher) {
+                val futureScheduledExpense = testExpense2.copy(
+                    paymentStatus = PaymentStatus.SCHEDULED,
+                    dueDate = LocalDateTime.now().plusDays(5)
+                )
+                every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                    listOf(testExpense1, futureScheduledExpense)
+                )
+                viewModel = createViewModel()
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+                viewModel.setSelectedGroup(testGroupId)
+                advanceUntilIdle()
 
-            val state = viewModel.uiState.value
-            assertEquals("5000 EUR", state.formattedTotalSpent)
-            assertEquals(2, state.visibleExpensesCount)
+                val state = viewModel.uiState.value
+                assertEquals("5000 EUR", state.formattedTotalSpent)
+                assertEquals("2000 EUR", state.formattedTotalScheduled)
+                assertEquals(2, state.visibleExpensesCount)
 
-            collectJob.cancel()
-        }
+                collectJob.cancel()
+            }
 
         @Test
-        fun `past and today scheduled expenses are included in total spent calculation`() = runTest(
-            testDispatcher
-        ) {
-            val todayScheduledExpense = testExpense2.copy(
-                sourceAmount = 3000L,
-                groupAmount = 3000L,
-                paymentStatus = PaymentStatus.SCHEDULED,
-                dueDate = LocalDateTime.now()
-            )
-            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
-                listOf(testExpense1, todayScheduledExpense)
-            )
-            viewModel = createViewModel()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setSelectedGroup(testGroupId)
-            advanceUntilIdle()
+        fun `past and today scheduled expenses are in total spent and formattedTotalScheduled is null`() =
+            runTest(testDispatcher) {
+                val todayScheduledExpense = testExpense2.copy(
+                    sourceAmount = 3000L,
+                    groupAmount = 3000L,
+                    paymentStatus = PaymentStatus.SCHEDULED,
+                    dueDate = LocalDateTime.now()
+                )
+                every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                    listOf(testExpense1, todayScheduledExpense)
+                )
+                viewModel = createViewModel()
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+                viewModel.setSelectedGroup(testGroupId)
+                advanceUntilIdle()
 
-            val state = viewModel.uiState.value
-            assertEquals("8000 EUR", state.formattedTotalSpent)
-            assertEquals(2, state.visibleExpensesCount)
+                val state = viewModel.uiState.value
+                assertEquals("8000 EUR", state.formattedTotalSpent)
+                assertNull(state.formattedTotalScheduled)
+                assertEquals(2, state.visibleExpensesCount)
 
-            collectJob.cancel()
-        }
+                collectJob.cancel()
+            }
 
         @Test
         fun `multi-currency expenses aggregate base groupAmount`() = runTest(testDispatcher) {

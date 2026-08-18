@@ -82,3 +82,23 @@ private fun ExpensesScreenEmptySearchPreview() {
         )
     }
 }
+
+@PreviewComplete
+@Composable
+private fun ExpensesScreenWithScheduledDataPreview() {
+    ExpenseListPreviewHelper { expenseGroups ->
+        val count = expenseGroups.sumOf { it.expenses.size }
+        ExpensesScreen(
+            uiState = ExpensesUiState(
+                isLoading = false,
+                groupId = "group-1",
+                expenseGroups = expenseGroups,
+                totalExpensesCount = count,
+                formattedTotalSpent = "€125.50",
+                formattedTotalScheduled = "€234.00",
+                visibleExpensesCount = count,
+                isFiltered = false
+            )
+        )
+    }
+}
