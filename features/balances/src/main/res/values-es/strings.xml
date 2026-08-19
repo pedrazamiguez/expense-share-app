@@ -43,7 +43,22 @@
     <string name="balances_member_collapsed">Contraído</string>
 
     <!-- Add Money -->
-    <string name="balances_add_money">Añadir dinero</string>
+    <string name="balances_add_money">Aportar</string>
+
+    <!-- Metric Info Explanations -->
+    <string name="balances_metric_info_cd">Más información sobre esta métrica</string>
+    <string name="balances_metric_remaining_title">Restante</string>
+    <string name="balances_metric_remaining_description">El saldo neto actual en el bote del grupo. Se calcula como el total aportado menos el total gastado.</string>
+    <string name="balances_metric_available_title">Disponible</string>
+    <string name="balances_metric_available_description">Fondos utilizables en el bote tras reservar los compromisos programados (Restante − Programado).\n\nUn valor negativo significa que los compromisos previstos superan el saldo actual y se necesitan nuevas aportaciones.</string>
+    <string name="balances_metric_scheduled_title">Programado</string>
+    <string name="balances_metric_scheduled_description">Importe total reservado para gastos previstos o programados comprometidos por el grupo.</string>
+    <string name="balances_metric_on_hold_title">Retenido</string>
+    <string name="balances_metric_on_hold_description">Depósitos reembolsables o retenciones temporales (p. ej., fianzas de vehículos o alojamientos) que volverán al bote al liberarse.</string>
+    <string name="balances_metric_total_contributed_title">Total aportado</string>
+    <string name="balances_metric_total_contributed_description">Suma acumulada de todas las aportaciones realizadas por los miembros al bote del grupo.</string>
+    <string name="balances_metric_total_spent_title">Total gastado</string>
+    <string name="balances_metric_total_spent_description">Suma acumulada de todos los gastos liquidados cargados al grupo.</string>
 
     <!-- Contribution History -->
     <string name="balances_history_title">Actividad</string>

@@ -39,7 +39,22 @@
     <string name="balances_member_collapsed">Collapsed</string>
 
     <!-- Add Money -->
-    <string name="balances_add_money">Add money</string>
+    <string name="balances_add_money">Contribute</string>
+
+    <!-- Metric Info Explanations -->
+    <string name="balances_metric_info_cd">More information about this metric</string>
+    <string name="balances_metric_remaining_title">Remaining</string>
+    <string name="balances_metric_remaining_description">The net funds currently in the group pocket. Calculated as total contributed minus total spent.</string>
+    <string name="balances_metric_available_title">Available</string>
+    <string name="balances_metric_available_description">Usable funds in the pocket after reserving for scheduled commitments (Remaining − Scheduled).\n\nA negative value means upcoming commitments exceed the current pocket balance, so new contributions are needed.</string>
+    <string name="balances_metric_scheduled_title">Scheduled</string>
+    <string name="balances_metric_scheduled_description">Total amount reserved for scheduled or upcoming expenses committed to the group.</string>
+    <string name="balances_metric_on_hold_title">On hold</string>
+    <string name="balances_metric_on_hold_description">Refundable deposits or temporary holds (e.g. vehicle rentals, accommodation deposits) that will be returned to the pocket once released.</string>
+    <string name="balances_metric_total_contributed_title">Total contributed</string>
+    <string name="balances_metric_total_contributed_description">Cumulative sum of all contributions made by members to the group pocket.</string>
+    <string name="balances_metric_total_spent_title">Total spent</string>
+    <string name="balances_metric_total_spent_description">Cumulative sum of all settled expenses charged to the group.</string>
 
     <!-- Contribution History -->
     <string name="balances_history_title">Activity</string>

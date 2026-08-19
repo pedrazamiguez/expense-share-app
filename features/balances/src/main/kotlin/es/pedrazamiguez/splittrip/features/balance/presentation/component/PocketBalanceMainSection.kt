@@ -9,12 +9,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.AnimatedAmount
-import es.pedrazamiguez.splittrip.features.balance.R
+import es.pedrazamiguez.splittrip.features.balance.presentation.model.BalanceMetricType
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.GroupPocketBalanceUiModel
 
 @Composable
@@ -24,7 +23,8 @@ internal fun PocketBalanceMainSection(
     previousBalance: String,
     balanceRollingUp: Boolean,
     onBalanceAnimationComplete: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onShowMetricInfo: (BalanceMetricType) -> Unit = {}
 ) {
     BoxWithConstraints(modifier = modifier) {
         val isNarrowScreen = maxWidth < UiConstants.NARROW_SCREEN_BREAKPOINT
@@ -40,17 +40,13 @@ internal fun PocketBalanceMainSection(
             if (balance.groupName.isNotBlank()) {
                 Text(
                     text = balance.groupName,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.Medium))
             }
-            Text(
-                text = stringResource(R.string.balances_remaining),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-            )
+            PocketRemainingLabelRow(onShowMetricInfo = onShowMetricInfo)
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.ExtraSmall))
             AnimatedAmount(
                 formattedAmount = balance.formattedBalance,
@@ -67,7 +63,10 @@ internal fun PocketBalanceMainSection(
                 balance.formattedRefundableHoldAmount != null
             ) {
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.Small))
-                SecondaryBalancesRow(balance)
+                SecondaryBalancesRow(
+                    balance = balance,
+                    onShowMetricInfo = onShowMetricInfo
+                )
             }
         }
     }

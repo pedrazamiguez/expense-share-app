@@ -11,19 +11,43 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.features.balance.R
+import es.pedrazamiguez.splittrip.features.balance.presentation.model.BalanceMetricType
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.GroupPocketBalanceUiModel
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun SecondaryBalancesRow(balance: GroupPocketBalanceUiModel) {
-    val showAvailable = balance.formattedAvailableBalance != null
-    val showScheduled = balance.formattedScheduledHoldAmount != null
-    val showRefundable = balance.formattedRefundableHoldAmount != null
-
+internal fun SecondaryBalancesRow(
+    balance: GroupPocketBalanceUiModel,
+    onShowMetricInfo: (BalanceMetricType) -> Unit = {}
+) {
     val items = buildList {
-        if (showAvailable) add(stringResource(R.string.balances_available) to balance.formattedAvailableBalance)
-        if (showScheduled) add(stringResource(R.string.balances_scheduled) to balance.formattedScheduledHoldAmount)
-        if (showRefundable) add(stringResource(R.string.balances_on_hold) to balance.formattedRefundableHoldAmount)
+        if (balance.formattedAvailableBalance != null) {
+            add(
+                Triple(
+                    stringResource(R.string.balances_available),
+                    balance.formattedAvailableBalance,
+                    BalanceMetricType.AVAILABLE
+                )
+            )
+        }
+        if (balance.formattedScheduledHoldAmount != null) {
+            add(
+                Triple(
+                    stringResource(R.string.balances_scheduled),
+                    balance.formattedScheduledHoldAmount,
+                    BalanceMetricType.SCHEDULED
+                )
+            )
+        }
+        if (balance.formattedRefundableHoldAmount != null) {
+            add(
+                Triple(
+                    stringResource(R.string.balances_on_hold),
+                    balance.formattedRefundableHoldAmount,
+                    BalanceMetricType.ON_HOLD
+                )
+            )
+        }
     }
 
     FlowRow(
@@ -31,7 +55,7 @@ internal fun SecondaryBalancesRow(balance: GroupPocketBalanceUiModel) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
     ) {
-        items.forEachIndexed { index, (label, amount) ->
+        items.forEachIndexed { index, (label, amount, metricType) ->
             val alignment = when {
                 items.size == 1 -> Alignment.CenterHorizontally
                 index == 0 -> Alignment.Start
@@ -41,7 +65,8 @@ internal fun SecondaryBalancesRow(balance: GroupPocketBalanceUiModel) {
             SecondaryBalanceColumn(
                 label = label,
                 amount = amount,
-                horizontalAlignment = alignment
+                horizontalAlignment = alignment,
+                onInfoClick = { onShowMetricInfo(metricType) }
             )
         }
     }

@@ -10,11 +10,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
+import es.pedrazamiguez.splittrip.features.balance.presentation.component.BalanceMetricInfoBottomSheet
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.BalancesBodyContent
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.BalancesScreenOverlays
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.ContributionDeleteDialog
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.ExtrasBreakdownBottomSheet
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.WithdrawalDeleteDialog
+import es.pedrazamiguez.splittrip.features.balance.presentation.model.BalanceMetricType
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.event.BalancesUiEvent
@@ -36,6 +38,7 @@ fun BalancesScreen(
     var contributionPendingDelete by remember { mutableStateOf<ContributionUiModel?>(null) }
     var withdrawalPendingDelete by remember { mutableStateOf<CashWithdrawalUiModel?>(null) }
     var showExtrasBreakdown by remember { mutableStateOf(false) }
+    var selectedMetricInfo by remember { mutableStateOf<BalanceMetricType?>(null) }
 
     BalancesBodyContent(
         uiState = uiState,
@@ -45,6 +48,7 @@ fun BalancesScreen(
         onNavigateToContributionDetail = onNavigateToContributionDetail,
         onNavigateToWithdrawal = onNavigateToWithdrawal,
         onShowExtrasBreakdown = { showExtrasBreakdown = true },
+        onShowMetricInfo = { selectedMetricInfo = it },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     )
 
@@ -61,6 +65,13 @@ fun BalancesScreen(
             breakdown = uiState.extrasBreakdown,
             formattedGrandTotal = uiState.pocketBalance.formattedTotalExtras ?: "",
             onDismiss = { showExtrasBreakdown = false }
+        )
+    }
+
+    selectedMetricInfo?.let { metricType ->
+        BalanceMetricInfoBottomSheet(
+            metricType = metricType,
+            onDismiss = { selectedMetricInfo = null }
         )
     }
 

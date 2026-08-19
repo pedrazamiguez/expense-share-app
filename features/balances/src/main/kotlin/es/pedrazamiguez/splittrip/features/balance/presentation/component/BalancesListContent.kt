@@ -27,6 +27,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layou
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.SectionHeadingText
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.ActivityItemUiModel
+import es.pedrazamiguez.splittrip.features.balance.presentation.model.BalanceMetricType
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.MemberBalanceUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.state.BalancesUiState
@@ -41,7 +42,8 @@ internal fun BalancesListContent(
     onNavigateToContribution: () -> Unit,
     onNavigateToContributionDetail: (String) -> Unit,
     onNavigateToWithdrawal: () -> Unit,
-    onShowExtrasBreakdown: () -> Unit
+    onShowExtrasBreakdown: () -> Unit,
+    onShowMetricInfo: (BalanceMetricType) -> Unit = {}
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -64,7 +66,8 @@ internal fun BalancesListContent(
                 onBalanceAnimationComplete = { onEvent(BalancesUiEvent.BalanceAnimationComplete) },
                 onAddMoney = onNavigateToContribution,
                 onWithdrawCash = onNavigateToWithdrawal,
-                onShowExtrasBreakdown = onShowExtrasBreakdown
+                onShowExtrasBreakdown = onShowExtrasBreakdown,
+                onShowMetricInfo = onShowMetricInfo
             )
         }
         memberBalancesSection(uiState.memberBalances)
