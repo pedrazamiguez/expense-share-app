@@ -14,7 +14,7 @@
     <string name="balances_remaining">Restante</string>
     <string name="balances_available">Disponible</string>
     <string name="balances_scheduled">Programado</string>
-    <string name="balances_on_hold">Retenido</string>
+    <string name="balances_refundable">Reembolsable</string>
     <string name="balances_total_contributed">Total aportado</string>
     <string name="balances_total_spent">Total gastado</string>
     <string name="balances_total_extras">Extras</string>
@@ -33,7 +33,7 @@
     <string name="balances_member_spent_breakdown">Desglose de gastos</string>
     <string name="balances_member_cash_expenses">Efectivo</string>
     <string name="balances_member_non_cash_expenses">Tarjeta/Otro</string>
-    <string name="balances_member_refundable_expenses">Retenido</string>
+    <string name="balances_member_refundable_expenses">Reembolsable</string>
     <string name="balances_member_no_expenses">Sin gastos registrados</string>
     <string name="balances_member_no_cash">Sin efectivo retirado</string>
     <string name="balances_member_negative_cash_hint">Gasto en efectivo excede el efectivo retirado</string>
@@ -43,7 +43,24 @@
     <string name="balances_member_collapsed">Contraído</string>
 
     <!-- Add Money -->
-    <string name="balances_add_money">Añadir dinero</string>
+    <string name="balances_add_money">Aportar</string>
+
+    <!-- Metric Info Explanations -->
+    <string name="balances_metric_info_cd">Más información sobre esta métrica</string>
+    <string name="balances_metric_remaining_title">Restante</string>
+    <string name="balances_metric_remaining_description">El dinero que queda en el bote virtual del grupo. Se calcula restando los gastos y las retiradas de efectivo al total de aportaciones.\n\nPuede ser negativo si se registran gastos o retiradas antes de añadir dinero al bote. Esto permite anotar los movimientos en el momento sin importar el orden, y regularizar el saldo después añadiendo aportaciones.</string>
+    <string name="balances_metric_available_title">Disponible</string>
+    <string name="balances_metric_available_description">El dinero del bote virtual listo para usarse en nuevos gastos, tras descontar los compromisos programados y las retiradas de efectivo.\n\nSacar dinero en efectivo reduce el saldo disponible en el bote porque pasa a estar en mano, sin contar como gasto hasta que se emplee.\n\nSi los gastos programados superan los fondos del bote, este valor pasa a ser negativo, indicando que el grupo necesita nuevas aportaciones para cubrir los planes previstos.</string>
+    <string name="balances_metric_scheduled_title">Programado</string>
+    <string name="balances_metric_scheduled_description">El importe total reservado para gastos futuros o planificados que el grupo tiene comprometidos.</string>
+    <string name="balances_metric_refundable_title">Reembolsable</string>
+    <string name="balances_metric_refundable_description">Dinero ya pagado por reservas con opción de cancelación o depósitos de fianza, como alojamientos o alquileres de vehículos.\n\nEl dinero ya ha salido de la cuenta, pero puede recuperarse si la reserva se cancela dentro del plazo permitido o cuando se devuelve la fianza. Si no se cancela, el pago queda consolidado definitivamente.</string>
+    <string name="balances_metric_total_contributed_title">Total aportado</string>
+    <string name="balances_metric_total_contributed_description">Suma acumulada de todas las aportaciones realizadas por los miembros, tanto para el bote del grupo como para uso personal.\n\nEl detalle de cuánto ha aportado cada miembro y su saldo individual puede consultarse en el desglose de balances por miembro.</string>
+    <string name="balances_metric_total_spent_title">Total gastado</string>
+    <string name="balances_metric_total_spent_description">Importe total gastado en el viaje hasta la fecha.\n\nIncluye todos los gastos pagados, los gastos en efectivo y los gastos reembolsables, ya que el dinero ya ha salido del bolsillo. No incluye los gastos programados futuros ni los importes de extras.</string>
+    <string name="balances_metric_cash_in_hand_title">Efectivo en mano</string>
+    <string name="balances_metric_cash_in_hand_description">El dinero físico retirado por los miembros que aún no se ha gastado.\n\nEl total de la cabecera muestra el valor acumulado convertido a la moneda principal del grupo, mientras que la lista inferior detalla el desglose en cada una de las monedas reales disponibles.</string>
 
     <!-- Contribution History -->
     <string name="balances_history_title">Actividad</string>
