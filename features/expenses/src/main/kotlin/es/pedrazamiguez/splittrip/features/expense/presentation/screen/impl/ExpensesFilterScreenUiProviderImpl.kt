@@ -59,8 +59,7 @@ class ExpensesFilterScreenUiProviderImpl(
                 ) {
                     Text(text = stringResource(R.string.expenses_filter_reset))
                 }
-            },
-            pinned = true
+            }
         )
 
         if (showResetDialog) {

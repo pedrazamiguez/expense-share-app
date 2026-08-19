@@ -25,8 +25,7 @@ class CreateGroupScreenUiProviderImpl(override val route: String = Routes.CREATE
         DynamicTopAppBar(
             title = stringResource(R.string.groups_create),
             onBack = { vm?.onEvent(CreateEditGroupUiEvent.PreviousStep) {} ?: navController.popBackStack() },
-            onBackLongPress = { vm?.onEvent(CreateEditGroupUiEvent.CloseWizard) {} },
-            pinned = true
+            onBackLongPress = { vm?.onEvent(CreateEditGroupUiEvent.CloseWizard) {} }
         )
     }
 }

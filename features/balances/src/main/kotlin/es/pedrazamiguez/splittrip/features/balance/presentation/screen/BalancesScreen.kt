@@ -1,26 +1,24 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.screen
 
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
+import es.pedrazamiguez.splittrip.features.balance.presentation.component.BalanceMetricInfoBottomSheet
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.BalancesBodyContent
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.BalancesScreenOverlays
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.ContributionDeleteDialog
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.ExtrasBreakdownBottomSheet
 import es.pedrazamiguez.splittrip.features.balance.presentation.component.WithdrawalDeleteDialog
+import es.pedrazamiguez.splittrip.features.balance.presentation.model.BalanceMetricType
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.state.BalancesUiState
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BalancesScreen(
     uiState: BalancesUiState = BalancesUiState(),
@@ -31,11 +29,11 @@ fun BalancesScreen(
     onNavigateToWithdrawal: () -> Unit = {}
 ) {
     val bottomPadding = LocalBottomPadding.current
-    val scrollBehavior = rememberConnectedScrollBehavior()
 
     var contributionPendingDelete by remember { mutableStateOf<ContributionUiModel?>(null) }
     var withdrawalPendingDelete by remember { mutableStateOf<CashWithdrawalUiModel?>(null) }
     var showExtrasBreakdown by remember { mutableStateOf(false) }
+    var selectedMetricInfo by remember { mutableStateOf<BalanceMetricType?>(null) }
 
     BalancesBodyContent(
         uiState = uiState,
@@ -45,7 +43,8 @@ fun BalancesScreen(
         onNavigateToContributionDetail = onNavigateToContributionDetail,
         onNavigateToWithdrawal = onNavigateToWithdrawal,
         onShowExtrasBreakdown = { showExtrasBreakdown = true },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        onShowMetricInfo = { selectedMetricInfo = it },
+        modifier = Modifier
     )
 
     BalancesScreenOverlays(
@@ -61,6 +60,13 @@ fun BalancesScreen(
             breakdown = uiState.extrasBreakdown,
             formattedGrandTotal = uiState.pocketBalance.formattedTotalExtras ?: "",
             onDismiss = { showExtrasBreakdown = false }
+        )
+    }
+
+    selectedMetricInfo?.let { metricType ->
+        BalanceMetricInfoBottomSheet(
+            metricType = metricType,
+            onDismiss = { selectedMetricInfo = null }
         )
     }
 

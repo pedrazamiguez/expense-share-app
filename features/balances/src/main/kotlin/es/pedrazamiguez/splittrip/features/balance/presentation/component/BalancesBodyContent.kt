@@ -17,6 +17,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layou
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.ShimmerBox
 import es.pedrazamiguez.splittrip.features.balance.R
+import es.pedrazamiguez.splittrip.features.balance.presentation.model.BalanceMetricType
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.state.BalancesUiState
 
@@ -29,7 +30,8 @@ internal fun BalancesBodyContent(
     onNavigateToContributionDetail: (String) -> Unit,
     onNavigateToWithdrawal: () -> Unit,
     onShowExtrasBreakdown: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onShowMetricInfo: (BalanceMetricType) -> Unit = {}
 ) {
     Box(modifier = modifier) {
         DeferredLoadingContainer(
@@ -64,7 +66,8 @@ internal fun BalancesBodyContent(
                         onNavigateToContribution = onNavigateToContribution,
                         onNavigateToContributionDetail = onNavigateToContributionDetail,
                         onNavigateToWithdrawal = onNavigateToWithdrawal,
-                        onShowExtrasBreakdown = onShowExtrasBreakdown
+                        onShowExtrasBreakdown = onShowExtrasBreakdown,
+                        onShowMetricInfo = onShowMetricInfo
                     )
                 }
             }

@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
+import es.pedrazamiguez.splittrip.features.balance.presentation.model.BalanceMetricType
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.GroupPocketBalanceUiModel
 
 private val CARD_SHADOW_ELEVATION = 8.dp
@@ -30,7 +31,8 @@ fun GroupPocketBalanceCard(
     onBalanceAnimationComplete: () -> Unit = {},
     onAddMoney: () -> Unit = {},
     onWithdrawCash: () -> Unit = {},
-    onShowExtrasBreakdown: () -> Unit = {}
+    onShowExtrasBreakdown: () -> Unit = {},
+    onShowMetricInfo: (BalanceMetricType) -> Unit = {}
 ) {
     Box(
         modifier = modifier.fillMaxWidth(),
@@ -51,21 +53,24 @@ fun GroupPocketBalanceCard(
                     shouldAnimateBalance = shouldAnimateBalance,
                     previousBalance = previousBalance,
                     balanceRollingUp = balanceRollingUp,
-                    onBalanceAnimationComplete = onBalanceAnimationComplete
+                    onBalanceAnimationComplete = onBalanceAnimationComplete,
+                    onShowMetricInfo = onShowMetricInfo
                 )
 
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.ExtraLarge))
 
                 PocketBalanceStatsRow(
                     balance = balance,
-                    onShowExtrasBreakdown = onShowExtrasBreakdown
+                    onShowExtrasBreakdown = onShowExtrasBreakdown,
+                    onShowMetricInfo = onShowMetricInfo
                 )
 
                 if (balance.cashBalances.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(MaterialTheme.spacing.ExtraLarge))
                     CashBalancesSection(
                         cashBalances = balance.cashBalances,
-                        formattedTotalCashEquivalent = balance.formattedTotalCashEquivalent
+                        formattedTotalCashEquivalent = balance.formattedTotalCashEquivalent,
+                        onShowMetricInfo = onShowMetricInfo
                     )
                 }
 

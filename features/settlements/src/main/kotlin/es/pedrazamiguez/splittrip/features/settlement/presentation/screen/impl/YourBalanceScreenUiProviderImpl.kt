@@ -19,8 +19,7 @@ class YourBalanceScreenUiProviderImpl(
         DynamicTopAppBar(
             title = stringResource(R.string.your_balance_title),
             subtitle = stringResource(R.string.your_balance_subtitle),
-            onBack = { navController.popBackStack() },
-            pinned = true
+            onBack = { navController.popBackStack() }
         )
     }
 }

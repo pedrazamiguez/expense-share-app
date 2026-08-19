@@ -50,9 +50,6 @@ import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationProvide
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationUtils
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.LocalProfileAvatarUrl
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.LocalTopAppBarState
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.ProvideTopAppBarState
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.TopAppBarScrollBehaviorState
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.splittrip.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.splittrip.core.designsystem.transition.NavTransitionDefaults
@@ -103,11 +100,6 @@ fun MainScreen(
         navControllers[provider] = rememberNavController()
     }
 
-    // Build a stable map of TopAppBarScrollBehaviorStates for ALL providers
-    val tabScrollStates = remember(navigationProviders) {
-        navigationProviders.associate { it.route to TopAppBarScrollBehaviorState() }
-    }
-
     // Observe current user profile at root level to prevent avatar blinking on tab switches
     val profile by mainViewModel.currentUserProfile.collectAsStateWithLifecycle()
 
@@ -138,7 +130,6 @@ fun MainScreen(
 
     val selectedProvider = navigationProviders.first { it.route == selectedRoute }
     val selectedNavController = navControllers.getValue(selectedProvider)
-    val selectedScrollState = tabScrollStates.getValue(selectedRoute)
 
     // Extract current route/provider for cleaner topBar/FAB usage
     val currentScreenRoute by selectedNavController.currentBackStackEntryAsState()
@@ -170,67 +161,63 @@ fun MainScreen(
 
     // Wrap Scaffold in CompositionLocalProvider to provide LocalTabNavController for topBar/FAB
     // Provide LocalProfileAvatarUrl to prevent profile avatar blinking
-    // Provide dynamic TopAppBarState matching the active tab's scroll behavior
     CompositionLocalProvider(
         LocalTabNavController provides selectedNavController,
         LocalProfileAvatarUrl provides profile?.profileImagePath
     ) {
-        ProvideTopAppBarState(state = selectedScrollState) {
-            Scaffold(
-                containerColor = MaterialTheme.colorScheme.background,
-                topBar = {
-                    AnimatedTopBar(
-                        currentRoute = currentRoute,
-                        screenUiProviders = screenUiProviders
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                AnimatedTopBar(
+                    currentRoute = currentRoute,
+                    screenUiProviders = screenUiProviders
+                )
+            },
+            bottomBar = {
+                AnimatedVisibility(
+                    visible = isInitialLoadComplete,
+                    enter = slideInVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        ),
+                        initialOffsetY = { it }
+                    ) + fadeIn(),
+                    exit = slideOutVertically(
+                        animationSpec = spring(
+                            stiffness = Spring.StiffnessMedium
+                        ),
+                        targetOffsetY = { it }
+                    ) + fadeOut()
+                ) {
+                    BottomNavigationBar(
+                        selectedRoute = selectedRoute,
+                        onTabSelected = { route -> selectedRoute = route },
+                        items = visibleProviders,
+                        mainAction = currentUiProvider?.mainAction,
+                        hazeState = hazeState
                     )
-                },
-                bottomBar = {
-                    AnimatedVisibility(
-                        visible = isInitialLoadComplete,
-                        enter = slideInVertically(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMedium
-                            ),
-                            initialOffsetY = { it }
-                        ) + fadeIn(),
-                        exit = slideOutVertically(
-                            animationSpec = spring(
-                                stiffness = Spring.StiffnessMedium
-                            ),
-                            targetOffsetY = { it }
-                        ) + fadeOut()
-                    ) {
-                        BottomNavigationBar(
-                            selectedRoute = selectedRoute,
-                            onTabSelected = { route -> selectedRoute = route },
-                            items = visibleProviders,
-                            mainAction = currentUiProvider?.mainAction,
-                            hazeState = hazeState
-                        )
-                    }
-                },
-                // Remove default content window insets since we're handling padding manually
-                contentWindowInsets = WindowInsets(0, 0, 0, 0)
-            ) { innerPadding ->
-                // Calculate bottom padding for content (FABs, list content padding)
-                val bottomPadding = innerPadding.calculateBottomPadding()
+                }
+            },
+            // Remove default content window insets since we're handling padding manually
+            contentWindowInsets = WindowInsets(0, 0, 0, 0)
+        ) { innerPadding ->
+            // Calculate bottom padding for content (FABs, list content padding)
+            val bottomPadding = innerPadding.calculateBottomPadding()
 
-                CompositionLocalProvider(LocalBottomPadding provides bottomPadding) {
-                    Box(
-                        modifier = Modifier
-                            .padding(top = innerPadding.calculateTopPadding())
-                            .fillMaxSize()
-                            .hazeSource(state = hazeState)
-                    ) {
-                        MainTabsContent(
-                            navigationProviders = navigationProviders,
-                            navControllers = navControllers,
-                            mainViewModel = mainViewModel,
-                            selectedRoute = selectedRoute,
-                            tabScrollStates = tabScrollStates
-                        )
-                    }
+            CompositionLocalProvider(LocalBottomPadding provides bottomPadding) {
+                Box(
+                    modifier = Modifier
+                        .padding(top = innerPadding.calculateTopPadding())
+                        .fillMaxSize()
+                        .hazeSource(state = hazeState)
+                ) {
+                    MainTabsContent(
+                        navigationProviders = navigationProviders,
+                        navControllers = navControllers,
+                        mainViewModel = mainViewModel,
+                        selectedRoute = selectedRoute
+                    )
                 }
             }
         }
@@ -273,20 +260,17 @@ private fun MainTabsContent(
     navigationProviders: List<NavigationProvider>,
     navControllers: Map<NavigationProvider, NavHostController>,
     mainViewModel: MainViewModel,
-    selectedRoute: String,
-    tabScrollStates: Map<String, TopAppBarScrollBehaviorState>
+    selectedRoute: String
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         for (provider in navigationProviders) {
             val navController = navControllers.getValue(provider)
             val isSelected = selectedRoute == provider.route
-            val tabScrollState = tabScrollStates.getValue(provider.route)
             TabContent(
                 provider = provider,
                 navController = navController,
                 mainViewModel = mainViewModel,
-                isSelected = isSelected,
-                tabScrollState = tabScrollState
+                isSelected = isSelected
             )
         }
     }
@@ -298,8 +282,7 @@ private fun TabContent(
     provider: NavigationProvider,
     navController: NavHostController,
     mainViewModel: MainViewModel,
-    isSelected: Boolean,
-    tabScrollState: TopAppBarScrollBehaviorState
+    isSelected: Boolean
 ) {
     DisposableEffect(provider.route) {
         val savedBundle = mainViewModel.getBundle(provider.route)
@@ -313,8 +296,7 @@ private fun TabContent(
 
     Box(modifier = tabModifier) {
         CompositionLocalProvider(
-            LocalTabNavController provides navController,
-            LocalTopAppBarState provides tabScrollState
+            LocalTabNavController provides navController
         ) {
             SharedTransitionLayout {
                 CompositionLocalProvider(LocalSharedTransitionScope provides this) {

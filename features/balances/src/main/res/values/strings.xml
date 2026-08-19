@@ -10,7 +10,7 @@
     <string name="balances_remaining">Remaining</string>
     <string name="balances_available">Available</string>
     <string name="balances_scheduled">Scheduled</string>
-    <string name="balances_on_hold">On hold</string>
+    <string name="balances_refundable">Refundable</string>
     <string name="balances_total_contributed">Total contributed</string>
     <string name="balances_total_spent">Total spent</string>
     <string name="balances_total_extras">Extras</string>
@@ -29,7 +29,7 @@
     <string name="balances_member_spent_breakdown">Spending breakdown</string>
     <string name="balances_member_cash_expenses">Cash</string>
     <string name="balances_member_non_cash_expenses">Card/Other</string>
-    <string name="balances_member_refundable_expenses">On hold</string>
+    <string name="balances_member_refundable_expenses">Refundable</string>
     <string name="balances_member_no_expenses">No expenses recorded</string>
     <string name="balances_member_no_cash">No cash withdrawn</string>
     <string name="balances_member_negative_cash_hint">Cash spent exceeds withdrawn cash</string>
@@ -39,7 +39,24 @@
     <string name="balances_member_collapsed">Collapsed</string>
 
     <!-- Add Money -->
-    <string name="balances_add_money">Add money</string>
+    <string name="balances_add_money">Contribute</string>
+
+    <!-- Metric Info Explanations -->
+    <string name="balances_metric_info_cd">More information about this metric</string>
+    <string name="balances_metric_remaining_title">Remaining</string>
+    <string name="balances_metric_remaining_description">The funds currently remaining in the group virtual pocket. It is calculated by subtracting expenses and cash withdrawals from the total contributions.\n\nIt can become negative if expenses or cash withdrawals are logged before adding funds to the pocket. This allows you to record activity immediately without worrying about order, and normalize the balance later with contributions.</string>
+    <string name="balances_metric_available_title">Available</string>
+    <string name="balances_metric_available_description">The funds in the virtual pocket ready to be used for new expenses, after deducting scheduled commitments and cash withdrawals.\n\nWithdrawing cash lowers the available virtual pocket balance because the money moves into cash in hand, without counting as an expense until spent.\n\nIf scheduled commitments exceed the pocket funds, this figure becomes negative, indicating that the group needs new contributions to cover upcoming commitments.</string>
+    <string name="balances_metric_scheduled_title">Scheduled</string>
+    <string name="balances_metric_scheduled_description">The total amount reserved for upcoming or planned expenses already committed by the group.</string>
+    <string name="balances_metric_refundable_title">Refundable</string>
+    <string name="balances_metric_refundable_description">Money already paid for bookings with cancellation policies or security deposits, such as accommodations or vehicle rentals.\n\nThe funds have already left the account, but can be recovered if the booking is cancelled before the refund deadline or when the deposit is returned. If not cancelled, the payment remains finalized.</string>
+    <string name="balances_metric_total_contributed_title">Total contributed</string>
+    <string name="balances_metric_total_contributed_description">Cumulative sum of all contributions made by members, including both group pocket funds and personal allowances.\n\nThe breakdown of how much each member contributed and their individual balance can be viewed in the member balances section.</string>
+    <string name="balances_metric_total_spent_title">Total spent</string>
+    <string name="balances_metric_total_spent_description">Total amount spent on the trip to date.\n\nIncludes all settled expenses, cash expenses, and refundable expenses, since that money has already been spent. It does not include upcoming scheduled expenses or extras.</string>
+    <string name="balances_metric_cash_in_hand_title">Cash in hand</string>
+    <string name="balances_metric_cash_in_hand_description">Physical cash withdrawn by members that has not yet been spent.\n\nThe header total shows the cumulative value converted into the group\'s default currency, while the list below details the exact breakdown across each currency held.</string>
 
     <!-- Contribution History -->
     <string name="balances_history_title">Activity</string>

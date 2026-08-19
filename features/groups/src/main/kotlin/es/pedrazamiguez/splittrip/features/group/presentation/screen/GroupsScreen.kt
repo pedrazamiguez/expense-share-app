@@ -1,16 +1,13 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.screen
 
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.splittrip.features.group.presentation.component.DeleteConfirmationDialog
 import es.pedrazamiguez.splittrip.features.group.presentation.component.GroupsScreenContent
 import es.pedrazamiguez.splittrip.features.group.presentation.component.GroupsScreenOverlays
@@ -21,7 +18,6 @@ import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupsUiState
 
 @Suppress("kotlin:S107", "LongMethod", "LongParameterList")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupsScreen(
     uiState: GroupsUiState = GroupsUiState(),
@@ -45,7 +41,6 @@ fun GroupsScreen(
     var selectedGroupForMenu by remember { mutableStateOf<GroupUiModel?>(null) }
     var groupToDelete by remember { mutableStateOf<GroupUiModel?>(null) }
     var groupToLeave by remember { mutableStateOf<GroupUiModel?>(null) }
-    val scrollBehavior = rememberConnectedScrollBehavior()
 
     RestoreScrollEffect(listState, uiState)
 
@@ -61,7 +56,7 @@ fun GroupsScreen(
         onGroupClicked = onGroupClicked,
         onGroupLongClicked = { selectedGroupForMenu = it },
         onUpgradeClicked = onUpgradeClicked,
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        modifier = Modifier
     )
 
     GroupsScreenOverlays(
