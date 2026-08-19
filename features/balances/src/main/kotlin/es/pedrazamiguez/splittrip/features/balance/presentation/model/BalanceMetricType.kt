@@ -19,9 +19,9 @@ enum class BalanceMetricType(
         titleRes = R.string.balances_metric_scheduled_title,
         descriptionRes = R.string.balances_metric_scheduled_description
     ),
-    ON_HOLD(
-        titleRes = R.string.balances_metric_on_hold_title,
-        descriptionRes = R.string.balances_metric_on_hold_description
+    REFUNDABLE(
+        titleRes = R.string.balances_metric_refundable_title,
+        descriptionRes = R.string.balances_metric_refundable_description
     ),
     TOTAL_CONTRIBUTED(
         titleRes = R.string.balances_metric_total_contributed_title,
@@ -30,5 +30,9 @@ enum class BalanceMetricType(
     TOTAL_SPENT(
         titleRes = R.string.balances_metric_total_spent_title,
         descriptionRes = R.string.balances_metric_total_spent_description
+    ),
+    CASH_IN_HAND(
+        titleRes = R.string.balances_metric_cash_in_hand_title,
+        descriptionRes = R.string.balances_metric_cash_in_hand_description
     )
 }

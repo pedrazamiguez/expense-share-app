@@ -69,7 +69,8 @@ fun GroupPocketBalanceCard(
                     Spacer(modifier = Modifier.height(MaterialTheme.spacing.ExtraLarge))
                     CashBalancesSection(
                         cashBalances = balance.cashBalances,
-                        formattedTotalCashEquivalent = balance.formattedTotalCashEquivalent
+                        formattedTotalCashEquivalent = balance.formattedTotalCashEquivalent,
+                        onShowMetricInfo = onShowMetricInfo
                     )
                 }
 

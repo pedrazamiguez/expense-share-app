@@ -16,14 +16,15 @@ class BalanceMetricTypeTest {
     }
 
     @Test
-    fun `BalanceMetricType contains expected 6 metric variants`() {
-        assertEquals(6, BalanceMetricType.entries.size)
+    fun `BalanceMetricType contains expected 7 metric variants`() {
+        assertEquals(7, BalanceMetricType.entries.size)
         val names = BalanceMetricType.entries.map { it.name }
         assertTrue(names.contains("REMAINING"))
         assertTrue(names.contains("AVAILABLE"))
         assertTrue(names.contains("SCHEDULED"))
-        assertTrue(names.contains("ON_HOLD"))
+        assertTrue(names.contains("REFUNDABLE"))
         assertTrue(names.contains("TOTAL_CONTRIBUTED"))
         assertTrue(names.contains("TOTAL_SPENT"))
+        assertTrue(names.contains("CASH_IN_HAND"))
     }
 }

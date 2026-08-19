@@ -42,9 +42,9 @@ internal fun SecondaryBalancesRow(
         if (balance.formattedRefundableHoldAmount != null) {
             add(
                 Triple(
-                    stringResource(R.string.balances_on_hold),
+                    stringResource(R.string.balances_refundable),
                     balance.formattedRefundableHoldAmount,
-                    BalanceMetricType.ON_HOLD
+                    BalanceMetricType.REFUNDABLE
                 )
             )
         }

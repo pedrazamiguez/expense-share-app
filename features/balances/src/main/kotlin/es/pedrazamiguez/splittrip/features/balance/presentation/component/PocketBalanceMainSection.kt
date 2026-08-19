@@ -42,7 +42,7 @@ internal fun PocketBalanceMainSection(
                     text = balance.groupName,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.Medium))
             }
