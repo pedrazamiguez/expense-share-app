@@ -161,7 +161,6 @@ All components are `@Composable` functions following Material 3 design. They acc
 | `LocalTopPillController` | `notification/TopPillNotification.kt` | Global top-pill notification controller that survives navigation. Consumed in Feature layer. |
 | `LocalSharedTransitionScope` | `transition/SharedElements.kt` | Shared-element transition scope for container-transform animations. |
 | `LocalAnimatedVisibilityScope` | `transition/SharedElements.kt` | Animated visibility scope for shared-element transitions. |
-| `LocalTopAppBarState` | `topbar/TopAppBarScrollBehaviorProvider.kt` | Provides scroll-connected `TopAppBarState` for collapsible top bars. |
 
 ### B.2 Contracts & Interfaces
 
@@ -177,8 +176,7 @@ All components are `@Composable` functions following Material 3 design. They acc
 
 | Component | File | Purpose |
 |---|---|---|
-| `DynamicTopAppBar` | `topbar/DynamicTopAppBar.kt` | Animated `LargeTopAppBar` with collapsible title, subtitle fade-out, and scroll-synchronized color transitions. Falls back to standard `TopAppBar` when no scroll behavior is provided. **Use for:** Non-tab screens that need a top bar with scroll-aware behavior (wizards, sub-screens with back navigation). Tab screens use inline typographic headers instead. |
-| `TopAppBarScrollBehaviorProvider` | `topbar/TopAppBarScrollBehaviorProvider.kt` | Provides `TopAppBarScrollBehavior` via `LocalTopAppBarState`. **Use for:** Connecting `LazyColumn` scroll state to the top bar collapse animation. |
+| `DynamicTopAppBar` | `topbar/DynamicTopAppBar.kt` | Standard pinned `TopAppBar` with primary background and `onPrimary` content color. **Use for:** Screens that need a fixed top app bar (wizards, sub-screens with back navigation, settings, etc.). |
 
 ### B.4 Notification
 

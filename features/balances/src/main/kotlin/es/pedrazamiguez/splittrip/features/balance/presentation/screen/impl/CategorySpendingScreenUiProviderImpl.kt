@@ -31,8 +31,7 @@ class CategorySpendingScreenUiProviderImpl(
         DynamicTopAppBar(
             title = stringResource(R.string.balances_category_spending_title),
             subtitle = groupName,
-            onBack = { tabNavController.navigateUp() },
-            pinned = true
+            onBack = { tabNavController.navigateUp() }
         )
     }
 

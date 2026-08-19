@@ -29,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.extension.sharedElementAnimation
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
@@ -46,7 +45,6 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layou
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.sheet.ActionBottomSheet
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.sheet.SheetAction
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.splittrip.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.splittrip.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.splittrip.features.expense.R
@@ -78,7 +76,6 @@ fun ExpensesScreen(
     onResetFilters: () -> Unit = {}
 ) {
     val bottomPadding = LocalBottomPadding.current
-    val scrollBehavior = rememberConnectedScrollBehavior()
 
     var selectedExpenseForMenu by remember { mutableStateOf<ExpenseUiModel?>(null) }
     var expenseToDelete by remember { mutableStateOf<ExpenseUiModel?>(null) }
@@ -130,7 +127,7 @@ fun ExpensesScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection)) {
+    Box(modifier = Modifier.fillMaxSize()) {
         DeferredLoadingContainer(
             isLoading = uiState.isLoading,
             loadingContent = { ShimmerLoadingList() }

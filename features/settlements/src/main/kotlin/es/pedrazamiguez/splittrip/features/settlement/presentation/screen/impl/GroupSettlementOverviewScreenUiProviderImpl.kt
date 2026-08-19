@@ -18,8 +18,7 @@ class GroupSettlementOverviewScreenUiProviderImpl(
         val navController = LocalTabNavController.current
         DynamicTopAppBar(
             title = stringResource(R.string.settlement_overview_title),
-            onBack = { navController.popBackStack() },
-            pinned = true
+            onBack = { navController.popBackStack() }
         )
     }
 }
