@@ -54,8 +54,7 @@ class AddContributionScreenUiProviderImpl(override val route: String = Routes.CO
             },
             onBackLongPress = {
                 vm?.onEvent(AddContributionUiEvent.CloseWizard)
-            },
-            pinned = true
+            }
         )
     }
 }

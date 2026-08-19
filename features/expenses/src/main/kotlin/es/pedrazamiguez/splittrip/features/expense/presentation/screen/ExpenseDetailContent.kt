@@ -12,8 +12,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
@@ -31,7 +29,6 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseDet
 internal fun ExpenseDetailContent(
     expense: ExpenseDetailUiModel,
     modifier: Modifier,
-    nestedScrollConnection: NestedScrollConnection,
     onReceiptTap: (() -> Unit)?,
     onConfirmPaymentTap: (() -> Unit)?
 ) {
@@ -40,7 +37,6 @@ internal fun ExpenseDetailContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .nestedScroll(nestedScrollConnection)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = MaterialTheme.spacing.Default),
         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
