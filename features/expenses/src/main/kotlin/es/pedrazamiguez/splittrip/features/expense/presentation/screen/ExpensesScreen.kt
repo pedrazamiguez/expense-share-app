@@ -1,13 +1,6 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.screen
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,7 +20,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.extension.sharedElementAnimation
@@ -81,7 +73,6 @@ fun ExpensesScreen(
     var expenseToDelete by remember { mutableStateOf<ExpenseUiModel?>(null) }
     var expenseToCancel by remember { mutableStateOf<ExpenseUiModel?>(null) }
     var showResetFiltersDialog by remember { mutableStateOf(false) }
-    var isSearchBarVisible by remember { mutableStateOf(true) }
 
     val listState = rememberLazyListState(
         initialFirstVisibleItemIndex = uiState.scrollPosition,
@@ -90,31 +81,6 @@ fun ExpensesScreen(
 
     RestoreScrollEffect(listState = listState, uiState = uiState)
     TrackScrollEffect(listState = listState, onScrollPositionChanged = onScrollPositionChanged)
-
-    LaunchedEffect(listState) {
-        var previousIndex = listState.firstVisibleItemIndex
-        var previousOffset = listState.firstVisibleItemScrollOffset
-
-        snapshotFlow {
-            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
-        }.collect { (currentIndex, currentOffset) ->
-            val scrollingDown = currentIndex > previousIndex ||
-                (currentIndex == previousIndex && currentOffset > previousOffset)
-            val scrollingUp = currentIndex < previousIndex ||
-                (currentIndex == previousIndex && currentOffset < previousOffset)
-
-            if (currentIndex == 0 && currentOffset == 0) {
-                isSearchBarVisible = true
-            } else if (scrollingDown) {
-                isSearchBarVisible = false
-            } else if (scrollingUp) {
-                isSearchBarVisible = true
-            }
-
-            previousIndex = currentIndex
-            previousOffset = currentOffset
-        }
-    }
 
     LaunchedEffect(actions) {
         actions?.collect { action ->
@@ -143,64 +109,47 @@ fun ExpensesScreen(
                 else -> {
                     val sharedTransitionScope = LocalSharedTransitionScope.current
                     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
-                    val showSearchBar = isSearchBarVisible || uiState.searchQuery.isNotEmpty()
                     Column(modifier = Modifier.fillMaxSize().imePadding()) {
-                        AnimatedVisibility(
-                            visible = showSearchBar,
-                            enter = expandVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioLowBouncy,
-                                    stiffness = Spring.StiffnessMediumLow
-                                )
-                            ) + fadeIn(),
-                            exit = shrinkVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioNoBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                )
-                            ) + fadeOut()
-                        ) {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                if (!uiState.isSearchResultEmpty) {
-                                    ExpensesTotalSummaryRow(
-                                        formattedTotalSpent = uiState.formattedTotalSpent,
-                                        formattedTotalScheduled = uiState.formattedTotalScheduled,
-                                        visibleExpensesCount = uiState.visibleExpensesCount,
-                                        isFiltered = uiState.isFiltered,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(
-                                                start = MaterialTheme.spacing.Default,
-                                                top = MaterialTheme.spacing.Default,
-                                                end = MaterialTheme.spacing.Default,
-                                                bottom = MaterialTheme.spacing.None
-                                            )
-                                    )
-                                }
-                                ExpenseSearchBar(
-                                    query = uiState.searchQuery,
-                                    onQueryChange = onSearchQueryChanged,
-                                    activeFilterCount = uiState.activeFilterCount,
-                                    onFilterClick = onFilterClick,
-                                    onFilterLongClick = {
-                                        if (uiState.activeFilterCount > 0) {
-                                            showResetFiltersDialog = true
-                                        }
-                                    },
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            if (!uiState.isSearchResultEmpty) {
+                                ExpensesTotalSummaryRow(
+                                    formattedTotalSpent = uiState.formattedTotalSpent,
+                                    formattedTotalScheduled = uiState.formattedTotalScheduled,
+                                    visibleExpensesCount = uiState.visibleExpensesCount,
+                                    isFiltered = uiState.isFiltered,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(
                                             start = MaterialTheme.spacing.Default,
-                                            top = if (!uiState.isSearchResultEmpty) {
-                                                MaterialTheme.spacing.Small
-                                            } else {
-                                                MaterialTheme.spacing.Default
-                                            },
+                                            top = MaterialTheme.spacing.Default,
                                             end = MaterialTheme.spacing.Default,
-                                            bottom = MaterialTheme.spacing.ExtraSmall
+                                            bottom = MaterialTheme.spacing.None
                                         )
                                 )
                             }
+                            ExpenseSearchBar(
+                                query = uiState.searchQuery,
+                                onQueryChange = onSearchQueryChanged,
+                                activeFilterCount = uiState.activeFilterCount,
+                                onFilterClick = onFilterClick,
+                                onFilterLongClick = {
+                                    if (uiState.activeFilterCount > 0) {
+                                        showResetFiltersDialog = true
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(
+                                        start = MaterialTheme.spacing.Default,
+                                        top = if (!uiState.isSearchResultEmpty) {
+                                            MaterialTheme.spacing.Small
+                                        } else {
+                                            MaterialTheme.spacing.Default
+                                        },
+                                        end = MaterialTheme.spacing.Default,
+                                        bottom = MaterialTheme.spacing.ExtraSmall
+                                    )
+                            )
                         }
 
                         when {
