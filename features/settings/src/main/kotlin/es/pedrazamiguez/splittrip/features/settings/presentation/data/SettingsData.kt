@@ -13,10 +13,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Headset
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.HelpCircle
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.InfoCircle
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Language
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Layers
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.LayoutGrid
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.MoonStars
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Photo
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Shield
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ShieldLock
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UserPin
@@ -116,21 +113,6 @@ private fun preferencesSection(
 private fun developerSection(onServicesTestClick: () -> Unit) = SettingsSectionModel(
     titleRes = R.string.settings_section_developer,
     items = listOf(
-        SettingsItemModel.Standard(
-            icon = TablerIcons.Outline.Layers,
-            titleRes = R.string.settings_developer_layout_title,
-            descriptionRes = R.string.settings_developer_layout_description
-        ),
-        SettingsItemModel.Standard(
-            icon = TablerIcons.Outline.LayoutGrid,
-            titleRes = R.string.settings_developer_widgets_title,
-            descriptionRes = R.string.settings_developer_widgets_description
-        ),
-        SettingsItemModel.Standard(
-            icon = TablerIcons.Outline.Photo,
-            titleRes = R.string.settings_developer_assets_title,
-            descriptionRes = R.string.settings_developer_assets_description
-        ),
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.Hammer,
             titleRes = R.string.settings_developer_services_title,
