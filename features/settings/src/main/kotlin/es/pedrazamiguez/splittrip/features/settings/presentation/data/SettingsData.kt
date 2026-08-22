@@ -15,7 +15,6 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.InfoCircle
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Language
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Layers
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.LayoutGrid
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Mail
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.MoonStars
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Photo
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Shield
@@ -66,11 +65,6 @@ private fun accountSection(params: SettingsPreferencesParams) = SettingsSectionM
             icon = TablerIcons.Outline.Shield,
             titleRes = R.string.settings_account_security_title,
             descriptionRes = R.string.settings_account_security_description
-        ),
-        SettingsItemModel.Standard(
-            icon = TablerIcons.Outline.Mail,
-            titleRes = R.string.settings_account_email_title,
-            descriptionRes = R.string.settings_account_email_description
         )
     )
 )
