@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="groups_title">Grupos</string>
-    <string name="groups_subtitle">Tus compis de aventura</string>
+    <string name="groups_subtitle">Compañeros de viaje</string>
     <string name="groups_not_found">¡Aún no tienes ningún grupo! Crea uno y empieza a compartir gastos</string>
     <string name="groups_error_loading">No pudimos cargar tus grupos. Inténtalo de nuevo más tarde</string>
     <string name="groups_anonymous_warning">Usando cuenta de invitado. Vincula tu cuenta en Ajustes para evitar perder datos.</string>
@@ -39,7 +39,7 @@
     <string name="group_error_name_empty">¡Ey! Tu grupo necesita un nombre</string>
     <string name="group_error_creation_failed">¡Ups! Algo falló al crear el grupo. Inténtalo de nuevo</string>
     <string name="group_error_load_currencies">No pudimos cargar las monedas. ¿Tienes conexión?</string>
-    <string name="group_created_success">¡Listo! \"%1$s\" está ready para la aventura</string>
+    <string name="group_created_success">¡Listo! \"%1$s\" está preparado para el viaje</string>
     <plurals name="group_members_count">
         <item quantity="one">%d viajero</item>
         <item quantity="other">%d viajeros</item>
@@ -76,7 +76,7 @@
     <string name="group_field_members">Miembros</string>
     <string name="group_member_search">Buscar por email</string>
     <string name="group_member_search_hint">Escribe el email de un miembro</string>
-    <string name="group_member_search_helper">Añade compis de viaje por su dirección de email</string>
+    <string name="group_member_search_helper">Añade compañeros de viaje por su dirección de email</string>
     <string name="group_member_search_no_results">No se encontró ningún usuario con ese email</string>
     <string name="group_member_remove">Quitar miembro</string>
     <string name="group_member_clear_search">Limpiar búsqueda</string>
@@ -181,7 +181,7 @@
     <string name="leave_wizard_step_confirm">Confirmar</string>
     <string name="leave_wizard_balance_title">Resumen de balance</string>
     <string name="leave_wizard_balance_subtitle">Revisa tu balance en este grupo antes de salir.</string>
-    <string name="leave_wizard_virtual_pocket">Bote virtual</string>
+    <string name="leave_wizard_virtual_pocket">Pocket virtual</string>
     <string name="leave_wizard_cash_in_hand">Efectivo físico en mano</string>
     <string name="leave_wizard_total_balance">Balance total</string>
     <string name="leave_wizard_settlement_title">Acuerdos de pago pendientes</string>
@@ -190,7 +190,7 @@
     <string name="leave_wizard_confirm_settlement">Confirmar acuerdo de pago</string>
     <string name="leave_wizard_cash_title">Resolución de efectivo físico</string>
     <string name="leave_wizard_cash_subtitle">Acción requerida para el efectivo físico antes de salir.</string>
-    <string name="leave_wizard_cash_deposit">Tienes %1$s en efectivo físico. Debe devolverse o depositarse al bote virtual del grupo.</string>
+    <string name="leave_wizard_cash_deposit">Tienes %1$s en efectivo físico. Debe devolverse o depositarse al pocket virtual del grupo.</string>
     <string name="leave_wizard_cash_reimbursement">Se te deben %1$s por gastos en efectivo del fondo físico de efectivo.</string>
     <string name="leave_wizard_confirm_title">Confirmar salida</string>
     <string name="leave_wizard_confirm_subtitle">Revisión final antes de salir de %1$s.</string>

@@ -57,6 +57,7 @@ docs/
 ## 🎨 3. Design System & UI
 
 * [Horizon Narrative Design Language](design-system/horizon-narrative-design.md)
+* [Tone of Voice & Verbal Identity Guide](design-system/tone-of-voice.md)
 * [UX Patterns & Interaction Guidelines](design-system/ux-guidelines.md)
 * [Compose Drop Shadows, Elevation & Clipping Guide](design-system/compose-shadows-and-clipping.md)
 * [Tabler Icons Maintenance & Vector Script](design-system/tabler-icons.md)

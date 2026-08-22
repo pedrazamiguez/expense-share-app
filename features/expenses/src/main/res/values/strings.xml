@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="expenses_title">Expenses</string>
-    <string name="expenses_subtitle">Who paid for what?</string>
+    <string name="expenses_subtitle">Expense log</string>
     <string name="expenses_not_found">No expenses yet!\nAdd the first one</string>
     <string name="expenses_error_loading">Failed to load expenses</string>
     <string name="expenses_add">Add expense</string>
@@ -294,7 +294,7 @@
 
     
     <string name="expense_detail_error_loading">Could not load expense details</string>
-    <string name="expense_detail_group_currency_label">Group balance</string>
+    <string name="expense_detail_group_currency_label">Group currency</string>
     <string name="expense_detail_amount_in_currency">Amount in %1$s</string>
     <string name="expense_detail_cash_section_title">Paid with</string>
     <string name="expense_detail_tranche_scope_group">Group cash</string>

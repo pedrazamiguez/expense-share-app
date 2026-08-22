@@ -17,7 +17,7 @@
     <string name="notification_member_removed_body">%1$s abandonó er grupo</string>
     <string name="notification_member_removed_by_admin_body">%1$s eliminó a %2$s der grupo</string>
     <string name="notification_cash_withdrawal_title">Retirá de efêttibo</string>
-    <string name="notification_cash_withdrawal_body">%1$s çacó %2$s</string>
+    <string name="notification_cash_withdrawal_body">%1$s retiró %2$s</string>
     <string name="notification_cash_withdrawal_body_brief">%1$s iço una retirá de efêttibo</string>
     <string name="notification_cash_withdrawal_body_on_behalf">%1$s rehîttró una retirá de efêttibo en nombre de %2$s</string>
     <string name="notification_contribution_added_title">Nueba aportaçión</string>

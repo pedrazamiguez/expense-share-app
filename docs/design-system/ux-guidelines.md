@@ -1,4 +1,6 @@
-This project implements specific User Experience (UX) principles to ensure the app feels polished, responsive, and native.
+# UX Patterns & Interaction Guidelines
+
+This project implements specific User Experience (UX) principles to ensure the app feels polished, responsive, and native. For copywriting, verbal identity, and UI label standards, refer to the [Tone of Voice & Verbal Identity Guide](tone-of-voice.md).
 
 ## 1. Progressive Disclosure & Delayed Navigation
 
@@ -226,3 +228,8 @@ Every form that collects more than a couple of fields uses a shared `WizardStepI
 - `AddCashWithdrawalScreen` / `CashWithdrawalStep` — 7 steps with 1 optional (DETAILS).
 - `AddExpenseScreen` / `AddExpenseStep` — 13 steps: TITLE → PAYMENT_METHOD → FUNDING_SOURCE → CONTRIBUTION_SCOPE (conditional) → AMOUNT → EXCHANGE_RATE (conditional) → SPLIT (conditional) → CATEGORY (optional) → VENDOR_NOTES (optional) → PAYMENT_STATUS → RECEIPT (optional) → ADD_ONS (optional) → REVIEW.
 - `AddContributionScreen` / `AddContributionStep` — 3 steps, all required (no optional steps).
+
+## 7. Tone of Voice & Microcopy Standards
+
+All user-facing copy, labels, validation messages, and empty states must follow the principles defined in the [Tone of Voice & Verbal Identity Guide](tone-of-voice.md) and the [Ubiquitous Language](../domain/ubiquitous-language.md) glossary.
+
