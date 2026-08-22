@@ -1,9 +1,7 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.mapper
 
-import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.SubunitDocument
 import es.pedrazamiguez.splittrip.domain.model.Subunit
-import io.mockk.mockk
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -18,7 +16,6 @@ class SubunitDocumentMapperTest {
     private val testSubunitId = "subunit-123"
     private val testGroupId = "group-456"
     private val testUserId = "user-789"
-    private val testGroupDocRef: DocumentReference = mockk(relaxed = true)
     private val testTimestamp = LocalDateTime.of(2026, 3, 13, 12, 30, 0)
     private val testFirebaseTimestamp = testTimestamp.toTimestampUtc()!!
     private val testName = "Antonio & Me"
@@ -49,13 +46,11 @@ class SubunitDocumentMapperTest {
             val document = fullSubunit.toDocument(
                 testSubunitId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
             assertEquals(testSubunitId, document.subunitId)
             assertEquals(testGroupId, document.groupId)
-            assertEquals(testGroupDocRef, document.groupRef)
             assertEquals(testName, document.name)
             assertEquals(testMemberIds, document.memberIds)
             assertEquals(testMemberSharesDoc, document.memberShares)
@@ -67,7 +62,6 @@ class SubunitDocumentMapperTest {
             val document = fullSubunit.toDocument(
                 testSubunitId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -87,7 +81,6 @@ class SubunitDocumentMapperTest {
             val document = subunitNoTimestamps.toDocument(
                 testSubunitId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -105,7 +98,6 @@ class SubunitDocumentMapperTest {
             val document = subunit.toDocument(
                 testSubunitId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -123,7 +115,6 @@ class SubunitDocumentMapperTest {
             val document = subunit.toDocument(
                 testSubunitId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -140,7 +131,6 @@ class SubunitDocumentMapperTest {
             val document = subunit.toDocument(
                 testSubunitId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -154,7 +144,6 @@ class SubunitDocumentMapperTest {
             val document = subunit.toDocument(
                 testSubunitId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -168,7 +157,6 @@ class SubunitDocumentMapperTest {
         private val fullDocument = SubunitDocument(
             subunitId = testSubunitId,
             groupId = testGroupId,
-            groupRef = testGroupDocRef,
             name = testName,
             memberIds = testMemberIds,
             memberShares = testMemberSharesDoc,

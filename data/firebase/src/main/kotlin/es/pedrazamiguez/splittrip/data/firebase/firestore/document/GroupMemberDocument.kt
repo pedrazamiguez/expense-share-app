@@ -1,14 +1,11 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.document
 
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.DocumentReference
 
 data class GroupMemberDocument(
     val memberId: String = "",
     val groupId: String = "",
-    val groupRef: DocumentReference? = null,
     val userId: String = "",
-    val userRef: DocumentReference? = null,
     val role: String = "MEMBER",
     val alias: String? = null,
     val addedBy: String = "",
@@ -18,6 +15,5 @@ data class GroupMemberDocument(
         fun collectionPath(groupId: String) = "groups/$groupId/members"
         const val SUBCOLLECTION_PATH = "members"
         const val USER_ID_FIELD = "userId"
-        const val FIELD_GROUP_REF = "groupRef"
     }
 }

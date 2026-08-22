@@ -24,8 +24,6 @@ class FirestoreGroupReconciler(private val firestore: FirebaseFirestore) {
     }
 
     private suspend fun executeReconcileUnregisteredUser(pendingUserId: String, activeUserId: String) {
-        val userRef = firestore.collection(UserDocument.COLLECTION_PATH).document(activeUserId)
-
         val matchingGroupsSnapshot = firestore.collection(GroupDocument.COLLECTION_PATH)
             .whereArrayContains("memberIds", pendingUserId)
             .get()
@@ -33,7 +31,7 @@ class FirestoreGroupReconciler(private val firestore: FirebaseFirestore) {
 
         for (groupDoc in matchingGroupsSnapshot.documents) {
             val groupId = groupDoc.id
-            reconcileGroupData(groupId, groupDoc.reference, pendingUserId, activeUserId, userRef)
+            reconcileGroupData(groupId, groupDoc.reference, pendingUserId, activeUserId)
         }
 
         // Delete users/$pendingUserId document
@@ -44,8 +42,7 @@ class FirestoreGroupReconciler(private val firestore: FirebaseFirestore) {
         groupId: String,
         groupDocRef: DocumentReference,
         pendingUserId: String,
-        activeUserId: String,
-        userRef: DocumentReference
+        activeUserId: String
     ) {
         val memberDocRef = firestore.collection(GroupDocument.COLLECTION_PATH)
             .document(groupId)
@@ -91,15 +88,14 @@ class FirestoreGroupReconciler(private val firestore: FirebaseFirestore) {
                 memberDocRef,
                 activeMemberDocRef,
                 pendingMemberSnap,
-                activeUserId,
-                userRef
+                activeUserId
             )
 
-            updateExpensesInTransaction(transaction, freshExpenseSnaps, pendingUserId, activeUserId, userRef)
+            updateExpensesInTransaction(transaction, freshExpenseSnaps, pendingUserId, activeUserId)
 
-            updateContributionsInTransaction(transaction, freshContributionSnaps, pendingUserId, activeUserId, userRef)
+            updateContributionsInTransaction(transaction, freshContributionSnaps, pendingUserId, activeUserId)
 
-            updateWithdrawalsInTransaction(transaction, freshWithdrawalSnaps, pendingUserId, activeUserId, userRef)
+            updateWithdrawalsInTransaction(transaction, freshWithdrawalSnaps, pendingUserId, activeUserId)
         }.await()
     }
 
@@ -120,16 +116,14 @@ class FirestoreGroupReconciler(private val firestore: FirebaseFirestore) {
         memberDocRef: DocumentReference,
         activeMemberDocRef: DocumentReference,
         pendingMemberSnap: DocumentSnapshot,
-        activeUserId: String,
-        userRef: DocumentReference
+        activeUserId: String
     ) {
         if (pendingMemberSnap.exists()) {
             val memberDoc = pendingMemberSnap.toObject(GroupMemberDocument::class.java)
             if (memberDoc != null) {
                 val activeMemberDoc = memberDoc.copy(
                     memberId = activeUserId,
-                    userId = activeUserId,
-                    userRef = userRef
+                    userId = activeUserId
                 )
                 transaction.set(activeMemberDocRef, activeMemberDoc)
                 transaction.delete(memberDocRef)
@@ -141,12 +135,11 @@ class FirestoreGroupReconciler(private val firestore: FirebaseFirestore) {
         transaction: Transaction,
         expenseSnaps: List<DocumentSnapshot>,
         pendingUserId: String,
-        activeUserId: String,
-        userRef: DocumentReference
+        activeUserId: String
     ) {
         for (freshExpSnap in expenseSnaps) {
             val expense = freshExpSnap.toObject(ExpenseDocument::class.java) ?: continue
-            val updatedExpense = expense.getUpdatedIfNeedsUpdate(pendingUserId, activeUserId, userRef)
+            val updatedExpense = expense.getUpdatedIfNeedsUpdate(pendingUserId, activeUserId)
             if (updatedExpense != null) {
                 transaction.set(freshExpSnap.reference, updatedExpense)
             }
@@ -157,12 +150,11 @@ class FirestoreGroupReconciler(private val firestore: FirebaseFirestore) {
         transaction: Transaction,
         contributionSnaps: List<DocumentSnapshot>,
         pendingUserId: String,
-        activeUserId: String,
-        userRef: DocumentReference
+        activeUserId: String
     ) {
         for (freshContrSnap in contributionSnaps) {
             val contribution = freshContrSnap.toObject(ContributionDocument::class.java) ?: continue
-            val updatedContribution = contribution.getUpdatedIfNeedsUpdate(pendingUserId, activeUserId, userRef)
+            val updatedContribution = contribution.getUpdatedIfNeedsUpdate(pendingUserId, activeUserId)
             if (updatedContribution != null) {
                 transaction.set(freshContrSnap.reference, updatedContribution)
             }
@@ -173,12 +165,11 @@ class FirestoreGroupReconciler(private val firestore: FirebaseFirestore) {
         transaction: Transaction,
         withdrawalSnaps: List<DocumentSnapshot>,
         pendingUserId: String,
-        activeUserId: String,
-        userRef: DocumentReference
+        activeUserId: String
     ) {
         for (freshWithdSnap in withdrawalSnaps) {
             val withdrawal = freshWithdSnap.toObject(CashWithdrawalDocument::class.java) ?: continue
-            val updatedWithdrawal = withdrawal.getUpdatedIfNeedsUpdate(pendingUserId, activeUserId, userRef)
+            val updatedWithdrawal = withdrawal.getUpdatedIfNeedsUpdate(pendingUserId, activeUserId)
             if (updatedWithdrawal != null) {
                 transaction.set(freshWithdSnap.reference, updatedWithdrawal)
             }

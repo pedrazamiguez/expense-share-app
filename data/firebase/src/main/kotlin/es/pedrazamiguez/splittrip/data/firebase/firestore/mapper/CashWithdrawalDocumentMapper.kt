@@ -1,6 +1,5 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.mapper
 
-import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.AddOnDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.CashWithdrawalDocument
 import es.pedrazamiguez.splittrip.domain.enums.AddOnMode
@@ -14,11 +13,10 @@ import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
-fun CashWithdrawal.toDocument(withdrawalId: String, groupId: String, groupDocRef: DocumentReference, userId: String) =
+fun CashWithdrawal.toDocument(withdrawalId: String, groupId: String, userId: String) =
     CashWithdrawalDocument(
         withdrawalId = withdrawalId,
         groupId = groupId,
-        groupRef = groupDocRef,
         withdrawnBy = withdrawnBy.ifBlank { userId },
         withdrawalScope = withdrawalScope.name,
         subunitId = subunitId,

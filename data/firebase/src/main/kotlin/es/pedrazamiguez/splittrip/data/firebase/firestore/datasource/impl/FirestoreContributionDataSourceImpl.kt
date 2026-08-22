@@ -39,7 +39,6 @@ class FirestoreContributionDataSourceImpl(
         val contributionDocument = contribution.toDocument(
             contributionId,
             groupId,
-            groupDocRef,
             userId
         )
 

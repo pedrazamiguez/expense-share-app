@@ -1,7 +1,6 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.mapper
 
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.AddOnDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.AttachmentDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.ExpenseDocument
@@ -22,12 +21,12 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.Date
 
-fun Expense.toDocument(expenseId: String, groupId: String, groupDocRef: DocumentReference, userId: String) =
+fun Expense.toDocument(expenseId: String, groupId: String, userId: String) =
     ExpenseDocument(
         expenseId = expenseId,
         groupId = groupId,
-        groupRef = groupDocRef,
         title = title,
+
         expenseCategory = category.name,
         expenseSubcategory = subcategory.name.takeUnless { subcategory == ExpenseSubcategory.UNSPECIFIED },
         vendor = vendor,

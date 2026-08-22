@@ -1,10 +1,8 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.mapper
 
-import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.ContributionDocument
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.model.Contribution
-import io.mockk.mockk
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -21,7 +19,6 @@ class ContributionDocumentMapperTest {
     private val testActorId = "actor-111"
     private val testSubunitId = "subunit-101"
     private val testLinkedExpenseId = "expense-202"
-    private val testGroupDocRef: DocumentReference = mockk(relaxed = true)
     private val testTimestamp = LocalDateTime.of(2026, 1, 15, 12, 30, 0)
     private val testFirebaseTimestamp = testTimestamp.toTimestampUtc()!!
 
@@ -45,13 +42,11 @@ class ContributionDocumentMapperTest {
             val document = fullContribution.toDocument(
                 testContributionId,
                 testGroupId,
-                testGroupDocRef,
                 testActorId
             )
 
             assertEquals(testContributionId, document.contributionId)
             assertEquals(testGroupId, document.groupId)
-            assertEquals(testGroupDocRef, document.groupRef)
             assertEquals(testUserId, document.userId)
             assertEquals(testSubunitId, document.subunitId)
             assertEquals(50000L, document.amountCents)
@@ -64,7 +59,6 @@ class ContributionDocumentMapperTest {
             val document = fullContribution.toDocument(
                 testContributionId,
                 testGroupId,
-                testGroupDocRef,
                 testActorId
             )
 
@@ -78,7 +72,6 @@ class ContributionDocumentMapperTest {
             val document = contributionBlankUser.toDocument(
                 testContributionId,
                 testGroupId,
-                testGroupDocRef,
                 testActorId
             )
 
@@ -90,7 +83,6 @@ class ContributionDocumentMapperTest {
             val document = fullContribution.toDocument(
                 testContributionId,
                 testGroupId,
-                testGroupDocRef,
                 testActorId
             )
 
@@ -104,7 +96,6 @@ class ContributionDocumentMapperTest {
             val document = contributionBlankCreatedBy.toDocument(
                 testContributionId,
                 testGroupId,
-                testGroupDocRef,
                 testActorId
             )
 
@@ -118,7 +109,6 @@ class ContributionDocumentMapperTest {
             val document = contributionNoSubunit.toDocument(
                 testContributionId,
                 testGroupId,
-                testGroupDocRef,
                 testActorId
             )
 
@@ -132,7 +122,6 @@ class ContributionDocumentMapperTest {
             val document = contributionWithLinkedExpense.toDocument(
                 testContributionId,
                 testGroupId,
-                testGroupDocRef,
                 testActorId
             )
 
@@ -146,7 +135,6 @@ class ContributionDocumentMapperTest {
             val document = contributionWithLinkedSettlement.toDocument(
                 testContributionId,
                 testGroupId,
-                testGroupDocRef,
                 testActorId
             )
 
@@ -158,7 +146,6 @@ class ContributionDocumentMapperTest {
             val document = fullContribution.toDocument(
                 testContributionId,
                 testGroupId,
-                testGroupDocRef,
                 testActorId
             )
 
@@ -171,7 +158,6 @@ class ContributionDocumentMapperTest {
             val document = fullContribution.toDocument(
                 testContributionId,
                 testGroupId,
-                testGroupDocRef,
                 testActorId
             )
 
@@ -191,7 +177,6 @@ class ContributionDocumentMapperTest {
             val document = contributionNoTimestamps.toDocument(
                 testContributionId,
                 testGroupId,
-                testGroupDocRef,
                 testActorId
             )
 
@@ -212,7 +197,6 @@ class ContributionDocumentMapperTest {
             val document = contribution.toDocument(
                 testContributionId,
                 testGroupId,
-                testGroupDocRef,
                 testActorId
             )
 

@@ -1,7 +1,6 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.mapper
 
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.AddOnDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.AttachmentDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.ExpenseDocument
@@ -20,7 +19,6 @@ import es.pedrazamiguez.splittrip.domain.model.CashTranche
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.ExpenseSplit
 import es.pedrazamiguez.splittrip.domain.model.ReceiptAttachment
-import io.mockk.mockk
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -35,7 +33,6 @@ class ExpenseDocumentMapperTest {
     private val testExpenseId = "expense-123"
     private val testGroupId = "group-456"
     private val testUserId = "user-789"
-    private val testGroupDocRef: DocumentReference = mockk(relaxed = true)
     private val testTimestamp = LocalDateTime.of(2026, 1, 15, 12, 30, 0)
     private val testFirebaseTimestamp = testTimestamp.toTimestampUtc()!!
 
@@ -76,11 +73,10 @@ class ExpenseDocumentMapperTest {
 
         @Test
         fun `maps all core fields correctly`() {
-            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testUserId)
 
             assertEquals(testExpenseId, document.expenseId)
             assertEquals(testGroupId, document.groupId)
-            assertEquals(testGroupDocRef, document.groupRef)
             assertEquals("Dinner", document.title)
             assertEquals(5000L, document.amountCents)
             assertEquals("EUR", document.currency)
@@ -94,7 +90,7 @@ class ExpenseDocumentMapperTest {
         @Test
         fun `maps payerType to document`() {
             val expense = fullExpense.copy(payerType = PayerType.USER)
-            val document = expense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+            val document = expense.toDocument(testExpenseId, testGroupId, testUserId)
 
             assertEquals("USER", document.payerType)
         }
@@ -102,14 +98,14 @@ class ExpenseDocumentMapperTest {
         @Test
         fun `maps payerId to document when non-null`() {
             val expense = fullExpense.copy(payerType = PayerType.USER, payerId = "payer-123")
-            val document = expense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+            val document = expense.toDocument(testExpenseId, testGroupId, testUserId)
 
             assertEquals("payer-123", document.payerId)
         }
 
         @Test
         fun `maps null payerId to null in document`() {
-            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testUserId)
 
             assertEquals("GROUP", document.payerType)
             assertNull(document.payerId)
@@ -117,7 +113,7 @@ class ExpenseDocumentMapperTest {
 
         @Test
         fun `maps enum fields by name`() {
-            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testUserId)
 
             assertEquals("FOOD", document.expenseCategory)
             assertEquals("RESTAURANT", document.expenseSubcategory)
@@ -129,14 +125,14 @@ class ExpenseDocumentMapperTest {
         @Test
         fun `omits expenseSubcategory in document when UNSPECIFIED`() {
             val expense = fullExpense.copy(subcategory = ExpenseSubcategory.UNSPECIFIED)
-            val document = expense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+            val document = expense.toDocument(testExpenseId, testGroupId, testUserId)
 
             assertNull(document.expenseSubcategory)
         }
 
         @Test
         fun `maps createdAt and lastUpdatedAt when present`() {
-            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testUserId)
 
             assertNotNull(document.createdAt)
             assertNotNull(document.lastUpdatedAt)
@@ -151,7 +147,6 @@ class ExpenseDocumentMapperTest {
             val document = expenseWithoutTimestamps.toDocument(
                 testExpenseId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -164,7 +159,7 @@ class ExpenseDocumentMapperTest {
             val opDate = LocalDateTime.of(2026, 1, 10, 10, 0, 0)
             val opFirebaseTimestamp = opDate.toTimestampUtc()!!
             val expense = fullExpense.copy(operationDate = opDate)
-            val document = expense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+            val document = expense.toDocument(testExpenseId, testGroupId, testUserId)
 
             assertEquals(opFirebaseTimestamp, document.operationDate)
         }
@@ -172,14 +167,14 @@ class ExpenseDocumentMapperTest {
         @Test
         fun `falls back to createdAt for operationDate when operationDate is null`() {
             val expense = fullExpense.copy(operationDate = null, createdAt = testTimestamp)
-            val document = expense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+            val document = expense.toDocument(testExpenseId, testGroupId, testUserId)
 
             assertEquals(testFirebaseTimestamp, document.operationDate)
         }
 
         @Test
         fun `maps userId to createdBy and lastUpdatedBy`() {
-            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testUserId)
 
             assertEquals(testUserId, document.createdBy)
             assertEquals(testUserId, document.lastUpdatedBy)
@@ -187,7 +182,7 @@ class ExpenseDocumentMapperTest {
 
         @Test
         fun `maps dueDate correctly`() {
-            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testUserId)
 
             assertNotNull(document.dueDate)
             assertEquals(testFirebaseTimestamp, document.dueDate)
@@ -196,14 +191,14 @@ class ExpenseDocumentMapperTest {
         @Test
         fun `maps null dueDate to null`() {
             val expenseNoDueDate = fullExpense.copy(dueDate = null)
-            val document = expenseNoDueDate.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+            val document = expenseNoDueDate.toDocument(testExpenseId, testGroupId, testUserId)
 
             assertNull(document.dueDate)
         }
 
         @Test
         fun `maps cashTranches to list of maps`() {
-            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testUserId)
 
             assertEquals(2, document.cashTranches.size)
 
@@ -219,14 +214,14 @@ class ExpenseDocumentMapperTest {
         @Test
         fun `maps empty cashTranches to empty list`() {
             val expenseNoCash = fullExpense.copy(cashTranches = emptyList())
-            val document = expenseNoCash.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+            val document = expenseNoCash.toDocument(testExpenseId, testGroupId, testUserId)
 
             assertTrue(document.cashTranches.isEmpty())
         }
 
         @Test
         fun `maps splits to split documents`() {
-            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testUserId)
 
             assertEquals(2, document.splits.size)
             assertEquals("user-1", document.splits[0].userId)
@@ -602,7 +597,6 @@ class ExpenseDocumentMapperTest {
             val document = expenseWithAddOn.toDocument(
                 testExpenseId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -628,7 +622,6 @@ class ExpenseDocumentMapperTest {
             val document = expenseWithAttachment.toDocument(
                 testExpenseId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -650,7 +643,6 @@ class ExpenseDocumentMapperTest {
             val document = expenseWithLocalAttachment.toDocument(
                 testExpenseId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -664,7 +656,6 @@ class ExpenseDocumentMapperTest {
             val document = expenseNoAttachment.toDocument(
                 testExpenseId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
