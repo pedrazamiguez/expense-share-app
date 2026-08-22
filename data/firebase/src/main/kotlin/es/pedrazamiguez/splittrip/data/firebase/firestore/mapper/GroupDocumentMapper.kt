@@ -1,7 +1,6 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.mapper
 
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupMemberDocument
 import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
@@ -41,21 +40,19 @@ fun GroupDocument.toDomain(): Group? {
     )
 }
 
-fun toAdminMemberDocument(groupDocRef: DocumentReference, userId: String, addedBy: String = userId) =
+fun toAdminMemberDocument(groupId: String, userId: String, addedBy: String = userId) =
     GroupMemberDocument(
         memberId = userId,
-        groupId = groupDocRef.id,
-        groupRef = groupDocRef,
+        groupId = groupId,
         userId = userId,
         role = "ADMIN",
         addedBy = addedBy,
         joinedAt = Timestamp.now()
     )
 
-fun toRegularMemberDocument(groupDocRef: DocumentReference, memberId: String, addedBy: String) = GroupMemberDocument(
+fun toRegularMemberDocument(groupId: String, memberId: String, addedBy: String) = GroupMemberDocument(
     memberId = memberId,
-    groupId = groupDocRef.id,
-    groupRef = groupDocRef,
+    groupId = groupId,
     userId = memberId,
     role = "MEMBER",
     addedBy = addedBy,

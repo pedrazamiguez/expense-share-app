@@ -44,7 +44,6 @@ class FirestoreExpenseDataSourceImpl(
         val expenseDocument = expense.toDocument(
             expenseId,
             groupId,
-            groupDocRef,
             userId
         )
 
@@ -155,7 +154,7 @@ class FirestoreExpenseDataSourceImpl(
         val expenseDocRef = groupDocRef
             .collection(ExpenseDocument.COLLECTION_PATH)
             .document(expenseId)
-        val expenseDocument = expense.toDocument(expenseId, groupId, groupDocRef, userId)
+        val expenseDocument = expense.toDocument(expenseId, groupId, userId)
 
         val withdrawalRefs = expectedRemainingAmounts.keys.map { withdrawalId ->
             groupDocRef

@@ -1,12 +1,10 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.document
 
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.DocumentReference
 
 data class ExpenseDocument(
     val expenseId: String = "",
     val groupId: String = "",
-    val groupRef: DocumentReference? = null,
     val operationDate: Timestamp? = null,
     val expenseCategory: String = "OTHER",
     val expenseSubcategory: String? = null,
@@ -27,7 +25,6 @@ data class ExpenseDocument(
     val dueDate: Timestamp? = null,
     val payerType: String = "GROUP",
     val payerId: String? = null,
-    val payerRef: DocumentReference? = null,
     val paidAt: Timestamp? = null,
     val splits: List<ExpenseSplitDocument> = emptyList(),
     val splitType: String = "EQUAL",
@@ -35,7 +32,6 @@ data class ExpenseDocument(
     val cashTranches: List<Map<String, Any>> = emptyList(),
     val notes: String? = null,
     val createdBy: String = "",
-    val createdByRef: DocumentReference? = null,
     val createdAt: Timestamp? = null,
     val lastUpdatedBy: String? = null,
     val lastUpdatedAt: Timestamp? = null

@@ -1,12 +1,10 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.document
 
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.DocumentReference
 
 data class CashWithdrawalDocument(
     val withdrawalId: String = "",
     val groupId: String = "",
-    val groupRef: DocumentReference? = null,
     val withdrawnBy: String = "",
     val withdrawalScope: String = "GROUP",
     val subunitId: String? = null,
@@ -20,7 +18,6 @@ data class CashWithdrawalDocument(
     val notes: String? = null,
     val receiptLocalUri: String? = null,
     val createdBy: String = "",
-    val createdByRef: DocumentReference? = null,
     var createdAt: Timestamp? = null,
     var lastUpdatedAt: Timestamp? = null,
     val reason: String? = null

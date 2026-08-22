@@ -1,12 +1,10 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.document
 
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.DocumentReference
 
 data class ContributionDocument(
     val contributionId: String = "",
     val groupId: String = "",
-    val groupRef: DocumentReference? = null,
     val userId: String = "",
     val contributionScope: String = "USER",
     val subunitId: String? = null,
@@ -17,7 +15,6 @@ data class ContributionDocument(
     val equivalentBaseAmountCents: Long? = null,
     val exchangeRate: String? = null,
     val createdBy: String = "",
-    val createdByRef: DocumentReference? = null,
     var contributionDate: Timestamp? = null,
     var createdAt: Timestamp? = null,
     var lastUpdatedAt: Timestamp? = null
