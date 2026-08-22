@@ -30,12 +30,6 @@
 
     <!-- Developer Options Section -->
     <string name="settings_section_developer">Opciones de Desarrollador</string>
-    <string name="settings_developer_layout_title">Diseño</string>
-    <string name="settings_developer_layout_description">Probar diseños de UI</string>
-    <string name="settings_developer_widgets_title">Widgets</string>
-    <string name="settings_developer_widgets_description">Vista previa de componentes</string>
-    <string name="settings_developer_assets_title">Recursos</string>
-    <string name="settings_developer_assets_description">Imágenes y animaciones</string>
     <string name="settings_developer_services_title">Pruebas de Servicios</string>
     <string name="settings_developer_services_description">Probar servicios del dispositivo</string>
 

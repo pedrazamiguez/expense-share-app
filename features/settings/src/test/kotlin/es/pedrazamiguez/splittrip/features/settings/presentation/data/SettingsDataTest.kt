@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.settings.presentation.data
 
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CreditCard
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Hammer
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.InfoCircle
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Shield
 import es.pedrazamiguez.splittrip.domain.enums.Currency
@@ -119,6 +120,23 @@ class SettingsDataTest {
     @Nested
     @DisplayName("developerSection")
     inner class DeveloperSection {
+
+        @Test
+        fun `developer section contains exactly one item for developer services`() {
+            val params = createParams()
+            val sections = buildSettingsSections(
+                preferencesParams = params,
+                onServicesTestClick = { servicesTestClickCount++ }
+            )
+
+            val developerSection = sections.first { it.titleRes == R.string.settings_section_developer }
+            assertEquals(1, developerSection.items.size)
+
+            val item0 = assertInstanceOf(SettingsItemModel.Standard::class.java, developerSection.items[0])
+            assertEquals(R.string.settings_developer_services_title, item0.titleRes)
+            assertEquals(R.string.settings_developer_services_description, item0.descriptionRes)
+            assertEquals(TablerIcons.Outline.Hammer, item0.icon)
+        }
 
         @Test
         fun `developer services item click delegates to onServicesTestClick callback`() {

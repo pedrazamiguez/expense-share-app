@@ -26,12 +26,6 @@
     <string name="settings_preferences_notifications_description">Recordatoriô y alertâ</string>
     <string name="settings_preferences_currency_title">Moneda por defêtto</string>
     <string name="settings_section_developer">Ôççionê de Deçarroyadôh</string>
-    <string name="settings_developer_layout_title">Diçeño</string>
-    <string name="settings_developer_layout_description">Probâh diçeñô de UI</string>
-    <string name="settings_developer_widgets_title">Wîhhets</string>
-    <string name="settings_developer_widgets_description">Bîtta prebia de componentê</string>
-    <string name="settings_developer_assets_title">Recurçô</string>
-    <string name="settings_developer_assets_description">Imáhenê y animaçionê</string>
     <string name="settings_developer_services_title">Pruebâ de Çerbiçiô</string>
     <string name="settings_developer_services_description">Probâh çerbiçiô der dîppoçitibo</string>
     <string name="settings_section_support">Ayuda y Feêbback</string>
