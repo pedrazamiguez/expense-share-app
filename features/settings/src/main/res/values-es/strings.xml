@@ -17,8 +17,6 @@
     <string name="settings_account_subscriptions_description">Gestiona tu plan</string>
     <string name="settings_account_security_title">Seguridad y Privacidad</string>
     <string name="settings_account_security_description">Mantén tu cuenta segura</string>
-    <string name="settings_account_email_title">Email y Notificaciones</string>
-    <string name="settings_account_email_description">Mantente al día</string>
 
     <!-- Preferences Section -->
     <string name="settings_section_preferences">Preferencias</string>

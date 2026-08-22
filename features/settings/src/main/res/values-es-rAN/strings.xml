@@ -17,8 +17,6 @@
     <string name="settings_account_subscriptions_description">Hêttiona tu plan</string>
     <string name="settings_account_security_title">Çeguridá y Pribaçidá</string>
     <string name="settings_account_security_description">Mantén tu cuenta çegura</string>
-    <string name="settings_account_email_title">Emaîh y Notificaçionê</string>
-    <string name="settings_account_email_description">Mantente ar día</string>
     <string name="settings_section_preferences">Preferençiâ</string>
     <string name="settings_preferences_theme_title">Tema</string>
     <string name="settings_preferences_theme_description">Claro, ôccuro o automático</string>
