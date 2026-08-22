@@ -39,7 +39,7 @@
     <string name="your_balance_settlement_status_suggested">Sugerido</string>
     <string name="your_balance_settlement_status_confirmed_payer">Confirmado por pagador</string>
     <string name="your_balance_settlement_status_disputed">Disputado</string>
-    <string name="your_balance_settlement_pocket_pocket">Bolsillo</string>
+    <string name="your_balance_settlement_pocket_pocket">Pocket</string>
     <string name="your_balance_settlement_pocket_cash">Efectivo</string>
     <string name="your_balance_settlement_pocket_net">Neto</string>
     <string name="your_balance_dispute_dialog_title">Disputar acuerdo de pago</string>

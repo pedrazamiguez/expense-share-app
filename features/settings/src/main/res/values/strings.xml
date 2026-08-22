@@ -1,7 +1,7 @@
 <resources>
     <!-- General Settings -->
     <string name="settings_title">Settings</string>
-    <string name="settings_subtitle">Make it yours</string>
+    <string name="settings_subtitle">Your preferences</string>
     <string name="settings_back">Back</string>
     <string name="app_version_title">App Version</string>
     <string name="app_version_description">Current version</string>
@@ -17,7 +17,7 @@
     <string name="settings_account_subscriptions_title">Subscriptions</string>
     <string name="settings_account_subscriptions_description">Manage your plan</string>
     <string name="settings_account_security_title">Security &amp; Privacy</string>
-    <string name="settings_account_security_description">Keep your stuff safe</string>
+    <string name="settings_account_security_description">Keep your account secure</string>
     <string name="settings_account_email_title">Email &amp; Notifications</string>
     <string name="settings_account_email_description">Stay in the loop</string>
 
