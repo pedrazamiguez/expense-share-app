@@ -29,7 +29,9 @@ fun SettingsScreen(
     onLogoutClick: () -> Unit = {},
     onDeveloperServicesTestClick: () -> Unit = {},
     onBugReportClick: () -> Unit = {},
+    onFeatureSuggestionClick: () -> Unit = {},
     onFaqClick: () -> Unit = {},
+    onContactSupportClick: () -> Unit = {},
     onPrivacyPolicyClick: () -> Unit = {},
     onOpenSourceClick: () -> Unit = {}
 ) {
@@ -45,7 +47,9 @@ fun SettingsScreen(
         onThemeClick = onThemeClick,
         onAccountStatusClick = onAccountStatusClick,
         onBugReportClick = onBugReportClick,
+        onFeatureSuggestionClick = onFeatureSuggestionClick,
         onFaqClick = onFaqClick,
+        onContactSupportClick = onContactSupportClick,
         onPrivacyPolicyClick = onPrivacyPolicyClick,
         onOpenSourceClick = onOpenSourceClick
     )

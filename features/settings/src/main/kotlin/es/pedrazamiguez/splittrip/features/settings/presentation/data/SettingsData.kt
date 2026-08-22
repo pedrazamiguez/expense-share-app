@@ -134,7 +134,8 @@ private fun supportSection(params: SettingsPreferencesParams) = SettingsSectionM
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.Bulb,
             titleRes = R.string.settings_support_feature_title,
-            descriptionRes = R.string.settings_support_feature_description
+            descriptionRes = R.string.settings_support_feature_description,
+            onClick = params.onFeatureSuggestionClick
         ),
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.HelpCircle,
@@ -145,7 +146,8 @@ private fun supportSection(params: SettingsPreferencesParams) = SettingsSectionM
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.Headset,
             titleRes = R.string.settings_support_support_title,
-            descriptionRes = R.string.settings_support_support_description
+            descriptionRes = R.string.settings_support_support_description,
+            onClick = params.onContactSupportClick
         )
     )
 )

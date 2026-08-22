@@ -8,4 +8,6 @@ data class SupportEmail(
 
 interface SupportEmailProvider {
     fun buildBugReportEmail(): SupportEmail
+    fun buildFeatureSuggestionEmail(): SupportEmail
+    fun buildContactSupportEmail(): SupportEmail
 }

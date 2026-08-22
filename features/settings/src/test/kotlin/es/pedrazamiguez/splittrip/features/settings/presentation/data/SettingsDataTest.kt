@@ -24,7 +24,9 @@ class SettingsDataTest {
     private var themeClickCount = 0
     private var accountStatusClickCount = 0
     private var bugReportClickCount = 0
+    private var featureSuggestionClickCount = 0
     private var faqClickCount = 0
+    private var contactSupportClickCount = 0
     private var privacyPolicyClickCount = 0
     private var openSourceClickCount = 0
     private var servicesTestClickCount = 0
@@ -41,7 +43,9 @@ class SettingsDataTest {
         onThemeClick = { themeClickCount++ },
         onAccountStatusClick = { accountStatusClickCount++ },
         onBugReportClick = { bugReportClickCount++ },
+        onFeatureSuggestionClick = { featureSuggestionClickCount++ },
         onFaqClick = { faqClickCount++ },
+        onContactSupportClick = { contactSupportClickCount++ },
         onPrivacyPolicyClick = { privacyPolicyClickCount++ },
         onOpenSourceClick = { openSourceClickCount++ }
     )
@@ -250,17 +254,31 @@ class SettingsDataTest {
             val bugItem = supportSection.items
                 .filterIsInstance<SettingsItemModel.Standard>()
                 .first { it.titleRes == R.string.settings_support_bug_title }
+            val featureItem = supportSection.items
+                .filterIsInstance<SettingsItemModel.Standard>()
+                .first { it.titleRes == R.string.settings_support_feature_title }
             val faqItem = supportSection.items
                 .filterIsInstance<SettingsItemModel.Standard>()
                 .first { it.titleRes == R.string.settings_support_faq_title }
+            val supportItem = supportSection.items
+                .filterIsInstance<SettingsItemModel.Standard>()
+                .first { it.titleRes == R.string.settings_support_support_title }
 
             assertEquals(0, bugReportClickCount)
             bugItem.onClick?.invoke()
             assertEquals(1, bugReportClickCount)
 
+            assertEquals(0, featureSuggestionClickCount)
+            featureItem.onClick?.invoke()
+            assertEquals(1, featureSuggestionClickCount)
+
             assertEquals(0, faqClickCount)
             faqItem.onClick?.invoke()
             assertEquals(1, faqClickCount)
+
+            assertEquals(0, contactSupportClickCount)
+            supportItem.onClick?.invoke()
+            assertEquals(1, contactSupportClickCount)
         }
     }
 
