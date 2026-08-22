@@ -135,14 +135,14 @@
     <string name="group_error_archived">Este viaje está archivado y no se puede modificar.</string>
     <string name="group_detail_end_trip">Finalizar viaje</string>
     <string name="group_detail_end_trip_title">¿Finalizar viaje?</string>
-    <string name="group_detail_end_trip_message">¿Estás seguro de que quieres finalizar este viaje? Esto bloqueará todos los gastos, aportaciones y retiros, haciendo que el grupo sea de solo lectura.</string>
+    <string name="group_detail_end_trip_message">¿Estás seguro de que quieres finalizar este viaje? Esto bloqueará todos los gastos, aportaciones y retiradas, haciendo que el grupo sea de solo lectura.</string>
     <string name="group_detail_end_trip_confirm">Finalizar viaje</string>
     <string name="group_detail_archived_label">Archivado</string>
     <string name="group_error_archiving_failed">Error al archivar el viaje. Por favor, inténtalo de nuevo.</string>
     <string name="group_error_archiving_unresolved_settlements">No se puede finalizar el viaje mientras existan balances o acuerdos de pago pendientes sin resolver.</string>
 
     <!-- Settlement Widget -->
-    <string name="settlement_pocket_type_virtual">Bolsillo virtual</string>
+    <string name="settlement_pocket_type_virtual">Pocket virtual</string>
     <string name="settlement_pocket_type_cash">Efectivo</string>
     <string name="settlement_pocket_type_net">Balance neto</string>
     <string name="settlement_status_pending">Pendiente</string>
@@ -156,7 +156,7 @@
     <string name="core_cash_breakdown_personal_scope">Efectivo personal</string>
     <string name="core_cash_breakdown_total_label">Total</string>
     <string name="core_cash_breakdown_estimated_hint">Estimado · tu parte proporcional del efectivo del grupo</string>
-    <string name="core_cash_breakdown_empty">Sin retiros activos</string>
+    <string name="core_cash_breakdown_empty">Sin retiradas activas</string>
     <!-- %1$s = formatted rate, %2$s = group currency, %3$s = source currency; e.g. "@ 0.027 EUR/THB" -->
     <string name="core_cash_breakdown_rate">@ %1$s %2$s/%3$s</string>
     <!-- Fallback label when a withdrawal has no title; %1$s = short date -->

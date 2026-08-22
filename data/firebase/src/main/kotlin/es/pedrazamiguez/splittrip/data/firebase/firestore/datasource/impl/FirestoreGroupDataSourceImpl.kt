@@ -56,7 +56,7 @@ class FirestoreGroupDataSourceImpl(
                 userId
             )
             val adminMemberDocument = toAdminMemberDocument(
-                groupDocRef,
+                groupId,
                 userId
             )
 
@@ -82,7 +82,7 @@ class FirestoreGroupDataSourceImpl(
                                 .collection(GroupMemberDocument.collectionPath(groupId))
                                 .document(memberId)
                             val memberDocument = toRegularMemberDocument(
-                                groupDocRef,
+                                groupId,
                                 memberId,
                                 addedBy = userId
                             )
@@ -232,10 +232,11 @@ class FirestoreGroupDataSourceImpl(
                     .collection(GroupMemberDocument.collectionPath(groupId))
                     .document(memberId)
                 val memberDocument = toRegularMemberDocument(
-                    groupDocRef,
+                    groupId,
                     memberId,
                     addedBy = addedBy
                 )
+
                 set(memberDocRef, memberDocument)
             }
             update(
@@ -394,8 +395,7 @@ class FirestoreGroupDataSourceImpl(
         }
 
     private fun extractGroupReferences(documents: List<DocumentSnapshot>) = documents.mapNotNull { doc ->
-        doc.getDocumentReference(GroupMemberDocument.FIELD_GROUP_REF)
-            ?: doc.reference.parent.parent
+        doc.reference.parent.parent
     }
 
     override suspend fun reconcileUnregisteredUser(pendingUserId: String, activeUserId: String) {

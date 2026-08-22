@@ -16,6 +16,7 @@ This article defines the ubiquitous language for the SplitTrip domain model, pro
 | **Settlement Record** | Registro de pago | A historical record of a completed or disputed settlement. |
 | **Balance** | Balance | The net financial position of a member or the group (how much is owed or owed to them). |
 | **Member Balance** | Balance de miembro | The specific breakdown of a single member's financial position, including cash in hand and total spent. |
+| **Group Pocket / Virtual Pocket** | Pocket del grupo / Pocket virtual | The collective pool of funds (virtual and physical cash) held by the group to cover shared expenses. |
 | **AddOn** | Extra | An additional cost attached to an expense, such as a tip, fee, surcharge, or discount. |
 | **Cash Tranche** | Tramo de efectivo | A specific portion of a cash withdrawal that is consumed to fund an expense. |
 | **Entity Split** | Reparto | The calculation of how an expense is divided among entities (individual users or subunits). |
@@ -48,4 +49,5 @@ This article defines the ubiquitous language for the SplitTrip domain model, pro
 ## Translation Guidelines
 - **Always use "Acuerdo de pago"**. Never use "Liquidación", which can imply a shop clearance sale.
 - **Always use "Balance"**. Never use "Saldo" or "Posición neta" to keep the terminology approachable and less aggressively financial.
+- **Always use "Pocket" / "Pocket del grupo" / "Pocket virtual"**. Never use "Bote", "Bolsa", or "Cuenta" to ensure a consistent, branded, and modern concept for the group's collective pool.
 - Maintain consistency across all UI text, push notifications, error messages, and API responses.

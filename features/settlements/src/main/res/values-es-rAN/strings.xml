@@ -38,7 +38,7 @@
     <string name="your_balance_settlement_status_suggested">Çuherío</string>
     <string name="your_balance_settlement_status_confirmed_payer">Confirmao por pagadôh</string>
     <string name="your_balance_settlement_status_disputed">Dîpputao</string>
-    <string name="your_balance_settlement_pocket_pocket">Borçiyo</string>
+    <string name="your_balance_settlement_pocket_pocket">Pockêh</string>
     <string name="your_balance_settlement_pocket_cash">Efêttibo</string>
     <string name="your_balance_settlement_pocket_net">Neto</string>
     <string name="your_balance_dispute_dialog_title">Dîpputâh acuerdo de pago</string>

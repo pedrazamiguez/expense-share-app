@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Add Money -->
-    <string name="contribution_add_money_title">Añadir a la cuenta</string>
+    <string name="contribution_add_money_title">Aportar al pocket</string>
     <string name="contribution_edit_title">Editar aportación</string>
     <string name="contribution_add_money_amount_hint">¿Cuánto vas a añadir?</string>
-    <string name="contribution_add_money_submit">Añadir dinero</string>
+    <string name="contribution_add_money_submit">Aportar</string>
     <string name="contribution_edit_submit">Guardar cambios</string>
-    <string name="contribution_add_money_success">¡Dinero añadido a la cuenta del grupo!</string>
+    <string name="contribution_add_money_success">¡Aportación añadida al pocket del grupo!</string>
     <string name="contribution_add_money_error">¡Ups! No se pudo añadir el dinero. Inténtalo de nuevo</string>
     <string name="contribution_add_money_error_amount">Introduce una cantidad válida mayor que cero</string>
     <string name="contribution_add_money_error_subunit">Selección de subunidad inválida. Inténtalo de nuevo</string>
@@ -53,8 +53,8 @@
     <string name="contribution_detail_scope_section_title">Ámbito y atribución</string>
     <string name="contribution_detail_linked_expense_title">Vinculada a un gasto</string>
     <string name="contribution_detail_linked_expense_desc">Esta aportación se generó automáticamente a partir de un gasto de bolsillo.</string>
-    <string name="contribution_detail_settlement_title">Aportación de liquidación</string>
-    <string name="contribution_detail_settlement_desc">Esta aportación se generó a partir de una liquidación de deudas del grupo.</string>
+    <string name="contribution_detail_settlement_title">Aportación de acuerdo de pago</string>
+    <string name="contribution_detail_settlement_desc">Esta aportación se generó a partir de un acuerdo de pago de deudas del grupo.</string>
     <string name="contribution_detail_rate_label">Tipo de cambio: %1$s</string>
     <string name="contribution_detail_amount_in_currency">Importe en %1$s</string>
     <string name="contribution_detail_contributed_by_you">Aportado por ti</string>
@@ -64,7 +64,7 @@
     <string name="contribution_detail_scope_personal">Personal</string>
     <string name="contribution_detail_scope_group">Grupo</string>
     <string name="contribution_detail_scope_personal_desc">Fondos reservados específicamente para gastos personales</string>
-    <string name="contribution_detail_scope_group_desc">Fondos del fondo común disponibles para todos los gastos del grupo</string>
+    <string name="contribution_detail_scope_group_desc">Fondos del pocket del grupo disponibles para todos los gastos</string>
     <string name="contribution_detail_scope_subunit_desc">Fondos reservados para la subunidad %1$s</string>
 </resources>
 

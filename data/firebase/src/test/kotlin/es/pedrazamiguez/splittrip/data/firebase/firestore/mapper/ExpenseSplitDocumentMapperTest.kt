@@ -1,9 +1,8 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.mapper
-import com.google.firebase.firestore.DocumentReference
+
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.ExpenseSplitDocument
 import es.pedrazamiguez.splittrip.domain.enums.SplitType
 import es.pedrazamiguez.splittrip.domain.model.ExpenseSplit
-import io.mockk.mockk
 import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -11,10 +10,10 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+
 class ExpenseSplitDocumentMapperTest {
     private val testUserId = "user-123"
     private val testCoveredByUserId = "user-456"
-    private val testDocRef: DocumentReference = mockk(relaxed = true)
 
     @Nested
     inner class ToDomain {
@@ -25,8 +24,7 @@ class ExpenseSplitDocumentMapperTest {
                 amountCents = 5000L,
                 percentage = "33.33",
                 isExcluded = false,
-                isCoveredById = null,
-                isCoveredByRef = null
+                isCoveredById = null
             )
             val domain = document.toDomain()
             assertEquals(testUserId, domain.userId)
@@ -52,8 +50,7 @@ class ExpenseSplitDocumentMapperTest {
             val document = ExpenseSplitDocument(
                 userId = testUserId,
                 amountCents = 3000L,
-                isCoveredById = testCoveredByUserId,
-                isCoveredByRef = testDocRef
+                isCoveredById = testCoveredByUserId
             )
             val domain = document.toDomain()
             assertEquals(testCoveredByUserId, domain.isCoveredById)

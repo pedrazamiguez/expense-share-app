@@ -1,6 +1,5 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.mapper
 
-import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.SubunitDocument
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import java.math.BigDecimal
@@ -9,14 +8,12 @@ import java.time.LocalDateTime
 fun Subunit.toDocument(
     subunitId: String,
     groupId: String,
-    groupDocRef: DocumentReference,
     userId: String
 ): SubunitDocument {
     val now = LocalDateTime.now()
     return SubunitDocument(
         subunitId = subunitId,
         groupId = groupId,
-        groupRef = groupDocRef,
         name = name,
         memberIds = memberIds,
         memberShares = memberShares.mapValues { it.value.toPlainString() },

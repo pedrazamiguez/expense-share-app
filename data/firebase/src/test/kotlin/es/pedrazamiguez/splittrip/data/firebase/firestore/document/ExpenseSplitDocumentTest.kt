@@ -22,8 +22,7 @@ class ExpenseSplitDocumentTest {
 
     private val expectedMappings = mapOf(
         "isExcluded" to "excluded",
-        "isCoveredById" to "coveredById",
-        "isCoveredByRef" to "coveredByRef"
+        "isCoveredById" to "coveredById"
     )
 
     @Nested

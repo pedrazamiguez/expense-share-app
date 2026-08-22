@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="balances_title">Balances</string>
-    <string name="balances_subtitle">Balance del grupo</string>
+    <string name="balances_subtitle">Resumen del viaje</string>
     <string name="balances_category_spending_title">Gastos por categoría</string>
     <string name="balances_category_expand">Mostrar subcategorías de %1$s</string>
     <string name="balances_category_collapse">Ocultar subcategorías de %1$s</string>
@@ -20,7 +20,7 @@
     <string name="balances_total_extras">Extras</string>
     <string name="balances_error_loading">No se pudieron cargar los balances</string>
     <string name="balances_empty_title">Sin actividad todavía</string>
-    <string name="balances_empty_description">Añade dinero a la cuenta del grupo para empezar</string>
+    <string name="balances_empty_description">Añade una aportación al pocket del grupo para empezar</string>
 
     <!-- Member Balances -->
     <string name="balances_member_balances_title">Balances por miembro</string>
@@ -28,7 +28,7 @@
     <string name="balances_member_contributed_label">Aportado</string>
     <string name="balances_member_cash_in_hand_label">Efectivo</string>
     <string name="balances_member_spent_label">Gastado</string>
-    <string name="balances_member_pocket_balance">En cuenta</string>
+    <string name="balances_member_pocket_balance">En el pocket</string>
     <string name="balances_member_cash_in_hand">Efectivo en mano</string>
     <string name="balances_member_spent_breakdown">Desglose de gastos</string>
     <string name="balances_member_cash_expenses">Efectivo</string>
@@ -48,15 +48,15 @@
     <!-- Metric Info Explanations -->
     <string name="balances_metric_info_cd">Más información sobre esta métrica</string>
     <string name="balances_metric_remaining_title">Restante</string>
-    <string name="balances_metric_remaining_description">El dinero que queda en el bote virtual del grupo. Se calcula restando los gastos y las retiradas de efectivo al total de aportaciones.\n\nPuede ser negativo si se registran gastos o retiradas antes de añadir dinero al bote. Esto permite anotar los movimientos en el momento sin importar el orden, y regularizar el saldo después añadiendo aportaciones.</string>
+    <string name="balances_metric_remaining_description">El dinero que queda en el pocket virtual del grupo. Se calcula restando los gastos y las retiradas de efectivo al total de aportaciones.\n\nPuede ser negativo si se registran gastos o retiradas antes de añadir dinero al pocket. Esto permite anotar los movimientos en el momento sin importar el orden, y regularizar el balance después añadiendo aportaciones.</string>
     <string name="balances_metric_available_title">Disponible</string>
-    <string name="balances_metric_available_description">El dinero del bote virtual listo para usarse en nuevos gastos, tras descontar los compromisos programados y las retiradas de efectivo.\n\nSacar dinero en efectivo reduce el saldo disponible en el bote porque pasa a estar en mano, sin contar como gasto hasta que se emplee.\n\nSi los gastos programados superan los fondos del bote, este valor pasa a ser negativo, indicando que el grupo necesita nuevas aportaciones para cubrir los planes previstos.</string>
+    <string name="balances_metric_available_description">El dinero del pocket virtual listo para usarse en nuevos gastos, tras descontar los compromisos programados y las retiradas de efectivo.\n\nRetirar dinero en efectivo reduce el balance disponible en el pocket porque pasa a estar en mano, sin contar como gasto hasta que se emplee.\n\nSi los gastos programados superan los fondos del pocket, este valor pasa a ser negativo, indicando que el grupo necesita nuevas aportaciones para cubrir los planes previstos.</string>
     <string name="balances_metric_scheduled_title">Programado</string>
     <string name="balances_metric_scheduled_description">El importe total reservado para gastos futuros o planificados que el grupo tiene comprometidos.</string>
     <string name="balances_metric_refundable_title">Reembolsable</string>
     <string name="balances_metric_refundable_description">Dinero ya pagado por reservas con opción de cancelación o depósitos de fianza, como alojamientos o alquileres de vehículos.\n\nEl dinero ya ha salido de la cuenta, pero puede recuperarse si la reserva se cancela dentro del plazo permitido o cuando se devuelve la fianza. Si no se cancela, el pago queda consolidado definitivamente.</string>
     <string name="balances_metric_total_contributed_title">Total aportado</string>
-    <string name="balances_metric_total_contributed_description">Suma acumulada de todas las aportaciones realizadas por los miembros, tanto para el bote del grupo como para uso personal.\n\nEl detalle de cuánto ha aportado cada miembro y su saldo individual puede consultarse en el desglose de balances por miembro.</string>
+    <string name="balances_metric_total_contributed_description">Suma acumulada de todas las aportaciones realizadas por los miembros, tanto para el pocket del grupo como para uso personal.\n\nEl detalle de cuánto ha aportado cada miembro y su balance individual puede consultarse en el desglose de balances por miembro.</string>
     <string name="balances_metric_total_spent_title">Total gastado</string>
     <string name="balances_metric_total_spent_description">Importe total gastado en el viaje hasta la fecha.\n\nIncluye todos los gastos pagados, los gastos en efectivo y los gastos reembolsables, ya que el dinero ya ha salido del bolsillo. No incluye los gastos programados futuros ni los importes de extras.</string>
     <string name="balances_metric_cash_in_hand_title">Efectivo en mano</string>
@@ -64,8 +64,8 @@
 
     <!-- Contribution History -->
     <string name="balances_history_title">Actividad</string>
-    <string name="balances_contribution_by">%1$s añadió dinero</string>
-    <string name="balances_contribution_by_you">Añadiste dinero</string>
+    <string name="balances_contribution_by">%1$s aportó</string>
+    <string name="balances_contribution_by_you">Aportaste</string>
     <string name="balances_contribution_scope_personal">Personal</string>
     <string name="balances_contribution_scope_group">Grupo</string>
     <!-- Linked Contributions (auto-generated for out-of-pocket expenses) -->
@@ -77,8 +77,8 @@
     <string name="balances_withdraw_cash_scope_personal">Personal</string>
     <string name="balances_withdraw_cash_scope_group">Grupo</string>
     <string name="balances_cash_balance_title">Efectivo en mano</string>
-    <string name="balances_cash_withdrawal_by">%1$s sacó efectivo</string>
-    <string name="balances_cash_withdrawal_by_you">Sacaste efectivo</string>
+    <string name="balances_cash_withdrawal_by">%1$s retiró efectivo</string>
+    <string name="balances_cash_withdrawal_by_you">Retiraste efectivo</string>
     <!-- On-behalf-of (impersonation) -->
     <string name="balances_logged_by">Registrado por %1$s</string>
 

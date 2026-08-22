@@ -1,6 +1,6 @@
 <resources>
     <string name="groups_title">Groups</string>
-    <string name="groups_subtitle">Your travel squad</string>
+    <string name="groups_subtitle">Travel companions</string>
     <string name="groups_not_found">No groups yet! Create one and start splitting costs</string>
     <string name="groups_error_loading">Couldn\'t load your groups. Please try again later</string>
     <string name="groups_anonymous_warning">Using guest account. Link your account in Settings to prevent data loss.</string>
@@ -38,7 +38,7 @@
     <string name="group_error_name_empty">Hey! Your group needs a name</string>
     <string name="group_error_creation_failed">Oops! Something went wrong. Try again</string>
     <string name="group_error_load_currencies">Couldn\'t load currencies. Are you online?</string>
-    <string name="group_created_success">Done! \"%1$s\" is ready for adventure</string>
+    <string name="group_created_success">Done! \"%1$s\" is ready for the trip</string>
     <plurals name="group_members_count">
         <item quantity="one">%d traveler</item>
         <item quantity="other">%d travelers</item>
@@ -75,7 +75,7 @@
     <string name="group_field_members">Members</string>
     <string name="group_member_search">Search by email</string>
     <string name="group_member_search_hint">Type a member\'s email address</string>
-    <string name="group_member_search_helper">Add travel buddies by their email address</string>
+    <string name="group_member_search_helper">Add travel companions by their email address</string>
     <string name="group_member_search_no_results">No user found with that email</string>
     <string name="group_member_remove">Remove member</string>
     <string name="group_member_clear_search">Clear search</string>

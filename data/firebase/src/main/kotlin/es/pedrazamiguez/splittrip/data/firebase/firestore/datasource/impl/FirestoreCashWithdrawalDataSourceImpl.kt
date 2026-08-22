@@ -39,7 +39,6 @@ class FirestoreCashWithdrawalDataSourceImpl(
         val withdrawalDocument = withdrawal.toDocument(
             withdrawalId,
             groupId,
-            groupDocRef,
             userId
         )
 
@@ -61,7 +60,6 @@ class FirestoreCashWithdrawalDataSourceImpl(
         val withdrawalDocument = withdrawal.toDocument(
             withdrawal.id,
             groupId,
-            groupDocRef,
             userId
         )
 

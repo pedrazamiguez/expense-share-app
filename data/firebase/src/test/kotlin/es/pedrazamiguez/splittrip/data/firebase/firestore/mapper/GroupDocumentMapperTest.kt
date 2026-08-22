@@ -1,10 +1,7 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.mapper
 
-import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupDocument
 import es.pedrazamiguez.splittrip.domain.model.Group
-import io.mockk.every
-import io.mockk.mockk
 import java.time.LocalDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -211,13 +208,9 @@ class GroupDocumentMapperTest {
     @Nested
     inner class ToAdminMemberDocumentTest {
 
-        private val groupDocRef = mockk<DocumentReference> {
-            every { id } returns testGroupId
-        }
-
         @Test
         fun `sets userId and memberId to provided userId`() {
-            val doc = toAdminMemberDocument(groupDocRef, testUserId)
+            val doc = toAdminMemberDocument(testGroupId, testUserId)
 
             assertEquals(testUserId, doc.userId)
             assertEquals(testUserId, doc.memberId)
@@ -225,22 +218,21 @@ class GroupDocumentMapperTest {
 
         @Test
         fun `sets role to ADMIN`() {
-            val doc = toAdminMemberDocument(groupDocRef, testUserId)
+            val doc = toAdminMemberDocument(testGroupId, testUserId)
 
             assertEquals("ADMIN", doc.role)
         }
 
         @Test
-        fun `sets groupId and groupRef from document reference`() {
-            val doc = toAdminMemberDocument(groupDocRef, testUserId)
+        fun `sets groupId correctly`() {
+            val doc = toAdminMemberDocument(testGroupId, testUserId)
 
             assertEquals(testGroupId, doc.groupId)
-            assertEquals(groupDocRef, doc.groupRef)
         }
 
         @Test
         fun `defaults addedBy to userId when not specified`() {
-            val doc = toAdminMemberDocument(groupDocRef, testUserId)
+            val doc = toAdminMemberDocument(testGroupId, testUserId)
 
             assertEquals(testUserId, doc.addedBy)
         }
@@ -248,7 +240,7 @@ class GroupDocumentMapperTest {
         @Test
         fun `uses explicit addedBy when provided`() {
             val adminUserId = "admin-789"
-            val doc = toAdminMemberDocument(groupDocRef, testUserId, addedBy = adminUserId)
+            val doc = toAdminMemberDocument(testGroupId, testUserId, addedBy = adminUserId)
 
             assertEquals(adminUserId, doc.addedBy)
             assertEquals(testUserId, doc.userId)
@@ -256,7 +248,7 @@ class GroupDocumentMapperTest {
 
         @Test
         fun `sets joinedAt to a non-null local timestamp`() {
-            val doc = toAdminMemberDocument(groupDocRef, testUserId)
+            val doc = toAdminMemberDocument(testGroupId, testUserId)
 
             assertNotNull(doc.joinedAt)
         }
@@ -265,15 +257,12 @@ class GroupDocumentMapperTest {
     @Nested
     inner class ToRegularMemberDocumentTest {
 
-        private val groupDocRef = mockk<DocumentReference> {
-            every { id } returns testGroupId
-        }
         private val memberId = "member-789"
         private val addedByUserId = "admin-456"
 
         @Test
         fun `sets userId and memberId to provided memberId`() {
-            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
+            val doc = toRegularMemberDocument(testGroupId, memberId, addedBy = addedByUserId)
 
             assertEquals(memberId, doc.userId)
             assertEquals(memberId, doc.memberId)
@@ -281,29 +270,28 @@ class GroupDocumentMapperTest {
 
         @Test
         fun `sets role to MEMBER`() {
-            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
+            val doc = toRegularMemberDocument(testGroupId, memberId, addedBy = addedByUserId)
 
             assertEquals("MEMBER", doc.role)
         }
 
         @Test
-        fun `sets groupId and groupRef from document reference`() {
-            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
+        fun `sets groupId correctly`() {
+            val doc = toRegularMemberDocument(testGroupId, memberId, addedBy = addedByUserId)
 
             assertEquals(testGroupId, doc.groupId)
-            assertEquals(groupDocRef, doc.groupRef)
         }
 
         @Test
         fun `sets addedBy to the user who added the member`() {
-            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
+            val doc = toRegularMemberDocument(testGroupId, memberId, addedBy = addedByUserId)
 
             assertEquals(addedByUserId, doc.addedBy)
         }
 
         @Test
         fun `addedBy differs from memberId when admin adds another user`() {
-            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
+            val doc = toRegularMemberDocument(testGroupId, memberId, addedBy = addedByUserId)
 
             assertEquals(addedByUserId, doc.addedBy)
             assertEquals(memberId, doc.userId)
@@ -312,7 +300,7 @@ class GroupDocumentMapperTest {
 
         @Test
         fun `sets joinedAt to a non-null local timestamp`() {
-            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
+            val doc = toRegularMemberDocument(testGroupId, memberId, addedBy = addedByUserId)
 
             assertNotNull(doc.joinedAt)
         }

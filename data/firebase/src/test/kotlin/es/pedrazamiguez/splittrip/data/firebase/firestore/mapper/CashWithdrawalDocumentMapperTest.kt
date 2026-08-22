@@ -1,6 +1,5 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.mapper
 
-import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.AddOnDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.CashWithdrawalDocument
 import es.pedrazamiguez.splittrip.domain.enums.AddOnMode
@@ -10,7 +9,6 @@ import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.model.AddOn
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
-import io.mockk.mockk
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -25,7 +23,6 @@ class CashWithdrawalDocumentMapperTest {
     private val testGroupId = "group-456"
     private val testUserId = "user-789"
     private val testActorId = "actor-111"
-    private val testGroupDocRef: DocumentReference = mockk(relaxed = true)
     private val testTimestamp = LocalDateTime.of(2026, 1, 15, 12, 30, 0)
     private val testFirebaseTimestamp = testTimestamp.toTimestampUtc()!!
 
@@ -53,13 +50,11 @@ class CashWithdrawalDocumentMapperTest {
             val document = fullWithdrawal.toDocument(
                 testWithdrawalId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
             assertEquals(testWithdrawalId, document.withdrawalId)
             assertEquals(testGroupId, document.groupId)
-            assertEquals(testGroupDocRef, document.groupRef)
             assertEquals("user-1", document.withdrawnBy)
             assertEquals("GROUP", document.withdrawalScope)
             assertNull(document.subunitId)
@@ -81,7 +76,6 @@ class CashWithdrawalDocumentMapperTest {
             val document = subunitWithdrawal.toDocument(
                 testWithdrawalId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -99,7 +93,6 @@ class CashWithdrawalDocumentMapperTest {
             val document = personalWithdrawal.toDocument(
                 testWithdrawalId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -112,7 +105,6 @@ class CashWithdrawalDocumentMapperTest {
             val document = fullWithdrawal.toDocument(
                 testWithdrawalId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -132,7 +124,6 @@ class CashWithdrawalDocumentMapperTest {
             val document = withdrawalNoTimestamps.toDocument(
                 testWithdrawalId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -148,7 +139,6 @@ class CashWithdrawalDocumentMapperTest {
             val document = withdrawalBlankUser.toDocument(
                 testWithdrawalId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -160,7 +150,6 @@ class CashWithdrawalDocumentMapperTest {
             val document = fullWithdrawal.toDocument(
                 testWithdrawalId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -172,7 +161,6 @@ class CashWithdrawalDocumentMapperTest {
             val document = fullWithdrawal.toDocument(
                 testWithdrawalId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -186,7 +174,6 @@ class CashWithdrawalDocumentMapperTest {
             val document = withdrawalBlankCreatedBy.toDocument(
                 testWithdrawalId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -202,7 +189,6 @@ class CashWithdrawalDocumentMapperTest {
             val document = withdrawalPreciseRate.toDocument(
                 testWithdrawalId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -220,7 +206,6 @@ class CashWithdrawalDocumentMapperTest {
             val document = withdrawalWithDetails.toDocument(
                 testWithdrawalId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -234,7 +219,6 @@ class CashWithdrawalDocumentMapperTest {
             val document = fullWithdrawal.toDocument(
                 testWithdrawalId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -455,7 +439,6 @@ class CashWithdrawalDocumentMapperTest {
             val document = withdrawalWithAddOns.toDocument(
                 testWithdrawalId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -475,7 +458,6 @@ class CashWithdrawalDocumentMapperTest {
             val document = withdrawalWithAddOns.toDocument(
                 testWithdrawalId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 
@@ -489,7 +471,6 @@ class CashWithdrawalDocumentMapperTest {
             val document = withdrawalNoAddOns.toDocument(
                 testWithdrawalId,
                 testGroupId,
-                testGroupDocRef,
                 testUserId
             )
 

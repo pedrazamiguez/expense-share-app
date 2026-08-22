@@ -39,7 +39,6 @@ class FirestoreSubunitDataSourceImpl(
         val subunitDocument = subunit.toDocument(
             subunitId,
             groupId,
-            groupDocRef,
             userId
         )
 
@@ -61,7 +60,6 @@ class FirestoreSubunitDataSourceImpl(
         val subunitDocument = subunit.toDocument(
             subunit.id,
             groupId,
-            groupDocRef,
             userId
         )
 

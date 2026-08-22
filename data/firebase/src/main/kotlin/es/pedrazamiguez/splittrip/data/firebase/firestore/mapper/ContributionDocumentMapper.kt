@@ -1,17 +1,15 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.mapper
 
-import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.ContributionDocument
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
-fun Contribution.toDocument(contributionId: String, groupId: String, groupDocRef: DocumentReference, userId: String) =
+fun Contribution.toDocument(contributionId: String, groupId: String, userId: String) =
     ContributionDocument(
         contributionId = contributionId,
         groupId = groupId,
-        groupRef = groupDocRef,
         userId = this.userId.ifBlank { userId },
         contributionScope = contributionScope.name,
         subunitId = subunitId,
