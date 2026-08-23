@@ -18,5 +18,6 @@ data class SettingsPreferencesParams(
     val onFaqClick: () -> Unit,
     val onContactSupportClick: () -> Unit,
     val onPrivacyPolicyClick: () -> Unit,
-    val onOpenSourceClick: () -> Unit
+    val onOpenSourceClick: () -> Unit,
+    val onDeveloperInfoClick: () -> Unit
 )

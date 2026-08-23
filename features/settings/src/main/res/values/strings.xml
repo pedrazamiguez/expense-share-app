@@ -234,4 +234,14 @@
     <string name="open_source_lib_coil_desc">Kotlin Coroutine-backed image loading library for Android</string>
     <string name="open_source_lib_gson_name">Gson</string>
     <string name="open_source_lib_gson_desc">Java library to convert Java Objects into JSON and vice versa</string>
+
+    <!-- Developer Info Screen -->
+    <string name="developer_info_title">Developer</string>
+    <string name="developer_info_section_links">Connect &amp; Code</string>
+    <string name="developer_info_section_credits">Philosophy &amp; Credits</string>
+    <string name="developer_info_link_github">GitHub Profile</string>
+    <string name="developer_info_link_splittrip">SplitTrip Repository</string>
+    <string name="developer_info_link_linkedin">LinkedIn</string>
+    <string name="developer_info_link_portfolio">Portfolio Website</string>
+    <string name="developer_info_avatar_cd">Developer avatar</string>
 </resources>

@@ -23,6 +23,7 @@ googleAiEdgeAicore = "0.0.1-exp02"
 googleServices = "4.5.0"
 googleid = "1.2.0"
 graphicsShapes = "1.1.0"
+gson = "2.12.1"
 haze = "1.7.2"
 jacoco = "0.8.12"
 junit4 = "4.13.2"
@@ -104,6 +105,7 @@ firebase-perf = { module = "com.google.firebase:firebase-perf" }
 firebase-storage = { module = "com.google.firebase:firebase-storage" }
 google-ai-edge-aicore = { module = "com.google.ai.edge.aicore:aicore", version.ref = "googleAiEdgeAicore" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit5" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }

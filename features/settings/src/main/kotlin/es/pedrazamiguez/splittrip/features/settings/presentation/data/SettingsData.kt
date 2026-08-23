@@ -172,7 +172,8 @@ private fun aboutSection(params: SettingsPreferencesParams) = SettingsSectionMod
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.UserPin,
             titleRes = R.string.settings_about_developer_title,
-            descriptionRes = R.string.settings_about_developer_description
+            descriptionRes = R.string.settings_about_developer_description,
+            onClick = params.onDeveloperInfoClick
         )
     )
 )

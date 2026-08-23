@@ -11,6 +11,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.setting.ConsumeLanguagePillUseC
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetActiveAiEngineUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetAppLanguageUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetAppThemeUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetDeveloperInfoUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
@@ -35,6 +36,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.ConsumeLanguagePil
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetActiveAiEngineUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetAppLanguageUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetAppThemeUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetDeveloperInfoUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetGroupLastUsedCategoryUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetGroupLastUsedCurrencyUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetGroupLastUsedPaymentMethodUseCaseImpl
@@ -200,6 +202,12 @@ val settingsDomainModule = module {
     factory<SetAppThemeUseCase> {
         SetAppThemeUseCaseImpl(
             preferenceRepository = get<UserPreferenceRepository>()
+        )
+    }
+
+    factory<GetDeveloperInfoUseCase> {
+        GetDeveloperInfoUseCaseImpl(
+            appConfigRepository = get<AppConfigRepository>()
         )
     }
 

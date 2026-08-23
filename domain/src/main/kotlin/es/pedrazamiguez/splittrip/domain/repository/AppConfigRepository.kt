@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.repository
 
+import es.pedrazamiguez.splittrip.domain.model.DeveloperInfo
 import kotlinx.coroutines.flow.StateFlow
 
 interface AppConfigRepository {
@@ -10,6 +11,7 @@ interface AppConfigRepository {
     val supportEmailAddress: StateFlow<String>
     val settlementNudgeRateLimitHours: StateFlow<Long>
     val ocrSafetyFalsePositivesBlacklist: StateFlow<List<String>>
+    val developerInfo: StateFlow<DeveloperInfo>
 
     suspend fun fetchConfiguration(): Boolean
 }

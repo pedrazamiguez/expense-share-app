@@ -18,6 +18,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.notification.UpdateNotification
 import es.pedrazamiguez.splittrip.domain.usecase.setting.ConsumeLanguagePillUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetAppLanguageUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetAppThemeUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetDeveloperInfoUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetShouldShowLanguagePillUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetUserDefaultCurrencyUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetAppLanguageUseCase
@@ -27,11 +28,13 @@ import es.pedrazamiguez.splittrip.domain.usecase.user.GetCurrentUserProfileUseCa
 import es.pedrazamiguez.splittrip.domain.usecase.user.ObserveCurrentUserProfileUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.UpdateUserReminderPreferencesUseCase
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.AccountStatusUiMapper
+import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.DeveloperInfoUiMapper
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.NotificationPreferencesUiMapper
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.impl.AccountStatusUiMapperImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.impl.NotificationPreferencesUiMapperImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.AccountStatusScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.DefaultCurrencyScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.DeveloperInfoScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.DeveloperServicesScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.FaqScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.LanguageScreenUiProviderImpl
@@ -43,6 +46,7 @@ import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.The
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.AccountStatusViewModel
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.AppVersionViewModel
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.DefaultCurrencyViewModel
+import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.DeveloperInfoViewModel
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.DeveloperServicesViewModel
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.InstallationIdViewModel
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.LanguageViewModel
@@ -150,6 +154,19 @@ val settingsUiModule = module {
         )
     }
 
+    factory { DeveloperInfoUiMapper() }
+
+    viewModel {
+        val getDeveloperInfoUseCase = get<GetDeveloperInfoUseCase>()
+        val getAppLanguageUseCase = get<GetAppLanguageUseCase>()
+        val developerInfoUiMapper = get<DeveloperInfoUiMapper>()
+        DeveloperInfoViewModel(
+            getDeveloperInfoUseCase = getDeveloperInfoUseCase,
+            getAppLanguageUseCase = getAppLanguageUseCase,
+            developerInfoUiMapper = developerInfoUiMapper
+        )
+    }
+
     single { DefaultCurrencyScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { LanguageScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { NotificationPreferencesScreenUiProviderImpl() } bind ScreenUiProvider::class
@@ -160,4 +177,5 @@ val settingsUiModule = module {
     single { FaqScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { PrivacyPolicyScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { OpenSourceScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { DeveloperInfoScreenUiProviderImpl() } bind ScreenUiProvider::class
 }
