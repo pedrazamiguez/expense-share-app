@@ -22,35 +22,30 @@ fun AccountSecurityContent(
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            horizontal = MaterialTheme.spacing.Medium,
-            vertical = MaterialTheme.spacing.Default
+            horizontal = MaterialTheme.spacing.ExtraLarge,
+            vertical = MaterialTheme.spacing.ExtraLarge
         ),
-        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Section)
     ) {
-        item(key = "auth_status_card") {
-            AuthStatusCard(
+        item(key = "identity_section") {
+            AccountSecurityIdentitySection(
                 uiState = uiState,
                 uiMapper = uiMapper
             )
         }
 
-        item(key = "password_reset_card") {
-            PasswordResetCard(
+        item(key = "security_preferences_card") {
+            SecurityPreferencesCard(
+                biometricLockEnabled = uiState.biometricLockEnabled,
+                onBiometricLockToggle = { onEvent(AccountSecurityUiEvent.ToggleBiometricLock(it)) },
+                onManageProvidersClick = { onEvent(AccountSecurityUiEvent.NavigateToAccountStatus) }
+            )
+        }
+
+        item(key = "password_reset_section") {
+            PasswordResetSection(
                 uiState = uiState,
                 onResetClick = { onEvent(AccountSecurityUiEvent.RequestPasswordResetConfirmation) }
-            )
-        }
-
-        item(key = "biometric_lock_card") {
-            BiometricLockCard(
-                biometricLockEnabled = uiState.biometricLockEnabled,
-                onToggle = { onEvent(AccountSecurityUiEvent.ToggleBiometricLock(it)) }
-            )
-        }
-
-        item(key = "linked_providers_card") {
-            LinkedProvidersCard(
-                onManageProvidersClick = { onEvent(AccountSecurityUiEvent.NavigateToAccountStatus) }
             )
         }
     }
