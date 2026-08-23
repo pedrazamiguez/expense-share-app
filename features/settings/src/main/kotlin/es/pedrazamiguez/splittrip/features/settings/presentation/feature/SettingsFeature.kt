@@ -143,6 +143,9 @@ fun SettingsFeature(
             },
             onOpenSourceClick = {
                 navController.navigate(Routes.SETTINGS_OPEN_SOURCE)
+            },
+            onDeveloperInfoClick = {
+                navController.navigate(Routes.SETTINGS_DEVELOPER_INFO)
             }
         )
     }

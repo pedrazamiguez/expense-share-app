@@ -5,6 +5,7 @@ import androidx.navigation.compose.composable
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.AccountStatusFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.DefaultCurrencyFeature
+import es.pedrazamiguez.splittrip.features.settings.presentation.feature.DeveloperInfoFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.DeveloperServicesFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.FaqFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.LanguageFeature
@@ -44,5 +45,8 @@ fun NavGraphBuilder.settingsGraph() {
     }
     composable(Routes.SETTINGS_OPEN_SOURCE) {
         OpenSourceFeature()
+    }
+    composable(Routes.SETTINGS_DEVELOPER_INFO) {
+        DeveloperInfoFeature()
     }
 }

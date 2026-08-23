@@ -198,4 +198,12 @@
     <string name="open_source_lib_coil_desc">Librería de carga de imáhenê pa Androîh baçá en corrutinâ de Kôl-lin</string>
     <string name="open_source_lib_gson_name">Gçon</string>
     <string name="open_source_lib_gson_desc">Librería Haba pa combertîh ôhhetô Haba en JÇON y biçe berça</string>
+    <string name="developer_info_title">Deçarroyadôh</string>
+    <string name="developer_info_section_links">Contâtto y Código</string>
+    <string name="developer_info_section_credits">Filoçofía y Créditô</string>
+    <string name="developer_info_link_github">Perfîh de HitÛh</string>
+    <string name="developer_info_link_splittrip">Repoçitorio SplîTTrîh</string>
+    <string name="developer_info_link_linkedin">LinkedIn</string>
+    <string name="developer_info_link_portfolio">Çitio Wêh Perçonâh</string>
+    <string name="developer_info_avatar_cd">Abatâh der deçarroyadôh</string>
 </resources>

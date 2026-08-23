@@ -29,6 +29,7 @@ class SettingsDataTest {
     private var contactSupportClickCount = 0
     private var privacyPolicyClickCount = 0
     private var openSourceClickCount = 0
+    private var developerInfoClickCount = 0
     private var servicesTestClickCount = 0
 
     private fun createParams(): SettingsPreferencesParams = SettingsPreferencesParams(
@@ -47,7 +48,8 @@ class SettingsDataTest {
         onFaqClick = { faqClickCount++ },
         onContactSupportClick = { contactSupportClickCount++ },
         onPrivacyPolicyClick = { privacyPolicyClickCount++ },
-        onOpenSourceClick = { openSourceClickCount++ }
+        onOpenSourceClick = { openSourceClickCount++ },
+        onDeveloperInfoClick = { developerInfoClickCount++ }
     )
 
     @Nested
@@ -301,6 +303,9 @@ class SettingsDataTest {
             val openSourceItem = aboutSection.items
                 .filterIsInstance<SettingsItemModel.Standard>()
                 .first { it.titleRes == R.string.settings_about_libraries_title }
+            val developerItem = aboutSection.items
+                .filterIsInstance<SettingsItemModel.Standard>()
+                .first { it.titleRes == R.string.settings_about_developer_title }
 
             assertEquals(0, privacyPolicyClickCount)
             privacyItem.onClick?.invoke()
@@ -309,6 +314,10 @@ class SettingsDataTest {
             assertEquals(0, openSourceClickCount)
             openSourceItem.onClick?.invoke()
             assertEquals(1, openSourceClickCount)
+
+            assertEquals(0, developerInfoClickCount)
+            developerItem.onClick?.invoke()
+            assertEquals(1, developerInfoClickCount)
         }
     }
 }

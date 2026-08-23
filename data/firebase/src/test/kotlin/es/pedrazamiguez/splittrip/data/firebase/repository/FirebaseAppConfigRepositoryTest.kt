@@ -2,7 +2,10 @@ package es.pedrazamiguez.splittrip.data.firebase.repository
 
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.Task
+import com.google.firebase.remoteconfig.ConfigUpdate
+import com.google.firebase.remoteconfig.ConfigUpdateListener
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigException
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.every
@@ -39,6 +42,7 @@ class FirebaseAppConfigRepositoryTest {
         every { firebaseRemoteConfig.getString("support_email_address") } returns "test-support@splittrip.com"
         every { firebaseRemoteConfig.getLong("settlement_nudge_rate_limit_hours") } returns 48L
         every { firebaseRemoteConfig.getString("ocr_safety_false_positives_blacklist") } returns "blade,secret"
+        every { firebaseRemoteConfig.getString("developer_info_json") } returns ""
 
         repository = FirebaseAppConfigRepository(firebaseRemoteConfig)
     }
@@ -63,6 +67,7 @@ class FirebaseAppConfigRepositoryTest {
         assertEquals("test-support@splittrip.com", repository.supportEmailAddress.value)
         assertEquals(48L, repository.settlementNudgeRateLimitHours.value)
         assertEquals(listOf("blade", "secret"), repository.ocrSafetyFalsePositivesBlacklist.value)
+        assertEquals(FirebaseAppConfigRepository.DEFAULT_DEVELOPER_INFO, repository.developerInfo.value)
     }
 
     @Test
@@ -79,6 +84,22 @@ class FirebaseAppConfigRepositoryTest {
         every { firebaseRemoteConfig.getString("support_email_address") } returns "fetch-support@splittrip.com"
         every { firebaseRemoteConfig.getLong("settlement_nudge_rate_limit_hours") } returns 12L
         every { firebaseRemoteConfig.getString("ocr_safety_false_positives_blacklist") } returns "fuck,dick,pussy,cunt"
+        every {
+            firebaseRemoteConfig.getString("developer_info_json")
+        } returns """
+            {
+              "name": "Custom Dev",
+              "avatar_url": "https://example.com/custom.png",
+              "github_url": "https://github.com/custom",
+              "splittrip_repo_url": "https://github.com/custom/split-trip",
+              "linkedin_url": "https://linkedin.com/in/custom",
+              "portfolio_url": "https://custom.me",
+              "role_map": { "en": "Custom Lead" },
+              "bio_map": { "en": "Custom Bio" },
+              "credits_map": { "en": "Custom Credits" },
+              "copyright_map": { "en": "© 2026 Custom" }
+            }
+        """.trimIndent()
 
         val result = repository.fetchConfiguration()
 
@@ -91,6 +112,9 @@ class FirebaseAppConfigRepositoryTest {
         assertEquals("fetch-support@splittrip.com", repository.supportEmailAddress.value)
         assertEquals(12L, repository.settlementNudgeRateLimitHours.value)
         assertEquals(listOf("fuck", "dick", "pussy", "cunt"), repository.ocrSafetyFalsePositivesBlacklist.value)
+        assertEquals("Custom Dev", repository.developerInfo.value.name)
+        assertEquals("https://example.com/custom.png", repository.developerInfo.value.avatarUrl)
+        assertEquals("Custom Lead", repository.developerInfo.value.roleMap["en"])
     }
 
     @Test
@@ -107,8 +131,8 @@ class FirebaseAppConfigRepositoryTest {
 
     @Test
     fun `init registers config update listener and activates changes on update`() {
-        val mockConfigUpdate = mockk<com.google.firebase.remoteconfig.ConfigUpdate>(relaxed = true)
-        val updateListenerSlot = slot<com.google.firebase.remoteconfig.ConfigUpdateListener>()
+        val mockConfigUpdate = mockk<ConfigUpdate>(relaxed = true)
+        val updateListenerSlot = slot<ConfigUpdateListener>()
 
         verify(exactly = 1) { firebaseRemoteConfig.addOnConfigUpdateListener(capture(updateListenerSlot)) }
 
@@ -128,10 +152,10 @@ class FirebaseAppConfigRepositoryTest {
 
     @Test
     fun `config update listener handles error without crashing`() {
-        val updateListenerSlot = slot<com.google.firebase.remoteconfig.ConfigUpdateListener>()
+        val updateListenerSlot = slot<ConfigUpdateListener>()
         verify(exactly = 1) { firebaseRemoteConfig.addOnConfigUpdateListener(capture(updateListenerSlot)) }
 
-        val error = mockk<com.google.firebase.remoteconfig.FirebaseRemoteConfigException>(relaxed = true)
+        val error = mockk<FirebaseRemoteConfigException>(relaxed = true)
         updateListenerSlot.captured.onError(error)
     }
 }
