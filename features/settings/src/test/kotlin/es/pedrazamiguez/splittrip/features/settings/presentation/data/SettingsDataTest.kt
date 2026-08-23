@@ -23,6 +23,7 @@ class SettingsDataTest {
     private var languageClickCount = 0
     private var themeClickCount = 0
     private var accountStatusClickCount = 0
+    private var accountSecurityClickCount = 0
     private var bugReportClickCount = 0
     private var featureSuggestionClickCount = 0
     private var faqClickCount = 0
@@ -43,6 +44,7 @@ class SettingsDataTest {
         currentThemeCode = "system",
         onThemeClick = { themeClickCount++ },
         onAccountStatusClick = { accountStatusClickCount++ },
+        onAccountSecurityClick = { accountSecurityClickCount++ },
         onBugReportClick = { bugReportClickCount++ },
         onFeatureSuggestionClick = { featureSuggestionClickCount++ },
         onFaqClick = { faqClickCount++ },
@@ -120,6 +122,22 @@ class SettingsDataTest {
             assertEquals(0, accountStatusClickCount)
             statusItem.onClick?.invoke()
             assertEquals(1, accountStatusClickCount)
+        }
+
+        @Test
+        fun `account security item click delegates to onAccountSecurityClick callback`() {
+            val params = createParams()
+            val sections = buildSettingsSections(
+                preferencesParams = params,
+                onServicesTestClick = { servicesTestClickCount++ }
+            )
+
+            val accountSection = sections.first { it.titleRes == R.string.settings_section_account }
+            val securityItem = assertInstanceOf(SettingsItemModel.Standard::class.java, accountSection.items[2])
+
+            assertEquals(0, accountSecurityClickCount)
+            securityItem.onClick?.invoke()
+            assertEquals(1, accountSecurityClickCount)
         }
     }
 

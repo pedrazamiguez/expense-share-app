@@ -487,4 +487,24 @@ class UserPreferencesTest {
         val result = prefs.appTheme.first()
         assertNull(result)
     }
+
+    // ── Biometric App Lock (Device-scoped) ───────────────────────────────
+
+    @Test
+    fun `isBiometricLockEnabled defaults to false`() = runTest {
+        val prefs = createUserPreferences(USER_A_ID)
+        val result = prefs.isBiometricLockEnabled.first()
+        assertFalse(result)
+    }
+
+    @Test
+    fun `setBiometricLockEnabled persists boolean value on device`() = runTest {
+        val prefsA = createUserPreferences(USER_A_ID)
+        prefsA.setBiometricLockEnabled(true)
+
+        val prefsB = createUserPreferences(USER_B_ID)
+        val result = prefsB.isBiometricLockEnabled.first()
+
+        assertTrue(result)
+    }
 }

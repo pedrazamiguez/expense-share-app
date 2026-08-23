@@ -61,7 +61,8 @@ private fun accountSection(params: SettingsPreferencesParams) = SettingsSectionM
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.Shield,
             titleRes = R.string.settings_account_security_title,
-            descriptionRes = R.string.settings_account_security_description
+            descriptionRes = R.string.settings_account_security_description,
+            onClick = params.onAccountSecurityClick
         )
     )
 )

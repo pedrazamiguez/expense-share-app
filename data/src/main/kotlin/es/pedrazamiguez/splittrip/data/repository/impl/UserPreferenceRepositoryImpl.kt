@@ -52,6 +52,12 @@ class UserPreferenceRepositoryImpl(
         userPreferences.setIsReconciled(reconciled)
     }
 
+    override fun getBiometricLockEnabled(): Flow<Boolean> = userPreferences.isBiometricLockEnabled
+
+    override suspend fun setBiometricLockEnabled(enabled: Boolean) {
+        userPreferences.setBiometricLockEnabled(enabled)
+    }
+
     override suspend fun clearAll() {
         userPreferences.clearAll()
     }
