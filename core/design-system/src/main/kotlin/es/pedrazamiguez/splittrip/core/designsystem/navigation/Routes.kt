@@ -36,6 +36,7 @@ object Routes {
     const val SETTINGS_DEVELOPER_SERVICES = "settings_developer_services"
     const val SETTINGS_THEME = "settings_theme"
     const val SETTINGS_ACCOUNT_STATUS = "settings_account_status"
+    const val SETTINGS_SECURITY = "settings_security"
     const val SETTINGS_FAQ = "settings_faq"
     const val SETTINGS_PRIVACY_POLICY = "settings_privacy_policy"
     const val SETTINGS_OPEN_SOURCE = "settings_open_source"

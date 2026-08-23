@@ -244,4 +244,31 @@
     <string name="developer_info_link_linkedin">LinkedIn</string>
     <string name="developer_info_link_portfolio">Sitio Web Personal</string>
     <string name="developer_info_avatar_cd">Avatar del desarrollador</string>
+
+    <!-- Account Security Screen -->
+    <string name="account_security_title">Seguridad de la cuenta</string>
+    <string name="account_security_auth_status_title">Estado de autenticación</string>
+    <string name="account_security_auth_status_desc">Tu método de inicio de sesión activo y estado de verificación de la cuenta.</string>
+    <string name="account_security_provider_google">Google</string>
+    <string name="account_security_provider_email">Email / Contraseña</string>
+    <string name="account_security_provider_multiple">Múltiples proveedores</string>
+    <string name="account_security_provider_guest">Sesión de invitado</string>
+    <string name="account_security_status_verified">Verificada</string>
+    <string name="account_security_status_unverified">No verificada</string>
+    <string name="account_security_password_reset_title">Restablecer contraseña</string>
+    <string name="account_security_password_reset_desc">Envía un correo de recuperación de contraseña a tu dirección registrada.</string>
+    <string name="account_security_password_reset_button">Enviar correo de restablecimiento</string>
+    <string name="account_security_password_reset_disabled_google">El restablecimiento de contraseña no es aplicable para cuentas que usan solo inicio de sesión con Google.</string>
+    <string name="account_security_password_reset_disabled_guest">El restablecimiento de contraseña no está disponible para cuentas de invitado. Vincula una cuenta de correo primero.</string>
+    <string name="account_security_password_reset_dialog_title">Restablecer contraseña</string>
+    <string name="account_security_password_reset_dialog_text">Enviaremos un enlace de restablecimiento de contraseña a %1$s. ¿Deseas continuar?</string>
+    <string name="account_security_password_reset_dialog_confirm">Enviar correo</string>
+    <string name="account_security_password_reset_dialog_cancel">Cancelar</string>
+    <string name="account_security_password_reset_sent">Correo de restablecimiento enviado a %1$s</string>
+    <string name="account_security_biometric_lock_title">Bloqueo biométrico de la app</string>
+    <string name="account_security_biometric_lock_desc">Requerir autenticación biométrica (huella dactilar o rostro) al abrir la app.</string>
+    <string name="account_security_linked_providers_title">Proveedores de inicio vinculados</string>
+    <string name="account_security_linked_providers_desc">Administra métodos de autenticación adicionales y cuentas vinculadas.</string>
+    <string name="account_security_manage_providers_button">Administrar proveedores</string>
+    <string name="account_security_error_prefix">Error: %1$s</string>
 </resources>

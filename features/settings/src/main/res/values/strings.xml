@@ -244,4 +244,31 @@
     <string name="developer_info_link_linkedin">LinkedIn</string>
     <string name="developer_info_link_portfolio">Portfolio Website</string>
     <string name="developer_info_avatar_cd">Developer avatar</string>
+
+    <!-- Account Security Screen -->
+    <string name="account_security_title">Account Security</string>
+    <string name="account_security_auth_status_title">Authentication Status</string>
+    <string name="account_security_auth_status_desc">Your active sign-in method and account verification posture.</string>
+    <string name="account_security_provider_google">Google</string>
+    <string name="account_security_provider_email">Email / Password</string>
+    <string name="account_security_provider_multiple">Multiple Providers</string>
+    <string name="account_security_provider_guest">Guest Session</string>
+    <string name="account_security_status_verified">Verified</string>
+    <string name="account_security_status_unverified">Unverified</string>
+    <string name="account_security_password_reset_title">Password Reset</string>
+    <string name="account_security_password_reset_desc">Send a password recovery email to your registered email address.</string>
+    <string name="account_security_password_reset_button">Send Password Reset Email</string>
+    <string name="account_security_password_reset_disabled_google">Password reset is not applicable for accounts using only Google Sign-In.</string>
+    <string name="account_security_password_reset_disabled_guest">Password reset is not available for guest accounts. Link an email account first.</string>
+    <string name="account_security_password_reset_dialog_title">Reset Password</string>
+    <string name="account_security_password_reset_dialog_text">We will send a password reset link to %1$s. Do you want to proceed?</string>
+    <string name="account_security_password_reset_dialog_confirm">Send Email</string>
+    <string name="account_security_password_reset_dialog_cancel">Cancel</string>
+    <string name="account_security_password_reset_sent">Password reset email sent to %1$s</string>
+    <string name="account_security_biometric_lock_title">Biometric App Lock</string>
+    <string name="account_security_biometric_lock_desc">Require biometric authentication (fingerprint or face) when opening the app.</string>
+    <string name="account_security_linked_providers_title">Linked Sign-In Providers</string>
+    <string name="account_security_linked_providers_desc">Manage additional authentication methods and linked accounts.</string>
+    <string name="account_security_manage_providers_button">Manage Providers</string>
+    <string name="account_security_error_prefix">Error: %1$s</string>
 </resources>
