@@ -17,6 +17,7 @@ import es.pedrazamiguez.splittrip.features.settings.presentation.data.buildSetti
 @Composable
 fun SettingsScreen(
     onAccountStatusClick: () -> Unit = {},
+    onSubscriptionsClick: () -> Unit = {},
     onAccountSecurityClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
     onNotificationSwitchToggle: () -> Unit = {},
@@ -48,6 +49,7 @@ fun SettingsScreen(
         currentThemeCode = currentThemeCode,
         onThemeClick = onThemeClick,
         onAccountStatusClick = onAccountStatusClick,
+        onSubscriptionsClick = onSubscriptionsClick,
         onAccountSecurityClick = onAccountSecurityClick,
         onBugReportClick = onBugReportClick,
         onFeatureSuggestionClick = onFeatureSuggestionClick,

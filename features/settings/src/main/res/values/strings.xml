@@ -271,4 +271,38 @@
     <string name="account_security_linked_providers_desc">Manage additional authentication methods and linked accounts.</string>
     <string name="account_security_manage_providers_button">Manage Providers</string>
     <string name="account_security_error_prefix">Error: %1$s</string>
+
+    <!-- Subscriptions Screen -->
+    <string name="subscriptions_title">Subscriptions</string>
+    <string name="subscriptions_subtitle">Choose the plan that fits your travel style</string>
+    <string name="subscriptions_interval_monthly">Monthly</string>
+    <string name="subscriptions_interval_annual">Annual</string>
+    <string name="subscriptions_annual_save_badge">Save 25%</string>
+    <string name="subscriptions_tier_free_title">SplitTrip Free</string>
+    <string name="subscriptions_tier_free_description">Essential expense sharing for casual trips</string>
+    <string name="subscriptions_tier_free_price">0 €</string>
+    <string name="subscriptions_tier_free_period">Free forever</string>
+    <string name="subscriptions_tier_pro_title">SplitTrip Pro</string>
+    <string name="subscriptions_tier_pro_description">Advanced AI features and unlimited group management</string>
+    <string name="subscriptions_tier_pro_price_monthly">4,99 €</string>
+    <string name="subscriptions_tier_pro_price_annual">3,99 €</string>
+    <string name="subscriptions_period_month">/ month</string>
+    <string name="subscriptions_period_annual_billed">billed annually</string>
+    <string name="subscriptions_feature_free_groups">1 group</string>
+    <string name="subscriptions_feature_free_members">Up to 4 members per group</string>
+    <string name="subscriptions_feature_free_standard_calc">Standard debt settlement</string>
+    <string name="subscriptions_feature_free_multi_currency">Multi-currency support</string>
+    <string name="subscriptions_feature_subunits">Subunits management</string>
+    <string name="subscriptions_feature_pro_unlimited_groups">Unlimited groups</string>
+    <string name="subscriptions_feature_pro_members">Up to 20 members per group</string>
+    <string name="subscriptions_feature_pro_ai_ocr">AI Receipt scanning &amp; OCR</string>
+    <string name="subscriptions_feature_pro_blended_fx">Blended FX &amp; real-time conversion</string>
+    <string name="subscriptions_feature_pro_priority_support">Priority customer support</string>
+    <string name="subscriptions_cta_current_plan">Current Plan</string>
+    <string name="subscriptions_cta_upgrade_pro">Upgrade to Pro</string>
+    <string name="subscriptions_badge_popular">Most Popular</string>
+    <string name="subscriptions_restore_purchases">Restore Purchases</string>
+    <string name="subscriptions_disclaimer">Subscriptions are billed through your Google Play account and renew automatically unless cancelled at least 24 hours before the end of the current period. (Simulated in MVP)</string>
+    <string name="subscriptions_upgrade_success">Upgraded to %1$s (Simulated)</string>
+    <string name="subscriptions_restore_success">Purchases restored successfully (Simulated)</string>
 </resources>

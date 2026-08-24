@@ -14,6 +14,7 @@ import es.pedrazamiguez.splittrip.features.settings.presentation.feature.Notific
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.OpenSourceFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.PrivacyPolicyFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.SettingsFeature
+import es.pedrazamiguez.splittrip.features.settings.presentation.feature.SubscriptionsFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.ThemeFeature
 
 fun NavGraphBuilder.settingsGraph() {
@@ -22,6 +23,9 @@ fun NavGraphBuilder.settingsGraph() {
     }
     composable(Routes.SETTINGS_ACCOUNT_STATUS) {
         AccountStatusFeature()
+    }
+    composable(Routes.SETTINGS_SUBSCRIPTIONS) {
+        SubscriptionsFeature()
     }
     composable(Routes.SETTINGS_SECURITY) {
         AccountSecurityFeature()
