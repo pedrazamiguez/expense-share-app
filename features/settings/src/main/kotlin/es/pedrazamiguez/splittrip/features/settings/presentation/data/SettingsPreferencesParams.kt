@@ -13,6 +13,7 @@ data class SettingsPreferencesParams(
     val currentThemeCode: String,
     val onThemeClick: () -> Unit,
     val onAccountStatusClick: () -> Unit,
+    val onSubscriptionsClick: () -> Unit,
     val onAccountSecurityClick: () -> Unit,
     val onBugReportClick: () -> Unit,
     val onFeatureSuggestionClick: () -> Unit,

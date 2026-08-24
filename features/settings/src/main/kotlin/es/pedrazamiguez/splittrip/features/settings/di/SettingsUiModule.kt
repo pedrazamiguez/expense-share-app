@@ -34,9 +34,11 @@ import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.AccountS
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.AccountStatusUiMapper
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.DeveloperInfoUiMapper
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.NotificationPreferencesUiMapper
+import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.SubscriptionsUiMapper
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.impl.AccountSecurityUiMapperImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.impl.AccountStatusUiMapperImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.impl.NotificationPreferencesUiMapperImpl
+import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.impl.SubscriptionsUiMapperImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.AccountSecurityScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.AccountStatusScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.DefaultCurrencyScreenUiProviderImpl
@@ -48,6 +50,7 @@ import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.Not
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.OpenSourceScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.PrivacyPolicyScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.SettingsScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.SubscriptionsScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.impl.ThemeScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.AccountSecurityViewModel
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.AccountStatusViewModel
@@ -59,6 +62,7 @@ import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.Insta
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.LanguageViewModel
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.NotificationPreferencesViewModel
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.SettingsViewModel
+import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.SubscriptionsViewModel
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.ThemeViewModel
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.handler.AccountStatusEventHandler
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.handler.AccountStatusEventHandlerImpl
@@ -176,6 +180,8 @@ val settingsUiModule = module {
 
     factory<AccountSecurityUiMapper> { AccountSecurityUiMapperImpl() }
 
+    factory<SubscriptionsUiMapper> { SubscriptionsUiMapperImpl(localeProvider = get()) }
+
     viewModel {
         val getCurrentUserProfileUseCase = get<GetCurrentUserProfileUseCase>()
         val isUserAnonymousUseCase = get<IsUserAnonymousUseCase>()
@@ -195,10 +201,22 @@ val settingsUiModule = module {
         )
     }
 
+    viewModel {
+        val getCurrentUserProfileUseCase = get<GetCurrentUserProfileUseCase>()
+        val isUserAnonymousUseCase = get<IsUserAnonymousUseCase>()
+        val subscriptionsUiMapper = get<SubscriptionsUiMapper>()
+        SubscriptionsViewModel(
+            getCurrentUserProfileUseCase = getCurrentUserProfileUseCase,
+            isUserAnonymousUseCase = isUserAnonymousUseCase,
+            subscriptionsUiMapper = subscriptionsUiMapper
+        )
+    }
+
     single { DefaultCurrencyScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { LanguageScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { NotificationPreferencesScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { SettingsScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { SubscriptionsScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { DeveloperServicesScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { ThemeScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { AccountStatusScreenUiProviderImpl() } bind ScreenUiProvider::class

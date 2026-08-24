@@ -56,7 +56,8 @@ private fun accountSection(params: SettingsPreferencesParams) = SettingsSectionM
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.CreditCard,
             titleRes = R.string.settings_account_subscriptions_title,
-            descriptionRes = R.string.settings_account_subscriptions_description
+            descriptionRes = R.string.settings_account_subscriptions_description,
+            onClick = params.onSubscriptionsClick
         ),
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.Shield,

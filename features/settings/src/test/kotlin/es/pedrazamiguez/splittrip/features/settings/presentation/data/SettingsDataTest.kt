@@ -23,6 +23,7 @@ class SettingsDataTest {
     private var languageClickCount = 0
     private var themeClickCount = 0
     private var accountStatusClickCount = 0
+    private var subscriptionsClickCount = 0
     private var accountSecurityClickCount = 0
     private var bugReportClickCount = 0
     private var featureSuggestionClickCount = 0
@@ -44,6 +45,7 @@ class SettingsDataTest {
         currentThemeCode = "system",
         onThemeClick = { themeClickCount++ },
         onAccountStatusClick = { accountStatusClickCount++ },
+        onSubscriptionsClick = { subscriptionsClickCount++ },
         onAccountSecurityClick = { accountSecurityClickCount++ },
         onBugReportClick = { bugReportClickCount++ },
         onFeatureSuggestionClick = { featureSuggestionClickCount++ },
@@ -99,13 +101,11 @@ class SettingsDataTest {
             assertEquals(R.string.settings_account_subscriptions_title, item1.titleRes)
             assertEquals(R.string.settings_account_subscriptions_description, item1.descriptionRes)
             assertEquals(TablerIcons.Outline.CreditCard, item1.icon)
-            item1.onClick.invoke()
 
             val item2 = assertInstanceOf(SettingsItemModel.Standard::class.java, accountSection.items[2])
             assertEquals(R.string.settings_account_security_title, item2.titleRes)
             assertEquals(R.string.settings_account_security_description, item2.descriptionRes)
             assertEquals(TablerIcons.Outline.Shield, item2.icon)
-            item2.onClick.invoke()
         }
 
         @Test
@@ -122,6 +122,22 @@ class SettingsDataTest {
             assertEquals(0, accountStatusClickCount)
             statusItem.onClick?.invoke()
             assertEquals(1, accountStatusClickCount)
+        }
+
+        @Test
+        fun `subscriptions item click delegates to onSubscriptionsClick callback`() {
+            val params = createParams()
+            val sections = buildSettingsSections(
+                preferencesParams = params,
+                onServicesTestClick = { servicesTestClickCount++ }
+            )
+
+            val accountSection = sections.first { it.titleRes == R.string.settings_section_account }
+            val subscriptionsItem = assertInstanceOf(SettingsItemModel.Standard::class.java, accountSection.items[1])
+
+            assertEquals(0, subscriptionsClickCount)
+            subscriptionsItem.onClick?.invoke()
+            assertEquals(1, subscriptionsClickCount)
         }
 
         @Test
