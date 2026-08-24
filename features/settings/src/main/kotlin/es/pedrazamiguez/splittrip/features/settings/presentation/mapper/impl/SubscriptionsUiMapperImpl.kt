@@ -67,11 +67,11 @@ class SubscriptionsUiMapperImpl(
                 isIncluded = true
             ),
             SubscriptionFeatureUiModel(
-                label = UiText.StringResource(R.string.subscriptions_feature_pro_ai_ocr),
+                label = UiText.StringResource(R.string.subscriptions_feature_subunits),
                 isIncluded = false
             ),
             SubscriptionFeatureUiModel(
-                label = UiText.StringResource(R.string.subscriptions_feature_pro_reports),
+                label = UiText.StringResource(R.string.subscriptions_feature_pro_ai_ocr),
                 isIncluded = false
             )
         ).toImmutableList()
@@ -115,7 +115,12 @@ class SubscriptionsUiMapperImpl(
                 isHighlighted = true
             ),
             SubscriptionFeatureUiModel(
-                label = UiText.StringResource(R.string.subscriptions_feature_pro_unlimited_members),
+                label = UiText.StringResource(R.string.subscriptions_feature_pro_members),
+                isIncluded = true,
+                isHighlighted = true
+            ),
+            SubscriptionFeatureUiModel(
+                label = UiText.StringResource(R.string.subscriptions_feature_subunits),
                 isIncluded = true,
                 isHighlighted = true
             ),
@@ -126,10 +131,6 @@ class SubscriptionsUiMapperImpl(
             ),
             SubscriptionFeatureUiModel(
                 label = UiText.StringResource(R.string.subscriptions_feature_pro_blended_fx),
-                isIncluded = true
-            ),
-            SubscriptionFeatureUiModel(
-                label = UiText.StringResource(R.string.subscriptions_feature_pro_reports),
                 isIncluded = true
             ),
             SubscriptionFeatureUiModel(

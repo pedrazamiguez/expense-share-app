@@ -18,6 +18,7 @@ class SubscriptionsScreenUiProviderImpl(
         val navController = LocalRootNavController.current
         DynamicTopAppBar(
             title = stringResource(R.string.subscriptions_title),
+            subtitle = stringResource(R.string.subscriptions_subtitle),
             onBack = { navController.popBackStack() }
         )
     }
