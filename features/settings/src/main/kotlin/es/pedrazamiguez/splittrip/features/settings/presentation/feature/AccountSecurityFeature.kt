@@ -4,8 +4,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.splittrip.core.common.presentation.asString
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
+import es.pedrazamiguez.splittrip.core.designsystem.biometric.BiometricPromptHelper
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.scaffold.FeatureScaffold
@@ -14,6 +18,7 @@ import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.AccountS
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.AccountSecurityScreen
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.AccountSecurityViewModel
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.action.AccountSecurityUiAction
+import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.event.AccountSecurityUiEvent
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -29,7 +34,11 @@ fun AccountSecurityFeature(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
+    val confirmTitle = stringResource(DesignSystemR.string.biometric_prompt_confirm_title)
+    val confirmSubtitle = stringResource(DesignSystemR.string.biometric_prompt_confirm_subtitle)
+    val confirmNegative = stringResource(DesignSystemR.string.biometric_prompt_negative)
+
+    LaunchedEffect(confirmTitle, confirmSubtitle, confirmNegative) {
         viewModel.actions.collectLatest { action ->
             when (action) {
                 is AccountSecurityUiAction.ShowTopPill -> {
@@ -40,6 +49,20 @@ fun AccountSecurityFeature(
                 }
                 AccountSecurityUiAction.NavigateBack -> {
                     navController.popBackStack()
+                }
+                AccountSecurityUiAction.RequestBiometricConfirmation -> {
+                    val activity = context as? FragmentActivity
+                    if (activity != null) {
+                        BiometricPromptHelper.authenticate(
+                            activity = activity,
+                            title = confirmTitle,
+                            subtitle = confirmSubtitle,
+                            negativeButtonText = confirmNegative,
+                            onSuccess = {
+                                viewModel.onEvent(AccountSecurityUiEvent.BiometricConfirmationSuccess)
+                            }
+                        )
+                    }
                 }
             }
         }

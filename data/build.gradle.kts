@@ -43,6 +43,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.play.services.mlkit.text.recognition)
     implementation(libs.google.ai.edge.aicore)
+    implementation(libs.androidx.biometric)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.koin.core)

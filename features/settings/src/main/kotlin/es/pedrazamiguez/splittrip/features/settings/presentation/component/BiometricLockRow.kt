@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.core.designsystem.extension.asString
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ShieldLock
@@ -26,9 +28,17 @@ private val ROW_ICON_SIZE = 24.dp
 @Composable
 fun BiometricLockRow(
     biometricLockEnabled: Boolean,
+    isToggleEnabled: Boolean,
+    subtitle: UiText,
     onBiometricLockToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val iconTint = if (isToggleEnabled) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+    }
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.fillMaxWidth()
@@ -36,7 +46,7 @@ fun BiometricLockRow(
         Icon(
             imageVector = TablerIcons.Outline.ShieldLock,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = iconTint,
             modifier = Modifier.size(ROW_ICON_SIZE)
         )
 
@@ -50,7 +60,7 @@ fun BiometricLockRow(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = stringResource(R.string.account_security_biometric_lock_desc),
+                text = subtitle.asString(),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -60,7 +70,8 @@ fun BiometricLockRow(
 
         Switch(
             checked = biometricLockEnabled,
-            onCheckedChange = onBiometricLockToggle
+            onCheckedChange = onBiometricLockToggle,
+            enabled = isToggleEnabled
         )
     }
 }

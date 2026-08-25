@@ -37,6 +37,8 @@ fun AccountSecurityContent(
         item(key = "security_preferences_card") {
             SecurityPreferencesCard(
                 biometricLockEnabled = uiState.biometricLockEnabled,
+                isBiometricToggleEnabled = uiState.isBiometricToggleEnabled,
+                biometricSubtitle = uiMapper.formatBiometricSubtitle(uiState.biometricCapability),
                 onBiometricLockToggle = { onEvent(AccountSecurityUiEvent.ToggleBiometricLock(it)) },
                 onManageProvidersClick = { onEvent(AccountSecurityUiEvent.NavigateToAccountStatus) }
             )

@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.settings.presentation.mapper.impl
 
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.domain.enums.AuthProviderType
+import es.pedrazamiguez.splittrip.domain.enums.BiometricCapability
 import es.pedrazamiguez.splittrip.features.settings.R
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -72,5 +73,37 @@ class AccountSecurityUiMapperImplTest {
         assertEquals(R.string.account_security_password_reset_sent, stringRes.resId)
         assertEquals(1, stringRes.args.size)
         assertEquals(email, stringRes.args[0])
+    }
+
+    @Test
+    fun `formatBiometricSubtitle returns default description when AVAILABLE`() {
+        val result = mapper.formatBiometricSubtitle(BiometricCapability.AVAILABLE)
+
+        val stringRes = assertInstanceOf(UiText.StringResource::class.java, result)
+        assertEquals(R.string.account_security_biometric_lock_desc, stringRes.resId)
+    }
+
+    @Test
+    fun `formatBiometricSubtitle returns no hardware message when NO_HARDWARE`() {
+        val result = mapper.formatBiometricSubtitle(BiometricCapability.NO_HARDWARE)
+
+        val stringRes = assertInstanceOf(UiText.StringResource::class.java, result)
+        assertEquals(R.string.account_security_biometric_lock_no_hardware, stringRes.resId)
+    }
+
+    @Test
+    fun `formatBiometricSubtitle returns not enrolled message when NOT_ENROLLED`() {
+        val result = mapper.formatBiometricSubtitle(BiometricCapability.NOT_ENROLLED)
+
+        val stringRes = assertInstanceOf(UiText.StringResource::class.java, result)
+        assertEquals(R.string.account_security_biometric_lock_not_enrolled, stringRes.resId)
+    }
+
+    @Test
+    fun `formatBiometricSubtitle returns unavailable message when UNAVAILABLE`() {
+        val result = mapper.formatBiometricSubtitle(BiometricCapability.UNAVAILABLE)
+
+        val stringRes = assertInstanceOf(UiText.StringResource::class.java, result)
+        assertEquals(R.string.account_security_biometric_lock_unavailable, stringRes.resId)
     }
 }
