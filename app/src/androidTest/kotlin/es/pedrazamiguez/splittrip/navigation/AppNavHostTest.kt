@@ -11,12 +11,17 @@ import es.pedrazamiguez.splittrip.core.designsystem.foundation.SplitTripTheme
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.BRANDED_LOADING_SCREEN_TEST_TAG
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.security.APP_LOCK_GATE_TEST_TAG
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.splittrip.di.createAppNavHostTestModule
+import es.pedrazamiguez.splittrip.domain.enums.BiometricCapability
+import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveSelectedGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.notification.RegisterDeviceTokenUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupCurrencyUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupNameUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.ObserveCurrentUserProfileUseCase
 import es.pedrazamiguez.splittrip.features.authentication.presentation.viewmodel.AuthenticationViewModel
 import es.pedrazamiguez.splittrip.features.main.presentation.viewmodel.MainViewModel
 import es.pedrazamiguez.splittrip.helpers.FakeNavigationProvider
@@ -71,10 +76,14 @@ class AppNavHostTest {
 
         // Main screen needs MainViewModel
         viewModel {
+            val observeCurrentUserProfile = mockk<ObserveCurrentUserProfileUseCase>().apply {
+                every { this@apply.invoke() } returns flowOf(null)
+            }
             MainViewModel(
                 registerDeviceTokenUseCase = mockk<RegisterDeviceTokenUseCase>(relaxed = true),
                 getGroupByIdUseCase = mockk(relaxed = true),
-                warmCurrencyCacheUseCase = mockk(relaxed = true)
+                warmCurrencyCacheUseCase = mockk(relaxed = true),
+                observeCurrentUserProfileUseCase = observeCurrentUserProfile
             )
         }
 
@@ -89,11 +98,19 @@ class AppNavHostTest {
             val getSelectedGroupCurrencyUseCase = mockk<GetSelectedGroupCurrencyUseCase>().apply {
                 every { this@apply.invoke() } returns flowOf(null)
             }
+            val observeSelectedGroup = mockk<ObserveSelectedGroupUseCase>().apply {
+                every { this@apply.invoke() } returns flowOf(null)
+            }
+            val observeGroup = mockk<ObserveGroupUseCase>().apply {
+                every { this@apply.invoke(any()) } returns flowOf(null)
+            }
             SharedViewModel(
                 getSelectedGroupIdUseCase = getSelectedGroupIdUseCase,
                 getSelectedGroupNameUseCase = getSelectedGroupNameUseCase,
                 getSelectedGroupCurrencyUseCase = getSelectedGroupCurrencyUseCase,
-                setSelectedGroupUseCase = mockk(relaxed = true)
+                setSelectedGroupUseCase = mockk(relaxed = true),
+                observeSelectedGroupUseCase = observeSelectedGroup,
+                observeGroupUseCase = observeGroup
             )
         }
 
@@ -298,5 +315,106 @@ class AppNavHostTest {
         // but the graph was NOT recreated. We verify the start destination of the graph itself.
         val graphStartRoute = navController.graph.startDestinationRoute
         assertEquals(Routes.LOGIN, graphStartRoute)
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
+    //  Biometric App Lock Gate
+    // ═════════════════════════════════════════════════════════════════════
+
+    @Test
+    fun showsAppLockGate_whenUserIsLoggedIn_onboardingComplete_andBiometricLockEnabled() {
+        val navController = buildTestNavController()
+
+        composeRule.setContent {
+            KoinApplication(application = {
+                modules(
+                    createAppNavHostTestModule(
+                        authStateFlow = flowOf(true),
+                        onboardingFlow = flowOf(true),
+                        biometricLockEnabledFlow = flowOf(true),
+                        biometricCapability = BiometricCapability.AVAILABLE
+                    ),
+                    createFeatureTestModule()
+                )
+            }) {
+                SplitTripTheme {
+                    AppNavHost(navController = navController)
+                }
+            }
+        }
+
+        composeRule.waitForIdle()
+
+        composeRule.onNode(
+            hasTestTag(APP_LOCK_GATE_TEST_TAG)
+        ).assertIsDisplayed()
+    }
+
+    @Test
+    fun doesNotShowAppLockGate_whenBiometricLockIsDisabled() {
+        val navController = buildTestNavController()
+
+        composeRule.setContent {
+            KoinApplication(application = {
+                modules(
+                    createAppNavHostTestModule(
+                        authStateFlow = flowOf(true),
+                        onboardingFlow = flowOf(true),
+                        biometricLockEnabledFlow = flowOf(false),
+                        biometricCapability = BiometricCapability.AVAILABLE
+                    ),
+                    createFeatureTestModule()
+                )
+            }) {
+                SplitTripTheme {
+                    AppNavHost(navController = navController)
+                }
+            }
+        }
+
+        composeRule.waitForIdle()
+
+        composeRule.onNode(
+            hasTestTag(APP_LOCK_GATE_TEST_TAG)
+        ).assertDoesNotExist()
+
+        assertEquals(
+            Routes.MAIN,
+            navController.currentDestination?.route
+        )
+    }
+
+    @Test
+    fun doesNotShowAppLockGate_whenBiometricCapabilityIsUnavailable() {
+        val navController = buildTestNavController()
+
+        composeRule.setContent {
+            KoinApplication(application = {
+                modules(
+                    createAppNavHostTestModule(
+                        authStateFlow = flowOf(true),
+                        onboardingFlow = flowOf(true),
+                        biometricLockEnabledFlow = flowOf(true),
+                        biometricCapability = BiometricCapability.NO_HARDWARE
+                    ),
+                    createFeatureTestModule()
+                )
+            }) {
+                SplitTripTheme {
+                    AppNavHost(navController = navController)
+                }
+            }
+        }
+
+        composeRule.waitForIdle()
+
+        composeRule.onNode(
+            hasTestTag(APP_LOCK_GATE_TEST_TAG)
+        ).assertDoesNotExist()
+
+        assertEquals(
+            Routes.MAIN,
+            navController.currentDestination?.route
+        )
     }
 }

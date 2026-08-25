@@ -267,6 +267,9 @@
     <string name="account_security_password_reset_sent">Password reset email sent to %1$s</string>
     <string name="account_security_biometric_lock_title">Biometric App Lock</string>
     <string name="account_security_biometric_lock_desc">Require biometric authentication (fingerprint or face) when opening the app.</string>
+    <string name="account_security_biometric_lock_no_hardware">Biometric authentication is not supported on this device.</string>
+    <string name="account_security_biometric_lock_not_enrolled">No biometrics enrolled. Please set up fingerprint or face unlock in device settings.</string>
+    <string name="account_security_biometric_lock_unavailable">Biometrics currently unavailable.</string>
     <string name="account_security_linked_providers_title">Linked Sign-In Providers</string>
     <string name="account_security_linked_providers_desc">Manage additional authentication methods and linked accounts.</string>
     <string name="account_security_manage_providers_button">Manage Providers</string>

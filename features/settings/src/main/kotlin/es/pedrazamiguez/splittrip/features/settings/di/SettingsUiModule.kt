@@ -19,6 +19,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.notification.UpdateNotification
 import es.pedrazamiguez.splittrip.domain.usecase.setting.ConsumeLanguagePillUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetAppLanguageUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetAppThemeUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetBiometricCapabilityUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetBiometricLockEnabledUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetDeveloperInfoUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetShouldShowLanguagePillUseCase
@@ -187,6 +188,7 @@ val settingsUiModule = module {
         val isUserAnonymousUseCase = get<IsUserAnonymousUseCase>()
         val getLinkedProvidersUseCase = get<GetLinkedProvidersUseCase>()
         val sendPasswordResetEmailUseCase = get<SendPasswordResetEmailUseCase>()
+        val getBiometricCapabilityUseCase = get<GetBiometricCapabilityUseCase>()
         val getBiometricLockEnabledUseCase = get<GetBiometricLockEnabledUseCase>()
         val setBiometricLockEnabledUseCase = get<SetBiometricLockEnabledUseCase>()
         val accountSecurityUiMapper = get<AccountSecurityUiMapper>()
@@ -195,6 +197,7 @@ val settingsUiModule = module {
             isUserAnonymousUseCase = isUserAnonymousUseCase,
             getLinkedProvidersUseCase = getLinkedProvidersUseCase,
             sendPasswordResetEmailUseCase = sendPasswordResetEmailUseCase,
+            getBiometricCapabilityUseCase = getBiometricCapabilityUseCase,
             getBiometricLockEnabledUseCase = getBiometricLockEnabledUseCase,
             setBiometricLockEnabledUseCase = setBiometricLockEnabledUseCase,
             accountSecurityUiMapper = accountSecurityUiMapper

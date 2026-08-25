@@ -6,4 +6,5 @@ sealed interface AccountSecurityUiAction {
     data class ShowTopPill(val message: UiText) : AccountSecurityUiAction
     data class NavigateToRoute(val route: String) : AccountSecurityUiAction
     data object NavigateBack : AccountSecurityUiAction
+    data object RequestBiometricConfirmation : AccountSecurityUiAction
 }

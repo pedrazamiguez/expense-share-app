@@ -227,6 +227,9 @@
     <string name="account_security_password_reset_sent">Correo de rêttableçimiento embiao a %1$s</string>
     <string name="account_security_biometric_lock_title">Bloqueo biométrico de la âpp</string>
     <string name="account_security_biometric_lock_desc">Requerîh autenticaçión biométrica (gueya dâttilâh o rôttro) al abrîh la âpp.</string>
+    <string name="account_security_biometric_lock_no_hardware">La autenticaçión biométrica no êh compatible con êtte dîppoçitibo.</string>
+    <string name="account_security_biometric_lock_not_enrolled">No ay datô biométricô configuráô. Configura tu gueya o rôttro en lô ahûttê der dîppoçitibo.</string>
+    <string name="account_security_biometric_lock_unavailable">Biometría âttuarmente no dîpponible.</string>
     <string name="account_security_linked_providers_title">Probeedorê de iniçio binculáô</string>
     <string name="account_security_linked_providers_desc">Âmminîttra métodô de autenticaçión adiçionalê y cuentâ binculâh.</string>
     <string name="account_security_manage_providers_button">Âmminîttrâh probeedorê</string>

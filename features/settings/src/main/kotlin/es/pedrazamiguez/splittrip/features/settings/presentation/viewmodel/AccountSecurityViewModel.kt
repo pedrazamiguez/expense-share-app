@@ -7,6 +7,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.domain.usecase.auth.GetLinkedProvidersUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.auth.IsUserAnonymousUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.auth.SendPasswordResetEmailUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetBiometricCapabilityUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetBiometricLockEnabledUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetBiometricLockEnabledUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetCurrentUserProfileUseCase
@@ -32,6 +33,7 @@ class AccountSecurityViewModel(
     private val isUserAnonymousUseCase: IsUserAnonymousUseCase,
     private val getLinkedProvidersUseCase: GetLinkedProvidersUseCase,
     private val sendPasswordResetEmailUseCase: SendPasswordResetEmailUseCase,
+    private val getBiometricCapabilityUseCase: GetBiometricCapabilityUseCase,
     private val getBiometricLockEnabledUseCase: GetBiometricLockEnabledUseCase,
     private val setBiometricLockEnabledUseCase: SetBiometricLockEnabledUseCase,
     private val accountSecurityUiMapper: AccountSecurityUiMapper
@@ -59,6 +61,7 @@ class AccountSecurityViewModel(
             }
             AccountSecurityUiEvent.ConfirmSendPasswordReset -> handleConfirmSendPasswordReset()
             is AccountSecurityUiEvent.ToggleBiometricLock -> handleToggleBiometricLock(event.enabled)
+            AccountSecurityUiEvent.BiometricConfirmationSuccess -> handleBiometricConfirmationSuccess()
             AccountSecurityUiEvent.NavigateToAccountStatus -> {
                 viewModelScope.launch {
                     _actions.send(AccountSecurityUiAction.NavigateToRoute(Routes.SETTINGS_ACCOUNT_STATUS))
@@ -89,13 +92,15 @@ class AccountSecurityViewModel(
                 val profile = getCurrentUserProfileUseCase()
                 val providersResult = getLinkedProvidersUseCase()
                 val providers = providersResult.getOrDefault(emptyList())
+                val capability = getBiometricCapabilityUseCase()
 
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         email = profile?.email.orEmpty(),
                         isAnonymous = isAnon,
-                        linkedProviders = providers.toImmutableList()
+                        linkedProviders = providers.toImmutableList(),
+                        biometricCapability = capability
                     )
                 }
             } catch (e: CancellationException) {
@@ -142,14 +147,35 @@ class AccountSecurityViewModel(
     }
 
     private fun handleToggleBiometricLock(enabled: Boolean) {
+        if (enabled) {
+            if (_uiState.value.isBiometricToggleEnabled) {
+                viewModelScope.launch {
+                    _actions.send(AccountSecurityUiAction.RequestBiometricConfirmation)
+                }
+            }
+        } else {
+            viewModelScope.launch {
+                try {
+                    setBiometricLockEnabledUseCase(false)
+                    _uiState.update { it.copy(biometricLockEnabled = false) }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to disable biometric lock preference")
+                }
+            }
+        }
+    }
+
+    private fun handleBiometricConfirmationSuccess() {
         viewModelScope.launch {
             try {
-                setBiometricLockEnabledUseCase(enabled)
-                _uiState.update { it.copy(biometricLockEnabled = enabled) }
+                setBiometricLockEnabledUseCase(true)
+                _uiState.update { it.copy(biometricLockEnabled = true) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to update biometric lock preference")
+                Timber.e(e, "Failed to enable biometric lock preference")
             }
         }
     }

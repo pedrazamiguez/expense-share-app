@@ -5,10 +5,13 @@ import es.pedrazamiguez.splittrip.data.repository.impl.BalancePreferenceReposito
 import es.pedrazamiguez.splittrip.data.repository.impl.GroupPreferenceRepositoryImpl
 import es.pedrazamiguez.splittrip.data.repository.impl.OnboardingPreferenceRepositoryImpl
 import es.pedrazamiguez.splittrip.data.repository.impl.UserPreferenceRepositoryImpl
+import es.pedrazamiguez.splittrip.data.service.BiometricAuthServiceImpl
 import es.pedrazamiguez.splittrip.domain.repository.BalancePreferenceRepository
 import es.pedrazamiguez.splittrip.domain.repository.GroupPreferenceRepository
 import es.pedrazamiguez.splittrip.domain.repository.OnboardingPreferenceRepository
 import es.pedrazamiguez.splittrip.domain.repository.UserPreferenceRepository
+import es.pedrazamiguez.splittrip.domain.service.BiometricAuthService
+import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val settingsDataModule = module {
@@ -26,5 +29,9 @@ val settingsDataModule = module {
 
     single<BalancePreferenceRepository> {
         BalancePreferenceRepositoryImpl(userPreferences = get<UserPreferences>())
+    }
+
+    single<BiometricAuthService> {
+        BiometricAuthServiceImpl(context = androidContext())
     }
 }

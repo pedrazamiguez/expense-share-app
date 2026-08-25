@@ -50,6 +50,7 @@ object JacocoExclusions {
         "**/designsystem/foundation/**",
         "**/designsystem/navigation/**",
         "**/designsystem/permission/**",
+        "**/designsystem/biometric/**",
         // Design-system: debug-only preview utilities
         "**/designsystem/preview/**",
         // Design-system: Compose transitions (SharedElement API) — UI-only

@@ -172,6 +172,16 @@
     <string name="core_cash_breakdown_add_on_surcharge">Surcharge</string>
     <string name="core_cash_breakdown_total_fees_label">Fees</string>
 
+    <!-- Biometric Authentication & App Lock -->
+    <string name="app_lock_title">App Locked</string>
+    <string name="app_lock_description">Unlock with biometrics to access your shared expenses.</string>
+    <string name="app_lock_button_unlock">Unlock with Biometrics</string>
+    <string name="biometric_prompt_title">Unlock SplitTrip</string>
+    <string name="biometric_prompt_subtitle">Confirm your identity to continue</string>
+    <string name="biometric_prompt_negative">Cancel</string>
+    <string name="biometric_prompt_confirm_title">Enable Biometric Lock</string>
+    <string name="biometric_prompt_confirm_subtitle">Verify your biometrics to enable app lock</string>
+
     <!-- App Name -->
     <string name="app_name" translatable="false">SplitTrip</string>
 </resources>

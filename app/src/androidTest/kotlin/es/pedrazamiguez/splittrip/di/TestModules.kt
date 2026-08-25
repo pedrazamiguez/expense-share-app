@@ -1,7 +1,10 @@
 package es.pedrazamiguez.splittrip.di
 
+import es.pedrazamiguez.splittrip.domain.enums.BiometricCapability
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.currency.WarmCurrencyCacheUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetBiometricCapabilityUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetBiometricLockEnabledUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.IsOnboardingCompleteUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetOnboardingCompleteUseCase
 import es.pedrazamiguez.splittrip.features.main.navigation.DeepLinkHolder
@@ -29,10 +32,14 @@ import org.koin.dsl.module
  *   `flowOf(false)` (logged out), or `flowOf(true)` (logged in).
  * @param onboardingFlow Flow returned by [IsOnboardingCompleteUseCase].
  *   Use `flowOf(true)` / `flowOf(false)` to control onboarding status.
+ * @param biometricLockEnabledFlow Flow returned by [GetBiometricLockEnabledUseCase].
+ * @param biometricCapability Capability returned by [GetBiometricCapabilityUseCase].
  */
 fun createAppNavHostTestModule(
     authStateFlow: Flow<Boolean> = MutableStateFlow(false),
-    onboardingFlow: Flow<Boolean> = flowOf(false)
+    onboardingFlow: Flow<Boolean> = flowOf(false),
+    biometricLockEnabledFlow: Flow<Boolean> = flowOf(false),
+    biometricCapability: BiometricCapability = BiometricCapability.AVAILABLE
 ) = module {
     // ── Domain services ───────────────────────────────────────────────
     single<AuthenticationService> {
@@ -51,6 +58,18 @@ fun createAppNavHostTestModule(
     factory<SetOnboardingCompleteUseCase> {
         mockk<SetOnboardingCompleteUseCase>(relaxed = true).apply {
             coEvery { this@apply.invoke() } returns Unit
+        }
+    }
+
+    factory<GetBiometricLockEnabledUseCase> {
+        mockk<GetBiometricLockEnabledUseCase>().apply {
+            every { this@apply.invoke() } returns biometricLockEnabledFlow
+        }
+    }
+
+    factory<GetBiometricCapabilityUseCase> {
+        mockk<GetBiometricCapabilityUseCase>().apply {
+            every { this@apply.invoke() } returns biometricCapability
         }
     }
 

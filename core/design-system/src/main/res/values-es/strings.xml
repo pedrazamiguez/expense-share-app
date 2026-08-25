@@ -172,6 +172,16 @@
     <string name="core_cash_breakdown_add_on_surcharge">Recargo</string>
     <string name="core_cash_breakdown_total_fees_label">Comisiones</string>
 
+    <!-- Biometric Authentication & App Lock -->
+    <string name="app_lock_title">App bloqueada</string>
+    <string name="app_lock_description">Desbloquea con biometría para acceder a tus gastos compartidos.</string>
+    <string name="app_lock_button_unlock">Desbloquear con biometría</string>
+    <string name="biometric_prompt_title">Desbloquear SplitTrip</string>
+    <string name="biometric_prompt_subtitle">Confirma tu identidad para continuar</string>
+    <string name="biometric_prompt_negative">Cancelar</string>
+    <string name="biometric_prompt_confirm_title">Activar bloqueo biométrico</string>
+    <string name="biometric_prompt_confirm_subtitle">Verifica tu biometría para activar el bloqueo</string>
+
     <!-- App Name -->
     <string name="app_name" translatable="false">SplitTrip</string>
 </resources>

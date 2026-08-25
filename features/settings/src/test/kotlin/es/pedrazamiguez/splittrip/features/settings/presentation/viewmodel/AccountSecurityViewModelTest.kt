@@ -3,10 +3,12 @@ package es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.domain.enums.AuthProviderType
+import es.pedrazamiguez.splittrip.domain.enums.BiometricCapability
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.usecase.auth.GetLinkedProvidersUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.auth.IsUserAnonymousUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.auth.SendPasswordResetEmailUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetBiometricCapabilityUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetBiometricLockEnabledUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetBiometricLockEnabledUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetCurrentUserProfileUseCase
@@ -47,6 +49,7 @@ class AccountSecurityViewModelTest {
     private lateinit var isUserAnonymousUseCase: IsUserAnonymousUseCase
     private lateinit var getLinkedProvidersUseCase: GetLinkedProvidersUseCase
     private lateinit var sendPasswordResetEmailUseCase: SendPasswordResetEmailUseCase
+    private lateinit var getBiometricCapabilityUseCase: GetBiometricCapabilityUseCase
     private lateinit var getBiometricLockEnabledUseCase: GetBiometricLockEnabledUseCase
     private lateinit var setBiometricLockEnabledUseCase: SetBiometricLockEnabledUseCase
     private lateinit var accountSecurityUiMapper: AccountSecurityUiMapper
@@ -64,6 +67,7 @@ class AccountSecurityViewModelTest {
         isUserAnonymousUseCase = mockk()
         getLinkedProvidersUseCase = mockk()
         sendPasswordResetEmailUseCase = mockk()
+        getBiometricCapabilityUseCase = mockk()
         getBiometricLockEnabledUseCase = mockk()
         setBiometricLockEnabledUseCase = mockk(relaxed = true)
         accountSecurityUiMapper = mockk()
@@ -71,6 +75,7 @@ class AccountSecurityViewModelTest {
         coEvery { getCurrentUserProfileUseCase() } returns testUser
         every { isUserAnonymousUseCase() } returns flowOf(false)
         coEvery { getLinkedProvidersUseCase() } returns Result.success(listOf(AuthProviderType.EMAIL_PASSWORD))
+        every { getBiometricCapabilityUseCase() } returns BiometricCapability.AVAILABLE
         every { getBiometricLockEnabledUseCase() } returns flowOf(false)
         every { accountSecurityUiMapper.formatPasswordResetSuccessMessage(any()) } returns UiText.StringResource(
             R.string.account_security_password_reset_sent,
@@ -88,6 +93,7 @@ class AccountSecurityViewModelTest {
         isUserAnonymousUseCase = isUserAnonymousUseCase,
         getLinkedProvidersUseCase = getLinkedProvidersUseCase,
         sendPasswordResetEmailUseCase = sendPasswordResetEmailUseCase,
+        getBiometricCapabilityUseCase = getBiometricCapabilityUseCase,
         getBiometricLockEnabledUseCase = getBiometricLockEnabledUseCase,
         setBiometricLockEnabledUseCase = setBiometricLockEnabledUseCase,
         accountSecurityUiMapper = accountSecurityUiMapper
@@ -98,7 +104,7 @@ class AccountSecurityViewModelTest {
     inner class InitialState {
 
         @Test
-        fun `initial state loads user profile and linked providers`() = runTest(testDispatcher) {
+        fun `initial state loads user profile, linked providers, and biometric capability`() = runTest(testDispatcher) {
             val viewModel = createViewModel()
             advanceUntilIdle()
 
@@ -110,6 +116,20 @@ class AccountSecurityViewModelTest {
             assertEquals(AuthProviderType.EMAIL_PASSWORD, state.linkedProviders.first())
             assertTrue(state.canResetPassword)
             assertFalse(state.biometricLockEnabled)
+            assertEquals(BiometricCapability.AVAILABLE, state.biometricCapability)
+            assertTrue(state.isBiometricToggleEnabled)
+        }
+
+        @Test
+        fun `initial state with NO_HARDWARE capability disables toggle`() = runTest(testDispatcher) {
+            every { getBiometricCapabilityUseCase() } returns BiometricCapability.NO_HARDWARE
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(BiometricCapability.NO_HARDWARE, state.biometricCapability)
+            assertFalse(state.isBiometricToggleEnabled)
         }
 
         @Test
@@ -315,27 +335,91 @@ class AccountSecurityViewModelTest {
     inner class BiometricLockAndNavigation {
 
         @Test
-        fun `ToggleBiometricLock calls SetBiometricLockEnabledUseCase and updates state`() = runTest(testDispatcher) {
-            val viewModel = createViewModel()
-            advanceUntilIdle()
+        fun `ToggleBiometricLock to true emits RequestBiometricConfirmation when capability is available`() =
+            runTest(testDispatcher) {
+                val viewModel = createViewModel()
+                advanceUntilIdle()
 
-            viewModel.onEvent(AccountSecurityUiEvent.ToggleBiometricLock(true))
-            advanceUntilIdle()
+                val actions = mutableListOf<AccountSecurityUiAction>()
+                val job = launch { viewModel.actions.collect { actions.add(it) } }
 
-            coVerify { setBiometricLockEnabledUseCase(true) }
-            assertTrue(viewModel.uiState.value.biometricLockEnabled)
-        }
+                viewModel.onEvent(AccountSecurityUiEvent.ToggleBiometricLock(true))
+                advanceUntilIdle()
+
+                assertEquals(1, actions.size)
+                assertInstanceOf(AccountSecurityUiAction.RequestBiometricConfirmation::class.java, actions.first())
+                coVerify(exactly = 0) { setBiometricLockEnabledUseCase(any()) }
+                assertFalse(viewModel.uiState.value.biometricLockEnabled)
+
+                job.cancel()
+            }
 
         @Test
-        fun `ToggleBiometricLock handles exception gracefully`() = runTest(testDispatcher) {
+        fun `ToggleBiometricLock to true does not emit RequestBiometricConfirmation when capability is unavailable`() =
+            runTest(testDispatcher) {
+                every { getBiometricCapabilityUseCase() } returns BiometricCapability.NO_HARDWARE
+                val viewModel = createViewModel()
+                advanceUntilIdle()
+
+                val actions = mutableListOf<AccountSecurityUiAction>()
+                val job = launch { viewModel.actions.collect { actions.add(it) } }
+
+                viewModel.onEvent(AccountSecurityUiEvent.ToggleBiometricLock(true))
+                advanceUntilIdle()
+
+                assertTrue(actions.isEmpty())
+                coVerify(exactly = 0) { setBiometricLockEnabledUseCase(any()) }
+
+                job.cancel()
+            }
+
+        @Test
+        fun `BiometricConfirmationSuccess calls SetBiometricLockEnabledUseCase and updates state`() =
+            runTest(testDispatcher) {
+                val viewModel = createViewModel()
+                advanceUntilIdle()
+
+                viewModel.onEvent(AccountSecurityUiEvent.BiometricConfirmationSuccess)
+                advanceUntilIdle()
+
+                coVerify { setBiometricLockEnabledUseCase(true) }
+                assertTrue(viewModel.uiState.value.biometricLockEnabled)
+            }
+
+        @Test
+        fun `BiometricConfirmationSuccess handles exception gracefully`() = runTest(testDispatcher) {
             coEvery { setBiometricLockEnabledUseCase(true) } throws RuntimeException("Set error")
             val viewModel = createViewModel()
             advanceUntilIdle()
 
-            viewModel.onEvent(AccountSecurityUiEvent.ToggleBiometricLock(true))
+            viewModel.onEvent(AccountSecurityUiEvent.BiometricConfirmationSuccess)
             advanceUntilIdle()
 
-            // State should not crash
+            assertFalse(viewModel.uiState.value.biometricLockEnabled)
+        }
+
+        @Test
+        fun `ToggleBiometricLock to false calls SetBiometricLockEnabledUseCase directly and updates state`() =
+            runTest(testDispatcher) {
+                val viewModel = createViewModel()
+                advanceUntilIdle()
+
+                viewModel.onEvent(AccountSecurityUiEvent.ToggleBiometricLock(false))
+                advanceUntilIdle()
+
+                coVerify { setBiometricLockEnabledUseCase(false) }
+                assertFalse(viewModel.uiState.value.biometricLockEnabled)
+            }
+
+        @Test
+        fun `ToggleBiometricLock to false handles exception gracefully`() = runTest(testDispatcher) {
+            coEvery { setBiometricLockEnabledUseCase(false) } throws RuntimeException("Set error")
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.onEvent(AccountSecurityUiEvent.ToggleBiometricLock(false))
+            advanceUntilIdle()
+
             assertFalse(viewModel.uiState.value.biometricLockEnabled)
         }
 

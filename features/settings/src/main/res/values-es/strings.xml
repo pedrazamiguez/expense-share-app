@@ -267,6 +267,9 @@
     <string name="account_security_password_reset_sent">Correo de restablecimiento enviado a %1$s</string>
     <string name="account_security_biometric_lock_title">Bloqueo biométrico de la app</string>
     <string name="account_security_biometric_lock_desc">Requerir autenticación biométrica (huella dactilar o rostro) al abrir la app.</string>
+    <string name="account_security_biometric_lock_no_hardware">La autenticación biométrica no es compatible con este dispositivo.</string>
+    <string name="account_security_biometric_lock_not_enrolled">No hay datos biométricos configurados. Configura tu huella o rostro en los ajustes del dispositivo.</string>
+    <string name="account_security_biometric_lock_unavailable">Biometría actualmente no disponible.</string>
     <string name="account_security_linked_providers_title">Proveedores de inicio vinculados</string>
     <string name="account_security_linked_providers_desc">Administra métodos de autenticación adicionales y cuentas vinculadas.</string>
     <string name="account_security_manage_providers_button">Administrar proveedores</string>
