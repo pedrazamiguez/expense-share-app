@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.service
 
 import android.content.Context
 import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import es.pedrazamiguez.splittrip.domain.enums.BiometricCapability
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -37,7 +38,7 @@ class BiometricAuthServiceImplTest {
     @Test
     fun `getBiometricCapability returns AVAILABLE when BIOMETRIC_SUCCESS`() {
         every {
-            biometricManager.canAuthenticate(any())
+            biometricManager.canAuthenticate(BIOMETRIC_STRONG)
         } returns BiometricManager.BIOMETRIC_SUCCESS
 
         val result = service.getBiometricCapability()
