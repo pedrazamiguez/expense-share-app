@@ -54,6 +54,7 @@ class FormEventHandlerTest {
     private val userSource = FundingSourceUiModel(id = PayerType.USER.name, displayText = "My Money")
     private val finishedStatus = PaymentStatusUiModel(id = PaymentStatus.FINISHED.name, displayText = "Finished")
     private val scheduledStatus = PaymentStatusUiModel(id = PaymentStatus.SCHEDULED.name, displayText = "Scheduled")
+    private val refundableStatus = PaymentStatusUiModel(id = PaymentStatus.REFUNDABLE.name, displayText = "Refundable")
     private val foodCategory = CategoryUiModel(id = "FOOD", displayText = "Food")
     private val otherCategory = CategoryUiModel(id = "OTHER", displayText = "Other")
 
@@ -63,6 +64,15 @@ class FormEventHandlerTest {
         addExpenseOptionsUiMapper = mockk(relaxed = true)
         attachReceiptUseCase = mockk(relaxed = true)
         capturedPostActions.clear()
+
+        every { addExpenseOptionsUiMapper.mapPaymentStatuses(any(), any()) } answers {
+            val method = secondArg<PaymentMethod?>()
+            if (method == PaymentMethod.CASH) {
+                persistentListOf(finishedStatus, refundableStatus)
+            } else {
+                persistentListOf(finishedStatus, scheduledStatus, refundableStatus)
+            }
+        }
 
         handler = FormEventHandler(
             addExpenseUiMapper = addExpenseUiMapper,
@@ -75,7 +85,7 @@ class FormEventHandlerTest {
             AddExpenseUiState(
                 paymentMethods = persistentListOf(cashMethod, cardMethod),
                 fundingSources = persistentListOf(groupSource, userSource),
-                availablePaymentStatuses = persistentListOf(finishedStatus, scheduledStatus),
+                availablePaymentStatuses = persistentListOf(finishedStatus, scheduledStatus, refundableStatus),
                 availableCategories = persistentListOf(foodCategory, otherCategory),
                 selectedFundingSource = groupSource
             )
@@ -222,6 +232,67 @@ class FormEventHandlerTest {
             val action = capturedPostActions.single() as FormPostAction.PaymentMethodChanged
             assertFalse(action.isGroupPocket)
         }
+
+        @Test
+        fun `switching to CASH when SCHEDULED is selected resets status to FINISHED and hides due date section`() =
+            runTest {
+                uiState.value = uiState.value.copy(
+                    selectedPaymentStatus = scheduledStatus,
+                    showDueDateSection = true,
+                    dueDateMillis = 12345L,
+                    formattedDueDate = "1 Jan 2026"
+                )
+
+                handler.handlePaymentMethodSelected(cashMethod.id)
+
+                assertEquals(finishedStatus, uiState.value.selectedPaymentStatus)
+                assertFalse(uiState.value.showDueDateSection)
+                assertNull(uiState.value.dueDateMillis)
+                assertEquals("", uiState.value.formattedDueDate)
+            }
+
+        @Test
+        fun `switching to CASH updates availablePaymentStatuses excluding SCHEDULED`() = runTest {
+            handler.handlePaymentMethodSelected(cashMethod.id)
+
+            val statuses = uiState.value.availablePaymentStatuses
+            assertTrue(finishedStatus in statuses)
+            assertTrue(refundableStatus in statuses)
+            assertTrue(scheduledStatus !in statuses)
+        }
+
+        @Test
+        fun `switching from CASH to non-cash restores SCHEDULED in availablePaymentStatuses`() = runTest {
+            uiState.value = uiState.value.copy(
+                selectedPaymentMethod = cashMethod,
+                availablePaymentStatuses = persistentListOf(finishedStatus, refundableStatus)
+            )
+
+            handler.handlePaymentMethodSelected(cardMethod.id)
+
+            val statuses = uiState.value.availablePaymentStatuses
+            assertTrue(scheduledStatus in statuses)
+            assertTrue(finishedStatus in statuses)
+            assertTrue(refundableStatus in statuses)
+        }
+
+        @Test
+        fun `switching to CASH when REFUNDABLE is selected preserves REFUNDABLE and keeps due date section visible`() =
+            runTest {
+                uiState.value = uiState.value.copy(
+                    selectedPaymentStatus = refundableStatus,
+                    showDueDateSection = true,
+                    dueDateMillis = 12345L,
+                    formattedDueDate = "1 Jan 2026"
+                )
+
+                handler.handlePaymentMethodSelected(cashMethod.id)
+
+                assertEquals(refundableStatus, uiState.value.selectedPaymentStatus)
+                assertTrue(uiState.value.showDueDateSection)
+                assertEquals(12345L, uiState.value.dueDateMillis)
+                assertEquals("1 Jan 2026", uiState.value.formattedDueDate)
+            }
     }
 
     @Nested

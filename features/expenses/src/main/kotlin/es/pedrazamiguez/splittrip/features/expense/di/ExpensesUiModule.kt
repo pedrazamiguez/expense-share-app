@@ -129,7 +129,8 @@ val expensesUiModule = module {
             resourceProvider = get<ResourceProvider>(),
             splitMapper = get<AddExpenseSplitUiMapper>(),
             addOnMapper = get<AddExpenseAddOnUiMapper>(),
-            splitPreviewService = get<SplitPreviewService>()
+            splitPreviewService = get<SplitPreviewService>(),
+            addExpenseOptionsUiMapper = get<AddExpenseOptionsUiMapper>()
         )
     }
 

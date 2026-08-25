@@ -209,14 +209,15 @@ class AddExpenseViewModelTest {
             EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService),
             userUiMapper
         )
+        val addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider, mockk(relaxed = true))
         addExpenseUiMapper = AddExpenseUiMapper(
             localeProvider,
             resourceProvider,
             addExpenseSplitMapper,
             AddExpenseAddOnUiMapper(),
-            splitPreviewService
+            splitPreviewService,
+            addExpenseOptionsMapper
         )
-        val addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider, mockk(relaxed = true))
 
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
         coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit
@@ -1180,6 +1181,62 @@ class AddExpenseViewModelTest {
 
             assertEquals(cashMethod.id, viewModel.uiState.value.selectedPaymentMethod?.id)
         }
+
+        @Test
+        fun `switching to CASH coerces SCHEDULED status to FINISHED and hides due date`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            every { getGroupLastUsedPaymentMethodUseCase(any()) } returns flowOf(listOf("CREDIT_CARD"))
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // Select SCHEDULED status and set due date
+            viewModel.onEvent(AddExpenseUiEvent.PaymentStatusSelected(PaymentStatus.SCHEDULED.name))
+            viewModel.onEvent(AddExpenseUiEvent.DueDateSelected(1735689600000L))
+            advanceUntilIdle()
+
+            assertEquals(PaymentStatus.SCHEDULED.name, viewModel.uiState.value.selectedPaymentStatus?.id)
+            assertTrue(viewModel.uiState.value.showDueDateSection)
+            assertEquals(1735689600000L, viewModel.uiState.value.dueDateMillis)
+
+            // Switch to CASH
+            viewModel.onEvent(AddExpenseUiEvent.PaymentMethodSelected(PaymentMethod.CASH.name))
+            advanceUntilIdle()
+
+            assertEquals(PaymentStatus.FINISHED.name, viewModel.uiState.value.selectedPaymentStatus?.id)
+            assertFalse(viewModel.uiState.value.showDueDateSection)
+            assertNull(viewModel.uiState.value.dueDateMillis)
+            assertEquals("", viewModel.uiState.value.formattedDueDate)
+        }
+
+        @Test
+        fun `availablePaymentStatuses dynamically updates when changing payment methods`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            every { getGroupLastUsedPaymentMethodUseCase(any()) } returns flowOf(listOf("CREDIT_CARD"))
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // Initially CREDIT_CARD: SCHEDULED should be present
+            val initialStatusIds = viewModel.uiState.value.availablePaymentStatuses.map { it.id }
+            assertTrue(PaymentStatus.SCHEDULED.name in initialStatusIds)
+            assertTrue(PaymentStatus.FINISHED.name in initialStatusIds)
+            assertTrue(PaymentStatus.REFUNDABLE.name in initialStatusIds)
+
+            // Switch to CASH: SCHEDULED should be removed
+            viewModel.onEvent(AddExpenseUiEvent.PaymentMethodSelected(PaymentMethod.CASH.name))
+            advanceUntilIdle()
+
+            val cashStatusIds = viewModel.uiState.value.availablePaymentStatuses.map { it.id }
+            assertTrue(PaymentStatus.SCHEDULED.name !in cashStatusIds)
+            assertTrue(PaymentStatus.FINISHED.name in cashStatusIds)
+            assertTrue(PaymentStatus.REFUNDABLE.name in cashStatusIds)
+
+            // Switch back to CREDIT_CARD: SCHEDULED should be restored
+            viewModel.onEvent(AddExpenseUiEvent.PaymentMethodSelected(PaymentMethod.CREDIT_CARD.name))
+            advanceUntilIdle()
+
+            val cardStatusIds = viewModel.uiState.value.availablePaymentStatuses.map { it.id }
+            assertTrue(PaymentStatus.SCHEDULED.name in cardStatusIds)
+        }
     }
 
     // ── PaymentStatusSelected ───────────────────────────────────────────
@@ -1205,6 +1262,7 @@ class AddExpenseViewModelTest {
         @Test
         fun `shows due date section for SCHEDULED status`() = runTest {
             coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            every { getGroupLastUsedPaymentMethodUseCase(any()) } returns flowOf(listOf("CREDIT_CARD"))
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
             advanceUntilIdle()
 
@@ -1216,6 +1274,7 @@ class AddExpenseViewModelTest {
         @Test
         fun `hides due date section when switching from SCHEDULED to FINISHED`() = runTest {
             coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            every { getGroupLastUsedPaymentMethodUseCase(any()) } returns flowOf(listOf("CREDIT_CARD"))
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
             advanceUntilIdle()
 

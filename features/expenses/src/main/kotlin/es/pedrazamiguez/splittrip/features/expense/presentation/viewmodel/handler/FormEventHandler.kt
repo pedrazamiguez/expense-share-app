@@ -111,15 +111,41 @@ class FormEventHandler(
     }
 
     fun handlePaymentMethodSelected(methodId: String) {
-        val selectedMethod = _uiState.value.paymentMethods
+        val currentState = _uiState.value
+        val selectedMethod = currentState.paymentMethods
             .find { it.id == methodId } ?: return
-        _uiState.update { it.copy(selectedPaymentMethod = selectedMethod) }
 
-        val isCash = try {
-            PaymentMethod.fromString(selectedMethod.id) == PaymentMethod.CASH
-        } catch (_: IllegalArgumentException) {
-            false
+        val selectedPaymentMethodEnum = runCatching { PaymentMethod.fromString(selectedMethod.id) }.getOrNull()
+        val isCash = selectedPaymentMethodEnum == PaymentMethod.CASH
+        val updatedAvailablePaymentStatuses = addExpenseOptionsUiMapper.mapPaymentStatuses(
+            PaymentStatus.entries,
+            selectedPaymentMethodEnum
+        )
+        val isCurrentStatusScheduled = currentState.selectedPaymentStatus?.id == PaymentStatus.SCHEDULED.name
+        val shouldResetStatus = isCash && isCurrentStatusScheduled
+        val newSelectedPaymentStatus = if (shouldResetStatus) {
+            updatedAvailablePaymentStatuses.find { it.id == PaymentStatus.FINISHED.name }
+                ?: updatedAvailablePaymentStatuses.firstOrNull()
+        } else {
+            updatedAvailablePaymentStatuses.find { it.id == currentState.selectedPaymentStatus?.id }
+                ?: currentState.selectedPaymentStatus
         }
+        val showDueDate = when (newSelectedPaymentStatus?.id) {
+            PaymentStatus.SCHEDULED.name, PaymentStatus.REFUNDABLE.name -> true
+            else -> false
+        }
+
+        _uiState.update {
+            it.copy(
+                selectedPaymentMethod = selectedMethod,
+                availablePaymentStatuses = updatedAvailablePaymentStatuses,
+                selectedPaymentStatus = newSelectedPaymentStatus,
+                showDueDateSection = showDueDate,
+                dueDateMillis = if (showDueDate) it.dueDateMillis else null,
+                formattedDueDate = if (showDueDate) it.formattedDueDate else ""
+            )
+        }
+
         val isGroupPocket = _uiState.value.selectedFundingSource?.id
             ?.let {
                 runCatching { PayerType.fromString(it) }
