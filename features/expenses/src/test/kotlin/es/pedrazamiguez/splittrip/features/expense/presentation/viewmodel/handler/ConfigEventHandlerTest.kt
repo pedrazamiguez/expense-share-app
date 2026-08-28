@@ -101,12 +101,14 @@ class ConfigEventHandlerTest {
             EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService),
             userUiMapper
         )
+        val addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider, mockk(relaxed = true))
         addExpenseUiMapper = AddExpenseUiMapper(
             localeProvider = localeProvider,
             resourceProvider = resourceProvider,
             splitMapper = addExpenseSplitMapper,
             addOnMapper = AddExpenseAddOnUiMapper(),
-            splitPreviewService = splitPreviewService
+            splitPreviewService = splitPreviewService,
+            addExpenseOptionsUiMapper = addExpenseOptionsMapper
         )
 
         handler = ConfigEventHandler(
@@ -116,7 +118,7 @@ class ConfigEventHandlerTest {
             getGroupLastUsedCategoryUseCase = getGroupLastUsedCategoryUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             authenticationService = authenticationService,
-            addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider, mockk(relaxed = true)),
+            addExpenseOptionsMapper = addExpenseOptionsMapper,
             addExpenseSplitMapper = addExpenseSplitMapper,
             addExpenseUiMapper = addExpenseUiMapper,
             receiptExtractionService = mockk(relaxed = true)
@@ -635,6 +637,40 @@ class ConfigEventHandlerTest {
             advanceUntilIdle()
 
             assertTrue(uiState.value.contributionSubunitOptions.isEmpty())
+        }
+    }
+
+    @Nested
+    inner class ResolveDefaultSelections {
+
+        @Test
+        fun `filters mappedPaymentStatuses to exclude SCHEDULED when default payment method is CASH`() {
+            val defaults = handler.resolveDefaultSelections(
+                config = testConfig,
+                lastUsedCode = null,
+                recentPaymentMethodIds = listOf(PaymentMethod.CASH.name),
+                recentCategoryIds = emptyList()
+            )
+
+            val statusIds = defaults.mappedPaymentStatuses.map { it.id }
+            assertTrue("FINISHED" in statusIds)
+            assertTrue("REFUNDABLE" in statusIds)
+            assertTrue("SCHEDULED" !in statusIds)
+        }
+
+        @Test
+        fun `includes SCHEDULED in mappedPaymentStatuses when default payment method is non-cash`() {
+            val defaults = handler.resolveDefaultSelections(
+                config = testConfig,
+                lastUsedCode = null,
+                recentPaymentMethodIds = listOf(PaymentMethod.CREDIT_CARD.name),
+                recentCategoryIds = emptyList()
+            )
+
+            val statusIds = defaults.mappedPaymentStatuses.map { it.id }
+            assertTrue("FINISHED" in statusIds)
+            assertTrue("REFUNDABLE" in statusIds)
+            assertTrue("SCHEDULED" in statusIds)
         }
     }
 }

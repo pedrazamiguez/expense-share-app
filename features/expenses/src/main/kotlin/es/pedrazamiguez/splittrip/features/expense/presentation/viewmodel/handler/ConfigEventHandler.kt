@@ -301,8 +301,12 @@ class ConfigEventHandler(
         } ?: ExpenseCategory.OTHER
         val availableSubcategories = addExpenseOptionsMapper.mapSubcategories(defaultCategoryEnum)
 
+        val defaultPaymentMethodEnum = defaultPaymentMethod?.id?.let {
+            runCatching { PaymentMethod.fromString(it) }.getOrNull()
+        }
         val mappedPaymentStatuses = addExpenseOptionsMapper.mapPaymentStatuses(
-            PaymentStatus.entries
+            PaymentStatus.entries,
+            defaultPaymentMethodEnum
         )
         val defaultPaymentStatus =
             mappedPaymentStatuses.find { it.id == PaymentStatus.FINISHED.name }

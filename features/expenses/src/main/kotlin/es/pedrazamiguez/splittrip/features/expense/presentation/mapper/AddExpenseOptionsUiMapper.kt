@@ -109,11 +109,21 @@ class AddExpenseOptionsUiMapper(
 
     /**
      * Maps a list of [PaymentStatus] enums to UI models, filtering to only
-     * user-selectable statuses (FINISHED, SCHEDULED).
+     * user-selectable statuses (FINISHED, SCHEDULED, REFUNDABLE).
+     * Excludes SCHEDULED when [paymentMethod] is CASH.
      */
-    fun mapPaymentStatuses(statuses: List<PaymentStatus>): ImmutableList<PaymentStatusUiModel> =
+    fun mapPaymentStatuses(
+        statuses: List<PaymentStatus>,
+        paymentMethod: PaymentMethod? = null
+    ): ImmutableList<PaymentStatusUiModel> =
         statuses
-            .filter { it == PaymentStatus.FINISHED || it == PaymentStatus.SCHEDULED || it == PaymentStatus.REFUNDABLE }
+            .filter { status ->
+                when (status) {
+                    PaymentStatus.FINISHED, PaymentStatus.REFUNDABLE -> true
+                    PaymentStatus.SCHEDULED -> paymentMethod != PaymentMethod.CASH
+                    else -> false
+                }
+            }
             .map { status ->
                 PaymentStatusUiModel(
                     id = status.name,

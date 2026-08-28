@@ -54,7 +54,8 @@ class AddExpenseUiMapper(
     private val resourceProvider: ResourceProvider,
     private val splitMapper: AddExpenseSplitUiMapper,
     private val addOnMapper: AddExpenseAddOnUiMapper,
-    private val splitPreviewService: SplitPreviewService
+    private val splitPreviewService: SplitPreviewService,
+    private val addExpenseOptionsUiMapper: AddExpenseOptionsUiMapper
 ) {
 
     // ── Date Formatting ────────────────────────────────────────────────────
@@ -237,7 +238,11 @@ class AddExpenseUiMapper(
         } else {
             null
         }
-        val selectedPaymentStatus = currentState.availablePaymentStatuses.find { it.id == expense.paymentStatus.name }
+        val availablePaymentStatuses = addExpenseOptionsUiMapper.mapPaymentStatuses(
+            PaymentStatus.entries,
+            expense.paymentMethod
+        )
+        val selectedPaymentStatus = availablePaymentStatuses.find { it.id == expense.paymentStatus.name }
 
         val isForeign = expense.sourceCurrency != expense.groupCurrency
         val displayRate = if (expense.exchangeRate.compareTo(BigDecimal.ZERO) != 0) {
@@ -293,6 +298,7 @@ class AddExpenseUiMapper(
             selectedCategory = selectedCategory,
             selectedSubcategory = selectedSubcategory,
             availableSubcategories = availableSubcategories,
+            availablePaymentStatuses = availablePaymentStatuses,
             selectedPaymentStatus = selectedPaymentStatus,
             displayExchangeRate = displayRate,
             calculatedGroupAmount = calculatedGroupAmountString,
