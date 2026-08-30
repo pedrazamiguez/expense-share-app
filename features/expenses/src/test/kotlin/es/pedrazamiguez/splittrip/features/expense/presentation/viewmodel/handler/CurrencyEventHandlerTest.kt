@@ -27,10 +27,12 @@ import io.mockk.every
 import io.mockk.mockk
 import java.math.BigDecimal
 import java.util.Locale
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -823,6 +825,119 @@ class CurrencyEventHandlerTest {
             // Then
             val state = uiState.value
             assertEquals("", state.calculatedGroupAmount)
+        }
+
+        @Test
+        fun `when fetchRate returns null, rate is retained and group amount recalculated`() = runTest {
+            val usdCurrency = CurrencyUiModel(code = "USD", displayText = "USD ($)", decimalDigits = 2)
+            uiState.value = nonCashForeignState.copy(
+                availableCurrencies = persistentListOf(eurCurrency, thbCurrency, usdCurrency),
+                displayExchangeRate = "35.5",
+                sourceAmount = "1000"
+            )
+            coEvery {
+                getExchangeRateUseCase(baseCurrencyCode = "EUR", targetCurrencyCode = "USD")
+            } returns null
+
+            handler.bind(uiState, actions, this)
+
+            // When: user switches currency to USD and fetch fails
+            var recalculated = false
+            handler.handleCurrencySelected("USD") { recalculated = true }
+            advanceUntilIdle()
+
+            // Then: error is set, stale is false, fallback rate is retained, and group amount recalculated
+            val state = uiState.value
+            assertTrue(state.isExchangeRateError)
+            assertFalse(state.isExchangeRateStale)
+            assertEquals("35.5", state.displayExchangeRate)
+            assertEquals("28.17", state.calculatedGroupAmount)
+            assertTrue(recalculated)
+        }
+
+        @Test
+        fun `when fetchRate throws exception, displayExchangeRate retains fallback rate and flags error`() = runTest {
+            val usdCurrency = CurrencyUiModel(code = "USD", displayText = "USD ($)", decimalDigits = 2)
+            uiState.value = nonCashForeignState.copy(
+                availableCurrencies = persistentListOf(eurCurrency, thbCurrency, usdCurrency),
+                displayExchangeRate = "35.5",
+                sourceAmount = "1000"
+            )
+            coEvery {
+                getExchangeRateUseCase(baseCurrencyCode = "EUR", targetCurrencyCode = "USD")
+            } throws RuntimeException("Network timeout")
+
+            handler.bind(uiState, actions, this)
+
+            // When: user switches currency to USD and fetch throws exception
+            handler.handleCurrencySelected("USD") {}
+            advanceUntilIdle()
+
+            // Then
+            val state = uiState.value
+            assertTrue(state.isExchangeRateError)
+            assertFalse(state.isExchangeRateStale)
+            assertEquals("35.5", state.displayExchangeRate)
+            assertEquals("28.17", state.calculatedGroupAmount)
+        }
+
+        @Test
+        fun `when fetchRate succeeds with Stale result, isExchangeRateStale is set to true`() = runTest {
+            val usdCurrency = CurrencyUiModel(code = "USD", displayText = "USD ($)", decimalDigits = 2)
+            uiState.value = nonCashForeignState.copy(
+                availableCurrencies = persistentListOf(eurCurrency, thbCurrency, usdCurrency),
+                displayExchangeRate = "35.5",
+                sourceAmount = "1000"
+            )
+            coEvery {
+                getExchangeRateUseCase(baseCurrencyCode = "EUR", targetCurrencyCode = "USD")
+            } returns ExchangeRateWithStaleness(rate = BigDecimal("1.08"), isStale = true)
+
+            handler.bind(uiState, actions, this)
+
+            // When: user switches currency to USD and stale rate is returned
+            handler.handleCurrencySelected("USD") {}
+            advanceUntilIdle()
+
+            // Then
+            val state = uiState.value
+            assertFalse(state.isExchangeRateError)
+            assertTrue(state.isExchangeRateStale)
+            assertEquals("1.08", state.displayExchangeRate)
+        }
+
+        @Test
+        fun `selecting foreign currency does not wipe displayExchangeRate before fetchRate completes`() = runTest {
+            val usdCurrency = CurrencyUiModel(code = "USD", displayText = "USD ($)", decimalDigits = 2)
+            uiState.value = nonCashForeignState.copy(
+                availableCurrencies = persistentListOf(eurCurrency, thbCurrency, usdCurrency),
+                displayExchangeRate = "35.5"
+            )
+            coEvery {
+                getExchangeRateUseCase(baseCurrencyCode = "EUR", targetCurrencyCode = "USD")
+            } coAnswers {
+                kotlinx.coroutines.delay(1000L)
+                ExchangeRateWithStaleness(rate = BigDecimal("1.10"), isStale = false)
+            }
+
+            handler.bind(uiState, actions, this)
+
+            // When: currency selected but coroutines not advanced to completion yet
+            handler.handleCurrencySelected("USD") {}
+            runCurrent()
+
+            // Then: before rate fetch completes, displayExchangeRate is NOT blank ("")
+            val interimState = uiState.value
+            assertEquals("35.5", interimState.displayExchangeRate)
+            assertTrue(interimState.isLoadingRate)
+
+            // When advancing coroutines
+            advanceUntilIdle()
+
+            // Then: updated rate is applied
+            val finalState = uiState.value
+            assertEquals("1.1", finalState.displayExchangeRate)
+            assertFalse(finalState.isLoadingRate)
         }
     }
 }

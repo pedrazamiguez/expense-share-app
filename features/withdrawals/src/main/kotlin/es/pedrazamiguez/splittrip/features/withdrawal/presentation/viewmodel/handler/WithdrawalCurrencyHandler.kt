@@ -59,15 +59,22 @@ class WithdrawalCurrencyHandler(
                 selectedCurrency = selectedUiModel,
                 showExchangeRateSection = isForeign,
                 exchangeRateLabel = exchangeRateLabel,
-                isExchangeRateError = false
+                isExchangeRateError = false,
+                isExchangeRateStale = false
             ).withStepClamped()
         }
 
         if (isForeign) {
-            _uiState.update { it.copy(displayExchangeRate = "") }
             fetchRate()
         } else {
-            _uiState.update { it.copy(displayExchangeRate = "1.0", deductedAmount = "") }
+            _uiState.update {
+                it.copy(
+                    displayExchangeRate = "1.0",
+                    deductedAmount = "",
+                    isExchangeRateError = false,
+                    isExchangeRateStale = false
+                )
+            }
         }
         recalculateDeducted()
     }
@@ -164,7 +171,7 @@ class WithdrawalCurrencyHandler(
                         isError = rateResult == null
                     )
                 }
-                if (rateResult != null) recalculateDeducted()
+                recalculateDeducted()
             } catch (e: Exception) {
                 Timber.w(e, "Failed to fetch exchange rate")
                 _uiState.update { current ->
@@ -175,6 +182,7 @@ class WithdrawalCurrencyHandler(
                         isError = true
                     )
                 }
+                recalculateDeducted()
             }
         }
     }
@@ -196,7 +204,7 @@ class WithdrawalCurrencyHandler(
             displayExchangeRate = rateResult?.rate?.let { r ->
                 formattingHelper.formatRateForDisplay(r.toPlainString())
             } ?: displayExchangeRate,
-            isExchangeRateStale = rateResult?.isStale ?: isExchangeRateStale
+            isExchangeRateStale = rateResult?.isStale ?: false
         )
     }
 }
