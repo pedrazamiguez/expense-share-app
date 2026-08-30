@@ -26,8 +26,8 @@ fun SecurityPreferencesCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(MaterialTheme.spacing.Medium),
-            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
+                .padding(MaterialTheme.spacing.Default),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Default)
         ) {
             BiometricLockRow(
                 biometricLockEnabled = biometricLockEnabled,

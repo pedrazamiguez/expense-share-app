@@ -1,18 +1,25 @@
 package es.pedrazamiguez.splittrip.features.settings.presentation.screen
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import es.pedrazamiguez.splittrip.core.designsystem.extension.debouncedClickable
 import es.pedrazamiguez.splittrip.core.designsystem.extension.getNameRes
+import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Check
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.domain.enums.Currency
 
 @Composable
@@ -21,27 +28,40 @@ fun DefaultCurrencyScreen(
     selectedCurrencyCode: String?,
     onCurrencySelected: (String) -> Unit
 ) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(availableCurrencies) { currency ->
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            horizontal = MaterialTheme.spacing.ExtraLarge,
+            vertical = MaterialTheme.spacing.ExtraLarge
+        )
+    ) {
+        item {
+            FlatCard(modifier = Modifier.fillMaxWidth()) {
+                Column {
+                    availableCurrencies.forEach { currency ->
+                        val isSelected = currency.name == selectedCurrencyCode
+                        val currencyName = stringResource(id = currency.getNameRes())
 
-            val isSelected = currency.name == selectedCurrencyCode
-            val currencyName = stringResource(id = currency.getNameRes())
-
-            ListItem(
-                supportingContent = { Text(text = currency.name) },
-                trailingContent = {
-                    if (isSelected) {
-                        Icon(
-                            imageVector = TablerIcons.Outline.Check,
-                            contentDescription = "Selected"
-                        )
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            supportingContent = { Text(text = currency.name) },
+                            trailingContent = {
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = TablerIcons.Outline.Check,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            },
+                            modifier = Modifier.debouncedClickable {
+                                onCurrencySelected(currency.name)
+                            }
+                        ) {
+                            Text(text = "$currencyName (${currency.symbol})")
+                        }
                     }
-                },
-                modifier = Modifier.clickable {
-                    onCurrencySelected(currency.name)
                 }
-            ) {
-                Text(text = "$currencyName (${currency.symbol})")
             }
         }
     }
