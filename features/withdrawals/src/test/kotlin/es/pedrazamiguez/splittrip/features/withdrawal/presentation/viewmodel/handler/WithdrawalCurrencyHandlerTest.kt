@@ -11,7 +11,6 @@ import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.sta
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import java.io.IOException
 import java.math.BigDecimal
 import kotlinx.collections.immutable.toImmutableList
@@ -19,6 +18,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -328,7 +328,7 @@ class WithdrawalCurrencyHandlerTest {
     inner class FetchRate {
 
         @Test
-        fun `rateResult null sets exchange rate to empty and flags error`() = runTest {
+        fun `rateResult null retains existing exchange rate and flags error`() = runTest {
             val originalRate = "37.5"
             uiState.value = baseState.copy(
                 selectedCurrency = thbModel,
@@ -340,24 +340,24 @@ class WithdrawalCurrencyHandlerTest {
             handler.handleCurrencySelected("THB")
             advanceUntilIdle()
 
-            assertEquals("", uiState.value.displayExchangeRate)
+            assertEquals("37.5", uiState.value.displayExchangeRate)
             assertTrue(uiState.value.isExchangeRateError)
         }
 
         @Test
-        fun `rateResult null skips async recalculate deducted so formatForDisplay is not called`() = runTest {
-            // handleCurrencySelected always calls recalculateDeducted() synchronously.
-            // Since displayExchangeRate is empty, it returns early.
-            // When rateResult == null, the async call is skipped and rate stays empty — verify 0 invocations.
-            uiState.value = baseState.copy(selectedCurrency = thbModel, showExchangeRateSection = true)
+        fun `rateResult null with blank rate leaves deducted amount empty`() = runTest {
+            uiState.value = baseState.copy(
+                selectedCurrency = thbModel,
+                displayExchangeRate = "",
+                showExchangeRateSection = true
+            )
             coEvery { getExchangeRateUseCase(any(), any()) } returns null
 
             handler.bind(uiState, actions, this)
             handler.handleCurrencySelected("THB")
             advanceUntilIdle()
 
-            // Deducted amount calculation is skipped because exchange rate is empty.
-            verify(exactly = 0) { formattingHelper.formatForDisplay(any(), any(), any()) }
+            assertEquals("", uiState.value.deductedAmount)
         }
 
         @Test
@@ -373,7 +373,7 @@ class WithdrawalCurrencyHandlerTest {
         }
 
         @Test
-        fun `stale rate sets isExchangeRateStale to true`() = runTest {
+        fun `stale rate sets isExchangeRateStale to true and updates displayExchangeRate`() = runTest {
             uiState.value = baseState.copy(selectedCurrency = thbModel)
             coEvery { getExchangeRateUseCase(any(), any()) } returns ExchangeRateWithStaleness(
                 rate = BigDecimal("37.037"),
@@ -385,6 +385,34 @@ class WithdrawalCurrencyHandlerTest {
             advanceUntilIdle()
 
             assertTrue(uiState.value.isExchangeRateStale)
+            assertEquals("37.037", uiState.value.displayExchangeRate)
+        }
+
+        @Test
+        fun `selecting foreign currency retains previous displayExchangeRate as fallback during fetchRate`() = runTest {
+            uiState.value = baseState.copy(displayExchangeRate = "37.5")
+            coEvery {
+                getExchangeRateUseCase(any(), any())
+            } coAnswers {
+                kotlinx.coroutines.delay(1000L)
+                ExchangeRateWithStaleness(rate = BigDecimal("38.0"), isStale = false)
+            }
+            handler.bind(uiState, actions, this)
+
+            // When
+            handler.handleCurrencySelected("THB")
+            runCurrent()
+
+            // Then: before fetch completes, rate is not wiped to ""
+            val interimState = uiState.value
+            assertEquals("37.5", interimState.displayExchangeRate)
+            assertTrue(interimState.isLoadingRate)
+
+            advanceUntilIdle()
+
+            val finalState = uiState.value
+            assertEquals("37.037", finalState.displayExchangeRate)
+            assertFalse(finalState.isLoadingRate)
         }
     }
 
@@ -412,9 +440,12 @@ class WithdrawalCurrencyHandlerTest {
         }
 
         @Test
-        fun `null rateResult from fetch rate sets error flag to true`() = runTest {
-            uiState.value =
-                baseState.copy(selectedCurrency = thbModel, isExchangeRateError = false, displayExchangeRate = "")
+        fun `null rateResult from fetch rate sets error flag and retains existing rate`() = runTest {
+            uiState.value = baseState.copy(
+                selectedCurrency = thbModel,
+                isExchangeRateError = false,
+                displayExchangeRate = "37.5"
+            )
             coEvery {
                 getExchangeRateUseCase(any(), any())
             } returns null
@@ -428,13 +459,17 @@ class WithdrawalCurrencyHandlerTest {
             // Then
             val state = uiState.value
             assertTrue(state.isExchangeRateError)
-            assertEquals("", state.displayExchangeRate)
+            assertFalse(state.isExchangeRateStale)
+            assertEquals("37.5", state.displayExchangeRate)
         }
 
         @Test
-        fun `exception from fetch rate sets error flag to true`() = runTest {
-            uiState.value =
-                baseState.copy(selectedCurrency = thbModel, isExchangeRateError = false, displayExchangeRate = "")
+        fun `exception from fetch rate sets error flag and retains existing rate`() = runTest {
+            uiState.value = baseState.copy(
+                selectedCurrency = thbModel,
+                isExchangeRateError = false,
+                displayExchangeRate = "37.5"
+            )
             coEvery {
                 getExchangeRateUseCase(any(), any())
             } throws IOException("Network error")
@@ -448,7 +483,8 @@ class WithdrawalCurrencyHandlerTest {
             // Then
             val state = uiState.value
             assertTrue(state.isExchangeRateError)
-            assertEquals("", state.displayExchangeRate)
+            assertFalse(state.isExchangeRateStale)
+            assertEquals("37.5", state.displayExchangeRate)
         }
 
         @Test
