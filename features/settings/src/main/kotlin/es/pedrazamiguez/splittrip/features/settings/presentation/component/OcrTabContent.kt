@@ -34,8 +34,8 @@ internal fun OcrTabContent(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(MaterialTheme.spacing.Large),
-        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Large)
+            .padding(MaterialTheme.spacing.ExtraLarge),
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.ExtraLarge)
     ) {
         item {
             SelectedAttachmentCard(

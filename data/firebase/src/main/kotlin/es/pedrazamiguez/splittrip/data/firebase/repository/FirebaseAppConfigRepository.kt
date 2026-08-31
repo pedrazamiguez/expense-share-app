@@ -128,6 +128,10 @@ class FirebaseAppConfigRepository(
         private const val DEFAULT_SETTLEMENT_NUDGE_RATE_LIMIT_HOURS = 24L
         private val DEFAULT_OCR_SAFETY_FALSE_POSITIVES_BLACKLIST = listOf("razor", "private", "toothbrushes")
 
+        private const val LANG_EN = "en"
+        private const val LANG_ES = "es"
+        private const val LANG_ES_RAN = "es-rAN"
+
         val DEFAULT_DEVELOPER_INFO = DeveloperInfo(
             name = "Andrés Pedraza Míguez",
             avatarUrl = "",
@@ -136,12 +140,12 @@ class FirebaseAppConfigRepository(
             linkedinUrl = "https://www.linkedin.com/in/pedrazamiguez",
             portfolioUrl = "https://pedrazamiguez.github.io",
             roleMap = mapOf(
-                "en" to "Senior Java & Kotlin Engineer",
-                "es" to "Ingeniero Senior de Java y Kotlin",
-                "es-rAN" to "Inheniero Senior de Java y Kotlin"
+                LANG_EN to "Senior Java & Kotlin Engineer",
+                LANG_ES to "Ingeniero Senior de Java y Kotlin",
+                LANG_ES_RAN to "Inheniero Senior de Java y Kotlin"
             ),
             bioMap = mapOf(
-                "en" to "Senior Backend Engineer with over 14 years of experience designing scalable systems, " +
+                LANG_EN to "Senior Backend Engineer with over 14 years of experience designing scalable systems, " +
                     "now leveraging a strong hybrid skill set in Java (Backend) and Kotlin (Mobile/Android). " +
                     "Proven track record working as a Remote Contractor for UK-based companies, delivering " +
                     "high-quality solutions in English-speaking environments.\n\n" +
@@ -150,7 +154,7 @@ class FirebaseAppConfigRepository(
                     "legacy environments to refactor code, mentor senior peers, and drive delivery. " +
                     "Passionate about software craftsmanship, automated testing, and solving critical " +
                     "business problems across the full stack.",
-                "es" to "Ingeniero Backend Senior con más de 14 años de experiencia diseñando sistemas " +
+                LANG_ES to "Ingeniero Backend Senior con más de 14 años de experiencia diseñando sistemas " +
                     "escalables, aprovechando un sólido conjunto de habilidades híbridas en Java (Backend) y " +
                     "Kotlin (Móvil/Android). Trayectoria contrastada trabajando como contratista remoto para " +
                     "empresas del Reino Unido, ofreciendo soluciones de alta calidad en entornos " +
@@ -160,7 +164,7 @@ class FirebaseAppConfigRepository(
                     "entornos heredados y complejos para refactorizar código, mentorizar a compañeros y " +
                     "acelerar entregas. Apasionado por la excelencia en el desarrollo de software, los tests " +
                     "automatizados y la resolución de problemas de negocio críticos en todo el stack.",
-                "es-rAN" to "Inheniero Backend Senior con mâh de 14 añô de êpperiençia diçeñando çîttemâ " +
+                LANG_ES_RAN to "Inheniero Backend Senior con mâh de 14 añô de êpperiençia diçeñando çîttemâ " +
                     "êccalablê, aprobexando un çólido conhunto de abilidadê íbridâ en Java (Backend) y " +
                     "Kotlin (Móbî/Androîh). Trayêttoria contrâttá trabahando como contratîtta remoto pa " +
                     "empreçâ del Reino Unío, ofreçiendo çoluçionê de arta calidá en entônnô anglopâl-lantê.\n\n" +
@@ -171,19 +175,19 @@ class FirebaseAppConfigRepository(
                     "automatiçáô y la reçoluçión de problemâ de negoçio críticô en tó er stack."
             ),
             creditsMap = mapOf(
-                "en" to "SplitTrip is a modular Android application designed for travelers to manage shared " +
+                LANG_EN to "SplitTrip is a modular Android application designed for travelers to manage shared " +
                     "expenses efficiently. It allows users to create expense groups, track spending in multiple " +
                     "currencies, calculate debts, and sync data across devices.\n\n" +
                     "Built with modern Android practices—including Jetpack Compose, Clean Architecture, and " +
                     "Offline-First principles—the app serves as a reference for scalable, multi-module Android " +
                     "development.",
-                "es" to "SplitTrip es una aplicación modular de Android diseñada para que los viajeros gestionen " +
+                LANG_ES to "SplitTrip es una aplicación modular de Android diseñada para que los viajeros gestionen " +
                     "gastos compartidos de forma eficiente. Permite crear grupos de gastos, registrar pagos en " +
                     "múltiples monedas, calcular deudas y sincronizar datos entre dispositivos.\n\n" +
                     "Construida con las prácticas modernas de Android —incluyendo Jetpack Compose, Clean " +
                     "Architecture y principios Offline-First—, la aplicación sirve como referencia para el " +
                     "desarrollo escalable y multimódulo en Android.",
-                "es-rAN" to "SplîTTrîh êh una aplicaçión modulâh de Androîh diçeñá pa que lô biaherô hêttionen " +
+                LANG_ES_RAN to "SplîTTrîh êh una aplicaçión modulâh de Androîh diçeñá pa que lô biaherô hêttionen " +
                     "gâttô compartíô de forma efiçiente. Permite creâh grupô de gâttô, rehîttrâh pagô en " +
                     "múrtiplê monedâ, carculâh deudâ y çincroniçâh datô entre dîppoçitibô.\n\n" +
                     "Côttruida con lâ prátticâ modênnâ de Androîh —incluyendo Hêppack Compoçe, Clean " +
@@ -191,9 +195,9 @@ class FirebaseAppConfigRepository(
                     "deçarroyo êccalable y murtimódulo en Androîh."
             ),
             copyrightMap = mapOf(
-                "en" to "© 2026 Andrés Pedraza Míguez.\nAll rights reserved.",
-                "es" to "© 2026 Andrés Pedraza Míguez.\nTodos los derechos reservados.",
-                "es-rAN" to "© 2026 Andrés Pedraza Míguez.\nTôh lô derexô reçerbaô."
+                LANG_EN to "© 2026 Andrés Pedraza Míguez.\nAll rights reserved.",
+                LANG_ES to "© 2026 Andrés Pedraza Míguez.\nTodos los derechos reservados.",
+                LANG_ES_RAN to "© 2026 Andrés Pedraza Míguez.\nTôh lô derexô reçerbaô."
             )
         )
     }

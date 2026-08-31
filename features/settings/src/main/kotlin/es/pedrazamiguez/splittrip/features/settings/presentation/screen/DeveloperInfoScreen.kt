@@ -25,10 +25,10 @@ fun DeveloperInfoScreen(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            horizontal = MaterialTheme.spacing.Default,
-            vertical = MaterialTheme.spacing.Default
+            horizontal = MaterialTheme.spacing.ExtraLarge,
+            vertical = MaterialTheme.spacing.ExtraLarge
         ),
-        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Large)
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.ExtraLarge)
     ) {
         item(key = "developer_hero_card") {
             DeveloperHeroCard(uiState = uiState)

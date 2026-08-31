@@ -303,6 +303,7 @@
     <string name="subscriptions_feature_pro_priority_support">Soporte prioritario</string>
     <string name="subscriptions_cta_current_plan">Plan actual</string>
     <string name="subscriptions_cta_upgrade_pro">Mejorar a Pro</string>
+    <string name="subscriptions_cta_downgrade_free">Cambiar a Free</string>
     <string name="subscriptions_badge_popular">Más popular</string>
     <string name="subscriptions_restore_purchases">Restaurar compras</string>
     <string name="subscriptions_disclaimer">Las suscripciones se facturan a través de tu cuenta de Google Play y se renuevan automáticamente salvo cancelación al menos 24 horas antes del final del período actual. (Simulado en MVP)</string>

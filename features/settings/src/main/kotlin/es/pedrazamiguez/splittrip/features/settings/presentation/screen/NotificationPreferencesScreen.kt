@@ -1,9 +1,10 @@
 package es.pedrazamiguez.splittrip.features.settings.presentation.screen
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +22,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.BuildingBank
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Receipt
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.BodyText
 import es.pedrazamiguez.splittrip.domain.enums.NotificationCategory
 import es.pedrazamiguez.splittrip.features.settings.R
@@ -72,88 +74,78 @@ fun NotificationPreferencesScreen(
     }
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = MaterialTheme.spacing.Small),
-        contentPadding = PaddingValues(vertical = MaterialTheme.spacing.Small)
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            horizontal = MaterialTheme.spacing.ExtraLarge,
+            vertical = MaterialTheme.spacing.ExtraLarge
+        ),
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Section)
     ) {
-        item(key = "header") {
-            BodyText(
-                text = stringResource(R.string.notification_prefs_header),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(
-                    horizontal = MaterialTheme.spacing.Default,
-                    vertical = MaterialTheme.spacing.Medium
+        item(key = "categories_section") {
+            Column(verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)) {
+                BodyText(
+                    text = stringResource(R.string.notification_prefs_header),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            )
-        }
 
-        item(key = "membership") {
-            NotificationCategoryItem(
-                icon = { Icon(TablerIcons.Outline.UsersGroup, contentDescription = null) },
-                title = stringResource(R.string.notification_prefs_membership_title),
-                description = stringResource(R.string.notification_prefs_membership_description),
-                checked = uiState.membershipEnabled,
-                onCheckedChange = { enabled ->
-                    onEvent(
-                        NotificationPreferencesUiEvent.ToggleCategory(
-                            NotificationCategory.MEMBERSHIP,
-                            enabled
+                FlatCard(modifier = Modifier.fillMaxWidth()) {
+                    Column {
+                        NotificationCategoryItem(
+                            icon = { Icon(TablerIcons.Outline.UsersGroup, contentDescription = null) },
+                            title = stringResource(R.string.notification_prefs_membership_title),
+                            description = stringResource(R.string.notification_prefs_membership_description),
+                            checked = uiState.membershipEnabled,
+                            onCheckedChange = { enabled ->
+                                onEvent(
+                                    NotificationPreferencesUiEvent.ToggleCategory(
+                                        NotificationCategory.MEMBERSHIP,
+                                        enabled
+                                    )
+                                )
+                            }
                         )
-                    )
-                }
-            )
-        }
 
-        item(key = "expenses") {
-            NotificationCategoryItem(
-                icon = { Icon(TablerIcons.Outline.Receipt, contentDescription = null) },
-                title = stringResource(R.string.notification_prefs_expenses_title),
-                description = stringResource(R.string.notification_prefs_expenses_description),
-                checked = uiState.expensesEnabled,
-                onCheckedChange = { enabled ->
-                    onEvent(
-                        NotificationPreferencesUiEvent.ToggleCategory(
-                            NotificationCategory.EXPENSES,
-                            enabled
+                        NotificationCategoryItem(
+                            icon = { Icon(TablerIcons.Outline.Receipt, contentDescription = null) },
+                            title = stringResource(R.string.notification_prefs_expenses_title),
+                            description = stringResource(R.string.notification_prefs_expenses_description),
+                            checked = uiState.expensesEnabled,
+                            onCheckedChange = { enabled ->
+                                onEvent(
+                                    NotificationPreferencesUiEvent.ToggleCategory(
+                                        NotificationCategory.EXPENSES,
+                                        enabled
+                                    )
+                                )
+                            }
                         )
-                    )
-                }
-            )
-        }
 
-        item(key = "financial") {
-            NotificationCategoryItem(
-                icon = { Icon(TablerIcons.Outline.BuildingBank, contentDescription = null) },
-                title = stringResource(R.string.notification_prefs_financial_title),
-                description = stringResource(R.string.notification_prefs_financial_description),
-                checked = uiState.financialEnabled,
-                onCheckedChange = { enabled ->
-                    onEvent(
-                        NotificationPreferencesUiEvent.ToggleCategory(
-                            NotificationCategory.FINANCIAL,
-                            enabled
+                        NotificationCategoryItem(
+                            icon = { Icon(TablerIcons.Outline.BuildingBank, contentDescription = null) },
+                            title = stringResource(R.string.notification_prefs_financial_title),
+                            description = stringResource(R.string.notification_prefs_financial_description),
+                            checked = uiState.financialEnabled,
+                            onCheckedChange = { enabled ->
+                                onEvent(
+                                    NotificationPreferencesUiEvent.ToggleCategory(
+                                        NotificationCategory.FINANCIAL,
+                                        enabled
+                                    )
+                                )
+                            }
                         )
-                    )
+                    }
                 }
-            )
+            }
         }
 
-        item(key = "reminder_prefs_header") {
-            BodyText(
-                text = stringResource(R.string.notification_prefs_reminder_title),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(
-                    horizontal = MaterialTheme.spacing.Default,
-                    vertical = MaterialTheme.spacing.Medium
+        item(key = "reminder_prefs_section") {
+            Column(verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)) {
+                BodyText(
+                    text = stringResource(R.string.notification_prefs_reminder_title),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            )
-        }
 
-        item(key = "timezone") {
-            Box(
-                modifier = Modifier.padding(horizontal = MaterialTheme.spacing.Default)
-            ) {
                 StyledOutlinedTextField(
                     value = uiState.timezone ?: stringResource(R.string.notification_prefs_select_timezone),
                     onValueChange = {},
@@ -162,13 +154,7 @@ fun NotificationPreferencesScreen(
                     label = stringResource(R.string.notification_prefs_timezone),
                     onClick = { showTimezoneSheet = true }
                 )
-            }
-        }
 
-        item(key = "reminder_time") {
-            Box(
-                modifier = Modifier.padding(horizontal = MaterialTheme.spacing.Default)
-            ) {
                 StyledOutlinedTextField(
                     value = uiState.preferredReminderTime ?: "",
                     onValueChange = { },

@@ -30,9 +30,9 @@ fun SubscriptionsContent(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(horizontal = MaterialTheme.spacing.Large)
+            .padding(horizontal = MaterialTheme.spacing.ExtraLarge)
             .padding(
-                top = MaterialTheme.spacing.Large,
+                top = MaterialTheme.spacing.ExtraLarge,
                 bottom = MaterialTheme.spacing.ExtraLarge + bottomPadding
             ),
         horizontalAlignment = Alignment.CenterHorizontally,

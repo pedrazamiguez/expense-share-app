@@ -106,8 +106,7 @@ fun WizardStepContent(
                 AddExpenseStep.SPLIT -> SplitStep(uiState = uiState, onEvent = onEvent)
                 AddExpenseStep.CATEGORY -> CategoryStep(
                     uiState = uiState,
-                    onEvent = onEvent,
-                    onAutoAdvance = nextStep
+                    onEvent = onEvent
                 )
                 AddExpenseStep.VENDOR_NOTES -> VendorNotesStep(
                     uiState = uiState,

@@ -39,8 +39,8 @@ internal fun AccountStatusProviders(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
-                modifier = Modifier.padding(MaterialTheme.spacing.Medium),
-                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
+                modifier = Modifier.padding(MaterialTheme.spacing.Default),
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Default)
             ) {
                 val isEmailLinked = uiState.linkedProviders.contains(AuthProviderType.EMAIL_PASSWORD)
                 AccountProviderRow(
