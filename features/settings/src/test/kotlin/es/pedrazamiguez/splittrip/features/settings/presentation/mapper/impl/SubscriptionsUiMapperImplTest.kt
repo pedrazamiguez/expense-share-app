@@ -168,6 +168,8 @@ class SubscriptionsUiMapperImplTest {
 
             assertFalse(freePlan.isCurrentPlan)
             assertTrue(freePlan.isCtaButtonEnabled)
+            val freeCtaText = assertInstanceOf(UiText.StringResource::class.java, freePlan.ctaButtonText)
+            assertEquals(R.string.subscriptions_cta_downgrade_free, freeCtaText.resId)
 
             assertTrue(proPlan.isCurrentPlan)
             assertFalse(proPlan.isCtaButtonEnabled)

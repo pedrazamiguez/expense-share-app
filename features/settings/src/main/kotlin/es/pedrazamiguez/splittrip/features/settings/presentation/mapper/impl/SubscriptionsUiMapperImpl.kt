@@ -88,7 +88,7 @@ class SubscriptionsUiMapperImpl(
             ctaButtonText = if (isCurrentPlan) {
                 UiText.StringResource(R.string.subscriptions_cta_current_plan)
             } else {
-                UiText.StringResource(R.string.subscriptions_cta_current_plan)
+                UiText.StringResource(R.string.subscriptions_cta_downgrade_free)
             },
             isCtaButtonEnabled = !isCurrentPlan,
             isHighlightedCard = false

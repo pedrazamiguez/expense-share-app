@@ -11,12 +11,10 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.
  * Step 6: Category selection.
  * Auto-advances to the next step after a category is selected.
  */
-@Suppress("UnusedParameter")
 @Composable
 fun CategoryStep(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
-    onAutoAdvance: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     WizardStepLayout(modifier = modifier) {
