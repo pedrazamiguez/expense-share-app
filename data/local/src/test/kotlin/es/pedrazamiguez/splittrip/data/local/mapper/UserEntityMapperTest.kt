@@ -1,6 +1,8 @@
 package es.pedrazamiguez.splittrip.data.local.mapper
 
 import es.pedrazamiguez.splittrip.data.local.entity.UserEntity
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.User
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -26,7 +28,8 @@ class UserEntityMapperTest {
         createdAtMillis = testTimestampMillis,
         lastUpdatedAtMillis = testTimestampMillis,
         bio = "Hello",
-        syncStatus = "PENDING_SYNC"
+        syncStatus = "PENDING_SYNC",
+        tier = "FREE"
     )
 
     @Nested
@@ -42,7 +45,22 @@ class UserEntityMapperTest {
             assertEquals("images/alice.jpg", user.profileImagePath)
             assertEquals(testTimestamp, user.createdAt)
             assertEquals("Hello", user.bio)
-            assertEquals(es.pedrazamiguez.splittrip.domain.enums.SyncStatus.PENDING_SYNC, user.syncStatus)
+            assertEquals(SyncStatus.PENDING_SYNC, user.syncStatus)
+            assertEquals(SubscriptionTier.FREE, user.tier)
+        }
+
+        @Test
+        fun `maps PRO tier correctly`() {
+            val entity = fullEntity.copy(tier = "PRO")
+            val user = entity.toDomain()
+            assertEquals(SubscriptionTier.PRO, user.tier)
+        }
+
+        @Test
+        fun `invalid tier defaults to FREE`() {
+            val entity = fullEntity.copy(tier = "INVALID")
+            val user = entity.toDomain()
+            assertEquals(SubscriptionTier.FREE, user.tier)
         }
 
         @Test
@@ -70,7 +88,8 @@ class UserEntityMapperTest {
             profileImagePath = "images/alice.jpg",
             createdAt = testTimestamp,
             bio = "Hello",
-            syncStatus = es.pedrazamiguez.splittrip.domain.enums.SyncStatus.PENDING_SYNC
+            syncStatus = SyncStatus.PENDING_SYNC,
+            tier = SubscriptionTier.FREE
         )
 
         @Test
@@ -84,6 +103,14 @@ class UserEntityMapperTest {
             assertEquals(testTimestampMillis, entity.createdAtMillis)
             assertEquals("Hello", entity.bio)
             assertEquals("PENDING_SYNC", entity.syncStatus)
+            assertEquals("FREE", entity.tier)
+        }
+
+        @Test
+        fun `maps PRO tier to string correctly`() {
+            val user = fullUser.copy(tier = SubscriptionTier.PRO)
+            val entity = user.toEntity()
+            assertEquals("PRO", entity.tier)
         }
 
         @Test

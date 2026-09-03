@@ -49,7 +49,7 @@ import es.pedrazamiguez.splittrip.data.local.entity.UserEntity
         SettlementRecordEntity::class,
         MembershipRemovalEventEntity::class
     ],
-    version = 43,
+    version = 44,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 33, to = 34),
@@ -60,7 +60,8 @@ import es.pedrazamiguez.splittrip.data.local.entity.UserEntity
         AutoMigration(from = 39, to = 40),
         AutoMigration(from = 40, to = 41),
         AutoMigration(from = 41, to = 42),
-        AutoMigration(from = 42, to = 43)
+        AutoMigration(from = 42, to = 43),
+        AutoMigration(from = 43, to = 44)
     ]
 )
 @TypeConverters(

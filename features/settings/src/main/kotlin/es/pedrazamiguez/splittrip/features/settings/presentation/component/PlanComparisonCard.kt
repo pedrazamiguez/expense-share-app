@@ -24,8 +24,8 @@ import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButtonDefaults
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.SubscriptionPlanUiModel
-import es.pedrazamiguez.splittrip.features.settings.presentation.model.SubscriptionTier
 
 private val CARD_ELEVATION_HIGHLIGHTED = 4.dp
 private val BADGE_HORIZONTAL_PADDING = 10.dp

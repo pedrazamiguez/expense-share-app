@@ -2,11 +2,11 @@ package es.pedrazamiguez.splittrip.features.settings.presentation.mapper.impl
 
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import es.pedrazamiguez.splittrip.features.settings.R
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.BillingInterval
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.SubscriptionFeatureUiModel
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.SubscriptionPlanUiModel
-import es.pedrazamiguez.splittrip.features.settings.presentation.model.SubscriptionTier
 import io.mockk.every
 import io.mockk.mockk
 import java.util.Locale

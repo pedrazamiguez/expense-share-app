@@ -36,6 +36,19 @@ interface UserDao {
         syncStatus: String
     )
 
+    @Query(
+        "UPDATE users SET tier = :tier, " +
+            "lastUpdatedAtMillis = :lastUpdatedAtMillis, " +
+            "syncStatus = :syncStatus " +
+            "WHERE userId = :userId"
+    )
+    suspend fun updateUserTier(
+        userId: String,
+        tier: String,
+        lastUpdatedAtMillis: Long,
+        syncStatus: String
+    )
+
     @Query("DELETE FROM users WHERE userId = :userId")
     suspend fun deleteUserById(userId: String)
 

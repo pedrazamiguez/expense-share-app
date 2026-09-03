@@ -5,6 +5,7 @@ import es.pedrazamiguez.splittrip.data.sync.syncCreateToCloud
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudUserDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalUserDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.repository.UserRepository
@@ -218,6 +219,26 @@ class UserRepositoryImpl(
                     localUserDataSource.getUsersByIds(listOf(id)).firstOrNull()?.syncStatus ?: SyncStatus.PENDING_SYNC
                 },
                 entityLabel = "user reminder preferences",
+                performanceMonitor = performanceMonitor
+            )
+        }
+    }
+
+    override suspend fun updateUserTier(userId: String, tier: SubscriptionTier): Result<Unit> {
+        return runCatching {
+            localUserDataSource.updateUserTier(userId, tier, SyncStatus.PENDING_SYNC)
+
+            syncCreateToCloud(
+                scope = syncScope,
+                entityId = userId,
+                cloudWrite = {
+                    cloudUserDataSource.updateUserTier(userId, tier)
+                },
+                updateSyncStatus = localUserDataSource::updateSyncStatus,
+                getCurrentSyncStatus = { id ->
+                    localUserDataSource.getUsersByIds(listOf(id)).firstOrNull()?.syncStatus ?: SyncStatus.PENDING_SYNC
+                },
+                entityLabel = "user tier",
                 performanceMonitor = performanceMonitor
             )
         }
