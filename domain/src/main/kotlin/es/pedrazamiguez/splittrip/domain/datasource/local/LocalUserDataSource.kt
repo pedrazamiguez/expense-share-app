@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.datasource.local
 
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.User
 import kotlinx.coroutines.flow.Flow
@@ -9,6 +10,7 @@ interface LocalUserDataSource {
     suspend fun getUsersByIds(userIds: List<String>): List<User>
     suspend fun updateSyncStatus(userId: String, syncStatus: SyncStatus)
     suspend fun updateUserReminderPreferences(userId: String, timezone: String?, preferredReminderTime: String?)
+    suspend fun updateUserTier(userId: String, tier: SubscriptionTier, syncStatus: SyncStatus)
     fun observeUser(userId: String): Flow<User?>
     suspend fun deleteUser(userId: String)
 }

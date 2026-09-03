@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.data.local.dao.UserDao
 import es.pedrazamiguez.splittrip.data.local.mapper.toDomain
 import es.pedrazamiguez.splittrip.data.local.mapper.toEntities
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalUserDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.User
 import kotlinx.coroutines.flow.Flow
@@ -32,6 +33,15 @@ class LocalUserDataSourceImpl(private val userDao: UserDao) : LocalUserDataSourc
             preferredReminderTime = preferredReminderTime,
             lastUpdatedAtMillis = System.currentTimeMillis(),
             syncStatus = SyncStatus.PENDING_SYNC.name
+        )
+    }
+
+    override suspend fun updateUserTier(userId: String, tier: SubscriptionTier, syncStatus: SyncStatus) {
+        userDao.updateUserTier(
+            userId = userId,
+            tier = tier.name,
+            lastUpdatedAtMillis = System.currentTimeMillis(),
+            syncStatus = syncStatus.name
         )
     }
 

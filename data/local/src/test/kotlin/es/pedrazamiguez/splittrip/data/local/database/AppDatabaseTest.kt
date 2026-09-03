@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import es.pedrazamiguez.splittrip.data.local.dao.CurrencyDao
 import es.pedrazamiguez.splittrip.data.local.dao.ExchangeRateDao
 import es.pedrazamiguez.splittrip.data.local.datasource.impl.LocalCurrencyDataSourceImpl
+import es.pedrazamiguez.splittrip.data.local.entity.UserEntity
 import es.pedrazamiguez.splittrip.domain.model.Currency
 import es.pedrazamiguez.splittrip.domain.model.ExchangeRate
 import es.pedrazamiguez.splittrip.domain.model.ExchangeRates
@@ -15,6 +16,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -133,5 +135,44 @@ class AppDatabaseTest {
             now.epochSecond,
             lastUpdated
         )
+    }
+
+    @Test
+    fun saveAndGetUserWithTier() = runTest {
+        val userDao = db.userDao()
+        val user = UserEntity(
+            userId = "user-pro",
+            email = "pro@example.com",
+            displayName = "Pro User",
+            profileImagePath = null,
+            createdAtMillis = 1000L,
+            lastUpdatedAtMillis = 1000L,
+            bio = null,
+            syncStatus = "SYNCED",
+            isPending = false,
+            tier = "PRO"
+        )
+        userDao.insertUsers(listOf(user))
+
+        val fetched = userDao.getUsersByIds(listOf("user-pro"))
+        assertEquals(1, fetched.size)
+        assertEquals("PRO", fetched.first().tier)
+
+        userDao.updateUserTier("user-pro", "FREE", 2000L, "SYNCED")
+        val updated = userDao.getUsersByIds(listOf("user-pro"))
+        assertEquals("FREE", updated.first().tier)
+    }
+
+    @Test
+    fun usersTable_tierColumn_hasDefaultValueFree() {
+        val sqliteDb = db.openHelper.writableDatabase
+        sqliteDb.execSQL(
+            "INSERT INTO users (userId, email, syncStatus, isPending) VALUES ('u1', 'test@example.com', 'SYNCED', 0)"
+        )
+        val cursor = sqliteDb.query("SELECT tier FROM users WHERE userId = 'u1'")
+        assertTrue(cursor.moveToFirst())
+        val tier = cursor.getString(0)
+        cursor.close()
+        assertEquals("FREE", tier)
     }
 }

@@ -5,9 +5,9 @@ import androidx.compose.ui.platform.LocalContext
 import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewComplete
 import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewLocaleProvider
 import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewThemeWrapper
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.impl.SubscriptionsUiMapperImpl
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.BillingInterval
-import es.pedrazamiguez.splittrip.features.settings.presentation.model.SubscriptionTier
 import es.pedrazamiguez.splittrip.features.settings.presentation.screen.SubscriptionsScreen
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.state.SubscriptionsUiState
 

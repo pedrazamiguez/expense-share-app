@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.data.local.mapper
 import es.pedrazamiguez.splittrip.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.splittrip.core.common.extensions.toLocalDateTimeUtc
 import es.pedrazamiguez.splittrip.data.local.entity.UserEntity
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.User
 
@@ -16,7 +17,8 @@ fun UserEntity.toDomain(): User = User(
     createdAt = createdAtMillis?.toLocalDateTimeUtc(),
     isPending = isPending,
     timezone = timezone,
-    preferredReminderTime = preferredReminderTime
+    preferredReminderTime = preferredReminderTime,
+    tier = SubscriptionTier.fromStringOrDefault(tier)
 )
 
 fun User.toEntity(): UserEntity = UserEntity(
@@ -30,7 +32,8 @@ fun User.toEntity(): UserEntity = UserEntity(
     syncStatus = syncStatus.name,
     isPending = isPending,
     timezone = timezone,
-    preferredReminderTime = preferredReminderTime
+    preferredReminderTime = preferredReminderTime,
+    tier = tier.name
 )
 
 fun List<UserEntity>.toDomain(): List<User> = map { it.toDomain() }

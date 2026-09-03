@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.settings.presentation.model
 
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import kotlinx.collections.immutable.ImmutableList
 
 data class SubscriptionPlanUiModel(

@@ -16,7 +16,8 @@ data class UserDocument(
     val lastUpdatedAt: Timestamp? = null,
     val isPending: Boolean = false,
     val timezone: String? = null,
-    val preferredReminderTime: String? = null
+    val preferredReminderTime: String? = null,
+    val tier: String = "FREE"
 ) {
     companion object {
         const val COLLECTION_PATH = "users"

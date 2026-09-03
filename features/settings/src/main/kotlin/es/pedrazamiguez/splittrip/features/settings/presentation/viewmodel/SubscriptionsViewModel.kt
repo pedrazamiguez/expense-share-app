@@ -2,11 +2,13 @@ package es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import es.pedrazamiguez.splittrip.domain.usecase.auth.IsUserAnonymousUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetCurrentUserProfileUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.ObserveCurrentUserProfileUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.UpdateUserTierUseCase
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.SubscriptionsUiMapper
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.BillingInterval
-import es.pedrazamiguez.splittrip.features.settings.presentation.model.SubscriptionTier
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.action.SubscriptionsUiAction
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.event.SubscriptionsUiEvent
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.state.SubscriptionsUiState
@@ -23,6 +25,8 @@ import timber.log.Timber
 
 class SubscriptionsViewModel(
     private val getCurrentUserProfileUseCase: GetCurrentUserProfileUseCase,
+    private val observeCurrentUserProfileUseCase: ObserveCurrentUserProfileUseCase,
+    private val updateUserTierUseCase: UpdateUserTierUseCase,
     private val isUserAnonymousUseCase: IsUserAnonymousUseCase,
     private val subscriptionsUiMapper: SubscriptionsUiMapper
 ) : ViewModel() {
@@ -34,7 +38,28 @@ class SubscriptionsViewModel(
     val actions = _actions.receiveAsFlow()
 
     init {
+        observeUserProfile()
         loadSubscriptions()
+    }
+
+    private fun observeUserProfile() {
+        viewModelScope.launch {
+            observeCurrentUserProfileUseCase().collect { user ->
+                if (user != null) {
+                    val selectedInterval = _uiState.value.selectedInterval
+                    val plans = subscriptionsUiMapper.mapPlans(
+                        currentTier = user.tier,
+                        selectedInterval = selectedInterval
+                    )
+                    _uiState.update {
+                        it.copy(
+                            currentTier = user.tier,
+                            plans = plans
+                        )
+                    }
+                }
+            }
+        }
     }
 
     fun onEvent(event: SubscriptionsUiEvent) {
@@ -51,8 +76,8 @@ class SubscriptionsViewModel(
             _uiState.update { it.copy(isLoading = true) }
             try {
                 val isAnon = isUserAnonymousUseCase().firstOrNull() ?: false
-                getCurrentUserProfileUseCase()
-                val currentTier = SubscriptionTier.FREE
+                val currentUser = getCurrentUserProfileUseCase()
+                val currentTier = currentUser?.tier ?: SubscriptionTier.FREE
                 val selectedInterval = _uiState.value.selectedInterval
                 val plans = subscriptionsUiMapper.mapPlans(
                     currentTier = currentTier,
@@ -94,6 +119,10 @@ class SubscriptionsViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isProcessingAction = true) }
             try {
+                val user = getCurrentUserProfileUseCase()
+                if (user != null) {
+                    updateUserTierUseCase(user.userId, tier)
+                }
                 val message = subscriptionsUiMapper.formatUpgradeSuccessMessage(tier)
                 _actions.send(SubscriptionsUiAction.ShowTopPill(message))
             } catch (e: CancellationException) {
@@ -110,6 +139,10 @@ class SubscriptionsViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isProcessingAction = true) }
             try {
+                val user = getCurrentUserProfileUseCase()
+                if (user != null) {
+                    updateUserTierUseCase(user.userId, SubscriptionTier.PRO)
+                }
                 val message = subscriptionsUiMapper.formatRestorePurchasesSuccessMessage()
                 _actions.send(SubscriptionsUiAction.ShowTopPill(message))
             } catch (e: CancellationException) {

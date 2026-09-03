@@ -1,14 +1,16 @@
 package es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel
 
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.usecase.auth.IsUserAnonymousUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetCurrentUserProfileUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.ObserveCurrentUserProfileUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.UpdateUserTierUseCase
 import es.pedrazamiguez.splittrip.features.settings.R
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.SubscriptionsUiMapper
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.BillingInterval
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.SubscriptionPlanUiModel
-import es.pedrazamiguez.splittrip.features.settings.presentation.model.SubscriptionTier
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.action.SubscriptionsUiAction
 import es.pedrazamiguez.splittrip.features.settings.presentation.viewmodel.event.SubscriptionsUiEvent
 import io.mockk.coEvery
@@ -18,6 +20,7 @@ import io.mockk.mockk
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -42,8 +45,12 @@ class SubscriptionsViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var getCurrentUserProfileUseCase: GetCurrentUserProfileUseCase
+    private lateinit var observeCurrentUserProfileUseCase: ObserveCurrentUserProfileUseCase
+    private lateinit var updateUserTierUseCase: UpdateUserTierUseCase
     private lateinit var isUserAnonymousUseCase: IsUserAnonymousUseCase
     private lateinit var subscriptionsUiMapper: SubscriptionsUiMapper
+
+    private val userProfileFlow = MutableSharedFlow<User?>(replay = 1)
 
     private val testUser = User(
         userId = "user_123",
@@ -83,11 +90,16 @@ class SubscriptionsViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         getCurrentUserProfileUseCase = mockk()
+        observeCurrentUserProfileUseCase = mockk()
+        updateUserTierUseCase = mockk(relaxed = true)
         isUserAnonymousUseCase = mockk()
         subscriptionsUiMapper = mockk()
 
+        userProfileFlow.tryEmit(testUser)
         coEvery { getCurrentUserProfileUseCase() } returns testUser
+        every { observeCurrentUserProfileUseCase() } returns userProfileFlow
         every { isUserAnonymousUseCase() } returns flowOf(false)
+        coEvery { updateUserTierUseCase(any(), any()) } returns Result.success(Unit)
         every {
             subscriptionsUiMapper.mapPlans(any(), any())
         } returns persistentListOf(mockFreePlan, mockProPlan)
@@ -107,6 +119,8 @@ class SubscriptionsViewModelTest {
 
     private fun createViewModel(): SubscriptionsViewModel = SubscriptionsViewModel(
         getCurrentUserProfileUseCase = getCurrentUserProfileUseCase,
+        observeCurrentUserProfileUseCase = observeCurrentUserProfileUseCase,
+        updateUserTierUseCase = updateUserTierUseCase,
         isUserAnonymousUseCase = isUserAnonymousUseCase,
         subscriptionsUiMapper = subscriptionsUiMapper
     )
@@ -133,6 +147,7 @@ class SubscriptionsViewModelTest {
         fun `guest user state sets isAnonymous to true`() = runTest(testDispatcher) {
             every { isUserAnonymousUseCase() } returns flowOf(true)
             coEvery { getCurrentUserProfileUseCase() } returns null
+            userProfileFlow.tryEmit(null)
 
             val viewModel = createViewModel()
             advanceUntilIdle()
@@ -161,6 +176,26 @@ class SubscriptionsViewModelTest {
             advanceUntilIdle()
 
             assertFalse(viewModel.uiState.value.isLoading)
+        }
+
+        @Test
+        fun `user profile observation updates currentTier and re-maps plans`() = runTest(testDispatcher) {
+            val proUser = testUser.copy(tier = SubscriptionTier.PRO)
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(SubscriptionTier.FREE, viewModel.uiState.value.currentTier)
+
+            userProfileFlow.emit(proUser)
+            advanceUntilIdle()
+
+            assertEquals(SubscriptionTier.PRO, viewModel.uiState.value.currentTier)
+            coVerify {
+                subscriptionsUiMapper.mapPlans(
+                    currentTier = SubscriptionTier.PRO,
+                    selectedInterval = BillingInterval.ANNUAL
+                )
+            }
         }
     }
 
@@ -192,7 +227,7 @@ class SubscriptionsViewModelTest {
     inner class UpgradePlan {
 
         @Test
-        fun `UpgradePlan emits ShowTopPill with formatted upgrade success message`() = runTest(testDispatcher) {
+        fun `UpgradePlan invokes UpdateUserTierUseCase and emits ShowTopPill`() = runTest(testDispatcher) {
             val viewModel = createViewModel()
             advanceUntilIdle()
 
@@ -202,6 +237,7 @@ class SubscriptionsViewModelTest {
             viewModel.onEvent(SubscriptionsUiEvent.UpgradePlan(SubscriptionTier.PRO))
             advanceUntilIdle()
 
+            coVerify(exactly = 1) { updateUserTierUseCase("user_123", SubscriptionTier.PRO) }
             assertFalse(viewModel.uiState.value.isProcessingAction)
             assertEquals(1, actions.size)
             val action = assertInstanceOf(SubscriptionsUiAction.ShowTopPill::class.java, actions.first())
@@ -230,7 +266,7 @@ class SubscriptionsViewModelTest {
     inner class RestorePurchases {
 
         @Test
-        fun `RestorePurchases emits ShowTopPill with formatted restore success message`() = runTest(testDispatcher) {
+        fun `RestorePurchases invokes UpdateUserTierUseCase and emits ShowTopPill`() = runTest(testDispatcher) {
             val viewModel = createViewModel()
             advanceUntilIdle()
 
@@ -240,6 +276,7 @@ class SubscriptionsViewModelTest {
             viewModel.onEvent(SubscriptionsUiEvent.RestorePurchases)
             advanceUntilIdle()
 
+            coVerify(exactly = 1) { updateUserTierUseCase("user_123", SubscriptionTier.PRO) }
             assertFalse(viewModel.uiState.value.isProcessingAction)
             assertEquals(1, actions.size)
             val action = assertInstanceOf(SubscriptionsUiAction.ShowTopPill::class.java, actions.first())

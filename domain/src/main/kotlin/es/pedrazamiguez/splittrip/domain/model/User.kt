@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.model
 
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import java.security.MessageDigest
 import java.time.LocalDateTime
@@ -14,7 +15,8 @@ data class User(
     val createdAt: LocalDateTime? = null,
     val isPending: Boolean = false,
     val timezone: String? = null,
-    val preferredReminderTime: String? = null
+    val preferredReminderTime: String? = null,
+    val tier: SubscriptionTier = SubscriptionTier.FREE
 ) {
     companion object {
         fun normalizeEmail(email: String): String {

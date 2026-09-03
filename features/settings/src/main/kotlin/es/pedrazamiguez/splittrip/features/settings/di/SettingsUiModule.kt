@@ -31,6 +31,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.setting.SetUserDefaultCurrencyU
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetCurrentUserProfileUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.ObserveCurrentUserProfileUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.UpdateUserReminderPreferencesUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.UpdateUserTierUseCase
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.AccountSecurityUiMapper
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.AccountStatusUiMapper
 import es.pedrazamiguez.splittrip.features.settings.presentation.mapper.DeveloperInfoUiMapper
@@ -206,10 +207,14 @@ val settingsUiModule = module {
 
     viewModel {
         val getCurrentUserProfileUseCase = get<GetCurrentUserProfileUseCase>()
+        val observeCurrentUserProfileUseCase = get<ObserveCurrentUserProfileUseCase>()
+        val updateUserTierUseCase = get<UpdateUserTierUseCase>()
         val isUserAnonymousUseCase = get<IsUserAnonymousUseCase>()
         val subscriptionsUiMapper = get<SubscriptionsUiMapper>()
         SubscriptionsViewModel(
             getCurrentUserProfileUseCase = getCurrentUserProfileUseCase,
+            observeCurrentUserProfileUseCase = observeCurrentUserProfileUseCase,
+            updateUserTierUseCase = updateUserTierUseCase,
             isUserAnonymousUseCase = isUserAnonymousUseCase,
             subscriptionsUiMapper = subscriptionsUiMapper
         )
