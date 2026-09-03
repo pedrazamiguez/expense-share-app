@@ -18,6 +18,9 @@
         "*.local"
       ]
     }
-  ]
+  ],
+  "remoteconfig": {
+    "template": "firebase/remoteconfig.template.json"
+  }
 }
 
