@@ -13,6 +13,34 @@
         <value>20</value>
     </entry>
     <entry>
+        <key>subscription_gating_enabled</key>
+        <value>true</value>
+    </entry>
+    <entry>
+        <key>max_owned_groups_free</key>
+        <value>1</value>
+    </entry>
+    <entry>
+        <key>max_owned_groups_pro</key>
+        <value>100</value>
+    </entry>
+    <entry>
+        <key>max_members_per_group_free</key>
+        <value>4</value>
+    </entry>
+    <entry>
+        <key>max_members_per_group_pro</key>
+        <value>20</value>
+    </entry>
+    <entry>
+        <key>ai_receipt_monthly_limit_free</key>
+        <value>0</value>
+    </entry>
+    <entry>
+        <key>ai_receipt_monthly_limit_pro</key>
+        <value>100</value>
+    </entry>
+    <entry>
         <key>extracted_date_max_future_days</key>
         <value>30</value>
     </entry>
