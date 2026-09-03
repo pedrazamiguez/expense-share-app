@@ -180,12 +180,23 @@ doctor: ## Check that required files and tools are present
 	else \
 		printf "  $(YELLOW)⚠️   Graphify index missing$(NC) — run 'make ai-setup'\n"; \
 	fi
-	@# opencode.jsonc has codebase-memory-mcp entry
+	@# SplitTrip RAG index
+	@if [ -f ".cache/splittrip_rag.db" ]; then \
+		printf "  $(GREEN)✅  SplitTrip RAG index present$(NC)\n"; \
+	else \
+		printf "  $(YELLOW)⚠️   SplitTrip RAG index missing$(NC) — run 'make rag-index' or 'make ai-setup'\n"; \
+	fi
+	@# opencode.jsonc has entries
 	@OPENCODE_CFG="$${HOME}/.config/opencode/opencode.jsonc"; \
 	if [ -f "$$OPENCODE_CFG" ] && grep -q "codebase-memory-mcp" "$$OPENCODE_CFG" 2>/dev/null; then \
 		printf "  $(GREEN)✅  opencode.jsonc has codebase-memory-mcp entry$(NC)\n"; \
 	else \
 		printf "  $(YELLOW)⚠️   opencode.jsonc missing codebase-memory-mcp entry$(NC) — run 'make ai-setup'\n"; \
+	fi; \
+	if [ -f "$$OPENCODE_CFG" ] && grep -q "splittrip-rag" "$$OPENCODE_CFG" 2>/dev/null; then \
+		printf "  $(GREEN)✅  opencode.jsonc has splittrip-rag entry$(NC)\n"; \
+	else \
+		printf "  $(YELLOW)⚠️   opencode.jsonc missing splittrip-rag entry$(NC) — run 'make ai-setup'\n"; \
 	fi
 	@# Gemini MCP config has entries
 	@GEMINI_CFG="$${HOME}/.gemini/config/mcp_config.json"; \
@@ -198,6 +209,11 @@ doctor: ## Check that required files and tools are present
 		printf "  $(GREEN)✅  Gemini MCP has graphify entry$(NC)\n"; \
 	else \
 		printf "  $(YELLOW)⚠️   Gemini MCP missing graphify entry$(NC) — run 'make ai-setup'\n"; \
+	fi; \
+	if [ -f "$$GEMINI_CFG" ] && grep -q '"splittrip-rag"' "$$GEMINI_CFG" 2>/dev/null; then \
+		printf "  $(GREEN)✅  Gemini MCP has splittrip-rag entry$(NC)\n"; \
+	else \
+		printf "  $(YELLOW)⚠️   Gemini MCP missing splittrip-rag entry$(NC) — run 'make ai-setup'\n"; \
 	fi
 	@echo ""
 
@@ -274,9 +290,22 @@ catalog-update: ## Check and update Version Catalog dependencies (on-demand)
 	@printf "$(YELLOW)⏳  Checking and updating Version Catalog...$(NC)\n"
 	@$(GRADLEW) versionCatalogUpdate
 
-ai-setup: ## Install and configure AI code-intelligence tools (codebase-memory-mcp + Graphify)
+ai-setup: ## Install and configure AI code-intelligence tools (codebase-memory-mcp + Graphify + SplitTrip RAG)
 	@printf "$(YELLOW)⏳  Setting up AI code-intelligence tools...$(NC)\n"
 	@./scripts/ai-setup.sh
+
+rag-index: ## Build or incrementally update local documentation RAG index
+	@printf "$(YELLOW)⏳  Indexing project documentation for RAG...$(NC)\n"
+	@uv run scripts/rag_indexer.py
+
+knowledge-update: ## Incrementally refresh all AI knowledge indexes (codebase-memory + SplitTrip docs RAG + Graphify)
+	@printf "$(YELLOW)⏳  Updating codebase-memory index...$(NC)\n"
+	@~/.local/bin/codebase-memory-mcp index 2>/dev/null || true
+	@printf "$(YELLOW)⏳  Updating SplitTrip documentation RAG index...$(NC)\n"
+	@uv run scripts/rag_indexer.py
+	@printf "$(YELLOW)⏳  Updating Graphify knowledge graph...$(NC)\n"
+	@graphify update . 2>/dev/null || true
+	@printf "$(GREEN)✅  All AI knowledge indexes up to date$(NC)\n"
 
 prune-branches: ## Fetch remote changes and delete local branches that are gone on the remote
 	@printf "$(YELLOW)⏳  Pruning gone branches...$(NC)\n"

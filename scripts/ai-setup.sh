@@ -199,6 +199,16 @@ if 'graphify' not in servers:
 else:
     print('  graphify already in Gemini MCP config')
 
+# Add splittrip-rag if not present
+if 'splittrip-rag' not in servers:
+    servers['splittrip-rag'] = {
+        'command': 'uv',
+        'args': ['run', '${PROJECT_ROOT}/scripts/rag_mcp_server.py']
+    }
+    print('  Added splittrip-rag to Gemini MCP config')
+else:
+    print('  splittrip-rag already in Gemini MCP config')
+
 with open(path, 'w') as f:
     json.dump(config, f, indent=2)
     f.write('\n')
@@ -237,6 +247,14 @@ if 'codebase-memory-mcp' not in servers:
         'enabled': True
     }
     print('  Added codebase-memory-mcp to opencode.jsonc')
+
+if 'splittrip-rag' not in servers:
+    servers['splittrip-rag'] = {
+        'type': 'local',
+        'command': ['uv', 'run', f'{project_root}/scripts/rag_mcp_server.py'],
+        'enabled': True
+    }
+    print('  Added splittrip-rag to opencode.jsonc')
 
 
 
@@ -302,6 +320,17 @@ install_and_setup_rtk() {
   fi
 }
 
+# ─── Step 12: Build / Update Documentation RAG Index ─────────────────────────
+index_splittrip_rag() {
+  log_info "Building / updating SplitTrip documentation RAG index..."
+  if uv run "${PROJECT_ROOT}/scripts/rag_indexer.py"; then
+    log_ok "SplitTrip documentation RAG index built"
+  else
+    log_err "Failed to build SplitTrip documentation RAG index"
+    return 1
+  fi
+}
+
 # ─── Summary ─────────────────────────────────────────────────────────────────
 print_summary() {
   echo ""
@@ -348,6 +377,8 @@ main() {
   setup_headroom_opencode || ((errors++))
   echo ""
   install_and_setup_rtk || ((errors++))
+  echo ""
+  index_splittrip_rag || ((errors++))
   echo ""
 
   print_summary
