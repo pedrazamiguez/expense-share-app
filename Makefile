@@ -300,7 +300,7 @@ rag-index: ## Build or incrementally update local documentation RAG index
 
 knowledge-update: ## Incrementally refresh all AI knowledge indexes (codebase-memory + SplitTrip docs RAG + Graphify)
 	@printf "$(YELLOW)⏳  Updating codebase-memory index...$(NC)\n"
-	@~/.local/bin/codebase-memory-mcp index 2>/dev/null || true
+	@~/.local/bin/codebase-memory-mcp cli index_repository "{\"repo_path\": \"$$(pwd)\", \"mode\": \"fast\"}" >/dev/null 2>&1 || true
 	@printf "$(YELLOW)⏳  Updating SplitTrip documentation RAG index...$(NC)\n"
 	@uv run scripts/rag_indexer.py
 	@printf "$(YELLOW)⏳  Updating Graphify knowledge graph...$(NC)\n"

@@ -139,7 +139,16 @@ find . -maxdepth 1 -name "*.log" -delete
 ```
 ---
 
-## Step 9 — Post walkthrough as an issue comment
+## Step 9 — Synchronize AI Knowledge Indexes
+
+Before posting the walkthrough and declaring done, ensure that all AI knowledge indexes (code syntax graphs, documentation RAG, and module topology) reflect the latest codebase and documentation changes:
+
+```bash
+make knowledge-update
+```
+---
+
+## Step 10 — Post walkthrough as an issue comment
 
 After verifying that all checks pass locally and your work is complete, you MUST automatically post the walkthrough you generate as a comment on the GitHub issue using the github-mcp-server tool `add_issue_comment` before finishing the task. Do not wait for the user to ask or perform this step manually; the agent must perform this step programmatically as part of this skill.
 

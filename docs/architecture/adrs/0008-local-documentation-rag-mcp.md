@@ -84,6 +84,7 @@ Markdown Docs (/docs/**/*.md, AGENTS.md)
 
 3. **Developer & Tooling Integration:**
    - Incremental indexing via `make rag-index` or `scripts/rag_indexer.py`.
+   - Unified multi-index refresh target `make knowledge-update` (synchronizing `codebase-memory-mcp`, `splittrip-rag`, and `graphify`).
    - Setup and verification integrated into `make ai-setup` and `make doctor`.
    - Automatic registration in `~/.gemini/config/mcp_config.json` and `~/.config/opencode/opencode.jsonc`.
 

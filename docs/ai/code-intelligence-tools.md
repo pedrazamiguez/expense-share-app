@@ -96,6 +96,19 @@ This idempotent command:
 7. Merges MCP entries into `~/.gemini/config/mcp_config.json` and `~/.config/opencode/opencode.jsonc`
 8. Verifies all steps completed
 
+### Knowledge Index Maintenance
+
+```bash
+make knowledge-update
+```
+
+A single fast ($<4\text{s}$), fully incremental target that refreshes all 3 local knowledge indexes after codebase edits, PR merges, or new documentation:
+1. **`codebase-memory-mcp`**: Incremental AST symbol extraction and call graph resolution.
+2. **`splittrip-rag`**: Incremental hash-checked document chunking and CPU ONNX vector embedding.
+3. **`graphify`**: Incremental module topology and community clustering updates to `graphify-out/`.
+
+AI skills (`sp-start-issue`, `sp-follow-up`) automatically trigger `make knowledge-update` upon task completion to eliminate index drift.
+
 ### Verification
 
 ```bash
