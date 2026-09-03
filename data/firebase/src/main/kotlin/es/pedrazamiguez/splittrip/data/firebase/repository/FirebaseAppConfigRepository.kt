@@ -30,6 +30,27 @@ class FirebaseAppConfigRepository(
     private val _maxMembersPerGroup = MutableStateFlow(DEFAULT_MAX_MEMBERS_PER_GROUP)
     override val maxMembersPerGroup: StateFlow<Int> = _maxMembersPerGroup.asStateFlow()
 
+    private val _subscriptionGatingEnabled = MutableStateFlow(DEFAULT_SUBSCRIPTION_GATING_ENABLED)
+    override val subscriptionGatingEnabled: StateFlow<Boolean> = _subscriptionGatingEnabled.asStateFlow()
+
+    private val _maxOwnedGroupsFree = MutableStateFlow(DEFAULT_MAX_OWNED_GROUPS_FREE)
+    override val maxOwnedGroupsFree: StateFlow<Int> = _maxOwnedGroupsFree.asStateFlow()
+
+    private val _maxOwnedGroupsPro = MutableStateFlow(DEFAULT_MAX_OWNED_GROUPS_PRO)
+    override val maxOwnedGroupsPro: StateFlow<Int> = _maxOwnedGroupsPro.asStateFlow()
+
+    private val _maxMembersPerGroupFree = MutableStateFlow(DEFAULT_MAX_MEMBERS_PER_GROUP_FREE)
+    override val maxMembersPerGroupFree: StateFlow<Int> = _maxMembersPerGroupFree.asStateFlow()
+
+    private val _maxMembersPerGroupPro = MutableStateFlow(DEFAULT_MAX_MEMBERS_PER_GROUP_PRO)
+    override val maxMembersPerGroupPro: StateFlow<Int> = _maxMembersPerGroupPro.asStateFlow()
+
+    private val _aiReceiptMonthlyLimitFree = MutableStateFlow(DEFAULT_AI_RECEIPT_MONTHLY_LIMIT_FREE)
+    override val aiReceiptMonthlyLimitFree: StateFlow<Int> = _aiReceiptMonthlyLimitFree.asStateFlow()
+
+    private val _aiReceiptMonthlyLimitPro = MutableStateFlow(DEFAULT_AI_RECEIPT_MONTHLY_LIMIT_PRO)
+    override val aiReceiptMonthlyLimitPro: StateFlow<Int> = _aiReceiptMonthlyLimitPro.asStateFlow()
+
     private val _extractedDateMaxFutureDays = MutableStateFlow(DEFAULT_EXTRACTED_DATE_MAX_FUTURE_DAYS)
     override val extractedDateMaxFutureDays: StateFlow<Int> = _extractedDateMaxFutureDays.asStateFlow()
 
@@ -84,6 +105,12 @@ class FirebaseAppConfigRepository(
     }
 
     private fun updateFlowsFromConfig() {
+        updateGeneralConfigFlows()
+        updateTierLimitFlows()
+        updateOcrAndDeveloperFlows()
+    }
+
+    private fun updateGeneralConfigFlows() {
         _defaultCurrencyCode.value =
             remoteConfig.getString("default_currency_code").takeIf { it.isNotBlank() } ?: DEFAULT_CURRENCY
         val debounce = remoteConfig.getLong("balance_computation_debounce_ms")
@@ -98,6 +125,36 @@ class FirebaseAppConfigRepository(
         val nudgeLimitHours = remoteConfig.getLong("settlement_nudge_rate_limit_hours")
         _settlementNudgeRateLimitHours.value =
             if (nudgeLimitHours > 0) nudgeLimitHours else DEFAULT_SETTLEMENT_NUDGE_RATE_LIMIT_HOURS
+    }
+
+    private fun updateTierLimitFlows() {
+        val gatingStr = remoteConfig.getString("subscription_gating_enabled").trim()
+        _subscriptionGatingEnabled.value = if (gatingStr.isNotBlank()) {
+            remoteConfig.getBoolean("subscription_gating_enabled")
+        } else {
+            DEFAULT_SUBSCRIPTION_GATING_ENABLED
+        }
+
+        val maxOwnedFree = remoteConfig.getLong("max_owned_groups_free").toInt()
+        _maxOwnedGroupsFree.value = if (maxOwnedFree > 0) maxOwnedFree else DEFAULT_MAX_OWNED_GROUPS_FREE
+
+        val maxOwnedPro = remoteConfig.getLong("max_owned_groups_pro").toInt()
+        _maxOwnedGroupsPro.value = if (maxOwnedPro > 0) maxOwnedPro else DEFAULT_MAX_OWNED_GROUPS_PRO
+
+        val maxMembersFree = remoteConfig.getLong("max_members_per_group_free").toInt()
+        _maxMembersPerGroupFree.value = if (maxMembersFree > 0) maxMembersFree else DEFAULT_MAX_MEMBERS_PER_GROUP_FREE
+
+        val maxMembersPro = remoteConfig.getLong("max_members_per_group_pro").toInt()
+        _maxMembersPerGroupPro.value = if (maxMembersPro > 0) maxMembersPro else DEFAULT_MAX_MEMBERS_PER_GROUP_PRO
+
+        val aiLimitFree = remoteConfig.getLong("ai_receipt_monthly_limit_free").toInt()
+        _aiReceiptMonthlyLimitFree.value = if (aiLimitFree >= 0) aiLimitFree else DEFAULT_AI_RECEIPT_MONTHLY_LIMIT_FREE
+
+        val aiLimitPro = remoteConfig.getLong("ai_receipt_monthly_limit_pro").toInt()
+        _aiReceiptMonthlyLimitPro.value = if (aiLimitPro > 0) aiLimitPro else DEFAULT_AI_RECEIPT_MONTHLY_LIMIT_PRO
+    }
+
+    private fun updateOcrAndDeveloperFlows() {
         val blacklistStr = remoteConfig.getString("ocr_safety_false_positives_blacklist")
         _ocrSafetyFalsePositivesBlacklist.value = if (blacklistStr.isNotBlank()) {
             blacklistStr.split(",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
@@ -123,6 +180,13 @@ class FirebaseAppConfigRepository(
         private const val DEFAULT_CURRENCY = "EUR"
         private const val DEFAULT_BALANCE_DEBOUNCE_MS = 300L
         private const val DEFAULT_MAX_MEMBERS_PER_GROUP = 20
+        private const val DEFAULT_SUBSCRIPTION_GATING_ENABLED = true
+        private const val DEFAULT_MAX_OWNED_GROUPS_FREE = 1
+        private const val DEFAULT_MAX_OWNED_GROUPS_PRO = 100
+        private const val DEFAULT_MAX_MEMBERS_PER_GROUP_FREE = 4
+        private const val DEFAULT_MAX_MEMBERS_PER_GROUP_PRO = 20
+        private const val DEFAULT_AI_RECEIPT_MONTHLY_LIMIT_FREE = 0
+        private const val DEFAULT_AI_RECEIPT_MONTHLY_LIMIT_PRO = 100
         private const val DEFAULT_EXTRACTED_DATE_MAX_FUTURE_DAYS = 30
         private const val DEFAULT_SUPPORT_EMAIL = "support@splittrip.com"
         private const val DEFAULT_SETTLEMENT_NUDGE_RATE_LIMIT_HOURS = 24L
