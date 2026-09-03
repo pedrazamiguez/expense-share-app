@@ -46,6 +46,9 @@ functions/lib/
 graphify-out/
 .serena/
 .headroom/
+.cache/
 
-# Serena AI agent
-.serena/
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
