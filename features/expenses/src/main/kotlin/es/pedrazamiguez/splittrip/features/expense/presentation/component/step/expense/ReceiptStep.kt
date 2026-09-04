@@ -23,11 +23,13 @@ import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.InfoCircle
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.PhotoAi
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.badge.ProBadge
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.SecondaryButton
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.splittrip.features.expense.R
+import es.pedrazamiguez.splittrip.features.expense.presentation.component.form.receipt.AiScanPromptCard
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.form.receipt.ReceiptSection
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -83,12 +85,20 @@ fun ReceiptStep(
                                 )
                             }
                             Column {
-                                Text(
-                                    text = stringResource(R.string.expense_autofill_ai_title),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.expense_autofill_ai_title),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    if (uiState.isAiProFeature || uiState.isAiGated) {
+                                        ProBadge()
+                                    }
+                                }
                                 Text(
                                     text = stringResource(R.string.expense_autofill_ai_subtitle),
                                     style = MaterialTheme.typography.labelSmall,
@@ -153,6 +163,13 @@ fun ReceiptStep(
                     modifier = Modifier.fillMaxWidth()
                 )
             } else {
+                if (uiState.isAiCapable && !uiState.isEditMode) {
+                    AiScanPromptCard(
+                        isProFeature = uiState.isAiProFeature || uiState.isAiGated,
+                        onSwitchToAi = { onEvent(AddExpenseUiEvent.SetAiModeActive(true)) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
                 ReceiptSection(
                     receiptUri = uiState.receiptUri,
                     mimeType = uiState.receiptAttachment?.mimeType,

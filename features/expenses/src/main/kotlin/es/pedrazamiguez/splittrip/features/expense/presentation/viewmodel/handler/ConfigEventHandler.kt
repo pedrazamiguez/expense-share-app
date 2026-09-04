@@ -13,6 +13,8 @@ import es.pedrazamiguez.splittrip.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedFeature
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
@@ -36,6 +38,7 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -60,7 +63,8 @@ class ConfigEventHandler(
     private val addExpenseOptionsMapper: AddExpenseOptionsUiMapper,
     private val addExpenseSplitMapper: AddExpenseSplitUiMapper,
     private val addExpenseUiMapper: AddExpenseUiMapper,
-    private val receiptExtractionService: ReceiptExtractionService
+    private val receiptExtractionService: ReceiptExtractionService,
+    private val featureGateService: FeatureGateService
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
@@ -165,7 +169,8 @@ class ConfigEventHandler(
         val userSubunitOptions = filterSubunitsForCurrentUser(currentUserId, config)
 
         val isAiCapable = receiptExtractionService.capability() == ExtractionCapability.ON_DEVICE_AI
-        val effectiveAiMode = resolveEffectiveAiMode(isAiCapable)
+        val isAiEnabled = featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING).first()
+        val effectiveAiMode = resolveEffectiveAiMode(isAiCapable, isAiEnabled)
         val currentMillis = System.currentTimeMillis()
         val formattedDate = addExpenseUiMapper.formatExpenseDateForDisplay(currentMillis)
 
@@ -177,6 +182,8 @@ class ConfigEventHandler(
                 loadedGroupId = groupId,
                 isAiCapable = isAiCapable,
                 isAiModeActive = effectiveAiMode,
+                isAiGated = !isAiEnabled,
+                isAiProFeature = !isAiEnabled,
                 currentStep = if (effectiveAiMode) AddExpenseStep.RECEIPT else AddExpenseStep.TITLE,
                 groupName = config.group.name,
                 currentUserId = currentUserId,
@@ -227,8 +234,8 @@ class ConfigEventHandler(
      * cause a FOUC where the wizard briefly opens on the RECEIPT step before
      * the mapper restores TITLE as the current step.
      */
-    private fun resolveEffectiveAiMode(isAiCapable: Boolean): Boolean =
-        isAiCapable && !_uiState.value.isEditMode
+    private fun resolveEffectiveAiMode(isAiCapable: Boolean, isAiEnabled: Boolean): Boolean =
+        isAiCapable && isAiEnabled && !_uiState.value.isEditMode
 
     private suspend fun resolveDefaults(
         groupId: String,

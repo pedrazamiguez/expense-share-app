@@ -29,7 +29,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,15 +42,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.chrisbanes.haze.HazeState
-import es.pedrazamiguez.splittrip.core.designsystem.R
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.horizonGlassEffect
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.FloatingNavTab
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.badge.ProBadge
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.MainAction
 import es.pedrazamiguez.splittrip.core.designsystem.transition.fabSharedTransitionModifier
 
@@ -339,29 +335,12 @@ private fun MainActionButton(
             }
 
             if (mainAction.showProBadge) {
-                ProBadge(modifier = Modifier.align(Alignment.TopEnd))
+                ProBadge(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 4.dp, end = 4.dp)
+                )
             }
         }
-    }
-}
-
-@Composable
-private fun ProBadge(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .padding(top = 4.dp, end = 4.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.tertiary)
-            .padding(horizontal = 4.dp, vertical = 1.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.badge_pro),
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
-                lineHeight = 10.sp
-            ),
-            color = MaterialTheme.colorScheme.onTertiary
-        )
     }
 }

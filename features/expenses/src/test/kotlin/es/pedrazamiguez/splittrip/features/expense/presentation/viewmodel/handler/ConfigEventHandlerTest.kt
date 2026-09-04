@@ -6,10 +6,14 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.Forma
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.model.Currency
+import es.pedrazamiguez.splittrip.domain.model.ExtractionCapability
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedFeature
 import es.pedrazamiguez.splittrip.domain.service.impl.RemainderDistributionServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.split.impl.SplitPreviewServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpenseConfigUseCase
@@ -22,6 +26,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpens
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpenseSplitUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.AddExpenseUiAction
+import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseStep
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -54,6 +59,8 @@ class ConfigEventHandlerTest {
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
     private lateinit var authenticationService: AuthenticationService
     private lateinit var addExpenseUiMapper: AddExpenseUiMapper
+    private lateinit var receiptExtractionService: ReceiptExtractionService
+    private lateinit var featureGateService: FeatureGateService
     private val capturedActions = mutableListOf<PostConfigAction>()
 
     private lateinit var uiState: MutableStateFlow<AddExpenseUiState>
@@ -111,6 +118,11 @@ class ConfigEventHandlerTest {
             addExpenseOptionsUiMapper = addExpenseOptionsMapper
         )
 
+        receiptExtractionService = mockk(relaxed = true)
+        featureGateService = mockk(relaxed = true) {
+            every { isFeatureEnabled(any(), any()) } returns flowOf(true)
+        }
+
         handler = ConfigEventHandler(
             getGroupExpenseConfigUseCase = getGroupExpenseConfigUseCase,
             getGroupLastUsedCurrencyUseCase = getGroupLastUsedCurrencyUseCase,
@@ -121,7 +133,8 @@ class ConfigEventHandlerTest {
             addExpenseOptionsMapper = addExpenseOptionsMapper,
             addExpenseSplitMapper = addExpenseSplitMapper,
             addExpenseUiMapper = addExpenseUiMapper,
-            receiptExtractionService = mockk(relaxed = true)
+            receiptExtractionService = receiptExtractionService,
+            featureGateService = featureGateService
         )
         handler.setPostConfigCallback { capturedActions.add(it) }
 
@@ -671,6 +684,71 @@ class ConfigEventHandlerTest {
             assertTrue("FINISHED" in statusIds)
             assertTrue("REFUNDABLE" in statusIds)
             assertTrue("SCHEDULED" in statusIds)
+        }
+    }
+
+    @Nested
+    inner class AiGating {
+
+        @Test
+        fun `applyConfig when AI scanning is enabled sets isAiModeActive and starts on RECEIPT step`() = runTest {
+            every { receiptExtractionService.capability() } returns ExtractionCapability.ON_DEVICE_AI
+            every { featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING, any()) } returns flowOf(true)
+
+            handler.bind(uiState, actions, this)
+            handler.applyConfig("group-1", testConfig)
+
+            assertTrue(uiState.value.isAiCapable)
+            assertTrue(uiState.value.isAiModeActive)
+            assertFalse(uiState.value.isAiGated)
+            assertFalse(uiState.value.isAiProFeature)
+            assertEquals(AddExpenseStep.RECEIPT, uiState.value.currentStep)
+        }
+
+        @Test
+        fun `applyConfig when AI scanning is gated sets isAiGated and starts on TITLE step`() = runTest {
+            every { receiptExtractionService.capability() } returns ExtractionCapability.ON_DEVICE_AI
+            every { featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING, any()) } returns flowOf(false)
+
+            handler.bind(uiState, actions, this)
+            handler.applyConfig("group-1", testConfig)
+
+            assertTrue(uiState.value.isAiCapable)
+            assertFalse(uiState.value.isAiModeActive)
+            assertTrue(uiState.value.isAiGated)
+            assertTrue(uiState.value.isAiProFeature)
+            assertEquals(AddExpenseStep.TITLE, uiState.value.currentStep)
+        }
+
+        @Test
+        fun `applyConfig in edit mode keeps isAiModeActive false even when AI scanning is enabled`() = runTest {
+            every { receiptExtractionService.capability() } returns ExtractionCapability.ON_DEVICE_AI
+            every { featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING, any()) } returns flowOf(true)
+
+            uiState.value = AddExpenseUiState(isEditMode = true)
+            handler.bind(uiState, actions, this)
+            handler.applyConfig("group-1", testConfig)
+
+            assertTrue(uiState.value.isAiCapable)
+            assertFalse(uiState.value.isAiModeActive)
+            assertFalse(uiState.value.isAiGated)
+            assertFalse(uiState.value.isAiProFeature)
+            assertEquals(AddExpenseStep.TITLE, uiState.value.currentStep)
+        }
+
+        @Test
+        fun `applyConfig when device lacks AI capability keeps isAiModeActive false even when tier is Pro`() = runTest {
+            every { receiptExtractionService.capability() } returns ExtractionCapability.UNSUPPORTED
+            every { featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING, any()) } returns flowOf(true)
+
+            handler.bind(uiState, actions, this)
+            handler.applyConfig("group-1", testConfig)
+
+            assertFalse(uiState.value.isAiCapable)
+            assertFalse(uiState.value.isAiModeActive)
+            assertFalse(uiState.value.isAiGated)
+            assertFalse(uiState.value.isAiProFeature)
+            assertEquals(AddExpenseStep.TITLE, uiState.value.currentStep)
         }
     }
 }

@@ -737,4 +737,26 @@ class AddExpenseUiStateTest {
             assertFalse(invalidState.isCurrentStepValid)
         }
     }
+
+    @Nested
+    @DisplayName("AI gating defaults")
+    inner class AiGatingDefaults {
+
+        @Test
+        fun `defaults isAiGated and isAiProFeature to false`() {
+            val state = AddExpenseUiState()
+            assertFalse(state.isAiGated)
+            assertFalse(state.isAiProFeature)
+        }
+
+        @Test
+        fun `copies isAiGated and isAiProFeature correctly`() {
+            val state = AddExpenseUiState(
+                isAiGated = true,
+                isAiProFeature = true
+            )
+            assertTrue(state.isAiGated)
+            assertTrue(state.isAiProFeature)
+        }
+    }
 }
