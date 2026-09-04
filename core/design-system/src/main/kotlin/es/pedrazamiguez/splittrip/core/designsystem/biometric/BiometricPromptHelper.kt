@@ -8,11 +8,13 @@ import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import java.security.GeneralSecurityException
 import java.security.KeyStore
+import java.security.ProviderException
+import java.util.concurrent.Executor
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
-import kotlin.text.Charsets
 
 object BiometricPromptHelper {
 
@@ -20,45 +22,37 @@ object BiometricPromptHelper {
     private const val KEY_ALIAS = "split_trip_biometric_auth_key"
     private const val CIPHER_TRANSFORMATION =
         "${KeyProperties.KEY_ALGORITHM_AES}/${KeyProperties.BLOCK_MODE_GCM}/${KeyProperties.ENCRYPTION_PADDING_NONE}"
-    private val AUTH_CHALLENGE = "split_trip_auth_challenge".toByteArray(Charsets.UTF_8)
+
+    internal var promptFactory: (
+        FragmentActivity,
+        Executor,
+        BiometricPrompt.AuthenticationCallback
+    ) -> BiometricPrompt = { activity, executor, callback ->
+        BiometricPrompt(activity, executor, callback)
+    }
+
+    internal var executorProvider: (FragmentActivity) -> Executor = { activity ->
+        ContextCompat.getMainExecutor(activity)
+    }
 
     fun authenticate(
         activity: FragmentActivity,
         title: String,
         subtitle: String? = null,
         negativeButtonText: String,
+        cryptoObject: BiometricPrompt.CryptoObject? = null,
         onSuccess: () -> Unit,
         onError: (errorCode: Int, errString: CharSequence) -> Unit = { _, _ -> },
         onFailed: () -> Unit = {}
     ) {
-        val cryptoObject = try {
-            createCryptoObject()
-        } catch (e: Exception) {
-            onError(BiometricPrompt.ERROR_UNABLE_TO_PROCESS, e.localizedMessage.orEmpty())
-            return
-        }
-
-        val executor = ContextCompat.getMainExecutor(activity)
-        val prompt = BiometricPrompt(
+        val executor = executorProvider(activity)
+        val prompt = promptFactory(
             activity,
             executor,
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
-                    val authenticatedCipher = result.cryptoObject?.cipher
-                    if (authenticatedCipher != null) {
-                        try {
-                            authenticatedCipher.doFinal(AUTH_CHALLENGE)
-                            onSuccess()
-                        } catch (e: Exception) {
-                            onError(BiometricPrompt.ERROR_UNABLE_TO_PROCESS, e.localizedMessage.orEmpty())
-                        }
-                    } else {
-                        onError(
-                            BiometricPrompt.ERROR_UNABLE_TO_PROCESS,
-                            "Biometric authentication succeeded without crypto object"
-                        )
-                    }
+                    onSuccess()
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
@@ -82,17 +76,45 @@ object BiometricPromptHelper {
             promptInfoBuilder.setSubtitle(subtitle)
         }
 
-        prompt.authenticate(promptInfoBuilder.build(), cryptoObject)
+        val promptInfo = promptInfoBuilder.build()
+        if (cryptoObject != null) {
+            prompt.authenticate(promptInfo, cryptoObject)
+        } else {
+            prompt.authenticate(promptInfo)
+        }
     }
 
-    private fun createCryptoObject(): BiometricPrompt.CryptoObject {
-        val cipher = try {
-            initCipher()
-        } catch (_: KeyPermanentlyInvalidatedException) {
-            deleteSecretKey()
-            initCipher()
+    fun createCryptoObject(): BiometricPrompt.CryptoObject? {
+        return try {
+            val cipher = try {
+                initCipher()
+            } catch (_: KeyPermanentlyInvalidatedException) {
+                deleteSecretKey()
+                initCipher()
+            } catch (_: GeneralSecurityException) {
+                deleteSecretKey()
+                initCipher()
+            } catch (_: ProviderException) {
+                deleteSecretKey()
+                initCipher()
+            }
+            BiometricPrompt.CryptoObject(cipher)
+        } catch (_: Exception) {
+            null
         }
-        return BiometricPrompt.CryptoObject(cipher)
+    }
+
+    fun purgeLegacyKey() {
+        deleteSecretKey()
+    }
+
+    internal fun resetDefaults() {
+        promptFactory = { activity, executor, callback ->
+            BiometricPrompt(activity, executor, callback)
+        }
+        executorProvider = { activity ->
+            ContextCompat.getMainExecutor(activity)
+        }
     }
 
     private fun initCipher(): Cipher {
@@ -133,9 +155,13 @@ object BiometricPromptHelper {
     }
 
     private fun deleteSecretKey() {
-        val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE_PROVIDER).apply { load(null) }
-        if (keyStore.containsAlias(KEY_ALIAS)) {
-            keyStore.deleteEntry(KEY_ALIAS)
+        try {
+            val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE_PROVIDER).apply { load(null) }
+            if (keyStore.containsAlias(KEY_ALIAS)) {
+                keyStore.deleteEntry(KEY_ALIAS)
+            }
+        } catch (_: Exception) {
+            // Ignore keystore deletion failure
         }
     }
 }

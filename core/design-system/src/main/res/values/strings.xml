@@ -181,6 +181,7 @@
     <string name="biometric_prompt_negative">Cancel</string>
     <string name="biometric_prompt_confirm_title">Enable Biometric Lock</string>
     <string name="biometric_prompt_confirm_subtitle">Verify your biometrics to enable app lock</string>
+    <string name="biometric_auth_error_generic">Biometric authentication failed. Please try again.</string>
 
     <!-- Upgrade Paywall Dialog & Badges -->
     <string name="upgrade_dialog_title">SplitTrip Pro</string>

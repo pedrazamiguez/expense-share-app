@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.navigation
 
 import android.content.Intent
+import androidx.biometric.BiometricPrompt
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
@@ -223,8 +224,15 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
                         val promptTitle = stringResource(DesignSystemR.string.biometric_prompt_title)
                         val promptSubtitle = stringResource(DesignSystemR.string.biometric_prompt_subtitle)
                         val promptNegative = stringResource(DesignSystemR.string.biometric_prompt_negative)
+                        val genericError = stringResource(DesignSystemR.string.biometric_auth_error_generic)
 
-                        val launchPrompt = remember(activity, promptTitle, promptSubtitle, promptNegative) {
+                        val launchPrompt = remember(
+                            activity,
+                            promptTitle,
+                            promptSubtitle,
+                            promptNegative,
+                            genericError
+                        ) {
                             {
                                 if (activity != null) {
                                     BiometricPromptHelper.authenticate(
@@ -234,6 +242,18 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
                                         negativeButtonText = promptNegative,
                                         onSuccess = {
                                             isAppUnlocked = true
+                                        },
+                                        onError = { errorCode, _ ->
+                                            when (errorCode) {
+                                                BiometricPrompt.ERROR_USER_CANCELED,
+                                                BiometricPrompt.ERROR_NEGATIVE_BUTTON,
+                                                BiometricPrompt.ERROR_CANCELED -> {
+                                                    // Standard user cancellations — do not show error pill
+                                                }
+                                                else -> {
+                                                    pillController.showPill(genericError)
+                                                }
+                                            }
                                         }
                                     )
                                 }
