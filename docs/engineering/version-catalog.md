@@ -49,6 +49,49 @@ versionCatalogUpdate {
 
 ---
 
+## 🤖 Automated Weekly Updates
+
+To ensure dependencies, security patches, and bug fixes do not lag behind, dependency updates are automated via a GitHub Actions workflow defined in [update-version-catalog.yml](../../.github/workflows/update-version-catalog.yml).
+
+### Cadence & Triggers
+- **Scheduled Run**: Executes every Monday at **08:00 UTC** (`0 8 * * 1`).
+- **Manual Trigger**: Can be dispatched on-demand at any time from GitHub Actions (`workflow_dispatch`).
+
+### Workflow Mechanics
+1. **Source of Truth**: Checks out the latest `develop` branch.
+2. **Execution**: Executes `./gradlew versionCatalogUpdate`.
+3. **Change Detection**: Uses `git diff --quiet gradle/libs.versions.toml` to inspect whether updates were made. If no updates are found, the job terminates cleanly without creating branches or PRs.
+4. **Branch & Pull Request**:
+   - Commits changes to the dedicated branch `internal/version-catalog-update`.
+   - Force pushes to update the branch on `origin`.
+   - If an open Pull Request for `internal/version-catalog-update` already exists, it is automatically refreshed with the latest changes.
+   - If no open Pull Request exists, it opens a new PR targeting `develop` with the `config` label.
+
+> [!NOTE]
+> Manual, on-demand updates via `make catalog-update` or `./gradlew versionCatalogUpdate` remain fully supported whenever a developer needs to upgrade dependencies immediately.
+
+---
+
+## 📋 Review & Merging Checklist
+
+When reviewing automated dependency PRs opened by the bot, follow this verification checklist before approving and merging:
+
+1. **Verify CI Status**: Ensure all continuous integration workflows (`Build and Test Android App`, `Static Analysis`, `Coverage & Architecture Rules`) pass green.
+2. **Review Dependency Changes**:
+   - Inspect the diff in `gradle/libs.versions.toml`.
+   - Confirm version bumps are standard and no required pins/overrides were unintentionally altered.
+3. **Local Compilation & Smoke Check (Optional/Recommended for Major Bumps)**:
+   ```bash
+   git fetch origin
+   git checkout internal/version-catalog-update
+   ./gradlew assembleDebug
+   make fast-check
+   ```
+4. **Breaking Changes & Deprecations**: Check release notes or migration guides for any library that underwent major or minor version bumps with breaking API changes.
+5. **Merge**: Once checks pass, merge into `develop`.
+
+---
+
 ## 📚 Best Practices for Dependency Upgrades
 
 When performing dependency upgrades, always follow this workflow to prevent build breakages and test regressions:
