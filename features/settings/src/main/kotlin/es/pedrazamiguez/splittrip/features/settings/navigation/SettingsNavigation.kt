@@ -3,8 +3,10 @@ package es.pedrazamiguez.splittrip.features.settings.navigation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
+import es.pedrazamiguez.splittrip.features.settings.presentation.feature.AccountSecurityFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.AccountStatusFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.DefaultCurrencyFeature
+import es.pedrazamiguez.splittrip.features.settings.presentation.feature.DeveloperInfoFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.DeveloperServicesFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.FaqFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.LanguageFeature
@@ -12,6 +14,7 @@ import es.pedrazamiguez.splittrip.features.settings.presentation.feature.Notific
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.OpenSourceFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.PrivacyPolicyFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.SettingsFeature
+import es.pedrazamiguez.splittrip.features.settings.presentation.feature.SubscriptionsFeature
 import es.pedrazamiguez.splittrip.features.settings.presentation.feature.ThemeFeature
 
 fun NavGraphBuilder.settingsGraph() {
@@ -20,6 +23,12 @@ fun NavGraphBuilder.settingsGraph() {
     }
     composable(Routes.SETTINGS_ACCOUNT_STATUS) {
         AccountStatusFeature()
+    }
+    composable(Routes.SETTINGS_SUBSCRIPTIONS) {
+        SubscriptionsFeature()
+    }
+    composable(Routes.SETTINGS_SECURITY) {
+        AccountSecurityFeature()
     }
     composable(Routes.SETTINGS_DEFAULT_CURRENCY) {
         DefaultCurrencyFeature()
@@ -44,5 +53,8 @@ fun NavGraphBuilder.settingsGraph() {
     }
     composable(Routes.SETTINGS_OPEN_SOURCE) {
         OpenSourceFeature()
+    }
+    composable(Routes.SETTINGS_DEVELOPER_INFO) {
+        DeveloperInfoFeature()
     }
 }

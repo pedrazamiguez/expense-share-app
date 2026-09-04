@@ -3,6 +3,8 @@ package es.pedrazamiguez.splittrip.features.subunit.presentation.viewmodel
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.model.User
+import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedFeature
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.DeleteSubunitUseCase
@@ -48,6 +50,7 @@ class SubunitManagementViewModelTest {
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
     private lateinit var subunitUiMapper: SubunitUiMapper
     private lateinit var observeGroupUseCase: ObserveGroupUseCase
+    private lateinit var featureGateService: FeatureGateService
     private lateinit var viewModel: SubunitManagementViewModel
 
     private val testGroup = Group(
@@ -89,6 +92,7 @@ class SubunitManagementViewModelTest {
         getMemberProfilesUseCase = mockk()
         subunitUiMapper = mockk()
         observeGroupUseCase = mockk()
+        featureGateService = mockk()
     }
 
     @AfterEach
@@ -103,7 +107,8 @@ class SubunitManagementViewModelTest {
             getGroupByIdUseCase = getGroupByIdUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             subunitUiMapper = subunitUiMapper,
-            observeGroupUseCase = observeGroupUseCase
+            observeGroupUseCase = observeGroupUseCase,
+            featureGateService = featureGateService
         )
     }
 
@@ -112,6 +117,8 @@ class SubunitManagementViewModelTest {
         coEvery { getMemberProfilesUseCase(testGroup.members) } returns testMemberProfiles
         every { getGroupSubunitsFlowUseCase("group-1") } returns flowOf(subunits)
         every { observeGroupUseCase("group-1") } returns flowOf(testGroup)
+        every { featureGateService.isFeatureEnabled(GatedFeature.SUBUNIT_CREATION, any()) } returns flowOf(true)
+        every { featureGateService.isActingUserPro() } returns flowOf(false)
         every {
             subunitUiMapper.toSubunitUiModelList(any(), any())
         } returns listOf(testSubunitUiModel).toImmutableList()
@@ -192,6 +199,73 @@ class SubunitManagementViewModelTest {
                     it is SubunitManagementUiAction.NavigateToCreateSubunit && it.groupId == "group-1"
                 }
             )
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `uiState reflects disabled state when feature gate disables creation`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            every { featureGateService.isFeatureEnabled(GatedFeature.SUBUNIT_CREATION, any()) } returns flowOf(false)
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.setGroupId("group-1")
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertFalse(state.isSubunitCreationEnabled)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `CreateSubunit emits NavigateToSubscriptions when disabled`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            every { featureGateService.isFeatureEnabled(GatedFeature.SUBUNIT_CREATION, any()) } returns flowOf(false)
+            every { featureGateService.isActingUserPro() } returns flowOf(false)
+            createViewModel()
+
+            val actions = mutableListOf<SubunitManagementUiAction>()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            viewModel.setGroupId("group-1")
+            advanceUntilIdle()
+
+            viewModel.onEvent(SubunitManagementUiEvent.CreateSubunit)
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is SubunitManagementUiAction.NavigateToSubscriptions })
+
+            collectJob.cancel()
+            actionsJob.cancel()
+        }
+
+        @Test
+        fun `CreateSubunit emits ShowError without paywall when acting user is Pro`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            every { featureGateService.isFeatureEnabled(GatedFeature.SUBUNIT_CREATION, any()) } returns flowOf(false)
+            every { featureGateService.isActingUserPro() } returns flowOf(true)
+            createViewModel()
+
+            val actions = mutableListOf<SubunitManagementUiAction>()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            viewModel.setGroupId("group-1")
+            advanceUntilIdle()
+
+            viewModel.onEvent(SubunitManagementUiEvent.CreateSubunit)
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is SubunitManagementUiAction.ShowError })
+            assertFalse(actions.any { it is SubunitManagementUiAction.NavigateToSubscriptions })
 
             collectJob.cancel()
             actionsJob.cancel()

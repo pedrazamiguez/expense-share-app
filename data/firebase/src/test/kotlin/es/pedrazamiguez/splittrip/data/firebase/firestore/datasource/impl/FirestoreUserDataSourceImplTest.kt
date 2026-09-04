@@ -7,6 +7,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.Transaction
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import es.pedrazamiguez.splittrip.domain.model.User
 import io.mockk.every
 import io.mockk.mockk
@@ -238,6 +239,100 @@ class FirestoreUserDataSourceImplTest {
             val data = dataSlot.captured
             assertFalse(data.containsKey("displayName"))
             assertFalse(data.containsKey("profileImagePath"))
+        }
+
+        @Test
+        fun `new user - writes tier`() = runTest {
+            val docRef = mockDocRef()
+            val existingDoc = mockExistingDoc(exists = false)
+            val transaction = mockTransaction(existingDoc)
+
+            val user = User(
+                userId = testUserId,
+                email = testEmail,
+                tier = SubscriptionTier.PRO
+            )
+
+            dataSource.saveUser(user)
+
+            val dataSlot = slot<Map<String, Any>>()
+            verify(exactly = 1) {
+                transaction.set(docRef, capture(dataSlot), any<SetOptions>())
+            }
+
+            val data = dataSlot.captured
+            assertEquals("PRO", data["tier"])
+        }
+
+        @Test
+        fun `existing user with missing tier - backfills tier`() = runTest {
+            val docRef = mockDocRef()
+            val existingDoc = mockExistingDoc(exists = true)
+            every { existingDoc.getString("tier") } returns null
+            val transaction = mockTransaction(existingDoc)
+
+            val user = User(
+                userId = testUserId,
+                email = testEmail,
+                tier = SubscriptionTier.PRO
+            )
+
+            dataSource.saveUser(user)
+
+            val dataSlot = slot<Map<String, Any>>()
+            verify(exactly = 1) {
+                transaction.set(docRef, capture(dataSlot), any<SetOptions>())
+            }
+
+            val data = dataSlot.captured
+            assertEquals("PRO", data["tier"])
+        }
+
+        @Test
+        fun `existing user with existing tier - does NOT overwrite tier`() = runTest {
+            val docRef = mockDocRef()
+            val existingDoc = mockExistingDoc(exists = true)
+            every { existingDoc.getString("tier") } returns "FREE"
+            val transaction = mockTransaction(existingDoc)
+
+            val user = User(
+                userId = testUserId,
+                email = testEmail,
+                tier = SubscriptionTier.PRO
+            )
+
+            dataSource.saveUser(user)
+
+            val dataSlot = slot<Map<String, Any>>()
+            verify(exactly = 1) {
+                transaction.set(docRef, capture(dataSlot), any<SetOptions>())
+            }
+
+            val data = dataSlot.captured
+            assertFalse(data.containsKey("tier"))
+        }
+    }
+
+    @Nested
+    @DisplayName("updateUserTier")
+    inner class UpdateUserTier {
+
+        @Test
+        fun `merges tier and timestamp into user document`() = runTest {
+            val docRef = mockDocRef()
+            every { docRef.set(any(), any<SetOptions>()) } returns Tasks.forResult(null)
+
+            dataSource.updateUserTier(testUserId, SubscriptionTier.PRO)
+
+            val dataSlot = slot<Map<String, Any>>()
+            verify(exactly = 1) {
+                docRef.set(capture(dataSlot), SetOptions.merge())
+            }
+
+            val data = dataSlot.captured
+            assertEquals("PRO", data["tier"])
+            assertEquals(testUserId, data["lastUpdatedBy"])
+            assertTrue(data.containsKey("lastUpdatedAt"))
         }
     }
 }

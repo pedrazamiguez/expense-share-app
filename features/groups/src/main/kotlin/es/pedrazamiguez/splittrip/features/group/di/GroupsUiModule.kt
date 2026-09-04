@@ -103,6 +103,7 @@ val groupsUiModule = module {
         val addGroupMembersUseCase = get<AddGroupMembersUseCase>()
         val removeGroupMemberUseCase = get<RemoveGroupMemberUseCase>()
         val setSelectedGroupUseCase = get<SetSelectedGroupUseCase>()
+        val authenticationService = get<AuthenticationService>()
         CreateEditGroupSubmitEventHandlerImpl(
             createGroupUseCase = createGroupUseCase,
             updateGroupUseCase = updateGroupUseCase,
@@ -112,7 +113,8 @@ val groupsUiModule = module {
             appConfigService = appConfigService,
             addGroupMembersUseCase = addGroupMembersUseCase,
             removeGroupMemberUseCase = removeGroupMemberUseCase,
-            setSelectedGroupUseCase = setSelectedGroupUseCase
+            setSelectedGroupUseCase = setSelectedGroupUseCase,
+            authenticationService = authenticationService
         )
     }
 

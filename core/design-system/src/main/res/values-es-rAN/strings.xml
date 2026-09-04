@@ -135,5 +135,18 @@
     <string name="core_cash_breakdown_add_on_fee">Comiçión</string>
     <string name="core_cash_breakdown_add_on_surcharge">Recargo</string>
     <string name="core_cash_breakdown_total_fees_label">Comiçionê</string>
+    <string name="app_lock_title">Âpp bloqueá</string>
+    <string name="app_lock_description">Dêbbloquea con biometría pa âççedêh a tû gâttô compartíô.</string>
+    <string name="app_lock_button_unlock">Dêbbloqueâh con biometría</string>
+    <string name="biometric_prompt_title">Dêbbloqueâh SplîTTrîh</string>
+    <string name="biometric_prompt_subtitle">Confirma tu identidá pa continuâh</string>
+    <string name="biometric_prompt_negative">Cançelâh</string>
+    <string name="biometric_prompt_confirm_title">Âttibâh bloqueo biométrico</string>
+    <string name="biometric_prompt_confirm_subtitle">Berifica tu biometría pa âttibâh er bloqueo</string>
+    <string name="biometric_auth_error_generic">Errôh al autenticâh con biometría. Inténtalo de nuebo.</string>
+    <string name="upgrade_dialog_title">SplîTTrîh Pro</string>
+    <string name="upgrade_dialog_confirm">Mehorâh a Pro</string>
+    <string name="upgrade_dialog_dismiss">Aora no</string>
+    <string name="badge_pro">PRO</string>
     <string name="app_name" translatable="false">SplitTrip</string>
 </resources>

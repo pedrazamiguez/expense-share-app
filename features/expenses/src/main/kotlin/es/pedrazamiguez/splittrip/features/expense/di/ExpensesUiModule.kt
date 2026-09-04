@@ -17,6 +17,7 @@ import es.pedrazamiguez.splittrip.domain.service.ExpenseFilterService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseValidationService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
 import es.pedrazamiguez.splittrip.domain.service.RemainderDistributionService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
 import es.pedrazamiguez.splittrip.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.splittrip.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.splittrip.domain.service.split.SubunitAwareSplitService
@@ -129,7 +130,8 @@ val expensesUiModule = module {
             resourceProvider = get<ResourceProvider>(),
             splitMapper = get<AddExpenseSplitUiMapper>(),
             addOnMapper = get<AddExpenseAddOnUiMapper>(),
-            splitPreviewService = get<SplitPreviewService>()
+            splitPreviewService = get<SplitPreviewService>(),
+            addExpenseOptionsUiMapper = get<AddExpenseOptionsUiMapper>()
         )
     }
 
@@ -227,6 +229,8 @@ val expensesUiModule = module {
             cashRateDelegate = cashRateDelegate
         )
 
+        val featureGateService = get<FeatureGateService>()
+
         val configEventHandler = ConfigEventHandler(
             getGroupExpenseConfigUseCase = get<GetGroupExpenseConfigUseCase>(),
             getGroupLastUsedCurrencyUseCase = get<GetGroupLastUsedCurrencyUseCase>(),
@@ -237,7 +241,8 @@ val expensesUiModule = module {
             addExpenseOptionsMapper = addExpenseOptionsUiMapper,
             addExpenseSplitMapper = addExpenseSplitUiMapper,
             addExpenseUiMapper = addExpenseUiMapper,
-            receiptExtractionService = get<ReceiptExtractionService>()
+            receiptExtractionService = get<ReceiptExtractionService>(),
+            featureGateService = featureGateService
         )
 
         val submitResultDelegate = SubmitResultDelegate(
@@ -294,7 +299,8 @@ val expensesUiModule = module {
             extractReceiptFieldsUseCase = get<ExtractReceiptFieldsUseCase>(),
             receiptExtractionService = get<ReceiptExtractionService>(),
             formattingHelper = formattingHelper,
-            addExpenseUiMapper = addExpenseUiMapper
+            addExpenseUiMapper = addExpenseUiMapper,
+            featureGateService = featureGateService
         )
 
         val expenseFlowStrategyFactory = ExpenseFlowStrategyFactory(
@@ -318,7 +324,8 @@ val expensesUiModule = module {
             submitEventHandler = submitEventHandler,
             formEventHandler = formEventHandler,
             receiptAutoFillEventHandler = receiptAutoFillEventHandler,
-            strategyFactory = expenseFlowStrategyFactory
+            strategyFactory = expenseFlowStrategyFactory,
+            featureGateService = featureGateService
         )
     }
 

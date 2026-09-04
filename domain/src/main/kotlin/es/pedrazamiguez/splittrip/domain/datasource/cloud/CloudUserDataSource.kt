@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.datasource.cloud
 
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import es.pedrazamiguez.splittrip.domain.model.User
 
 interface CloudUserDataSource {
@@ -16,5 +17,6 @@ interface CloudUserDataSource {
     suspend fun searchUsersByEmail(email: String, excludeUserId: String? = null): List<User>
     suspend fun updateUserProfile(userId: String, displayName: String?, bio: String?, avatarUrl: String?)
     suspend fun updateUserReminderPreferences(userId: String, timezone: String?, preferredReminderTime: String?)
+    suspend fun updateUserTier(userId: String, tier: SubscriptionTier)
     suspend fun deleteUser(userId: String)
 }

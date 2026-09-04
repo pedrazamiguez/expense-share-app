@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.navigation
 
 import android.content.Intent
+import androidx.biometric.BiometricPrompt
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
@@ -18,14 +19,18 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import es.pedrazamiguez.splittrip.R
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
+import es.pedrazamiguez.splittrip.core.designsystem.biometric.BiometricPromptHelper
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationUtils
@@ -34,6 +39,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.LocalArithmeticKeyboardState
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.BrandedLoadingScreen
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.DeferredLoadingContainer
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.security.AppLockGate
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.notification.LocalTopPillController
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.notification.TopPillNotification
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.notification.rememberTopPillController
@@ -46,6 +52,8 @@ import es.pedrazamiguez.splittrip.core.performance.PerformanceTraces
 import es.pedrazamiguez.splittrip.domain.repository.UserPreferenceRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.currency.WarmCurrencyCacheUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetBiometricCapabilityUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetBiometricLockEnabledUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.IsOnboardingCompleteUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetOnboardingCompleteUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.CheckPendingReconciliationUseCase
@@ -74,6 +82,8 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
     val screenUiProviders = remember(koin) { koin.getAll<ScreenUiProvider>() }
     val isOnboardingCompleteUseCase = remember(koin) { koin.get<IsOnboardingCompleteUseCase>() }
     val setOnboardingCompleteUseCase = remember(koin) { koin.get<SetOnboardingCompleteUseCase>() }
+    val getBiometricLockEnabledUseCase = remember(koin) { koin.get<GetBiometricLockEnabledUseCase>() }
+    val getBiometricCapabilityUseCase = remember(koin) { koin.get<GetBiometricCapabilityUseCase>() }
     val authenticationService = remember(koin) { koin.get<AuthenticationService>() }
     val warmCurrencyCacheUseCase = remember(koin) { koin.get<WarmCurrencyCacheUseCase>() }
     val userPreferenceRepository = remember(koin) { koin.get<UserPreferenceRepository>() }
@@ -90,6 +100,9 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
         initialValue = null
     )
     val isReconciled by userPreferenceRepository.getIsReconciled().collectAsStateWithLifecycle(initialValue = null)
+    val biometricLockEnabled by getBiometricLockEnabledUseCase().collectAsStateWithLifecycle(initialValue = null)
+    val biometricCapability = remember(getBiometricCapabilityUseCase) { getBiometricCapabilityUseCase() }
+    var isAppUnlocked by remember { mutableStateOf(false) }
 
     var isReconciliationChecked by remember { mutableStateOf(false) }
     var hasPendingReconciliation by remember { mutableStateOf<Boolean?>(null) }
@@ -99,6 +112,7 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
             telemetryTracker.setUserId(authenticationService.currentUserId())
         } else if (isUserLoggedIn == false) {
             telemetryTracker.setUserId(null)
+            isAppUnlocked = false
         }
     }
 
@@ -156,6 +170,12 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
     // remember(startDestination, builder) from invalidating and recreating the graph.
     val currentOnboardingCompleted = rememberUpdatedState(onboardingCompleted)
 
+    val isAppLocked = isUserLoggedIn == true &&
+        onboardingCompleted == true &&
+        biometricLockEnabled == true &&
+        biometricCapability.isAvailable &&
+        !isAppUnlocked
+
     DisposableEffect(navController) {
         val listener = NavController.OnDestinationChangedListener { _, destination, arguments ->
             Timber.tag(LogTag.NAVIGATION).i(
@@ -184,8 +204,11 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
         LocalTopPillController provides pillController
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
+            val isBiometricPreferenceLoaded = isUserLoggedIn != true ||
+                onboardingCompleted != true ||
+                biometricLockEnabled != null
             DeferredLoadingContainer(
-                isLoading = stableStartDestination.value == null,
+                isLoading = stableStartDestination.value == null || !isBiometricPreferenceLoaded,
                 loadingContent = {
                     BrandedLoadingScreen(
                         painter = painterResource(R.drawable.ic_launcher_foreground),
@@ -195,116 +218,169 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
             ) {
                 val route = stableStartDestination.value
                 if (route != null) {
-                    // When the user is already authenticated and onboarding is complete,
-                    // startDestination = Routes.MAIN. NavHost natively processes the Activity
-                    // intent's deep link on first composition, extracting arguments into the
-                    // backStackEntry. The DeepLinkHolder may hold a stale copy saved in
-                    // MainActivity.onCreate() — consume it to prevent accidental replay.
-                    LaunchedEffect(route) {
-                        if (route == Routes.MAIN) {
-                            deepLinkHolder.consumePendingDeepLink()
-                            // Cold start with existing auth — warm cache in background.
-                            // No-op if cache is already populated from a previous session.
-                            warmCurrencyCacheUseCase()
-                        }
-                    }
+                    if (isAppLocked) {
+                        val context = LocalContext.current
+                        val activity = context as? FragmentActivity
+                        val promptTitle = stringResource(DesignSystemR.string.biometric_prompt_title)
+                        val promptSubtitle = stringResource(DesignSystemR.string.biometric_prompt_subtitle)
+                        val promptNegative = stringResource(DesignSystemR.string.biometric_prompt_negative)
+                        val genericError = stringResource(DesignSystemR.string.biometric_auth_error_generic)
 
-                    NavHost(
-                        navController = navController,
-                        startDestination = route,
-                        modifier = modifier,
-                        enterTransition = {
-                            getEnterTransition(initialState.destination.route, targetState.destination.route)
-                        },
-                        exitTransition = {
-                            getExitTransition(initialState.destination.route, targetState.destination.route)
-                        },
-                        popEnterTransition = {
-                            getPopEnterTransition(initialState.destination.route, targetState.destination.route)
-                        },
-                        popExitTransition = {
-                            getPopExitTransition(initialState.destination.route, targetState.destination.route)
-                        }
-                    ) {
-                        loginGraph(
-                            onLoginSuccess = {
-                                scope.launch {
-                                    val email = authenticationService.currentUserEmail()
-                                    val currentUserId = authenticationService.currentUserId()
-                                    if (email != null && currentUserId != null) {
-                                        val isReconciledVal = userPreferenceRepository.getIsReconciled().first()
-                                        if (!isReconciledVal) {
-                                            checkPendingReconciliationUseCase(email)
-                                                .onSuccess { hasPending ->
-                                                    if (hasPending) {
-                                                        navController.navigate(Routes.RECONCILIATION) {
-                                                            popUpTo(Routes.LOGIN) { inclusive = true }
-                                                        }
-                                                        return@launch
-                                                    } else {
-                                                        userPreferenceRepository.setIsReconciled(true)
-                                                    }
+                        val launchPrompt = remember(
+                            activity,
+                            promptTitle,
+                            promptSubtitle,
+                            promptNegative,
+                            genericError
+                        ) {
+                            {
+                                if (activity != null) {
+                                    BiometricPromptHelper.authenticate(
+                                        activity = activity,
+                                        title = promptTitle,
+                                        subtitle = promptSubtitle,
+                                        negativeButtonText = promptNegative,
+                                        onSuccess = {
+                                            isAppUnlocked = true
+                                        },
+                                        onError = { errorCode, _ ->
+                                            when (errorCode) {
+                                                BiometricPrompt.ERROR_USER_CANCELED,
+                                                BiometricPrompt.ERROR_NEGATIVE_BUTTON,
+                                                BiometricPrompt.ERROR_CANCELED -> {
+                                                    // Standard user cancellations — do not show error pill
                                                 }
-                                                .onFailure {
-                                                    // Fail-safe: proceed if check fails
+                                                else -> {
+                                                    pillController.showPill(genericError)
                                                 }
+                                            }
                                         }
-                                    }
-                                    val destination = NavigationUtils.resolvePostLoginDestination(
-                                        currentOnboardingCompleted.value
                                     )
-                                    navController.navigate(destination) {
-                                        popUpTo(Routes.LOGIN) { inclusive = true }
+                                }
+                            }
+                        }
+
+                        LaunchedEffect(Unit) {
+                            launchPrompt()
+                        }
+
+                        AppLockGate(
+                            onUnlockClick = launchPrompt
+                        )
+                    } else {
+                        // When the user is already authenticated and onboarding is complete,
+                        // startDestination = Routes.MAIN. NavHost natively processes the Activity
+                        // intent's deep link on first composition, extracting arguments into the
+                        // backStackEntry. The DeepLinkHolder may hold a stale copy saved in
+                        // MainActivity.onCreate() — consume it to prevent accidental replay.
+                        LaunchedEffect(route) {
+                            if (route == Routes.MAIN) {
+                                deepLinkHolder.consumePendingDeepLink()
+                                // Cold start with existing auth — warm cache in background.
+                                // No-op if cache is already populated from a previous session.
+                                warmCurrencyCacheUseCase()
+                            }
+                        }
+
+                        NavHost(
+                            navController = navController,
+                            startDestination = route,
+                            modifier = modifier,
+                            enterTransition = {
+                                getEnterTransition(initialState.destination.route, targetState.destination.route)
+                            },
+                            exitTransition = {
+                                getExitTransition(initialState.destination.route, targetState.destination.route)
+                            },
+                            popEnterTransition = {
+                                getPopEnterTransition(initialState.destination.route, targetState.destination.route)
+                            },
+                            popExitTransition = {
+                                getPopExitTransition(initialState.destination.route, targetState.destination.route)
+                            }
+                        ) {
+                            loginGraph(
+                                onLoginSuccess = {
+                                    isAppUnlocked = true
+                                    scope.launch {
+                                        val email = authenticationService.currentUserEmail()
+                                        val currentUserId = authenticationService.currentUserId()
+                                        if (email != null && currentUserId != null) {
+                                            val isReconciledVal = userPreferenceRepository.getIsReconciled().first()
+                                            if (!isReconciledVal) {
+                                                checkPendingReconciliationUseCase(email)
+                                                    .onSuccess { hasPending ->
+                                                        if (hasPending) {
+                                                            navController.navigate(Routes.RECONCILIATION) {
+                                                                popUpTo(Routes.LOGIN) { inclusive = true }
+                                                            }
+                                                            return@launch
+                                                        } else {
+                                                            userPreferenceRepository.setIsReconciled(true)
+                                                        }
+                                                    }
+                                                    .onFailure {
+                                                        // Fail-safe: proceed if check fails
+                                                    }
+                                            }
+                                        }
+                                        val destination = NavigationUtils.resolvePostLoginDestination(
+                                            currentOnboardingCompleted.value
+                                        )
+                                        navController.navigate(destination) {
+                                            popUpTo(Routes.LOGIN) { inclusive = true }
+                                        }
+                                        // Replay pending deep link after auth gate (cold start scenario)
+                                        if (destination == Routes.MAIN) {
+                                            replayPendingDeepLink(deepLinkHolder, navController)
+                                        }
+                                        // Warm currency cache while user navigates through
+                                        // onboarding or the main screen — fire-and-forget.
+                                        scope.launch { warmCurrencyCacheUseCase() }
                                     }
-                                    // Replay pending deep link after auth gate (cold start scenario)
-                                    if (destination == Routes.MAIN) {
+                                }
+                            )
+
+                            onboardingGraph(
+                                onOnboardingComplete = {
+                                    isAppUnlocked = true
+                                    scope.launch {
+                                        try {
+                                            setOnboardingCompleteUseCase()
+                                        } catch (t: Throwable) {
+                                            Timber.e(
+                                                t,
+                                                "Error setting onboarding complete"
+                                            )
+                                        }
+                                        navController.navigate(Routes.MAIN) {
+                                            popUpTo(Routes.ONBOARDING) { inclusive = true }
+                                        }
+                                        // Replay pending deep link after onboarding gate
                                         replayPendingDeepLink(deepLinkHolder, navController)
                                     }
-                                    // Warm currency cache while user navigates through
-                                    // onboarding or the main screen — fire-and-forget.
-                                    scope.launch { warmCurrencyCacheUseCase() }
-                                }
-                            }
-                        )
-
-                        onboardingGraph(
-                            onOnboardingComplete = {
-                                scope.launch {
-                                    try {
-                                        setOnboardingCompleteUseCase()
-                                    } catch (t: Throwable) {
-                                        Timber.e(
-                                            t,
-                                            "Error setting onboarding complete"
-                                        )
+                                },
+                                onReconciliationComplete = {
+                                    val destination = if (currentOnboardingCompleted.value == true) {
+                                        Routes.MAIN
+                                    } else {
+                                        Routes.ONBOARDING
                                     }
-                                    navController.navigate(Routes.MAIN) {
-                                        popUpTo(Routes.ONBOARDING) { inclusive = true }
+                                    navController.navigate(destination) {
+                                        popUpTo(Routes.RECONCILIATION) { inclusive = true }
                                     }
-                                    // Replay pending deep link after onboarding gate
-                                    replayPendingDeepLink(deepLinkHolder, navController)
                                 }
-                            },
-                            onReconciliationComplete = {
-                                val destination = if (currentOnboardingCompleted.value == true) {
-                                    Routes.MAIN
-                                } else {
-                                    Routes.ONBOARDING
-                                }
-                                navController.navigate(destination) {
-                                    popUpTo(Routes.RECONCILIATION) { inclusive = true }
-                                }
-                            }
-                        )
+                            )
 
-                        mainGraph(
-                            navigationProviders = navigationProviders,
-                            screenUiProviders = routeToUiProvider.values.toList()
-                        )
+                            mainGraph(
+                                navigationProviders = navigationProviders,
+                                screenUiProviders = routeToUiProvider.values.toList()
+                            )
 
-                        settingsGraph()
+                            settingsGraph()
 
-                        profileGraph()
+                            profileGraph()
+                        }
                     }
                 }
             }

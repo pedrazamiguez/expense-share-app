@@ -17,6 +17,8 @@ import es.pedrazamiguez.splittrip.features.settings.presentation.data.buildSetti
 @Composable
 fun SettingsScreen(
     onAccountStatusClick: () -> Unit = {},
+    onSubscriptionsClick: () -> Unit = {},
+    onAccountSecurityClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
     onNotificationSwitchToggle: () -> Unit = {},
     hasNotificationPermission: Boolean = false,
@@ -29,9 +31,12 @@ fun SettingsScreen(
     onLogoutClick: () -> Unit = {},
     onDeveloperServicesTestClick: () -> Unit = {},
     onBugReportClick: () -> Unit = {},
+    onFeatureSuggestionClick: () -> Unit = {},
     onFaqClick: () -> Unit = {},
+    onContactSupportClick: () -> Unit = {},
     onPrivacyPolicyClick: () -> Unit = {},
-    onOpenSourceClick: () -> Unit = {}
+    onOpenSourceClick: () -> Unit = {},
+    onDeveloperInfoClick: () -> Unit = {}
 ) {
     val preferencesParams = SettingsPreferencesParams(
         onNotificationsClick = onNotificationsClick,
@@ -44,10 +49,15 @@ fun SettingsScreen(
         currentThemeCode = currentThemeCode,
         onThemeClick = onThemeClick,
         onAccountStatusClick = onAccountStatusClick,
+        onSubscriptionsClick = onSubscriptionsClick,
+        onAccountSecurityClick = onAccountSecurityClick,
         onBugReportClick = onBugReportClick,
+        onFeatureSuggestionClick = onFeatureSuggestionClick,
         onFaqClick = onFaqClick,
+        onContactSupportClick = onContactSupportClick,
         onPrivacyPolicyClick = onPrivacyPolicyClick,
-        onOpenSourceClick = onOpenSourceClick
+        onOpenSourceClick = onOpenSourceClick,
+        onDeveloperInfoClick = onDeveloperInfoClick
     )
 
     val sections = buildSettingsSections(

@@ -19,6 +19,9 @@ dependencies {
     // Glassmorphism (blur/haze effects) — api because HazeState appears in horizonGlassEffect signature
     api(libs.haze)
 
+    // Biometric authentication
+    api(libs.androidx.biometric)
+
     // Compose essentials
     api(libs.androidx.ui)
     api(libs.androidx.material3)

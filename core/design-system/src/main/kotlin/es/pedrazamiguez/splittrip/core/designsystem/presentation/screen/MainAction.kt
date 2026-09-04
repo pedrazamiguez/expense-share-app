@@ -7,5 +7,6 @@ data class MainAction(
     val contentDescription: String,
     val onClick: () -> Unit,
     val enabled: Boolean = true,
-    val sharedTransitionKey: String? = null
+    val sharedTransitionKey: String? = null,
+    val showProBadge: Boolean = false
 )

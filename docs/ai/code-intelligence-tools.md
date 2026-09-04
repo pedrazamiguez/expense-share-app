@@ -16,11 +16,13 @@ Agent (OpenCode / Antigravity)
   │     ├── Firebase MCP Server      (existing)
   │     │
   │     ├── codebase-memory-mcp      [Phase 1] — Structural graph, static C binary
-  │     └── graphify                 [Phase 1] — Semantic graph + HTML viz
+  │     ├── graphify                 [Phase 1] — Semantic graph + HTML viz
+  │     └── splittrip-rag            [Phase 1] — Local documentation RAG, ONNX + SQLite
   │
   └── Local Indexes (persistent)
         ├── ~/.cache/codebase-memory-mcp/  (SQLite, auto-updated)
-        └── graphify-out/                  (JSON + HTML, git-committed)
+        ├── graphify-out/                  (JSON + HTML, git-committed)
+        └── .cache/splittrip_rag.db        (SQLite + FTS5, git-ignored)
 ```
 
 ## Tool Catalog
@@ -29,6 +31,7 @@ Agent (OpenCode / Antigravity)
 |------|------|---------|--------------|---------------|----------|-------------|-------|
 | **codebase-memory-mcp** | [DeusData/codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) | Structural code graph (tree-sitter + LSP), 14 MCP tools, impact analysis | 120× fewer tokens | Static C binary (`curl \| bash`) | ✅ Auto | ✅ Auto | **Phase 1 — Active** |
 | **Graphify** | [safishamsi/graphify](https://github.com/safishamsi/graphify) | Multi-modal knowledge graph (AST + LLM), HTML report, team-shareable artifacts | 71.5× fewer tokens | `uv tool install graphifyy` | ✅ Native `--platform opencode` | ✅ Dedicated `antigravity install` | **Phase 1 — Active** |
+| **splittrip-rag** | In-repo (`scripts/`) | Local documentation RAG (fastembed ONNX + SQLite FTS5 hybrid search), 3 tools | 85–95% on docs | `uv run scripts/rag_indexer.py` | ✅ Configured | ✅ Configured | **Phase 1 — Active** |
 | **Gentle-AI** | [Gentleman-Programming/gentle-ai](https://github.com/Gentleman-Programming/gentle-ai) | Cross-session memory (Engram), SDD workflow, provider switching | Indirect (memory reuse) | `brew install gentle-ai` | ✅ Native SDD profiles | ✅ Native | Phase 2 — On Radar |
 | **token-savior** | [Mibayy/token-savior](https://github.com/Mibayy/token-savior) | Structural index + Bash output compaction, 53 tools | 80–99.9% | `pip install token-savior-recall[mcp]` | ⚠️ Manual | ⚠️ Manual | Phase 2 — On Radar |
 | **CodeGraph** | [codegraph-ai/CodeGraph](https://github.com/codegraph-ai/CodeGraph) | Rust semantic graph, 38 languages | 94% fewer tool calls | Manual binary | ❌ Not listed | ❌ Not listed | Skipped |
@@ -51,6 +54,14 @@ Agent (OpenCode / Antigravity)
 - **OpenCode:** `graphify install --platform opencode` writes `.agents/skills/graphify/SKILL.md` + `references/`
 - **Antigravity:** `graphify antigravity install` writes `.agents/rules` + `.agents/workflows`
 - **Git integration:** `graphify-out/` should be committed to share the graph artifact across the team
+
+### splittrip-rag
+
+- **Runtime:** Python with `uv` (isolated PEP 723), `fastembed` (`BAAI/bge-small-en-v1.5`) CPU ONNX Runtime + SQLite FTS5 BM25
+- **Indexing:** Header-aware semantic chunking of `/docs/**/*.md` and `AGENTS.md` → `.cache/splittrip_rag.db`
+- **Tools:** `search_project_knowledge` (hybrid dense + BM25 RRF search), `get_doc_section` (targeted reader), `reindex_project_knowledge`
+- **OpenCode & Antigravity:** Stdio MCP server registered via `scripts/ai-setup.sh`
+- **Zero Cloud Leakage:** 100% private, offline, zero API keys required
 
 ## Phase 2 Tools (On Radar)
 
@@ -81,8 +92,22 @@ This idempotent command:
 3. Installs Graphify via `uv tool install graphifyy`
 4. Builds Graphify index to `graphify-out/`
 5. Runs `graphify install --platform opencode --project`
-6. Merges MCP entries into `~/.gemini/config/mcp_config.json`
-7. Verifies all steps completed
+6. Builds/updates local documentation RAG index to `.cache/splittrip_rag.db`
+7. Merges MCP entries into `~/.gemini/config/mcp_config.json` and `~/.config/opencode/opencode.jsonc`
+8. Verifies all steps completed
+
+### Knowledge Index Maintenance
+
+```bash
+make knowledge-update
+```
+
+A single fast ($<4\text{s}$), fully incremental target that refreshes all 3 local knowledge indexes after codebase edits, PR merges, or new documentation:
+1. **`codebase-memory-mcp`**: Incremental AST symbol extraction and call graph resolution.
+2. **`splittrip-rag`**: Incremental hash-checked document chunking and CPU ONNX vector embedding.
+3. **`graphify`**: Incremental module topology and community clustering updates to `graphify-out/`.
+
+AI skills (`sp-start-issue`, `sp-follow-up`) automatically trigger `make knowledge-update` upon task completion to eliminate index drift.
 
 ### Verification
 
@@ -96,8 +121,9 @@ Extended checks include:
 - `graphify` present
 - codebase-memory-mcp index exists
 - Graphify index (`graphify-out/graph.json`) exists
-- `opencode.jsonc` has codebase-memory-mcp entry
-- Gemini MCP config has codebase-memory-mcp + graphify entries
+- SplitTrip RAG index (`.cache/splittrip_rag.db`) exists
+- `opencode.jsonc` has codebase-memory-mcp + splittrip-rag entries
+- Gemini MCP config has codebase-memory-mcp + graphify + splittrip-rag entries
 
 ## Sensitive Data Map
 

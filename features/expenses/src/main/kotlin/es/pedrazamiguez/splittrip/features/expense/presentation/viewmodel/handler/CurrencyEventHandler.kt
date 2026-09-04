@@ -89,8 +89,8 @@ class CurrencyEventHandler(
         if (isForeign) {
             _uiState.update {
                 it.copy(
-                    displayExchangeRate = "",
-                    isExchangeRateError = false
+                    isExchangeRateError = false,
+                    isExchangeRateStale = false
                 )
             }
             if (isCash) {
@@ -118,7 +118,8 @@ class CurrencyEventHandler(
                     isExchangeRateLocked = false,
                     isInsufficientCash = false,
                     exchangeRateLockedHint = null,
-                    isExchangeRateError = false
+                    isExchangeRateError = false,
+                    isExchangeRateStale = false
                 )
             }
             // Same currency + CASH: probe pools and fetch tranche preview via callback.
@@ -216,9 +217,7 @@ class CurrencyEventHandler(
                     )
                 }
 
-                if (rateResult != null) {
-                    recalculateForward()
-                }
+                recalculateForward()
             } catch (e: Exception) {
                 Timber.e(
                     e,
@@ -232,6 +231,7 @@ class CurrencyEventHandler(
                         isError = true
                     )
                 }
+                recalculateForward()
             }
         }
     }
@@ -468,7 +468,7 @@ class CurrencyEventHandler(
             displayExchangeRate = rateResult?.rate?.let { exchangeRate ->
                 formattingHelper.formatRateForDisplay(exchangeRate.toPlainString())
             } ?: displayExchangeRate,
-            isExchangeRateStale = rateResult?.isStale ?: isExchangeRateStale
+            isExchangeRateStale = rateResult?.isStale ?: false
         )
     }
 }

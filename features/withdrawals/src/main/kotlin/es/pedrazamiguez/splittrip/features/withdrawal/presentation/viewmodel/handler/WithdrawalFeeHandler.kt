@@ -57,7 +57,8 @@ class WithdrawalFeeHandler(
                     feeConvertedLabel = feeConvertedLabel,
                     showFeeExchangeRateSection = false,
                     isFeeAmountValid = true,
-                    isFeeExchangeRateError = false
+                    isFeeExchangeRateError = false,
+                    isFeeExchangeRateStale = false
                 ).withStepClamped()
             }
         } else {
@@ -72,7 +73,8 @@ class WithdrawalFeeHandler(
                     feeConvertedLabel = "",
                     showFeeExchangeRateSection = false,
                     isFeeAmountValid = true,
-                    isFeeExchangeRateError = false
+                    isFeeExchangeRateError = false,
+                    isFeeExchangeRateStale = false
                 ).withStepClamped()
             }
         }
@@ -104,8 +106,9 @@ class WithdrawalFeeHandler(
                 feeCurrency = feeCurrencyModel,
                 showFeeExchangeRateSection = isForeign,
                 feeExchangeRateLabel = feeExchangeRateLabel,
-                feeExchangeRate = if (isForeign) "" else "1.0",
-                isFeeExchangeRateError = false
+                feeExchangeRate = if (isForeign) it.feeExchangeRate else "1.0",
+                isFeeExchangeRateError = false,
+                isFeeExchangeRateStale = false
             ).withStepClamped()
         }
 
@@ -181,9 +184,7 @@ class WithdrawalFeeHandler(
                         isError = rateResult == null
                     )
                 }
-                if (rateResult != null) {
-                    recalculateFeeConverted()
-                }
+                recalculateFeeConverted()
             } catch (e: Exception) {
                 Timber.w(e, "Failed to fetch fee exchange rate")
                 _uiState.update { current ->
@@ -194,6 +195,7 @@ class WithdrawalFeeHandler(
                         isError = true
                     )
                 }
+                recalculateFeeConverted()
             }
         }
     }
@@ -214,7 +216,7 @@ class WithdrawalFeeHandler(
             feeExchangeRate = rateResult?.rate?.let { r ->
                 formattingHelper.formatRateForDisplay(r.toPlainString())
             } ?: feeExchangeRate,
-            isFeeExchangeRateStale = rateResult?.isStale ?: isFeeExchangeRateStale
+            isFeeExchangeRateStale = rateResult?.isStale ?: false
         )
     }
 }

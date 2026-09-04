@@ -1,9 +1,11 @@
 package es.pedrazamiguez.splittrip.features.settings.presentation.component
 
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.SecondaryBodyText
 
 @Composable
@@ -15,6 +17,7 @@ internal fun NotificationCategoryItem(
     onCheckedChange: (Boolean) -> Unit
 ) {
     ListItem(
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         leadingContent = icon,
         supportingContent = {
             SecondaryBodyText(text = description, maxLines = Int.MAX_VALUE)

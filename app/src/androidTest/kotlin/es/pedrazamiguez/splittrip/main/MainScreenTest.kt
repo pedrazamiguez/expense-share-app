@@ -7,10 +7,13 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.SplitTripTheme
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
+import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveSelectedGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupCurrencyUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupNameUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetSelectedGroupUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.ObserveCurrentUserProfileUseCase
 import es.pedrazamiguez.splittrip.features.main.presentation.screen.MainScreen
 import es.pedrazamiguez.splittrip.features.main.presentation.viewmodel.MainViewModel
 import es.pedrazamiguez.splittrip.helpers.FakeNavigationProvider
@@ -55,7 +58,7 @@ class MainScreenTest {
 
     private val expensesProvider = FakeNavigationProvider(
         route = "expenses",
-        order = 50,
+        order = 30,
         requiresSelectedGroup = true,
         label = "Expenses"
     )
@@ -76,11 +79,17 @@ class MainScreenTest {
 
     // ── ViewModel helpers ────────────────────────────────────────────
 
-    private fun createMainViewModel(): MainViewModel = MainViewModel(
-        registerDeviceTokenUseCase = mockk(relaxed = true),
-        getGroupByIdUseCase = mockk(relaxed = true),
-        warmCurrencyCacheUseCase = mockk(relaxed = true)
-    )
+    private fun createMainViewModel(): MainViewModel {
+        val observeCurrentUserProfile = mockk<ObserveCurrentUserProfileUseCase>().apply {
+            every { this@apply.invoke() } returns flowOf(null)
+        }
+        return MainViewModel(
+            registerDeviceTokenUseCase = mockk(relaxed = true),
+            getGroupByIdUseCase = mockk(relaxed = true),
+            warmCurrencyCacheUseCase = mockk(relaxed = true),
+            observeCurrentUserProfileUseCase = observeCurrentUserProfile
+        )
+    }
 
     private fun createSharedViewModel(selectedGroupId: String? = null): SharedViewModel {
         val getGroupId = mockk<GetSelectedGroupIdUseCase>().apply {
@@ -96,13 +105,21 @@ class MainScreenTest {
                 if (selectedGroupId != null) "EUR" else null
             )
         }
+        val observeSelectedGroup = mockk<ObserveSelectedGroupUseCase>().apply {
+            every { this@apply.invoke() } returns flowOf(null)
+        }
+        val observeGroup = mockk<ObserveGroupUseCase>().apply {
+            every { this@apply.invoke(any()) } returns flowOf(null)
+        }
         val setGroup = mockk<SetSelectedGroupUseCase>(relaxed = true)
 
         return SharedViewModel(
             getSelectedGroupIdUseCase = getGroupId,
             getSelectedGroupNameUseCase = getGroupName,
             getSelectedGroupCurrencyUseCase = getGroupCurrency,
-            setSelectedGroupUseCase = setGroup
+            setSelectedGroupUseCase = setGroup,
+            observeSelectedGroupUseCase = observeSelectedGroup,
+            observeGroupUseCase = observeGroup
         )
     }
 

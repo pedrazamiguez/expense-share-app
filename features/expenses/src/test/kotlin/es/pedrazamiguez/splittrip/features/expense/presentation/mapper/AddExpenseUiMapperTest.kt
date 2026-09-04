@@ -84,12 +84,14 @@ class AddExpenseUiMapperTest {
             userUiMapper
         )
         addOnMapper = AddExpenseAddOnUiMapper()
+        val addExpenseOptionsUiMapper = AddExpenseOptionsUiMapper(resourceProvider, formattingHelper)
         mapper = AddExpenseUiMapper(
             localeProvider,
             resourceProvider,
             splitMapper,
             addOnMapper,
-            splitPreviewService
+            splitPreviewService,
+            addExpenseOptionsUiMapper
         )
     }
 
@@ -1158,6 +1160,31 @@ class AddExpenseUiMapperTest {
             assertFalse(result.showExchangeRateSection)
             assertNull(result.receiptAttachment)
             assertFalse(result.isAiModeActive)
+        }
+
+        @Test
+        fun `maps cash expense and filters out SCHEDULED from availablePaymentStatuses`() {
+            val expense = Expense(
+                id = "exp-cash",
+                groupId = "group-1",
+                title = "Coffee",
+                sourceAmount = 350L,
+                sourceCurrency = "EUR",
+                groupAmount = 350L,
+                groupCurrency = "EUR",
+                exchangeRate = BigDecimal.ONE,
+                category = ExpenseCategory.FOOD,
+                paymentMethod = PaymentMethod.CASH,
+                paymentStatus = PaymentStatus.FINISHED,
+                splitType = SplitType.EQUAL
+            )
+
+            val result = mapper.mapExpenseToState(expense, null, baseEditState(), emptyMap(), emptyList())
+
+            val statusIds = result.availablePaymentStatuses.map { it.id }
+            assertTrue("FINISHED" in statusIds)
+            assertTrue("REFUNDABLE" in statusIds)
+            assertTrue("SCHEDULED" !in statusIds)
         }
 
         @Test

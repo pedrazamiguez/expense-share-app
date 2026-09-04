@@ -18,6 +18,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.AlertTriangle
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Cash
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CreditCard
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.X
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
@@ -51,6 +52,8 @@ fun AddExpenseFeature(
     val pillController = LocalTopPillController.current
     val context = LocalContext.current
     val navController = LocalTabNavController.current
+    val rootNavController = LocalRootNavController.current
+    val proRequiredMessage = stringResource(R.string.expense_autofill_pro_required)
 
     val state by addExpenseViewModel.uiState.collectAsStateWithLifecycle()
     val selectedGroupId = sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
@@ -82,6 +85,11 @@ fun AddExpenseFeature(
                 AddExpenseUiAction.RequestExitConfirmation -> showExitConfirmation = true
 
                 AddExpenseUiAction.NavigateBack -> navController.popBackStack()
+
+                AddExpenseUiAction.NavigateToSubscriptions -> {
+                    pillController.showPill(message = proRequiredMessage)
+                    rootNavController.navigate(Routes.SETTINGS_SUBSCRIPTIONS)
+                }
 
                 AddExpenseUiAction.None -> Unit
             }

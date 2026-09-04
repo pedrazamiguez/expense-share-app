@@ -11,13 +11,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.splittrip.core.common.presentation.asString
-import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.splittrip.core.designsystem.permission.rememberRequestCameraPermission
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.notification.LocalTopPillController
 import es.pedrazamiguez.splittrip.features.group.R
-import es.pedrazamiguez.splittrip.features.group.presentation.component.QrScannerDialog
+import es.pedrazamiguez.splittrip.features.group.presentation.component.CreateEditGroupOverlays
 import es.pedrazamiguez.splittrip.features.group.presentation.screen.CreateEditGroupScreen
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.CreateEditGroupViewModel
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.CreateEditGroupUiAction
@@ -35,6 +34,7 @@ fun CreateEditGroupFeature(
     val context = LocalContext.current
     val pillController = LocalTopPillController.current
     val navController = LocalTabNavController.current
+    val rootNavController = LocalRootNavController.current
 
     var showScanner by remember { mutableStateOf(false) }
     var showExitConfirmation by remember { mutableStateOf(false) }
@@ -55,35 +55,32 @@ fun CreateEditGroupFeature(
                 is CreateEditGroupUiAction.ShowError -> pillController.showPill(action.message.asString(context))
                 CreateEditGroupUiAction.NavigateBack -> navController.popBackStack()
                 CreateEditGroupUiAction.RequestExitConfirmation -> showExitConfirmation = true
+                is CreateEditGroupUiAction.NavigateToRoute -> rootNavController.navigate(action.route)
             }
         }
     }
 
-    if (showScanner) {
-        QrScannerDialog(
-            onDismissRequest = { showScanner = false },
-            onScanned = { payload ->
-                showScanner = false
-                createEditGroupViewModel.onEvent(
-                    CreateEditGroupUiEvent.MemberScanned(payload.userId, payload.email),
-                    onSuccess
-                )
-            }
-        )
-    }
-
-    if (showExitConfirmation) {
-        DestructiveConfirmationDialog(
-            title = stringResource(DesignSystemR.string.wizard_exit_dialog_title),
-            text = stringResource(DesignSystemR.string.wizard_exit_dialog_message),
-            confirmLabel = stringResource(DesignSystemR.string.wizard_exit_dialog_confirm),
-            onConfirm = {
-                showExitConfirmation = false
-                navController.popBackStack()
-            },
-            onDismiss = { showExitConfirmation = false }
-        )
-    }
+    CreateEditGroupOverlays(
+        state = state,
+        showScanner = showScanner,
+        showExitConfirmation = showExitConfirmation,
+        onDismissScanner = { showScanner = false },
+        onMemberScanned = { userId, email ->
+            showScanner = false
+            createEditGroupViewModel.onEvent(CreateEditGroupUiEvent.MemberScanned(userId, email), onSuccess)
+        },
+        onConfirmExit = {
+            showExitConfirmation = false
+            navController.popBackStack()
+        },
+        onDismissExit = { showExitConfirmation = false },
+        onUpgrade = {
+            createEditGroupViewModel.onEvent(CreateEditGroupUiEvent.UpgradeClicked, onSuccess)
+        },
+        onDismissUpgrade = {
+            createEditGroupViewModel.onEvent(CreateEditGroupUiEvent.DismissUpgradeDialog, onSuccess)
+        }
+    )
 
     CreateEditGroupScreen(
         uiState = state,

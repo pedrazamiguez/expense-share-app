@@ -14,6 +14,48 @@ class SupportEmailProviderImpl(
 ) : SupportEmailProvider {
 
     override fun buildBugReportEmail(): SupportEmail {
+        val emailBody = """
+            
+            
+            ${buildSystemInfoFooter()}
+        """.trimIndent()
+
+        return SupportEmail(
+            recipient = supportEmailAddressProvider.getSupportEmailAddress(),
+            subject = resourceProvider.getString(R.string.support_email_subject),
+            body = emailBody
+        )
+    }
+
+    override fun buildFeatureSuggestionEmail(): SupportEmail {
+        val template = resourceProvider.getString(R.string.support_email_feature_body_template)
+        val emailBody = """
+            $template
+            ${buildSystemInfoFooter()}
+        """.trimIndent()
+
+        return SupportEmail(
+            recipient = supportEmailAddressProvider.getSupportEmailAddress(),
+            subject = resourceProvider.getString(R.string.support_email_feature_subject),
+            body = emailBody
+        )
+    }
+
+    override fun buildContactSupportEmail(): SupportEmail {
+        val template = resourceProvider.getString(R.string.support_email_contact_body_template)
+        val emailBody = """
+            $template
+            ${buildSystemInfoFooter()}
+        """.trimIndent()
+
+        return SupportEmail(
+            recipient = supportEmailAddressProvider.getSupportEmailAddress(),
+            subject = resourceProvider.getString(R.string.support_email_contact_subject),
+            body = emailBody
+        )
+    }
+
+    private fun buildSystemInfoFooter(): String {
         val systemInfoHeader = resourceProvider.getString(R.string.support_email_system_info_header)
         val appVersionStr = resourceProvider.getString(
             R.string.support_email_app_version,
@@ -29,20 +71,12 @@ class SupportEmailProviderImpl(
             appMetadataProvider.deviceModel
         )
 
-        val emailBody = """
-            
-            
+        return """
             -----------------------------------
             $systemInfoHeader
             $appVersionStr
             $osVersionStr
             $deviceStr
         """.trimIndent()
-
-        return SupportEmail(
-            recipient = supportEmailAddressProvider.getSupportEmailAddress(),
-            subject = resourceProvider.getString(R.string.support_email_subject),
-            body = emailBody
-        )
     }
 }

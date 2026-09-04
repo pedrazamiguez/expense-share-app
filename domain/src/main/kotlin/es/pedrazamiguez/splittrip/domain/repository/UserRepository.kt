@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.repository
 
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import es.pedrazamiguez.splittrip.domain.model.User
 import kotlinx.coroutines.flow.Flow
 
@@ -63,5 +64,13 @@ interface UserRepository {
         userId: String,
         timezone: String?,
         preferredReminderTime: String?
+    ): Result<Unit>
+
+    /**
+     * Updates the user's subscription tier.
+     */
+    suspend fun updateUserTier(
+        userId: String,
+        tier: SubscriptionTier
     ): Result<Unit>
 }

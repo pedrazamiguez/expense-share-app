@@ -12,6 +12,8 @@ import es.pedrazamiguez.splittrip.domain.exception.ValidationException
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.SubunitShareDistributionService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedFeature
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.CreateSubunitUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
@@ -40,6 +42,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -66,7 +69,8 @@ class CreateEditSubunitViewModel(
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
     private val subunitUiMapper: SubunitUiMapper,
     private val shareDistributionService: SubunitShareDistributionService,
-    private val authenticationService: AuthenticationService
+    private val authenticationService: AuthenticationService,
+    private val featureGateService: FeatureGateService
 ) : ViewModel() {
 
     private data class InitParams(val groupId: String, val subunitId: String?)
@@ -368,7 +372,8 @@ class CreateEditSubunitViewModel(
         }
     }
 
-    @Suppress("LongMethod") // Sequential save flow: validate → build domain object → persist → handle result
+    // Sequential save flow: validate → build domain object → persist → handle result
+    @Suppress("LongMethod", "CognitiveComplexMethod")
     private fun save() {
         val form = _formState.value
         val params = _initParams.value ?: return
@@ -390,6 +395,26 @@ class CreateEditSubunitViewModel(
         _formState.update { it.copy(isSaving = true) }
 
         viewModelScope.launch {
+            if (params.subunitId == null) {
+                val isEnabled = featureGateService.isFeatureEnabled(
+                    feature = GatedFeature.SUBUNIT_CREATION,
+                    groupId = params.groupId
+                ).first()
+                if (!isEnabled) {
+                    _formState.update { it.copy(isSaving = false) }
+                    _actions.emit(
+                        CreateEditSubunitUiAction.ShowError(
+                            UiText.StringResource(R.string.subunit_error_pro_required)
+                        )
+                    )
+                    val isPro = featureGateService.isActingUserPro().first()
+                    if (!isPro) {
+                        _actions.emit(CreateEditSubunitUiAction.NavigateToSubscriptions)
+                    }
+                    return@launch
+                }
+            }
+
             val memberShares = shareDistributionService.parseShareTexts(
                 selectedMemberIds = form.selectedMemberIds,
                 memberShareTexts = form.memberShares

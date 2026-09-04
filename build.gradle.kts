@@ -139,6 +139,7 @@ sonarqube {
                 "**/designsystem/foundation/**/*.kt",
                 "**/designsystem/navigation/**/*.kt",
                 "**/designsystem/permission/**/*.kt",
+                "**/designsystem/biometric/**/*.kt",
                 // Design-system: constants-only objects — JaCoCo instruments the static class initializer
                 // even though there are no executable statements (confirmed false positive).
                 "**/designsystem/constant/**/*.kt",
@@ -337,3 +338,13 @@ tasks.register<Exec>("generateAndaluzStrings") {
     }
     commandLine(pythonPath, "${rootDir}/scripts/generate_andaluz_strings.py")
 }
+
+tasks.register<Exec>("validateRemoteConfig") {
+    group = "verification"
+    description = "Validates consistency between remote_config_defaults.xml and firebase/remoteconfig.template.json"
+    val pythonPath = project.file("/opt/homebrew/bin/python3").let {
+        if (it.exists()) it.absolutePath else "python3"
+    }
+    commandLine(pythonPath, "${rootDir}/scripts/validate_remote_config.py")
+}
+

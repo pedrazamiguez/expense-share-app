@@ -41,8 +41,8 @@ internal fun AiExtractionTabContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(MaterialTheme.spacing.Large),
-        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Large)
+            .padding(MaterialTheme.spacing.ExtraLarge),
+        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.ExtraLarge)
     ) {
         AiModelSelector(
             availableModels = uiState.availableModels,

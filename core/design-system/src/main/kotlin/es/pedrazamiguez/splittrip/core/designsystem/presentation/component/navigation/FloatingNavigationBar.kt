@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeState
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.horizonGlassEffect
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.FloatingNavTab
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.badge.ProBadge
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.MainAction
 import es.pedrazamiguez.splittrip.core.designsystem.transition.fabSharedTransitionModifier
 
@@ -330,6 +331,14 @@ private fun MainActionButton(
                     imageVector = mainAction.icon,
                     contentDescription = mainAction.contentDescription,
                     tint = contentColor
+                )
+            }
+
+            if (mainAction.showProBadge) {
+                ProBadge(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 4.dp, end = 4.dp)
                 )
             }
         }

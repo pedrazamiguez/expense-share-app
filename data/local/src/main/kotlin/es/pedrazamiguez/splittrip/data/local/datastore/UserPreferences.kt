@@ -33,6 +33,7 @@ class UserPreferences(
         private val APP_THEME_KEY = stringPreferencesKey("app_theme")
         private val DEVICE_ID_KEY = stringPreferencesKey("device_id")
         private val HAS_SIGNED_OUT_KEY = booleanPreferencesKey("has_signed_out")
+        private val BIOMETRIC_LOCK_ENABLED_KEY = booleanPreferencesKey("biometric_lock_enabled")
 
         // User-scoped key name constants (prefixed at access time via userKey())
         private const val SELECTED_GROUP_ID = "selected_group_id"
@@ -128,6 +129,18 @@ class UserPreferences(
     suspend fun setHasSignedOut(signedOut: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[HAS_SIGNED_OUT_KEY] = signedOut
+        }
+    }
+
+    // ── Biometric App Lock (Device-scoped) ───────────────────────────────
+
+    val isBiometricLockEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[BIOMETRIC_LOCK_ENABLED_KEY] ?: false
+    }
+
+    suspend fun setBiometricLockEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[BIOMETRIC_LOCK_ENABLED_KEY] = enabled
         }
     }
 

@@ -290,6 +290,7 @@
     <string name="expense_autofill_success">Reçibo êccaneao con éççito</string>
     <string name="expense_autofill_failed">No çe pudieron leêh lô campô del reçibo</string>
     <string name="expense_autofill_unavailable">Lâ funçionê de IA no çon compatiblê con êtte dîppoçitibo</string>
+    <string name="expense_autofill_pro_required">El êccaneo de reçibô con IA requiere una çûccrîççión a SplîTTrîh Pro.</string>
     <string name="expense_autofill_banner_title">Reyenao automáticamente dêdde el reçibo</string>
     <string name="expense_autofill_banner_dismiss_cd">Dêccartâh abiço de reyenao automático</string>
     <string name="add_expense_date">Fexa</string>

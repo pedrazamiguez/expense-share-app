@@ -257,7 +257,7 @@ class AddExpenseOptionsUiMapperTest {
     inner class MapPaymentStatuses {
 
         @Test
-        fun `includes FINISHED, SCHEDULED, and REFUNDABLE`() {
+        fun `includes FINISHED, SCHEDULED, and REFUNDABLE when payment method is null`() {
             val result = mapper.mapPaymentStatuses(PaymentStatus.entries)
 
             assertEquals(3, result.size)
@@ -268,13 +268,42 @@ class AddExpenseOptionsUiMapperTest {
         }
 
         @Test
-        fun `excludes RECEIVED, PENDING, and CANCELLED`() {
-            val result = mapper.mapPaymentStatuses(PaymentStatus.entries)
+        fun `includes FINISHED, SCHEDULED, and REFUNDABLE when payment method is non-cash`() {
+            val result = mapper.mapPaymentStatuses(PaymentStatus.entries, PaymentMethod.CREDIT_CARD)
 
+            assertEquals(3, result.size)
             val ids = result.map { it.id }
-            assertTrue("RECEIVED" !in ids)
-            assertTrue("PENDING" !in ids)
-            assertTrue("CANCELLED" !in ids)
+            assertTrue("FINISHED" in ids)
+            assertTrue("SCHEDULED" in ids)
+            assertTrue("REFUNDABLE" in ids)
+        }
+
+        @Test
+        fun `excludes SCHEDULED when payment method is CASH`() {
+            val result = mapper.mapPaymentStatuses(PaymentStatus.entries, PaymentMethod.CASH)
+
+            assertEquals(2, result.size)
+            val ids = result.map { it.id }
+            assertTrue("FINISHED" in ids)
+            assertTrue("REFUNDABLE" in ids)
+            assertTrue("SCHEDULED" !in ids)
+        }
+
+        @Test
+        fun `excludes RECEIVED, PENDING, and CANCELLED across both cash and non-cash methods`() {
+            val nonCashResult = mapper.mapPaymentStatuses(PaymentStatus.entries, PaymentMethod.CREDIT_CARD)
+            val cashResult = mapper.mapPaymentStatuses(PaymentStatus.entries, PaymentMethod.CASH)
+
+            val nonCashIds = nonCashResult.map { it.id }
+            val cashIds = cashResult.map { it.id }
+
+            assertTrue("RECEIVED" !in nonCashIds)
+            assertTrue("PENDING" !in nonCashIds)
+            assertTrue("CANCELLED" !in nonCashIds)
+
+            assertTrue("RECEIVED" !in cashIds)
+            assertTrue("PENDING" !in cashIds)
+            assertTrue("CANCELLED" !in cashIds)
         }
 
         @Test

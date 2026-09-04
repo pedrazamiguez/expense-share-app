@@ -24,7 +24,7 @@ YELLOW := \033[1;33m
 CYAN   := \033[0;36m
 NC     := \033[0m
 
-.PHONY: help setup hooks local-props doctor fast-check check ktlint detekt test konsist coverage build clean andaluz andaluz-lenient catalog-update firebase prune-branches ai-setup
+.PHONY: help setup hooks local-props doctor fast-check check ktlint detekt test konsist coverage build clean andaluz andaluz-lenient catalog-update firebase prune-branches ai-setup remoteconfig-validate remoteconfig-diff remoteconfig-deploy remoteconfig-rollback
 
 # ─── Default: show help ───────────────────────────────────────────────────────
 help: ## Show this help message
@@ -180,12 +180,23 @@ doctor: ## Check that required files and tools are present
 	else \
 		printf "  $(YELLOW)⚠️   Graphify index missing$(NC) — run 'make ai-setup'\n"; \
 	fi
-	@# opencode.jsonc has codebase-memory-mcp entry
+	@# SplitTrip RAG index
+	@if [ -f ".cache/splittrip_rag.db" ]; then \
+		printf "  $(GREEN)✅  SplitTrip RAG index present$(NC)\n"; \
+	else \
+		printf "  $(YELLOW)⚠️   SplitTrip RAG index missing$(NC) — run 'make rag-index' or 'make ai-setup'\n"; \
+	fi
+	@# opencode.jsonc has entries
 	@OPENCODE_CFG="$${HOME}/.config/opencode/opencode.jsonc"; \
 	if [ -f "$$OPENCODE_CFG" ] && grep -q "codebase-memory-mcp" "$$OPENCODE_CFG" 2>/dev/null; then \
 		printf "  $(GREEN)✅  opencode.jsonc has codebase-memory-mcp entry$(NC)\n"; \
 	else \
 		printf "  $(YELLOW)⚠️   opencode.jsonc missing codebase-memory-mcp entry$(NC) — run 'make ai-setup'\n"; \
+	fi; \
+	if [ -f "$$OPENCODE_CFG" ] && grep -q "splittrip-rag" "$$OPENCODE_CFG" 2>/dev/null; then \
+		printf "  $(GREEN)✅  opencode.jsonc has splittrip-rag entry$(NC)\n"; \
+	else \
+		printf "  $(YELLOW)⚠️   opencode.jsonc missing splittrip-rag entry$(NC) — run 'make ai-setup'\n"; \
 	fi
 	@# Gemini MCP config has entries
 	@GEMINI_CFG="$${HOME}/.gemini/config/mcp_config.json"; \
@@ -198,18 +209,23 @@ doctor: ## Check that required files and tools are present
 		printf "  $(GREEN)✅  Gemini MCP has graphify entry$(NC)\n"; \
 	else \
 		printf "  $(YELLOW)⚠️   Gemini MCP missing graphify entry$(NC) — run 'make ai-setup'\n"; \
+	fi; \
+	if [ -f "$$GEMINI_CFG" ] && grep -q '"splittrip-rag"' "$$GEMINI_CFG" 2>/dev/null; then \
+		printf "  $(GREEN)✅  Gemini MCP has splittrip-rag entry$(NC)\n"; \
+	else \
+		printf "  $(YELLOW)⚠️   Gemini MCP missing splittrip-rag entry$(NC) — run 'make ai-setup'\n"; \
 	fi
 	@echo ""
 
 # ─── Quality gates (mirrors CI) ───────────────────────────────────────────────
-fast-check: andaluz-lenient ## Fast incremental check using Gradle daemon & build cache (for rapid iteration)
+fast-check: andaluz-lenient remoteconfig-validate ## Fast incremental check using Gradle daemon & build cache (for rapid iteration)
 	@printf "$(YELLOW)⏳  Running fast incremental quality checks...$(NC)\n"
 	@$(FAST_GRADLEW) ktlintCheck detekt lintDebug :konsist-tests:test --continue
 	@$(FAST_GRADLEW) jacocoMergedReport --continue
 	@printf "$(YELLOW)⏳  Checking LINE coverage gates (overall + per-file, ≥ 80%%)...$(NC)\n"
 	@python3 scripts/check_coverage.py
 
-check: clean andaluz-lenient ## Run all local quality gates from a 100% cold state before pushing (single-pass Gradle execution, mirrors CI)
+check: clean andaluz-lenient remoteconfig-validate ## Run all local quality gates from a 100% cold state before pushing (single-pass Gradle execution, mirrors CI)
 	@printf "$(YELLOW)⏳  Running full cold quality gates (single-pass Gradle execution)...$(NC)\n"
 	@$(GRADLEW) ktlintFormat ktlintCheck detekt lintDebug :konsist-tests:test --continue
 	@$(GRADLEW) jacocoMergedReport --continue
@@ -262,9 +278,22 @@ build: ## Compile all modules (debug)
 	@$(GRADLEW) compileDebugKotlin --continue
 
 # ─── Utility ──────────────────────────────────────────────────────────────────
-firebase: ## Deploy all configured resources to Firebase
+firebase: ## Deploy all configured resources to Firebase (functions, firestore, remoteconfig)
 	@printf "$(YELLOW)⏳  Deploying to Firebase...$(NC)\n"
 	@npx firebase-tools deploy
+
+remoteconfig-validate: ## Validate consistency between in-app defaults and Remote Config template
+	@printf "$(YELLOW)⏳  Validating Remote Config template consistency...$(NC)\n"
+	@python3 scripts/validate_remote_config.py
+
+remoteconfig-diff: ## Diff local Remote Config template against live cloud configuration
+	@./scripts/deploy-remote-config.sh diff
+
+remoteconfig-deploy: ## Deploy Remote Config template to Firebase
+	@./scripts/deploy-remote-config.sh deploy
+
+remoteconfig-rollback: ## Roll back Remote Config template to a previous version (usage: make remoteconfig-rollback VERSION=<version>)
+	@./scripts/deploy-remote-config.sh rollback $(VERSION)
 
 clean: ## Clean all Gradle build outputs
 	@printf "$(YELLOW)⏳  Cleaning build outputs...$(NC)\n"
@@ -274,9 +303,22 @@ catalog-update: ## Check and update Version Catalog dependencies (on-demand)
 	@printf "$(YELLOW)⏳  Checking and updating Version Catalog...$(NC)\n"
 	@$(GRADLEW) versionCatalogUpdate
 
-ai-setup: ## Install and configure AI code-intelligence tools (codebase-memory-mcp + Graphify)
+ai-setup: ## Install and configure AI code-intelligence tools (codebase-memory-mcp + Graphify + SplitTrip RAG)
 	@printf "$(YELLOW)⏳  Setting up AI code-intelligence tools...$(NC)\n"
 	@./scripts/ai-setup.sh
+
+rag-index: ## Build or incrementally update local documentation RAG index
+	@printf "$(YELLOW)⏳  Indexing project documentation for RAG...$(NC)\n"
+	@uv run scripts/rag_indexer.py
+
+knowledge-update: ## Incrementally refresh all AI knowledge indexes (codebase-memory + SplitTrip docs RAG + Graphify)
+	@printf "$(YELLOW)⏳  Updating codebase-memory index...$(NC)\n"
+	@~/.local/bin/codebase-memory-mcp cli index_repository "{\"repo_path\": \"$$(pwd)\", \"mode\": \"fast\"}" >/dev/null 2>&1 || true
+	@printf "$(YELLOW)⏳  Updating SplitTrip documentation RAG index...$(NC)\n"
+	@uv run scripts/rag_indexer.py
+	@printf "$(YELLOW)⏳  Updating Graphify knowledge graph...$(NC)\n"
+	@graphify update . 2>/dev/null || true
+	@printf "$(GREEN)✅  All AI knowledge indexes up to date$(NC)\n"
 
 prune-branches: ## Fetch remote changes and delete local branches that are gone on the remote
 	@printf "$(YELLOW)⏳  Pruning gone branches...$(NC)\n"

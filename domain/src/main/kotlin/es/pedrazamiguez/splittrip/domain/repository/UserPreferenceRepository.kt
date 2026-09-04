@@ -27,5 +27,8 @@ interface UserPreferenceRepository {
     fun getIsReconciled(): Flow<Boolean>
     suspend fun setIsReconciled(reconciled: Boolean)
 
+    fun getBiometricLockEnabled(): Flow<Boolean>
+    suspend fun setBiometricLockEnabled(enabled: Boolean)
+
     suspend fun clearAll()
 }

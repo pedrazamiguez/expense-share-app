@@ -6,11 +6,15 @@ import es.pedrazamiguez.splittrip.domain.repository.GroupPreferenceRepository
 import es.pedrazamiguez.splittrip.domain.repository.OnboardingPreferenceRepository
 import es.pedrazamiguez.splittrip.domain.repository.UserPreferenceRepository
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
+import es.pedrazamiguez.splittrip.domain.service.BiometricAuthService
 import es.pedrazamiguez.splittrip.domain.service.impl.AppConfigServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.ConsumeLanguagePillUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetActiveAiEngineUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetAppLanguageUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetAppThemeUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetBiometricCapabilityUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetBiometricLockEnabledUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetDeveloperInfoUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
@@ -24,6 +28,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.setting.IsOnboardingCompleteUse
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetActiveAiEngineUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetAppLanguageUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetAppThemeUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.SetBiometricLockEnabledUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
@@ -35,6 +40,9 @@ import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.ConsumeLanguagePil
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetActiveAiEngineUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetAppLanguageUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetAppThemeUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetBiometricCapabilityUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetBiometricLockEnabledUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetDeveloperInfoUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetGroupLastUsedCategoryUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetGroupLastUsedCurrencyUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.GetGroupLastUsedPaymentMethodUseCaseImpl
@@ -48,6 +56,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.IsOnboardingComple
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.SetActiveAiEngineUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.SetAppLanguageUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.SetAppThemeUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.SetBiometricLockEnabledUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.SetGroupLastUsedCategoryUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.SetGroupLastUsedCurrencyUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.setting.impl.SetGroupLastUsedPaymentMethodUseCaseImpl
@@ -200,6 +209,30 @@ val settingsDomainModule = module {
     factory<SetAppThemeUseCase> {
         SetAppThemeUseCaseImpl(
             preferenceRepository = get<UserPreferenceRepository>()
+        )
+    }
+
+    factory<GetBiometricCapabilityUseCase> {
+        GetBiometricCapabilityUseCaseImpl(
+            biometricAuthService = get<BiometricAuthService>()
+        )
+    }
+
+    factory<GetBiometricLockEnabledUseCase> {
+        GetBiometricLockEnabledUseCaseImpl(
+            preferenceRepository = get<UserPreferenceRepository>()
+        )
+    }
+
+    factory<SetBiometricLockEnabledUseCase> {
+        SetBiometricLockEnabledUseCaseImpl(
+            preferenceRepository = get<UserPreferenceRepository>()
+        )
+    }
+
+    factory<GetDeveloperInfoUseCase> {
+        GetDeveloperInfoUseCaseImpl(
+            appConfigRepository = get<AppConfigRepository>()
         )
     }
 

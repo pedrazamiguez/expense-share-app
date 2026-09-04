@@ -8,6 +8,8 @@ import es.pedrazamiguez.splittrip.domain.model.ExtractionCapability
 import es.pedrazamiguez.splittrip.domain.model.ExtractionConfidence
 import es.pedrazamiguez.splittrip.domain.model.ReceiptAttachment
 import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedFeature
 import es.pedrazamiguez.splittrip.domain.usecase.expense.ExtractReceiptFieldsUseCase
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpenseUiMapper
@@ -24,6 +26,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -33,7 +36,8 @@ class ReceiptAutoFillEventHandler(
     private val extractReceiptFieldsUseCase: ExtractReceiptFieldsUseCase,
     private val receiptExtractionService: ReceiptExtractionService,
     private val formattingHelper: FormattingHelper,
-    private val addExpenseUiMapper: AddExpenseUiMapper
+    private val addExpenseUiMapper: AddExpenseUiMapper,
+    private val featureGateService: FeatureGateService
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
@@ -79,8 +83,7 @@ class ReceiptAutoFillEventHandler(
         val state = _uiState.value
         if (!state.isAiModeActive) return
 
-        val capability = receiptExtractionService.capability()
-        if (capability != ExtractionCapability.ON_DEVICE_AI) {
+        if (receiptExtractionService.capability() != ExtractionCapability.ON_DEVICE_AI) {
             scope.launch {
                 _actionsFlow.emit(
                     AddExpenseUiAction.ShowPill(
@@ -91,44 +94,59 @@ class ReceiptAutoFillEventHandler(
             return
         }
 
-        val preScanCurrency = state.selectedCurrency
-        val preScanPaymentMethod = state.selectedPaymentMethod
-
         scope.launch {
-            _uiState.update { it.copy(isAnalyzingReceipt = true) }
+            processReceiptAttachment(
+                attachment = attachment,
+                preScanCurrency = state.selectedCurrency,
+                preScanPaymentMethod = state.selectedPaymentMethod
+            )
+        }
+    }
 
-            val result = try {
-                extractReceiptFieldsUseCase(attachment)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
+    private suspend fun processReceiptAttachment(
+        attachment: ReceiptAttachment,
+        preScanCurrency: CurrencyUiModel?,
+        preScanPaymentMethod: PaymentMethodUiModel?
+    ) {
+        val isEnabled = featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING).first()
+        if (!isEnabled) {
+            _actionsFlow.emit(AddExpenseUiAction.NavigateToSubscriptions)
+            return
+        }
 
-            result
-                .onSuccess { extracted ->
-                    mergeExtractedFields(extracted, preScanCurrency, preScanPaymentMethod)
-                    _uiState.update {
-                        val nextStep = it.applicableSteps.let { steps ->
-                            val idx = steps.indexOf(AddExpenseStep.RECEIPT)
-                            if (idx >= 0 && idx < steps.lastIndex) steps[idx + 1] else null
-                        }
-                        it.copy(
-                            isAnalyzingReceipt = false,
-                            currentStep = nextStep ?: it.currentStep
-                        )
+        _uiState.update { it.copy(isAnalyzingReceipt = true) }
+
+        val result = try {
+            extractReceiptFieldsUseCase(attachment)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+
+        result
+            .onSuccess { extracted ->
+                mergeExtractedFields(extracted, preScanCurrency, preScanPaymentMethod)
+                _uiState.update {
+                    val nextStep = it.applicableSteps.let { steps ->
+                        val idx = steps.indexOf(AddExpenseStep.RECEIPT)
+                        if (idx >= 0 && idx < steps.lastIndex) steps[idx + 1] else null
                     }
-                }
-                .onFailure { error ->
-                    Timber.e(error, "Receipt auto-fill failed")
-                    _uiState.update { it.copy(isAnalyzingReceipt = false) }
-                    _actionsFlow.emit(
-                        AddExpenseUiAction.ShowPill(
-                            UiText.StringResource(R.string.expense_autofill_failed)
-                        )
+                    it.copy(
+                        isAnalyzingReceipt = false,
+                        currentStep = nextStep ?: it.currentStep
                     )
                 }
-        }
+            }
+            .onFailure { error ->
+                Timber.e(error, "Receipt auto-fill failed")
+                _uiState.update { it.copy(isAnalyzingReceipt = false) }
+                _actionsFlow.emit(
+                    AddExpenseUiAction.ShowPill(
+                        UiText.StringResource(R.string.expense_autofill_failed)
+                    )
+                )
+            }
     }
 
     /**
@@ -138,6 +156,22 @@ class ReceiptAutoFillEventHandler(
         val state = _uiState.value
         if (state.isAiModeActive == active) return
 
+        if (active) {
+            scope.launch {
+                val isEnabled = featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING).first()
+                if (!isEnabled) {
+                    _actionsFlow.emit(AddExpenseUiAction.NavigateToSubscriptions)
+                    return@launch
+                }
+                performSetAiModeActive(active = true)
+            }
+        } else {
+            performSetAiModeActive(active = false)
+        }
+    }
+
+    private fun performSetAiModeActive(active: Boolean) {
+        val state = _uiState.value
         _uiState.update { it.copy(isAiModeActive = active) }
 
         // If the user turned off AI mode while on the RECEIPT step, transition to TITLE.

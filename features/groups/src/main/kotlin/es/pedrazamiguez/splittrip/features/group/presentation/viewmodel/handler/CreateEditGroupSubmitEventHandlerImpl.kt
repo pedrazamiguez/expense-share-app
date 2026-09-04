@@ -8,6 +8,7 @@ import es.pedrazamiguez.splittrip.domain.exception.GroupArchivedException
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedLimit
 import es.pedrazamiguez.splittrip.domain.service.featuregate.LimitResult
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+@Suppress("LongParameterList")
 class CreateEditGroupSubmitEventHandlerImpl(
     private val createGroupUseCase: CreateGroupUseCase,
     private val updateGroupUseCase: UpdateGroupUseCase,
@@ -37,7 +39,8 @@ class CreateEditGroupSubmitEventHandlerImpl(
     private val appConfigService: AppConfigService,
     private val addGroupMembersUseCase: AddGroupMembersUseCase,
     private val removeGroupMemberUseCase: RemoveGroupMemberUseCase,
-    private val setSelectedGroupUseCase: SetSelectedGroupUseCase
+    private val setSelectedGroupUseCase: SetSelectedGroupUseCase,
+    private val authenticationService: AuthenticationService
 ) : CreateEditGroupSubmitEventHandler {
     private lateinit var _uiState: MutableStateFlow<CreateEditGroupUiState>
     private lateinit var _actions: MutableSharedFlow<CreateEditGroupUiAction>
@@ -82,6 +85,20 @@ class CreateEditGroupSubmitEventHandlerImpl(
             val currentMemberIds = state.selectedMembers.map { it.userId }
             val membersToAdd = state.selectedMembers.filter { it.userId !in group.members }
             val membersToRemove = group.members.filter { it !in currentMemberIds }
+
+            if (membersToAdd.isNotEmpty()) {
+                val totalMembersCount = state.selectedMembers.size
+                val memberLimitResult = featureGateService.checkLimit(
+                    limit = GatedLimit.MAX_MEMBERS_PER_GROUP,
+                    currentCount = totalMembersCount,
+                    groupId = group.id
+                ).firstOrNull()
+
+                if (memberLimitResult is LimitResult.Blocked) {
+                    handleMembersLimitBlocked(memberLimitResult)
+                    return@launch
+                }
+            }
 
             val updatedGroup = group.copy(
                 name = state.groupName.trim(),
@@ -169,11 +186,13 @@ class CreateEditGroupSubmitEventHandlerImpl(
         scope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             val currentGroups = getUserGroupsFlowUseCase().firstOrNull() ?: emptyList()
-            featureGateService.checkLimit(GatedLimit.MAX_GROUPS_COUNT, currentGroups.size)
+            val currentUserId = authenticationService.currentUserId()
+            val ownedGroupsCount = currentGroups.count { it.createdBy == currentUserId }
+            featureGateService.checkLimit(GatedLimit.MAX_OWNED_GROUPS_COUNT, ownedGroupsCount)
                 .collect { limitResult ->
                     when (limitResult) {
                         is LimitResult.Allowed -> checkMemberLimitAndCreateGroup(onSuccess)
-                        is LimitResult.Blocked -> handleGroupsLimitBlocked()
+                        is LimitResult.Blocked -> handleGroupsLimitBlocked(limitResult)
                     }
                 }
         }
@@ -181,7 +200,7 @@ class CreateEditGroupSubmitEventHandlerImpl(
 
     private suspend fun checkMemberLimitAndCreateGroup(onSuccess: () -> Unit) {
         val membersCount = _uiState.value.selectedMembers.size
-        featureGateService.checkLimit(GatedLimit.MAX_MEMBERS_PER_GROUP, membersCount)
+        featureGateService.checkLimit(GatedLimit.MAX_MEMBERS_PER_GROUP, membersCount, groupId = null)
             .collect { memberLimitResult ->
                 when (memberLimitResult) {
                     is LimitResult.Allowed -> createGroup(onSuccess)
@@ -190,9 +209,21 @@ class CreateEditGroupSubmitEventHandlerImpl(
             }
     }
 
-    private suspend fun handleGroupsLimitBlocked() {
+    private suspend fun handleGroupsLimitBlocked(limitResult: LimitResult.Blocked) {
         val errorRes = UiText.StringResource(R.string.group_error_limit_groups_exceeded)
-        _uiState.update { it.copy(isLoading = false, error = errorRes) }
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                error = errorRes,
+                showUpgradeDialog = limitResult.upgradeRequired,
+                upgradeDialogTitle = if (limitResult.upgradeRequired) {
+                    UiText.StringResource(DesignSystemR.string.upgrade_dialog_title)
+                } else {
+                    null
+                },
+                upgradeDialogMessage = if (limitResult.upgradeRequired) errorRes else null
+            )
+        }
         _actions.emit(CreateEditGroupUiAction.ShowError(errorRes))
     }
 
@@ -205,7 +236,19 @@ class CreateEditGroupSubmitEventHandlerImpl(
                 appConfigService.maxMembersPerGroup.value
             )
         }
-        _uiState.update { it.copy(isLoading = false, error = errorRes) }
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                error = errorRes,
+                showUpgradeDialog = memberLimitResult.upgradeRequired,
+                upgradeDialogTitle = if (memberLimitResult.upgradeRequired) {
+                    UiText.StringResource(DesignSystemR.string.upgrade_dialog_title)
+                } else {
+                    null
+                },
+                upgradeDialogMessage = if (memberLimitResult.upgradeRequired) errorRes else null
+            )
+        }
         _actions.emit(CreateEditGroupUiAction.ShowError(errorRes))
     }
 

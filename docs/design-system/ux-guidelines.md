@@ -233,3 +233,16 @@ Every form that collects more than a couple of fields uses a shared `WizardStepI
 
 All user-facing copy, labels, validation messages, and empty states must follow the principles defined in the [Tone of Voice & Verbal Identity Guide](tone-of-voice.md) and the [Ubiquitous Language](../domain/ubiquitous-language.md) glossary.
 
+## 8. Settings & Child Screens Layout Hierarchy
+
+Child settings and configuration screens must maintain consistent padding, card encapsulation, and interaction patterns across the application.
+
+**Key Requirements:**
+1. **Screen Padding:** 24dp (`MaterialTheme.spacing.ExtraLarge`) canvas padding across all child views.
+2. **Surface Grouping:** Group multi-row settings, toggles, or selection options inside a single `FlatCard` (`surfaceContainerLow`). Avoid wrapping individual items or single action buttons in standalone cards ("card fatigue").
+3. **Soft Fields:** `StyledOutlinedTextField` inputs sit directly on the foundation canvas, never inside cards.
+4. **Debounced Interactions:** All clickable list items, switches, and accordion triggers use `Modifier.debouncedClickable`.
+5. **Selection Feedback:** Selection screens (Theme, Language, Currency) display `TablerIcons.Outline.Check` with primary tint, a confirmation pill via `LocalTopPillController`, and navigate back after `UiConstants.NAV_FEEDBACK_DELAY`.
+
+For complete architectural rules and code examples, see [The Horizon Narrative — §12. Settings & Child Screens Layout Standards](horizon-narrative-design.md#12-settings--child-screens-layout-standards).
+

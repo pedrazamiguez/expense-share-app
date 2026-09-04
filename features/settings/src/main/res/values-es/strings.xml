@@ -17,8 +17,6 @@
     <string name="settings_account_subscriptions_description">Gestiona tu plan</string>
     <string name="settings_account_security_title">Seguridad y Privacidad</string>
     <string name="settings_account_security_description">Mantén tu cuenta segura</string>
-    <string name="settings_account_email_title">Email y Notificaciones</string>
-    <string name="settings_account_email_description">Mantente al día</string>
 
     <!-- Preferences Section -->
     <string name="settings_section_preferences">Preferencias</string>
@@ -32,12 +30,6 @@
 
     <!-- Developer Options Section -->
     <string name="settings_section_developer">Opciones de Desarrollador</string>
-    <string name="settings_developer_layout_title">Diseño</string>
-    <string name="settings_developer_layout_description">Probar diseños de UI</string>
-    <string name="settings_developer_widgets_title">Widgets</string>
-    <string name="settings_developer_widgets_description">Vista previa de componentes</string>
-    <string name="settings_developer_assets_title">Recursos</string>
-    <string name="settings_developer_assets_description">Imágenes y animaciones</string>
     <string name="settings_developer_services_title">Pruebas de Servicios</string>
     <string name="settings_developer_services_description">Probar servicios del dispositivo</string>
 
@@ -242,4 +234,79 @@
     <string name="open_source_lib_coil_desc">Librería de carga de imágenes para Android basada en corrutinas de Kotlin</string>
     <string name="open_source_lib_gson_name">Gson</string>
     <string name="open_source_lib_gson_desc">Librería Java para convertir objetos Java en JSON y vice versa</string>
+
+    <!-- Developer Info Screen -->
+    <string name="developer_info_title">Desarrollador</string>
+    <string name="developer_info_section_links">Contacto y Código</string>
+    <string name="developer_info_section_credits">Filosofía y Créditos</string>
+    <string name="developer_info_link_github">Perfil de GitHub</string>
+    <string name="developer_info_link_splittrip">Repositorio SplitTrip</string>
+    <string name="developer_info_link_linkedin">LinkedIn</string>
+    <string name="developer_info_link_portfolio">Sitio Web Personal</string>
+    <string name="developer_info_avatar_cd">Avatar del desarrollador</string>
+
+    <!-- Account Security Screen -->
+    <string name="account_security_title">Seguridad de la cuenta</string>
+    <string name="account_security_auth_status_title">Estado de autenticación</string>
+    <string name="account_security_auth_status_desc">Tu método de inicio de sesión activo y estado de verificación de la cuenta.</string>
+    <string name="account_security_provider_google">Google</string>
+    <string name="account_security_provider_email">Email / Contraseña</string>
+    <string name="account_security_provider_multiple">Múltiples proveedores</string>
+    <string name="account_security_provider_guest">Sesión de invitado</string>
+    <string name="account_security_status_verified">Verificada</string>
+    <string name="account_security_status_unverified">No verificada</string>
+    <string name="account_security_password_reset_title">Restablecer contraseña</string>
+    <string name="account_security_password_reset_desc">Envía un correo de recuperación de contraseña a tu dirección registrada.</string>
+    <string name="account_security_password_reset_button">Enviar correo de restablecimiento</string>
+    <string name="account_security_password_reset_disabled_google">El restablecimiento de contraseña no es aplicable para cuentas que usan solo inicio de sesión con Google.</string>
+    <string name="account_security_password_reset_disabled_guest">El restablecimiento de contraseña no está disponible para cuentas de invitado. Vincula una cuenta de correo primero.</string>
+    <string name="account_security_password_reset_dialog_title">Restablecer contraseña</string>
+    <string name="account_security_password_reset_dialog_text">Enviaremos un enlace de restablecimiento de contraseña a %1$s. ¿Deseas continuar?</string>
+    <string name="account_security_password_reset_dialog_confirm">Enviar correo</string>
+    <string name="account_security_password_reset_dialog_cancel">Cancelar</string>
+    <string name="account_security_password_reset_sent">Correo de restablecimiento enviado a %1$s</string>
+    <string name="account_security_biometric_lock_title">Bloqueo biométrico de la app</string>
+    <string name="account_security_biometric_lock_desc">Requerir autenticación biométrica (huella dactilar o rostro) al abrir la app.</string>
+    <string name="account_security_biometric_lock_no_hardware">La autenticación biométrica no es compatible con este dispositivo.</string>
+    <string name="account_security_biometric_lock_not_enrolled">No hay datos biométricos configurados. Configura tu huella o rostro en los ajustes del dispositivo.</string>
+    <string name="account_security_biometric_lock_unavailable">Biometría actualmente no disponible.</string>
+    <string name="account_security_linked_providers_title">Proveedores de inicio vinculados</string>
+    <string name="account_security_linked_providers_desc">Administra métodos de autenticación adicionales y cuentas vinculadas.</string>
+    <string name="account_security_manage_providers_button">Administrar proveedores</string>
+    <string name="account_security_error_prefix">Error: %1$s</string>
+
+    <!-- Subscriptions Screen -->
+    <string name="subscriptions_title">Suscripciones</string>
+    <string name="subscriptions_subtitle">Elige el plan que mejor se adapte a tu estilo de viaje</string>
+    <string name="subscriptions_interval_monthly">Mensual</string>
+    <string name="subscriptions_interval_annual">Anual</string>
+    <string name="subscriptions_annual_save_badge">Ahorra 25%</string>
+    <string name="subscriptions_tier_free_title">SplitTrip Free</string>
+    <string name="subscriptions_tier_free_description">Gestión de gastos esencial para viajes ocasionales</string>
+    <string name="subscriptions_tier_free_price">0 €</string>
+    <string name="subscriptions_tier_free_period">Gratis para siempre</string>
+    <string name="subscriptions_tier_pro_title">SplitTrip Pro</string>
+    <string name="subscriptions_tier_pro_description">Funciones avanzadas con IA y gestión ilimitada de grupos</string>
+    <string name="subscriptions_tier_pro_price_monthly">4,99 €</string>
+    <string name="subscriptions_tier_pro_price_annual">3,99 €</string>
+    <string name="subscriptions_period_month">/ mes</string>
+    <string name="subscriptions_period_annual_billed">facturado anualmente</string>
+    <string name="subscriptions_feature_free_groups">1 grupo</string>
+    <string name="subscriptions_feature_free_members">Hasta 4 miembros por grupo</string>
+    <string name="subscriptions_feature_free_standard_calc">Liquidación estándar de deudas</string>
+    <string name="subscriptions_feature_free_multi_currency">Soporte multidivisa</string>
+    <string name="subscriptions_feature_subunits">Gestión de subunidades</string>
+    <string name="subscriptions_feature_pro_unlimited_groups">Grupos ilimitados</string>
+    <string name="subscriptions_feature_pro_members">Hasta 20 miembros por grupo</string>
+    <string name="subscriptions_feature_pro_ai_ocr">Escaneo de recibos con IA y OCR</string>
+    <string name="subscriptions_feature_pro_blended_fx">Tipos de cambio combinados y en tiempo real</string>
+    <string name="subscriptions_feature_pro_priority_support">Soporte prioritario</string>
+    <string name="subscriptions_cta_current_plan">Plan actual</string>
+    <string name="subscriptions_cta_upgrade_pro">Mejorar a Pro</string>
+    <string name="subscriptions_cta_downgrade_free">Cambiar a Free</string>
+    <string name="subscriptions_badge_popular">Más popular</string>
+    <string name="subscriptions_restore_purchases">Restaurar compras</string>
+    <string name="subscriptions_disclaimer">Las suscripciones se facturan a través de tu cuenta de Google Play y se renuevan automáticamente salvo cancelación al menos 24 horas antes del final del período actual. (Simulado en MVP)</string>
+    <string name="subscriptions_upgrade_success">Suscripción actualizada a %1$s (Simulado)</string>
+    <string name="subscriptions_restore_success">Compras restauradas con éxito (Simulado)</string>
 </resources>

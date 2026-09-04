@@ -556,3 +556,41 @@ All Horizon Narrative components include `@PreviewThemes` previews (light + dark
 | `PassportChipPreviews.kt` | Selected/unselected, removable, overflow variants |
 | `TextComponentsPreviews.kt` | All semantic text wrappers (gallery + per-wrapper light/dark + locale variants) |
 
+---
+
+## 12. Settings & Child Screens Layout Standards
+
+To prevent visual fragmentation across settings and detail sub-screens, all child screens under `:features:settings` and related feature branches must adhere to unified layout hierarchy, surface grouping, and interaction rules.
+
+### 12.1 Screen Margin & Padding Scale
+
+All settings child screens and configuration views use a standardized canvas padding scale:
+- **Horizontal & Vertical Canvas Inset:** `MaterialTheme.spacing.ExtraLarge` (24dp) applied via `contentPadding = PaddingValues(horizontal = MaterialTheme.spacing.ExtraLarge, vertical = MaterialTheme.spacing.ExtraLarge)`.
+- **Bottom Inset Integration:** For scrollable views with bottom navigation or floating actions, extend bottom padding using `LocalBottomPadding.current` (e.g. `bottom = MaterialTheme.spacing.ExtraLarge + LocalBottomPadding.current`).
+- **Section Separation:** `MaterialTheme.spacing.Section` (32dp) or `MaterialTheme.spacing.ExtraLarge` (24dp) vertical spacing between independent cards or form sections.
+
+### 12.2 Surface Grouping & Anti-"Card Fatigue" Rule
+
+Wrapping every single list row or text block in an individual card produces visual noise and disrupts the reading flow ("card fatigue").
+- **Grouped List Rows:** When presenting multiple options, preferences, switches, or FAQ items, wrap the entire list within a **single `FlatCard`** (`surfaceContainerLow`, `shapes.large`, zero elevation).
+- **Transparent Row Containers:** All `ListItem`s and custom rows nested inside a `FlatCard` must have transparent background colors (`ListItemDefaults.colors(containerColor = Color.Transparent)`).
+- **Subtle Row Separators:** Use `HorizontalDivider` with `outlineVariant.copy(alpha = 0.5f)` between adjacent items within the same card when visual demarcation is necessary (e.g., accordion FAQ items).
+- **No Standalone Single-Item Cards:** Standalone section titles, helper descriptions, and primary/destructive CTA buttons must **sit directly on the foundation `surface` canvas** rather than being wrapped in isolated cards.
+
+### 12.3 The "Soft Field" Rule in Settings Forms
+
+In strict accordance with §5.3, text inputs and dropdown triggers (`StyledOutlinedTextField`) must **never be embedded inside `FlatCard`s**. They sit directly on the foundation `surface` canvas with clear section headers or label descriptions above them.
+
+### 12.4 Selection Screen Standards (Theme, Language, Default Currency)
+
+Selection sub-screens follow a strict, standardized pattern:
+- Group available options within a single `FlatCard`.
+- Each option is a `ListItem` with transparent container color.
+- Selected item is indicated by `TablerIcons.Outline.Check` with `tint = MaterialTheme.colorScheme.primary`.
+- Item clicks must use `Modifier.debouncedClickable`.
+- Upon selection, show immediate confirmation via `LocalTopPillController.current.showPill(...)` and delay pop navigation by `UiConstants.NAV_FEEDBACK_DELAY` (300ms) to provide clear visual feedback of the selected state before navigating back.
+
+### 12.5 Action & CTA Placement
+
+- Primary action buttons (`GradientButton`) and destructive actions (`DestructiveButton`) sit directly on the canvas foundation.
+- Maintain full width (`Modifier.fillMaxWidth()`) with standard vertical spacing (`MaterialTheme.spacing.Section` or `MaterialTheme.spacing.Large`) from preceding cards.

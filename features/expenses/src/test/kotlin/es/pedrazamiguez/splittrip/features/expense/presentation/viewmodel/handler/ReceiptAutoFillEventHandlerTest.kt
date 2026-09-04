@@ -9,6 +9,8 @@ import es.pedrazamiguez.splittrip.domain.model.ExtractionConfidence
 import es.pedrazamiguez.splittrip.domain.model.ExtractionSource
 import es.pedrazamiguez.splittrip.domain.model.ReceiptAttachment
 import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedFeature
 import es.pedrazamiguez.splittrip.domain.usecase.expense.ExtractReceiptFieldsUseCase
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpenseUiMapper
@@ -18,6 +20,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseStep
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.math.BigDecimal
@@ -26,6 +29,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -48,6 +52,7 @@ class ReceiptAutoFillEventHandlerTest {
     private lateinit var receiptExtractionService: ReceiptExtractionService
     private lateinit var formattingHelper: FormattingHelper
     private lateinit var addExpenseUiMapper: AddExpenseUiMapper
+    private lateinit var featureGateService: FeatureGateService
     private lateinit var uiState: MutableStateFlow<AddExpenseUiState>
     private lateinit var actions: MutableSharedFlow<AddExpenseUiAction>
 
@@ -75,11 +80,15 @@ class ReceiptAutoFillEventHandlerTest {
         capturedPaymentMethodSelections.clear()
 
         addExpenseUiMapper = mockk(relaxed = true)
+        featureGateService = mockk {
+            every { isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING, any()) } returns flowOf(true)
+        }
         handler = ReceiptAutoFillEventHandler(
             extractReceiptFieldsUseCase = extractReceiptFieldsUseCase,
             receiptExtractionService = receiptExtractionService,
             formattingHelper = formattingHelper,
-            addExpenseUiMapper = addExpenseUiMapper
+            addExpenseUiMapper = addExpenseUiMapper,
+            featureGateService = featureGateService
         )
         handler.setOnCurrencySelected { capturedCurrencySelections.add(it) }
         handler.setOnAmountChanged { capturedAmountChanges.add(it) }
@@ -125,7 +134,8 @@ class ReceiptAutoFillEventHandlerTest {
         }
 
         @Test
-        fun `navigates from TITLE to RECEIPT when enabling AI mode`() = runTest {
+        fun `handleSetAiModeActive true when AI scanning enabled activates AI mode`() = runTest {
+            every { featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING, any()) } returns flowOf(true)
             uiState.value = uiState.value.copy(
                 isAiCapable = true,
                 isAiModeActive = false,
@@ -136,6 +146,22 @@ class ReceiptAutoFillEventHandlerTest {
 
             assertTrue(uiState.value.isAiModeActive)
             assertEquals(AddExpenseStep.RECEIPT, uiState.value.currentStep)
+        }
+
+        @Test
+        fun `handleSetAiModeActive true when AI scanning disabled emits NavigateToSubscriptions`() = runTest {
+            every { featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING, any()) } returns flowOf(false)
+            uiState.value = uiState.value.copy(
+                isAiCapable = true,
+                isAiModeActive = false,
+                currentStep = AddExpenseStep.TITLE
+            )
+
+            handler.handleSetAiModeActive(true)
+
+            assertFalse(uiState.value.isAiModeActive)
+            assertEquals(AddExpenseStep.TITLE, uiState.value.currentStep)
+            assertEquals(AddExpenseUiAction.NavigateToSubscriptions, actions.replayCache.lastOrNull())
         }
     }
 
@@ -162,6 +188,44 @@ class ReceiptAutoFillEventHandlerTest {
             mimeType = "image/webp",
             capturedAtMillis = 1000L
         )
+
+        @Test
+        fun `handleReceiptAttached when AI scanning is disabled emits NavigateToSubscriptions`() = runTest {
+            every { receiptExtractionService.capability() } returns ExtractionCapability.ON_DEVICE_AI
+            every { featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING, any()) } returns flowOf(false)
+
+            handler.handleReceiptAttached(attachment)
+
+            assertEquals(AddExpenseUiAction.NavigateToSubscriptions, actions.replayCache.lastOrNull())
+            coVerify(exactly = 0) { extractReceiptFieldsUseCase(any()) }
+            assertFalse(uiState.value.isAnalyzingReceipt)
+        }
+
+        @Test
+        fun `handleReceiptAttached when AI scanning is enabled proceeds to extract receipt fields`() = runTest {
+            every { receiptExtractionService.capability() } returns ExtractionCapability.ON_DEVICE_AI
+            every { featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING, any()) } returns flowOf(true)
+            coEvery { extractReceiptFieldsUseCase(attachment) } returns Result.success(
+                ExtractedReceipt(
+                    title = "Starbucks",
+                    amount = BigDecimal("12.50"),
+                    currency = "USD",
+                    date = null,
+                    time = null,
+                    vendor = null,
+                    category = null,
+                    paymentMethod = null,
+                    notes = null,
+                    confidence = ExtractionConfidence.HIGH,
+                    source = ExtractionSource.AI_CORE
+                )
+            )
+
+            handler.handleReceiptAttached(attachment)
+
+            coVerify(exactly = 1) { extractReceiptFieldsUseCase(attachment) }
+            assertEquals("Starbucks", uiState.value.expenseTitle)
+        }
 
         @Test
         fun `shows unavailable pill if device is not AI capable`() = runTest {

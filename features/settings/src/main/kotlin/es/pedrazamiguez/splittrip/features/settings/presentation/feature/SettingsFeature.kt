@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
+import es.pedrazamiguez.splittrip.core.common.provider.SupportEmail
 import es.pedrazamiguez.splittrip.core.common.provider.SupportEmailProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
@@ -81,9 +82,21 @@ fun SettingsFeature(
         settingsViewModel.updateNotificationPermission(isGranted)
     }
 
+    val sendSupportEmail: (SupportEmail) -> Unit = { email ->
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = Uri.parse("mailto:")
+            putExtra(Intent.EXTRA_EMAIL, arrayOf(email.recipient))
+            putExtra(Intent.EXTRA_SUBJECT, email.subject)
+            putExtra(Intent.EXTRA_TEXT, email.body)
+        }
+        context.startActivity(Intent.createChooser(intent, "Send email..."))
+    }
+
     FeatureScaffold(currentRoute = Routes.SETTINGS) {
         SettingsScreen(
             onAccountStatusClick = { navController.navigate(Routes.SETTINGS_ACCOUNT_STATUS) },
+            onSubscriptionsClick = { navController.navigate(Routes.SETTINGS_SUBSCRIPTIONS) },
+            onAccountSecurityClick = { navController.navigate(Routes.SETTINGS_SECURITY) },
             onNotificationsClick = {
                 if (hasPermission) {
                     navController.navigate(Routes.SETTINGS_NOTIFICATIONS)
@@ -116,23 +129,25 @@ fun SettingsFeature(
                 navController.navigate(Routes.SETTINGS_DEVELOPER_SERVICES)
             },
             onBugReportClick = {
-                val supportEmail = supportEmailProvider.buildBugReportEmail()
-                val intent = Intent(Intent.ACTION_SENDTO).apply {
-                    data = Uri.parse("mailto:")
-                    putExtra(Intent.EXTRA_EMAIL, arrayOf(supportEmail.recipient))
-                    putExtra(Intent.EXTRA_SUBJECT, supportEmail.subject)
-                    putExtra(Intent.EXTRA_TEXT, supportEmail.body)
-                }
-                context.startActivity(Intent.createChooser(intent, "Send email..."))
+                sendSupportEmail(supportEmailProvider.buildBugReportEmail())
+            },
+            onFeatureSuggestionClick = {
+                sendSupportEmail(supportEmailProvider.buildFeatureSuggestionEmail())
             },
             onFaqClick = {
                 navController.navigate(Routes.SETTINGS_FAQ)
+            },
+            onContactSupportClick = {
+                sendSupportEmail(supportEmailProvider.buildContactSupportEmail())
             },
             onPrivacyPolicyClick = {
                 navController.navigate(Routes.SETTINGS_PRIVACY_POLICY)
             },
             onOpenSourceClick = {
                 navController.navigate(Routes.SETTINGS_OPEN_SOURCE)
+            },
+            onDeveloperInfoClick = {
+                navController.navigate(Routes.SETTINGS_DEVELOPER_INFO)
             }
         )
     }

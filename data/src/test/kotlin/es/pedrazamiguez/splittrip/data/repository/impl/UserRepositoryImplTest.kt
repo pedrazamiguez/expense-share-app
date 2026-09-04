@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.core.performance.PerformanceMonitor
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudUserDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalUserDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
@@ -397,6 +398,69 @@ class UserRepositoryImplTest {
             assertTrue(result.isFailure)
             assertTrue(result.exceptionOrNull() is IllegalStateException)
             coVerify(exactly = 0) { localUserDataSource.saveUsers(any()) }
+        }
+    }
+
+    @Nested
+    inner class UpdateUserTier {
+
+        @Test
+        fun `updates user tier locally with PENDING_SYNC first, then pushes to cloud and updates to SYNCED`() = runTest(
+            testDispatcher
+        ) {
+            coEvery {
+                localUserDataSource.updateUserTier("user-1", SubscriptionTier.PRO, SyncStatus.PENDING_SYNC)
+            } just Runs
+            coEvery { cloudUserDataSource.updateUserTier("user-1", SubscriptionTier.PRO) } just Runs
+            coEvery { localUserDataSource.getUsersByIds(listOf("user-1")) } returns listOf(
+                testUser.copy(tier = SubscriptionTier.PRO, syncStatus = SyncStatus.PENDING_SYNC)
+            )
+            coEvery { localUserDataSource.updateSyncStatus("user-1", SyncStatus.SYNCED) } just Runs
+
+            val result = repository.updateUserTier("user-1", SubscriptionTier.PRO)
+
+            assertTrue(result.isSuccess)
+            coVerify(exactly = 1) {
+                localUserDataSource.updateUserTier("user-1", SubscriptionTier.PRO, SyncStatus.PENDING_SYNC)
+            }
+
+            advanceUntilIdle()
+
+            coVerify { cloudUserDataSource.updateUserTier("user-1", SubscriptionTier.PRO) }
+            coVerify { localUserDataSource.updateSyncStatus("user-1", SyncStatus.SYNCED) }
+        }
+
+        @Test
+        fun `marks SYNC_FAILED when cloud update throws`() = runTest(testDispatcher) {
+            coEvery {
+                localUserDataSource.updateUserTier("user-1", SubscriptionTier.PRO, SyncStatus.PENDING_SYNC)
+            } just Runs
+            coEvery { cloudUserDataSource.updateUserTier("user-1", SubscriptionTier.PRO) } throws RuntimeException(
+                "Cloud error"
+            )
+            coEvery { localUserDataSource.getUsersByIds(listOf("user-1")) } returns listOf(
+                testUser.copy(tier = SubscriptionTier.PRO, syncStatus = SyncStatus.PENDING_SYNC)
+            )
+            coEvery { localUserDataSource.updateSyncStatus("user-1", SyncStatus.SYNC_FAILED) } just Runs
+
+            val result = repository.updateUserTier("user-1", SubscriptionTier.PRO)
+
+            assertTrue(result.isSuccess)
+            advanceUntilIdle()
+
+            coVerify { localUserDataSource.updateSyncStatus("user-1", SyncStatus.SYNC_FAILED) }
+        }
+
+        @Test
+        fun `returns failure when local update throws`() = runTest(testDispatcher) {
+            coEvery {
+                localUserDataSource.updateUserTier("user-1", SubscriptionTier.PRO, SyncStatus.PENDING_SYNC)
+            } throws RuntimeException("Local DB error")
+
+            val result = repository.updateUserTier("user-1", SubscriptionTier.PRO)
+
+            assertTrue(result.isFailure)
+            coVerify(exactly = 0) { cloudUserDataSource.updateUserTier(any(), any()) }
         }
     }
 }

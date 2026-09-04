@@ -13,11 +13,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Headset
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.HelpCircle
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.InfoCircle
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Language
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Layers
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.LayoutGrid
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Mail
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.MoonStars
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Photo
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Shield
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ShieldLock
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UserPin
@@ -60,17 +56,14 @@ private fun accountSection(params: SettingsPreferencesParams) = SettingsSectionM
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.CreditCard,
             titleRes = R.string.settings_account_subscriptions_title,
-            descriptionRes = R.string.settings_account_subscriptions_description
+            descriptionRes = R.string.settings_account_subscriptions_description,
+            onClick = params.onSubscriptionsClick
         ),
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.Shield,
             titleRes = R.string.settings_account_security_title,
-            descriptionRes = R.string.settings_account_security_description
-        ),
-        SettingsItemModel.Standard(
-            icon = TablerIcons.Outline.Mail,
-            titleRes = R.string.settings_account_email_title,
-            descriptionRes = R.string.settings_account_email_description
+            descriptionRes = R.string.settings_account_security_description,
+            onClick = params.onAccountSecurityClick
         )
     )
 )
@@ -123,21 +116,6 @@ private fun developerSection(onServicesTestClick: () -> Unit) = SettingsSectionM
     titleRes = R.string.settings_section_developer,
     items = listOf(
         SettingsItemModel.Standard(
-            icon = TablerIcons.Outline.Layers,
-            titleRes = R.string.settings_developer_layout_title,
-            descriptionRes = R.string.settings_developer_layout_description
-        ),
-        SettingsItemModel.Standard(
-            icon = TablerIcons.Outline.LayoutGrid,
-            titleRes = R.string.settings_developer_widgets_title,
-            descriptionRes = R.string.settings_developer_widgets_description
-        ),
-        SettingsItemModel.Standard(
-            icon = TablerIcons.Outline.Photo,
-            titleRes = R.string.settings_developer_assets_title,
-            descriptionRes = R.string.settings_developer_assets_description
-        ),
-        SettingsItemModel.Standard(
             icon = TablerIcons.Outline.Hammer,
             titleRes = R.string.settings_developer_services_title,
             descriptionRes = R.string.settings_developer_services_description,
@@ -158,7 +136,8 @@ private fun supportSection(params: SettingsPreferencesParams) = SettingsSectionM
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.Bulb,
             titleRes = R.string.settings_support_feature_title,
-            descriptionRes = R.string.settings_support_feature_description
+            descriptionRes = R.string.settings_support_feature_description,
+            onClick = params.onFeatureSuggestionClick
         ),
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.HelpCircle,
@@ -169,7 +148,8 @@ private fun supportSection(params: SettingsPreferencesParams) = SettingsSectionM
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.Headset,
             titleRes = R.string.settings_support_support_title,
-            descriptionRes = R.string.settings_support_support_description
+            descriptionRes = R.string.settings_support_support_description,
+            onClick = params.onContactSupportClick
         )
     )
 )
@@ -194,7 +174,8 @@ private fun aboutSection(params: SettingsPreferencesParams) = SettingsSectionMod
         SettingsItemModel.Standard(
             icon = TablerIcons.Outline.UserPin,
             titleRes = R.string.settings_about_developer_title,
-            descriptionRes = R.string.settings_about_developer_description
+            descriptionRes = R.string.settings_about_developer_description,
+            onClick = params.onDeveloperInfoClick
         )
     )
 )

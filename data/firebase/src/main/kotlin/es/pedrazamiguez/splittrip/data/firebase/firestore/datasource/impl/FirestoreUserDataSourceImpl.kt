@@ -9,6 +9,7 @@ import es.pedrazamiguez.splittrip.data.firebase.firestore.document.UserDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.mapper.toLocalDateTimeUtc
 import es.pedrazamiguez.splittrip.data.firebase.firestore.mapper.toTimestampUtc
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudUserDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SubscriptionTier
 import es.pedrazamiguez.splittrip.domain.model.User
 import java.util.Date
 import kotlinx.coroutines.delay
@@ -49,6 +50,7 @@ class FirestoreUserDataSourceImpl(private val firestore: FirebaseFirestore) : Cl
                 user.displayName?.let { data["displayName"] = it }
                 user.profileImagePath?.let { data["profileImagePath"] = it }
                 user.bio?.let { data["bio"] = it }
+                data["tier"] = user.tier.name
                 data["createdBy"] = user.userId
                 data["createdAt"] = userCreatedAtTimestamp ?: now
             } else {
@@ -56,6 +58,10 @@ class FirestoreUserDataSourceImpl(private val firestore: FirebaseFirestore) : Cl
                 val existingCreatedAt = existingDoc.get("createdAt")
                 if (existingCreatedAt == null && userCreatedAtTimestamp != null) {
                     data["createdAt"] = userCreatedAtTimestamp
+                }
+                val existingTier = existingDoc.getString("tier")
+                if (existingTier == null) {
+                    data["tier"] = user.tier.name
                 }
             }
             // Existing user — skip displayName and profileImagePath to preserve
@@ -94,7 +100,8 @@ class FirestoreUserDataSourceImpl(private val firestore: FirebaseFirestore) : Cl
                             createdAt = userDoc.createdAt.toLocalDateTimeUtc(),
                             isPending = userDoc.isPending,
                             timezone = userDoc.timezone,
-                            preferredReminderTime = userDoc.preferredReminderTime
+                            preferredReminderTime = userDoc.preferredReminderTime,
+                            tier = SubscriptionTier.fromStringOrDefault(userDoc.tier)
                         )
                     }
                 }
@@ -131,7 +138,8 @@ class FirestoreUserDataSourceImpl(private val firestore: FirebaseFirestore) : Cl
                             createdAt = userDoc.createdAt.toLocalDateTimeUtc(),
                             isPending = userDoc.isPending,
                             timezone = userDoc.timezone,
-                            preferredReminderTime = userDoc.preferredReminderTime
+                            preferredReminderTime = userDoc.preferredReminderTime,
+                            tier = SubscriptionTier.fromStringOrDefault(userDoc.tier)
                         )
                     }
                 }
@@ -167,6 +175,16 @@ class FirestoreUserDataSourceImpl(private val firestore: FirebaseFirestore) : Cl
             "lastUpdatedAt" to Timestamp(Date())
         )
         docRef.update(updates).await()
+    }
+
+    override suspend fun updateUserTier(userId: String, tier: SubscriptionTier) {
+        val docRef = firestore.collection(UserDocument.COLLECTION_PATH).document(userId)
+        val updates = mapOf(
+            "tier" to tier.name,
+            "lastUpdatedBy" to userId,
+            "lastUpdatedAt" to Timestamp(Date())
+        )
+        docRef.set(updates, SetOptions.merge()).await()
     }
 
     override suspend fun deleteUser(userId: String) {

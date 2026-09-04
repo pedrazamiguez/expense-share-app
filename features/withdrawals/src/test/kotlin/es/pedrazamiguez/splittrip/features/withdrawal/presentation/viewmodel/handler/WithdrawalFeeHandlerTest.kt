@@ -17,6 +17,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -415,13 +416,13 @@ class WithdrawalFeeHandlerTest {
         }
 
         @Test
-        fun `null rateResult from fetch fee rate sets error flag to true`() = runTest {
+        fun `null rateResult from fetch fee rate sets error flag and retains rate`() = runTest {
             uiState.value =
                 baseState.copy(
                     hasFee = true,
                     feeCurrency = thbModel,
                     isFeeExchangeRateError = false,
-                    feeExchangeRate = ""
+                    feeExchangeRate = "37.5"
                 )
             coEvery {
                 getExchangeRateUseCase(any(), any())
@@ -436,17 +437,18 @@ class WithdrawalFeeHandlerTest {
             // Then
             val state = uiState.value
             assertTrue(state.isFeeExchangeRateError)
-            assertEquals("", state.feeExchangeRate)
+            assertFalse(state.isFeeExchangeRateStale)
+            assertEquals("37.5", state.feeExchangeRate)
         }
 
         @Test
-        fun `exception from fetch fee rate sets error flag to true`() = runTest {
+        fun `exception from fetch fee rate sets error flag and retains rate`() = runTest {
             uiState.value =
                 baseState.copy(
                     hasFee = true,
                     feeCurrency = thbModel,
                     isFeeExchangeRateError = false,
-                    feeExchangeRate = ""
+                    feeExchangeRate = "37.5"
                 )
             coEvery {
                 getExchangeRateUseCase(any(), any())
@@ -461,7 +463,52 @@ class WithdrawalFeeHandlerTest {
             // Then
             val state = uiState.value
             assertTrue(state.isFeeExchangeRateError)
-            assertEquals("", state.feeExchangeRate)
+            assertFalse(state.isFeeExchangeRateStale)
+            assertEquals("37.5", state.feeExchangeRate)
+        }
+
+        @Test
+        fun `stale fee rate sets isFeeExchangeRateStale to true and updates feeExchangeRate`() = runTest {
+            uiState.value = baseState.copy(hasFee = true, feeCurrency = thbModel)
+            coEvery {
+                getExchangeRateUseCase(any(), any())
+            } returns ExchangeRateWithStaleness(rate = BigDecimal("37.0"), isStale = true)
+
+            handler.bind(uiState, actions, this)
+
+            // When
+            handler.handleFeeCurrencySelected("THB")
+            advanceUntilIdle()
+
+            // Then
+            val state = uiState.value
+            assertTrue(state.isFeeExchangeRateStale)
+            assertEquals("37.0", state.feeExchangeRate)
+        }
+
+        @Test
+        fun `selecting foreign fee currency retains previous feeExchangeRate as fallback`() = runTest {
+            uiState.value = baseState.copy(hasFee = true, feeExchangeRate = "35.5")
+            coEvery {
+                getExchangeRateUseCase(any(), any())
+            } coAnswers {
+                kotlinx.coroutines.delay(1000L)
+                ExchangeRateWithStaleness(rate = BigDecimal("38.0"), isStale = false)
+            }
+            handler.bind(uiState, actions, this)
+
+            // When
+            handler.handleFeeCurrencySelected("THB")
+            runCurrent()
+
+            // Then: before fetch completes, fee rate is not wiped to ""
+            val interimState = uiState.value
+            assertEquals("35.5", interimState.feeExchangeRate)
+
+            advanceUntilIdle()
+
+            val finalState = uiState.value
+            assertEquals("37.0", finalState.feeExchangeRate)
         }
 
         @Test

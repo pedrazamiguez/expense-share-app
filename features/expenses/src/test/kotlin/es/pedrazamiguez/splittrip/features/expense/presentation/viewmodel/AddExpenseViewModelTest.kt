@@ -22,6 +22,7 @@ import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseValidationService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
 import es.pedrazamiguez.splittrip.domain.service.impl.AddOnCalculationServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.ExchangeRateCalculationServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.ExpenseCalculatorServiceImpl
@@ -121,6 +122,8 @@ class AddExpenseViewModelTest {
     private lateinit var addExpenseUiMapper: AddExpenseUiMapper
     private lateinit var localeProvider: LocaleProvider
     private lateinit var resourceProvider: ResourceProvider
+    private lateinit var featureGateService: FeatureGateService
+    private lateinit var gateFlow: MutableStateFlow<Boolean>
 
     private lateinit var viewModel: AddExpenseViewModel
 
@@ -209,14 +212,15 @@ class AddExpenseViewModelTest {
             EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService),
             userUiMapper
         )
+        val addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider, mockk(relaxed = true))
         addExpenseUiMapper = AddExpenseUiMapper(
             localeProvider,
             resourceProvider,
             addExpenseSplitMapper,
             AddExpenseAddOnUiMapper(),
-            splitPreviewService
+            splitPreviewService,
+            addExpenseOptionsMapper
         )
-        val addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider, mockk(relaxed = true))
 
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
         coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit
@@ -274,6 +278,11 @@ class AddExpenseViewModelTest {
         val mockReceiptExtractionService = mockk<ReceiptExtractionService>()
         every { mockReceiptExtractionService.capability() } returns ExtractionCapability.UNSUPPORTED
 
+        gateFlow = MutableStateFlow(true)
+        featureGateService = mockk<FeatureGateService>(relaxed = true) {
+            every { isFeatureEnabled(any(), any()) } returns gateFlow
+        }
+
         val configHandler = ConfigEventHandler(
             getGroupExpenseConfigUseCase = getGroupExpenseConfigUseCase,
             getGroupLastUsedCurrencyUseCase = getGroupLastUsedCurrencyUseCase,
@@ -284,7 +293,8 @@ class AddExpenseViewModelTest {
             addExpenseOptionsMapper = addExpenseOptionsMapper,
             addExpenseSplitMapper = addExpenseSplitMapper,
             addExpenseUiMapper = addExpenseUiMapper,
-            receiptExtractionService = mockReceiptExtractionService
+            receiptExtractionService = mockReceiptExtractionService,
+            featureGateService = featureGateService
         )
 
         val submitHandler = SubmitEventHandler(
@@ -351,7 +361,8 @@ class AddExpenseViewModelTest {
             extractReceiptFieldsUseCase = mockk<ExtractReceiptFieldsUseCase>(relaxed = true),
             receiptExtractionService = mockk<ReceiptExtractionService>(relaxed = true),
             formattingHelper = formattingHelper,
-            addExpenseUiMapper = addExpenseUiMapper
+            addExpenseUiMapper = addExpenseUiMapper,
+            featureGateService = featureGateService
         )
 
         val updateExpenseUseCase = mockk<UpdateExpenseUseCase>(relaxed = true)
@@ -379,7 +390,8 @@ class AddExpenseViewModelTest {
             submitEventHandler = submitHandler,
             formEventHandler = formHandler,
             receiptAutoFillEventHandler = receiptAutoFillEventHandler,
-            strategyFactory = strategyFactory
+            strategyFactory = strategyFactory,
+            featureGateService = featureGateService
         )
     }
 
@@ -923,10 +935,10 @@ class AddExpenseViewModelTest {
             viewModel.onEvent(AddExpenseUiEvent.CurrencySelected("THB"))
             advanceUntilIdle()
 
-            // Then - Should keep default rate (empty string) and flag error
+            // Then - Should keep previous rate as fallback and flag error
             val state = viewModel.uiState.value
             assertTrue(state.showExchangeRateSection)
-            assertEquals("", state.displayExchangeRate)
+            assertEquals("1.0", state.displayExchangeRate)
             assertTrue(state.isExchangeRateError)
             assertFalse(state.isLoadingRate)
         }
@@ -1011,10 +1023,10 @@ class AddExpenseViewModelTest {
             viewModel.onEvent(AddExpenseUiEvent.CurrencySelected("THB"))
             advanceUntilIdle()
 
-            // Then - Should set isLoadingRate to false, keep existing rate (empty string), and flag error
+            // Then - Should set isLoadingRate to false, retain previous rate as fallback, and flag error
             val state = viewModel.uiState.value
             assertTrue(state.showExchangeRateSection)
-            assertEquals("", state.displayExchangeRate)
+            assertEquals("1.0", state.displayExchangeRate)
             assertTrue(state.isExchangeRateError)
             assertFalse(state.isLoadingRate)
             coVerify { getExchangeRateUseCase("EUR", "THB") }
@@ -1180,6 +1192,62 @@ class AddExpenseViewModelTest {
 
             assertEquals(cashMethod.id, viewModel.uiState.value.selectedPaymentMethod?.id)
         }
+
+        @Test
+        fun `switching to CASH coerces SCHEDULED status to FINISHED and hides due date`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            every { getGroupLastUsedPaymentMethodUseCase(any()) } returns flowOf(listOf("CREDIT_CARD"))
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // Select SCHEDULED status and set due date
+            viewModel.onEvent(AddExpenseUiEvent.PaymentStatusSelected(PaymentStatus.SCHEDULED.name))
+            viewModel.onEvent(AddExpenseUiEvent.DueDateSelected(1735689600000L))
+            advanceUntilIdle()
+
+            assertEquals(PaymentStatus.SCHEDULED.name, viewModel.uiState.value.selectedPaymentStatus?.id)
+            assertTrue(viewModel.uiState.value.showDueDateSection)
+            assertEquals(1735689600000L, viewModel.uiState.value.dueDateMillis)
+
+            // Switch to CASH
+            viewModel.onEvent(AddExpenseUiEvent.PaymentMethodSelected(PaymentMethod.CASH.name))
+            advanceUntilIdle()
+
+            assertEquals(PaymentStatus.FINISHED.name, viewModel.uiState.value.selectedPaymentStatus?.id)
+            assertFalse(viewModel.uiState.value.showDueDateSection)
+            assertNull(viewModel.uiState.value.dueDateMillis)
+            assertEquals("", viewModel.uiState.value.formattedDueDate)
+        }
+
+        @Test
+        fun `availablePaymentStatuses dynamically updates when changing payment methods`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            every { getGroupLastUsedPaymentMethodUseCase(any()) } returns flowOf(listOf("CREDIT_CARD"))
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // Initially CREDIT_CARD: SCHEDULED should be present
+            val initialStatusIds = viewModel.uiState.value.availablePaymentStatuses.map { it.id }
+            assertTrue(PaymentStatus.SCHEDULED.name in initialStatusIds)
+            assertTrue(PaymentStatus.FINISHED.name in initialStatusIds)
+            assertTrue(PaymentStatus.REFUNDABLE.name in initialStatusIds)
+
+            // Switch to CASH: SCHEDULED should be removed
+            viewModel.onEvent(AddExpenseUiEvent.PaymentMethodSelected(PaymentMethod.CASH.name))
+            advanceUntilIdle()
+
+            val cashStatusIds = viewModel.uiState.value.availablePaymentStatuses.map { it.id }
+            assertTrue(PaymentStatus.SCHEDULED.name !in cashStatusIds)
+            assertTrue(PaymentStatus.FINISHED.name in cashStatusIds)
+            assertTrue(PaymentStatus.REFUNDABLE.name in cashStatusIds)
+
+            // Switch back to CREDIT_CARD: SCHEDULED should be restored
+            viewModel.onEvent(AddExpenseUiEvent.PaymentMethodSelected(PaymentMethod.CREDIT_CARD.name))
+            advanceUntilIdle()
+
+            val cardStatusIds = viewModel.uiState.value.availablePaymentStatuses.map { it.id }
+            assertTrue(PaymentStatus.SCHEDULED.name in cardStatusIds)
+        }
     }
 
     // ── PaymentStatusSelected ───────────────────────────────────────────
@@ -1205,6 +1273,7 @@ class AddExpenseViewModelTest {
         @Test
         fun `shows due date section for SCHEDULED status`() = runTest {
             coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            every { getGroupLastUsedPaymentMethodUseCase(any()) } returns flowOf(listOf("CREDIT_CARD"))
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
             advanceUntilIdle()
 
@@ -1216,6 +1285,7 @@ class AddExpenseViewModelTest {
         @Test
         fun `hides due date section when switching from SCHEDULED to FINISHED`() = runTest {
             coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            every { getGroupLastUsedPaymentMethodUseCase(any()) } returns flowOf(listOf("CREDIT_CARD"))
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
             advanceUntilIdle()
 
@@ -1876,9 +1946,44 @@ class AddExpenseViewModelTest {
     inner class AiAutoFillEvents {
 
         @Test
-        fun `SetAiModeActive true activates AI mode`() = runTest {
+        fun `AddExpenseViewModel observes featureGateService and updates isAiGated dynamically`() = runTest {
+            gateFlow.value = true
+            advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.isAiGated)
+            assertFalse(viewModel.uiState.value.isAiProFeature)
+
+            gateFlow.value = false
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.isAiGated)
+            assertTrue(viewModel.uiState.value.isAiProFeature)
+        }
+
+        @Test
+        fun `SetAiModeActive true when gated emits NavigateToSubscriptions action`() = runTest {
+            gateFlow.value = false
+            advanceUntilIdle()
+
+            val actions = mutableListOf<AddExpenseUiAction>()
+            val job = launch {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
             viewModel.onEvent(AddExpenseUiEvent.SetAiModeActive(true))
             advanceUntilIdle()
+
+            assertTrue(actions.any { it is AddExpenseUiAction.NavigateToSubscriptions })
+            assertFalse(viewModel.uiState.value.isAiModeActive)
+            job.cancel()
+        }
+
+        @Test
+        fun `SetAiModeActive true when ungated enables AI mode in uiState`() = runTest {
+            gateFlow.value = true
+            advanceUntilIdle()
+
+            viewModel.onEvent(AddExpenseUiEvent.SetAiModeActive(true))
+            advanceUntilIdle()
+
             assertTrue(viewModel.uiState.value.isAiModeActive)
         }
 

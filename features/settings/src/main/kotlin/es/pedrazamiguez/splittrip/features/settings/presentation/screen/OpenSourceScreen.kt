@@ -1,22 +1,20 @@
 package es.pedrazamiguez.splittrip.features.settings.presentation.screen
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.features.settings.R
+import es.pedrazamiguez.splittrip.features.settings.presentation.component.OpenSourceLibraryItem
 
 private data class OssLibrary(
     val nameRes: Int,
@@ -82,50 +80,33 @@ private val libraries = listOf(
 fun OpenSourceScreen(onLibraryUrlClick: (String) -> Unit) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = MaterialTheme.spacing.Default)
+        contentPadding = PaddingValues(
+            horizontal = MaterialTheme.spacing.ExtraLarge,
+            vertical = MaterialTheme.spacing.ExtraLarge
+        )
     ) {
         item {
             Text(
                 text = stringResource(R.string.open_source_libraries_header),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(MaterialTheme.spacing.Default)
+                modifier = Modifier.padding(bottom = MaterialTheme.spacing.Default)
             )
         }
 
-        items(libraries) { library ->
-            ListItem(
-                supportingContent = {
-                    Column {
-                        Text(
-                            text = stringResource(library.descriptionRes),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = stringResource(R.string.open_source_lib_license, library.license),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = MaterialTheme.spacing.Small)
+        item {
+            FlatCard(modifier = Modifier.fillMaxWidth()) {
+                Column {
+                    libraries.forEach { library ->
+                        OpenSourceLibraryItem(
+                            nameRes = library.nameRes,
+                            descriptionRes = library.descriptionRes,
+                            license = library.license,
+                            url = library.url,
+                            onClick = onLibraryUrlClick
                         )
                     }
-                },
-                trailingContent = {
-                    Text(
-                        text = stringResource(R.string.open_source_view_source),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onLibraryUrlClick(library.url) }
-            ) {
-                Text(
-                    text = stringResource(library.nameRes),
-                    fontWeight = FontWeight.SemiBold
-                )
+                }
             }
         }
     }
