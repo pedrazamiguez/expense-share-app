@@ -229,6 +229,8 @@ val expensesUiModule = module {
             cashRateDelegate = cashRateDelegate
         )
 
+        val featureGateService = get<FeatureGateService>()
+
         val configEventHandler = ConfigEventHandler(
             getGroupExpenseConfigUseCase = get<GetGroupExpenseConfigUseCase>(),
             getGroupLastUsedCurrencyUseCase = get<GetGroupLastUsedCurrencyUseCase>(),
@@ -239,7 +241,8 @@ val expensesUiModule = module {
             addExpenseOptionsMapper = addExpenseOptionsUiMapper,
             addExpenseSplitMapper = addExpenseSplitUiMapper,
             addExpenseUiMapper = addExpenseUiMapper,
-            receiptExtractionService = get<ReceiptExtractionService>()
+            receiptExtractionService = get<ReceiptExtractionService>(),
+            featureGateService = featureGateService
         )
 
         val submitResultDelegate = SubmitResultDelegate(
@@ -297,7 +300,7 @@ val expensesUiModule = module {
             receiptExtractionService = get<ReceiptExtractionService>(),
             formattingHelper = formattingHelper,
             addExpenseUiMapper = addExpenseUiMapper,
-            featureGateService = get<FeatureGateService>()
+            featureGateService = featureGateService
         )
 
         val expenseFlowStrategyFactory = ExpenseFlowStrategyFactory(
@@ -321,7 +324,8 @@ val expensesUiModule = module {
             submitEventHandler = submitEventHandler,
             formEventHandler = formEventHandler,
             receiptAutoFillEventHandler = receiptAutoFillEventHandler,
-            strategyFactory = expenseFlowStrategyFactory
+            strategyFactory = expenseFlowStrategyFactory,
+            featureGateService = featureGateService
         )
     }
 

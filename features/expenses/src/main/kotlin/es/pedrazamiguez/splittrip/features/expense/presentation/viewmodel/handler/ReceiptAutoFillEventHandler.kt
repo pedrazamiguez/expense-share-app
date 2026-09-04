@@ -83,8 +83,7 @@ class ReceiptAutoFillEventHandler(
         val state = _uiState.value
         if (!state.isAiModeActive) return
 
-        val capability = receiptExtractionService.capability()
-        if (capability != ExtractionCapability.ON_DEVICE_AI) {
+        if (receiptExtractionService.capability() != ExtractionCapability.ON_DEVICE_AI) {
             scope.launch {
                 _actionsFlow.emit(
                     AddExpenseUiAction.ShowPill(
@@ -95,44 +94,59 @@ class ReceiptAutoFillEventHandler(
             return
         }
 
-        val preScanCurrency = state.selectedCurrency
-        val preScanPaymentMethod = state.selectedPaymentMethod
-
         scope.launch {
-            _uiState.update { it.copy(isAnalyzingReceipt = true) }
+            processReceiptAttachment(
+                attachment = attachment,
+                preScanCurrency = state.selectedCurrency,
+                preScanPaymentMethod = state.selectedPaymentMethod
+            )
+        }
+    }
 
-            val result = try {
-                extractReceiptFieldsUseCase(attachment)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Result.failure(e)
-            }
+    private suspend fun processReceiptAttachment(
+        attachment: ReceiptAttachment,
+        preScanCurrency: CurrencyUiModel?,
+        preScanPaymentMethod: PaymentMethodUiModel?
+    ) {
+        val isEnabled = featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING).first()
+        if (!isEnabled) {
+            _actionsFlow.emit(AddExpenseUiAction.NavigateToSubscriptions)
+            return
+        }
 
-            result
-                .onSuccess { extracted ->
-                    mergeExtractedFields(extracted, preScanCurrency, preScanPaymentMethod)
-                    _uiState.update {
-                        val nextStep = it.applicableSteps.let { steps ->
-                            val idx = steps.indexOf(AddExpenseStep.RECEIPT)
-                            if (idx >= 0 && idx < steps.lastIndex) steps[idx + 1] else null
-                        }
-                        it.copy(
-                            isAnalyzingReceipt = false,
-                            currentStep = nextStep ?: it.currentStep
-                        )
+        _uiState.update { it.copy(isAnalyzingReceipt = true) }
+
+        val result = try {
+            extractReceiptFieldsUseCase(attachment)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+
+        result
+            .onSuccess { extracted ->
+                mergeExtractedFields(extracted, preScanCurrency, preScanPaymentMethod)
+                _uiState.update {
+                    val nextStep = it.applicableSteps.let { steps ->
+                        val idx = steps.indexOf(AddExpenseStep.RECEIPT)
+                        if (idx >= 0 && idx < steps.lastIndex) steps[idx + 1] else null
                     }
-                }
-                .onFailure { error ->
-                    Timber.e(error, "Receipt auto-fill failed")
-                    _uiState.update { it.copy(isAnalyzingReceipt = false) }
-                    _actionsFlow.emit(
-                        AddExpenseUiAction.ShowPill(
-                            UiText.StringResource(R.string.expense_autofill_failed)
-                        )
+                    it.copy(
+                        isAnalyzingReceipt = false,
+                        currentStep = nextStep ?: it.currentStep
                     )
                 }
-        }
+            }
+            .onFailure { error ->
+                Timber.e(error, "Receipt auto-fill failed")
+                _uiState.update { it.copy(isAnalyzingReceipt = false) }
+                _actionsFlow.emit(
+                    AddExpenseUiAction.ShowPill(
+                        UiText.StringResource(R.string.expense_autofill_failed)
+                    )
+                )
+            }
     }
 
     /**

@@ -122,6 +122,8 @@ class AddExpenseViewModelTest {
     private lateinit var addExpenseUiMapper: AddExpenseUiMapper
     private lateinit var localeProvider: LocaleProvider
     private lateinit var resourceProvider: ResourceProvider
+    private lateinit var featureGateService: FeatureGateService
+    private lateinit var gateFlow: MutableStateFlow<Boolean>
 
     private lateinit var viewModel: AddExpenseViewModel
 
@@ -276,6 +278,11 @@ class AddExpenseViewModelTest {
         val mockReceiptExtractionService = mockk<ReceiptExtractionService>()
         every { mockReceiptExtractionService.capability() } returns ExtractionCapability.UNSUPPORTED
 
+        gateFlow = MutableStateFlow(true)
+        featureGateService = mockk<FeatureGateService>(relaxed = true) {
+            every { isFeatureEnabled(any(), any()) } returns gateFlow
+        }
+
         val configHandler = ConfigEventHandler(
             getGroupExpenseConfigUseCase = getGroupExpenseConfigUseCase,
             getGroupLastUsedCurrencyUseCase = getGroupLastUsedCurrencyUseCase,
@@ -286,7 +293,8 @@ class AddExpenseViewModelTest {
             addExpenseOptionsMapper = addExpenseOptionsMapper,
             addExpenseSplitMapper = addExpenseSplitMapper,
             addExpenseUiMapper = addExpenseUiMapper,
-            receiptExtractionService = mockReceiptExtractionService
+            receiptExtractionService = mockReceiptExtractionService,
+            featureGateService = featureGateService
         )
 
         val submitHandler = SubmitEventHandler(
@@ -349,9 +357,6 @@ class AddExpenseViewModelTest {
             attachReceiptUseCase = attachReceiptUseCase
         )
 
-        val featureGateService = mockk<FeatureGateService>(relaxed = true) {
-            every { isFeatureEnabled(any(), any()) } returns flowOf(true)
-        }
         val receiptAutoFillEventHandler = ReceiptAutoFillEventHandler(
             extractReceiptFieldsUseCase = mockk<ExtractReceiptFieldsUseCase>(relaxed = true),
             receiptExtractionService = mockk<ReceiptExtractionService>(relaxed = true),
@@ -385,7 +390,8 @@ class AddExpenseViewModelTest {
             submitEventHandler = submitHandler,
             formEventHandler = formHandler,
             receiptAutoFillEventHandler = receiptAutoFillEventHandler,
-            strategyFactory = strategyFactory
+            strategyFactory = strategyFactory,
+            featureGateService = featureGateService
         )
     }
 
@@ -1940,9 +1946,44 @@ class AddExpenseViewModelTest {
     inner class AiAutoFillEvents {
 
         @Test
-        fun `SetAiModeActive true activates AI mode`() = runTest {
+        fun `AddExpenseViewModel observes featureGateService and updates isAiGated dynamically`() = runTest {
+            gateFlow.value = true
+            advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.isAiGated)
+            assertFalse(viewModel.uiState.value.isAiProFeature)
+
+            gateFlow.value = false
+            advanceUntilIdle()
+            assertTrue(viewModel.uiState.value.isAiGated)
+            assertTrue(viewModel.uiState.value.isAiProFeature)
+        }
+
+        @Test
+        fun `SetAiModeActive true when gated emits NavigateToSubscriptions action`() = runTest {
+            gateFlow.value = false
+            advanceUntilIdle()
+
+            val actions = mutableListOf<AddExpenseUiAction>()
+            val job = launch {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
             viewModel.onEvent(AddExpenseUiEvent.SetAiModeActive(true))
             advanceUntilIdle()
+
+            assertTrue(actions.any { it is AddExpenseUiAction.NavigateToSubscriptions })
+            assertFalse(viewModel.uiState.value.isAiModeActive)
+            job.cancel()
+        }
+
+        @Test
+        fun `SetAiModeActive true when ungated enables AI mode in uiState`() = runTest {
+            gateFlow.value = true
+            advanceUntilIdle()
+
+            viewModel.onEvent(AddExpenseUiEvent.SetAiModeActive(true))
+            advanceUntilIdle()
+
             assertTrue(viewModel.uiState.value.isAiModeActive)
         }
 

@@ -20,6 +20,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseStep
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.math.BigDecimal
@@ -133,7 +134,8 @@ class ReceiptAutoFillEventHandlerTest {
         }
 
         @Test
-        fun `navigates from TITLE to RECEIPT when enabling AI mode`() = runTest {
+        fun `handleSetAiModeActive true when AI scanning enabled activates AI mode`() = runTest {
+            every { featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING, any()) } returns flowOf(true)
             uiState.value = uiState.value.copy(
                 isAiCapable = true,
                 isAiModeActive = false,
@@ -147,7 +149,7 @@ class ReceiptAutoFillEventHandlerTest {
         }
 
         @Test
-        fun `when feature gate disables AI scanning emits NavigateToSubscriptions and does not activate`() = runTest {
+        fun `handleSetAiModeActive true when AI scanning disabled emits NavigateToSubscriptions`() = runTest {
             every { featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING, any()) } returns flowOf(false)
             uiState.value = uiState.value.copy(
                 isAiCapable = true,
@@ -186,6 +188,44 @@ class ReceiptAutoFillEventHandlerTest {
             mimeType = "image/webp",
             capturedAtMillis = 1000L
         )
+
+        @Test
+        fun `handleReceiptAttached when AI scanning is disabled emits NavigateToSubscriptions`() = runTest {
+            every { receiptExtractionService.capability() } returns ExtractionCapability.ON_DEVICE_AI
+            every { featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING, any()) } returns flowOf(false)
+
+            handler.handleReceiptAttached(attachment)
+
+            assertEquals(AddExpenseUiAction.NavigateToSubscriptions, actions.replayCache.lastOrNull())
+            coVerify(exactly = 0) { extractReceiptFieldsUseCase(any()) }
+            assertFalse(uiState.value.isAnalyzingReceipt)
+        }
+
+        @Test
+        fun `handleReceiptAttached when AI scanning is enabled proceeds to extract receipt fields`() = runTest {
+            every { receiptExtractionService.capability() } returns ExtractionCapability.ON_DEVICE_AI
+            every { featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING, any()) } returns flowOf(true)
+            coEvery { extractReceiptFieldsUseCase(attachment) } returns Result.success(
+                ExtractedReceipt(
+                    title = "Starbucks",
+                    amount = BigDecimal("12.50"),
+                    currency = "USD",
+                    date = null,
+                    time = null,
+                    vendor = null,
+                    category = null,
+                    paymentMethod = null,
+                    notes = null,
+                    confidence = ExtractionConfidence.HIGH,
+                    source = ExtractionSource.AI_CORE
+                )
+            )
+
+            handler.handleReceiptAttached(attachment)
+
+            coVerify(exactly = 1) { extractReceiptFieldsUseCase(attachment) }
+            assertEquals("Starbucks", uiState.value.expenseTitle)
+        }
 
         @Test
         fun `shows unavailable pill if device is not AI capable`() = runTest {
