@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.settings.presentation.feature
 
+import androidx.biometric.BiometricPrompt
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,8 +38,9 @@ fun AccountSecurityFeature(
     val confirmTitle = stringResource(DesignSystemR.string.biometric_prompt_confirm_title)
     val confirmSubtitle = stringResource(DesignSystemR.string.biometric_prompt_confirm_subtitle)
     val confirmNegative = stringResource(DesignSystemR.string.biometric_prompt_negative)
+    val genericError = stringResource(DesignSystemR.string.biometric_auth_error_generic)
 
-    LaunchedEffect(confirmTitle, confirmSubtitle, confirmNegative) {
+    LaunchedEffect(confirmTitle, confirmSubtitle, confirmNegative, genericError) {
         viewModel.actions.collectLatest { action ->
             when (action) {
                 is AccountSecurityUiAction.ShowTopPill -> {
@@ -60,6 +62,18 @@ fun AccountSecurityFeature(
                             negativeButtonText = confirmNegative,
                             onSuccess = {
                                 viewModel.onEvent(AccountSecurityUiEvent.BiometricConfirmationSuccess)
+                            },
+                            onError = { errorCode, _ ->
+                                when (errorCode) {
+                                    BiometricPrompt.ERROR_USER_CANCELED,
+                                    BiometricPrompt.ERROR_NEGATIVE_BUTTON,
+                                    BiometricPrompt.ERROR_CANCELED -> {
+                                        // Standard user cancellations — do not show error pill
+                                    }
+                                    else -> {
+                                        pillController.showPill(genericError)
+                                    }
+                                }
                             }
                         )
                     }
