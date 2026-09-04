@@ -30,4 +30,7 @@ sealed interface AddExpenseUiAction {
 
     /** Fired when the user requests exit while the form has unsaved changes. */
     data object RequestExitConfirmation : AddExpenseUiAction
+
+    /** Fired when attempting to use a Pro-only feature without an active subscription. */
+    data object NavigateToSubscriptions : AddExpenseUiAction
 }

@@ -2,7 +2,9 @@ package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler
 
 import es.pedrazamiguez.splittrip.core.logging.TelemetryTracker
 import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedLimit
 import es.pedrazamiguez.splittrip.domain.service.featuregate.LimitResult
@@ -18,6 +20,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -50,6 +53,7 @@ class CreateEditGroupSubmitEventHandlerImplTest {
     private lateinit var featureGateService: FeatureGateService
     private lateinit var telemetryTracker: TelemetryTracker
     private lateinit var appConfigService: AppConfigService
+    private lateinit var authenticationService: AuthenticationService
     private lateinit var stateFlow: MutableStateFlow<CreateEditGroupUiState>
     private lateinit var actionsFlow: MutableSharedFlow<CreateEditGroupUiAction>
     private lateinit var handler: CreateEditGroupSubmitEventHandlerImpl
@@ -78,6 +82,9 @@ class CreateEditGroupSubmitEventHandlerImplTest {
             every { defaultCurrencyCode } returns MutableStateFlow("EUR")
             every { maxMembersPerGroup } returns MutableStateFlow(10)
         }
+        authenticationService = mockk(relaxed = true) {
+            every { currentUserId() } returns "current-user"
+        }
         stateFlow = MutableStateFlow(CreateEditGroupUiState(groupName = "My Trip"))
         actionsFlow = MutableSharedFlow(replay = 1)
         handler = CreateEditGroupSubmitEventHandlerImpl(
@@ -89,7 +96,8 @@ class CreateEditGroupSubmitEventHandlerImplTest {
             appConfigService = appConfigService,
             addGroupMembersUseCase = addGroupMembersUseCase,
             removeGroupMemberUseCase = removeGroupMemberUseCase,
-            setSelectedGroupUseCase = setSelectedGroupUseCase
+            setSelectedGroupUseCase = setSelectedGroupUseCase,
+            authenticationService = authenticationService
         )
         handler.bind(stateFlow, actionsFlow, kotlinx.coroutines.MainScope())
     }
@@ -166,8 +174,8 @@ class CreateEditGroupSubmitEventHandlerImplTest {
 
         @Test
         fun `emits ShowError when group limit is blocked`() = runTest(testDispatcher) {
-            coEvery { featureGateService.checkLimit(any(), any()) } returns flowOf(
-                LimitResult.Blocked(limit = GatedLimit.MAX_GROUPS_COUNT, upgradeRequired = true)
+            coEvery { featureGateService.checkLimit(any(), any(), any()) } returns flowOf(
+                LimitResult.Blocked(limit = GatedLimit.MAX_OWNED_GROUPS_COUNT, upgradeRequired = true)
             )
             stateFlow.value = CreateEditGroupUiState(groupName = "New Group", isEditMode = false)
 
@@ -179,6 +187,32 @@ class CreateEditGroupSubmitEventHandlerImplTest {
 
             assertTrue(actions.any { it is CreateEditGroupUiAction.ShowError })
             collectJob.cancel()
+        }
+
+        @Test
+        fun `participating in other groups does not block creating an owned group`() = runTest(testDispatcher) {
+            val participatingGroups = listOf(
+                Group(id = "g1", createdBy = "other-user-1"),
+                Group(id = "g2", createdBy = "other-user-2"),
+                Group(id = "g3", createdBy = "other-user-3")
+            )
+            every { getUserGroupsFlowUseCase() } returns flowOf(participatingGroups)
+            every { authenticationService.currentUserId() } returns "current-user"
+            coEvery {
+                featureGateService.checkLimit(GatedLimit.MAX_OWNED_GROUPS_COUNT, 0)
+            } returns flowOf(LimitResult.Allowed)
+            coEvery {
+                featureGateService.checkLimit(GatedLimit.MAX_MEMBERS_PER_GROUP, any(), groupId = null)
+            } returns flowOf(LimitResult.Allowed)
+            coEvery { createGroupUseCase(any(), any()) } returns Result.success("new-group-id")
+
+            stateFlow.value = CreateEditGroupUiState(groupName = "My New Group", isEditMode = false)
+
+            handler.handleSubmit {}
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { featureGateService.checkLimit(GatedLimit.MAX_OWNED_GROUPS_COUNT, 0) }
+            coVerify(exactly = 1) { createGroupUseCase(any(), any()) }
         }
     }
 
@@ -284,6 +318,39 @@ class CreateEditGroupSubmitEventHandlerImplTest {
             advanceUntilIdle()
 
             coVerify(exactly = 0) { telemetryTracker.trackEvent(any(), any()) }
+        }
+
+        @Test
+        fun `blocks group update when adding members exceeds MAX_MEMBERS_PER_GROUP`() = runTest(testDispatcher) {
+            handler.setInitialGroup(testGroup)
+            val newMember = User(userId = "user-3", email = "user3@test.com")
+            stateFlow.value = CreateEditGroupUiState(
+                groupName = "Updated Group",
+                isEditMode = true,
+                selectedMembers = persistentListOf(
+                    User(userId = "user-1", email = "user1@test.com"),
+                    User(userId = "user-2", email = "user2@test.com"),
+                    newMember
+                )
+            )
+
+            coEvery {
+                featureGateService.checkLimit(
+                    limit = GatedLimit.MAX_MEMBERS_PER_GROUP,
+                    currentCount = 3,
+                    groupId = testGroup.id
+                )
+            } returns flowOf(LimitResult.Blocked(GatedLimit.MAX_MEMBERS_PER_GROUP, upgradeRequired = true))
+
+            val actions = mutableListOf<CreateEditGroupUiAction>()
+            val collectJob = launch { actionsFlow.collect { actions.add(it) } }
+
+            handler.handleSubmit {}
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is CreateEditGroupUiAction.ShowError })
+            coVerify(exactly = 0) { updateGroupUseCase(any()) }
+            collectJob.cancel()
         }
     }
 

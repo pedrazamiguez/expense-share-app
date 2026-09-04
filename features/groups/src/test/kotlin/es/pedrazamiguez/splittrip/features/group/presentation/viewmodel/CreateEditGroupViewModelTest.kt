@@ -9,6 +9,7 @@ import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.EmailValidationService
 import es.pedrazamiguez.splittrip.domain.service.GroupImageStorageService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedFeature
 import es.pedrazamiguez.splittrip.domain.service.featuregate.LimitResult
 import es.pedrazamiguez.splittrip.domain.service.impl.EmailValidationServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.currency.GetSupportedCurrenciesUseCase
@@ -28,6 +29,7 @@ import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.Cr
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.CreateEditGroupImageEventHandlerImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.CreateEditGroupNavigationEventHandlerImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.CreateEditGroupSubmitEventHandlerImpl
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.CreateEditGroupStep
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -119,8 +121,8 @@ class CreateEditGroupViewModelTest {
 
         every { getUserDefaultCurrencyUseCase() } returns flowOf("EUR")
         every { getUserGroupsFlowUseCase() } returns flowOf(emptyList())
-        every { featureGateService.isFeatureEnabled(any()) } returns flowOf(true)
-        coEvery { featureGateService.checkLimit(any(), any()) } returns flowOf(LimitResult.Allowed)
+        every { featureGateService.isFeatureEnabled(any(), any()) } returns flowOf(true)
+        coEvery { featureGateService.checkLimit(any(), any(), any()) } returns flowOf(LimitResult.Allowed)
         coEvery { getSupportedCurrenciesUseCase() } returns Result.success(emptyList())
         every { groupUiMapper.toCurrencyUiModels(any()) } returns
             persistentListOf(currencyUiModelJPY, currencyUiModelUSD)
@@ -141,7 +143,8 @@ class CreateEditGroupViewModelTest {
             appConfigService = appConfigService,
             addGroupMembersUseCase = addGroupMembersUseCase,
             removeGroupMemberUseCase = removeGroupMemberUseCase,
-            setSelectedGroupUseCase = setSelectedGroupUseCase
+            setSelectedGroupUseCase = setSelectedGroupUseCase,
+            authenticationService = authenticationService
         )
         return CreateEditGroupViewModel(
             navigationEventHandler = navigationEventHandler,
@@ -185,7 +188,7 @@ class CreateEditGroupViewModelTest {
             assertFalse(state.isEditMode)
             assertTrue(
                 state.steps.contains(
-                    es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.CreateEditGroupStep.MEMBERS
+                    CreateEditGroupStep.MEMBERS
                 )
             )
         }
@@ -233,9 +236,21 @@ class CreateEditGroupViewModelTest {
             assertEquals("Trip to Japan", state.groupDescription)
             assertTrue(
                 state.steps.contains(
-                    es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.CreateEditGroupStep.MEMBERS
+                    CreateEditGroupStep.MEMBERS
                 )
             )
+        }
+
+        @Test
+        fun `evaluates cover upload with groupId`() = runTest(testDispatcher) {
+            every {
+                featureGateService.isFeatureEnabled(GatedFeature.GROUP_COVER_UPLOAD, testGroupId)
+            } returns flowOf(false)
+            val vm = createViewModel()
+            vm.init(testGroupId)
+            advanceUntilIdle()
+
+            assertFalse(vm.uiState.value.isCoverUploadEnabled)
         }
 
         @Test

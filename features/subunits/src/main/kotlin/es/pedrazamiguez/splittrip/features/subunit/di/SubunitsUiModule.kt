@@ -7,6 +7,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMa
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.SubunitShareDistributionService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveSelectedGroupUseCase
@@ -56,7 +57,8 @@ val subunitsUiModule = module {
             getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
             subunitUiMapper = get<SubunitUiMapper>(),
             shareDistributionService = get<SubunitShareDistributionService>(),
-            authenticationService = get<AuthenticationService>()
+            authenticationService = get<AuthenticationService>(),
+            featureGateService = get<FeatureGateService>()
         )
     }
 

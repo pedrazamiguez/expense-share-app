@@ -118,10 +118,10 @@
     <string name="group_unregistered_names_subtitle">Assign display names for people who aren\'t registered yet so they are easier to recognize in splits and balances.</string>
 
     <!-- Guest limits/gating -->
-    <string name="group_error_limit_groups_exceeded">Guest users can only create 1 group. Please link your account in Settings to lift this limit.</string>
-    <string name="group_error_limit_members_exceeded">Guest groups are limited to 3 members. Please link your account in Settings to lift this limit.</string>
+    <string name="group_error_limit_groups_exceeded">Upgrade to SplitTrip Pro to create more groups. Free accounts can own up to 1 group.</string>
+    <string name="group_error_limit_members_exceeded">Upgrade to SplitTrip Pro to add more members to this group. Free groups are limited to 4 members.</string>
     <string name="group_error_limit_members_registered_exceeded">Groups are limited to %1$d members.</string>
-    <string name="group_error_limit_cover_upload_disabled">Cover image upload is disabled for guest accounts. Please link your account in Settings to upload custom images.</string>
+    <string name="group_error_limit_cover_upload_disabled">Custom cover images are a SplitTrip Pro feature. Upgrade your account or join a Pro group to customize covers.</string>
 
     <!-- Edit Group -->
     <string name="group_edit_title">Edit group</string>

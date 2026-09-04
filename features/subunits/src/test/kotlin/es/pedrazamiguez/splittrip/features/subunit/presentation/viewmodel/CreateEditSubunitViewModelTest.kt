@@ -6,6 +6,8 @@ import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.SubunitShareDistributionService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedFeature
 import es.pedrazamiguez.splittrip.domain.service.impl.SubunitShareDistributionServiceImpl
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.CreateSubunitUseCase
@@ -59,6 +61,7 @@ class CreateEditSubunitViewModelTest {
     private lateinit var subunitUiMapper: SubunitUiMapper
     private lateinit var shareDistributionService: SubunitShareDistributionService
     private lateinit var authenticationService: AuthenticationService
+    private lateinit var featureGateService: FeatureGateService
     private lateinit var viewModel: CreateEditSubunitViewModel
 
     private val testGroup = Group(
@@ -100,6 +103,9 @@ class CreateEditSubunitViewModelTest {
         authenticationService = mockk {
             every { currentUserId() } returns "user-1"
         }
+        featureGateService = mockk {
+            every { isFeatureEnabled(any(), any()) } returns flowOf(true)
+        }
     }
 
     @AfterEach
@@ -116,7 +122,8 @@ class CreateEditSubunitViewModelTest {
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             subunitUiMapper = subunitUiMapper,
             shareDistributionService = shareDistributionService,
-            authenticationService = authenticationService
+            authenticationService = authenticationService,
+            featureGateService = featureGateService
         )
     }
 
@@ -343,6 +350,43 @@ class CreateEditSubunitViewModelTest {
             coVerify { createSubunitUseCase("group-1", any()) }
             assertTrue(actions.any { it is CreateEditSubunitUiAction.ShowSuccess })
             assertTrue(actions.any { it is CreateEditSubunitUiAction.NavigateBack })
+
+            collectJob.cancel()
+            actionsJob.cancel()
+        }
+
+        @Test
+        fun `when feature gate disables subunit creation emits ShowError and aborts save`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            every {
+                featureGateService.isFeatureEnabled(GatedFeature.SUBUNIT_CREATION, "group-1")
+            } returns flowOf(false)
+            createViewModel()
+
+            val actions = mutableListOf<CreateEditSubunitUiAction>()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.UpdateName("Family"))
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-3"))
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.Save)
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { createSubunitUseCase(any(), any()) }
+            assertFalse(viewModel.uiState.value.isSaving)
+            val errorAction = actions.filterIsInstance<CreateEditSubunitUiAction.ShowError>().firstOrNull()
+            assertNotNull(errorAction)
+            assertEquals(
+                UiText.StringResource(R.string.subunit_error_pro_required),
+                errorAction?.message
+            )
 
             collectJob.cancel()
             actionsJob.cancel()

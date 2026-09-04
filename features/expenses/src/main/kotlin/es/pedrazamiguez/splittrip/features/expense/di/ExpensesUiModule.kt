@@ -17,6 +17,7 @@ import es.pedrazamiguez.splittrip.domain.service.ExpenseFilterService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseValidationService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
 import es.pedrazamiguez.splittrip.domain.service.RemainderDistributionService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
 import es.pedrazamiguez.splittrip.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.splittrip.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.splittrip.domain.service.split.SubunitAwareSplitService
@@ -295,7 +296,8 @@ val expensesUiModule = module {
             extractReceiptFieldsUseCase = get<ExtractReceiptFieldsUseCase>(),
             receiptExtractionService = get<ReceiptExtractionService>(),
             formattingHelper = formattingHelper,
-            addExpenseUiMapper = addExpenseUiMapper
+            addExpenseUiMapper = addExpenseUiMapper,
+            featureGateService = get<FeatureGateService>()
         )
 
         val expenseFlowStrategyFactory = ExpenseFlowStrategyFactory(

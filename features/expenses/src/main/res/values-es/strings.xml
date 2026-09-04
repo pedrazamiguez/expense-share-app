@@ -347,6 +347,7 @@
     <string name="expense_autofill_success">Recibo escaneado con éxito</string>
     <string name="expense_autofill_failed">No se pudieron leer los campos del recibo</string>
     <string name="expense_autofill_unavailable">Las funciones de IA no son compatibles con este dispositivo</string>
+    <string name="expense_autofill_pro_required">El escaneo de recibos con IA requiere una suscripción a SplitTrip Pro.</string>
     <string name="expense_autofill_banner_title">Rellenado automáticamente desde el recibo</string>
     <string name="expense_autofill_banner_dismiss_cd">Descartar aviso de rellenado automático</string>
     <string name="add_expense_date">Fecha</string>
