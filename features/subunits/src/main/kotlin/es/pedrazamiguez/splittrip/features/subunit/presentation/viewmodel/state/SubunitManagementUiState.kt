@@ -9,5 +9,6 @@ data class SubunitManagementUiState(
     val groupId: String = "",
     val groupName: String = "",
     val subunits: ImmutableList<SubunitUiModel> = persistentListOf(),
-    val isGroupArchived: Boolean = false
+    val isGroupArchived: Boolean = false,
+    val isSubunitCreationEnabled: Boolean = true
 )

@@ -6,6 +6,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -224,6 +225,18 @@ class CreateEditGroupUiStateTest {
                 selectedCurrency = null
             )
             assertFalse(state.isCurrentStepValid)
+        }
+    }
+
+    @Nested
+    inner class UpgradeDialogDefaults {
+
+        @Test
+        fun `upgrade dialog state defaults to hidden with null strings`() {
+            val state = CreateEditGroupUiState()
+            assertFalse(state.showUpgradeDialog)
+            assertNull(state.upgradeDialogTitle)
+            assertNull(state.upgradeDialogMessage)
         }
     }
 }

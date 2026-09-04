@@ -387,6 +387,7 @@ class CreateEditSubunitViewModelTest {
                 UiText.StringResource(R.string.subunit_error_pro_required),
                 errorAction?.message
             )
+            assertTrue(actions.any { it is CreateEditSubunitUiAction.NavigateToSubscriptions })
 
             collectJob.cancel()
             actionsJob.cancel()

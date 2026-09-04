@@ -143,5 +143,9 @@
     <string name="biometric_prompt_negative">Cançelâh</string>
     <string name="biometric_prompt_confirm_title">Âttibâh bloqueo biométrico</string>
     <string name="biometric_prompt_confirm_subtitle">Berifica tu biometría pa âttibâh er bloqueo</string>
+    <string name="upgrade_dialog_title">SplîTTrîh Pro</string>
+    <string name="upgrade_dialog_confirm">Mehorâh a Pro</string>
+    <string name="upgrade_dialog_dismiss">Aora no</string>
+    <string name="badge_pro">PRO</string>
     <string name="app_name" translatable="false">SplitTrip</string>
 </resources>

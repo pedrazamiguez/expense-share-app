@@ -192,7 +192,7 @@ class CreateEditGroupSubmitEventHandlerImpl(
                 .collect { limitResult ->
                     when (limitResult) {
                         is LimitResult.Allowed -> checkMemberLimitAndCreateGroup(onSuccess)
-                        is LimitResult.Blocked -> handleGroupsLimitBlocked()
+                        is LimitResult.Blocked -> handleGroupsLimitBlocked(limitResult)
                     }
                 }
         }
@@ -209,9 +209,21 @@ class CreateEditGroupSubmitEventHandlerImpl(
             }
     }
 
-    private suspend fun handleGroupsLimitBlocked() {
+    private suspend fun handleGroupsLimitBlocked(limitResult: LimitResult.Blocked) {
         val errorRes = UiText.StringResource(R.string.group_error_limit_groups_exceeded)
-        _uiState.update { it.copy(isLoading = false, error = errorRes) }
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                error = errorRes,
+                showUpgradeDialog = limitResult.upgradeRequired,
+                upgradeDialogTitle = if (limitResult.upgradeRequired) {
+                    UiText.StringResource(DesignSystemR.string.upgrade_dialog_title)
+                } else {
+                    null
+                },
+                upgradeDialogMessage = if (limitResult.upgradeRequired) errorRes else null
+            )
+        }
         _actions.emit(CreateEditGroupUiAction.ShowError(errorRes))
     }
 
@@ -224,7 +236,19 @@ class CreateEditGroupSubmitEventHandlerImpl(
                 appConfigService.maxMembersPerGroup.value
             )
         }
-        _uiState.update { it.copy(isLoading = false, error = errorRes) }
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                error = errorRes,
+                showUpgradeDialog = memberLimitResult.upgradeRequired,
+                upgradeDialogTitle = if (memberLimitResult.upgradeRequired) {
+                    UiText.StringResource(DesignSystemR.string.upgrade_dialog_title)
+                } else {
+                    null
+                },
+                upgradeDialogMessage = if (memberLimitResult.upgradeRequired) errorRes else null
+            )
+        }
         _actions.emit(CreateEditGroupUiAction.ShowError(errorRes))
     }
 

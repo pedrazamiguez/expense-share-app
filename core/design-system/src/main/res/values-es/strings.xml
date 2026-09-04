@@ -182,6 +182,12 @@
     <string name="biometric_prompt_confirm_title">Activar bloqueo biométrico</string>
     <string name="biometric_prompt_confirm_subtitle">Verifica tu biometría para activar el bloqueo</string>
 
+    <!-- Upgrade Paywall Dialog & Badges -->
+    <string name="upgrade_dialog_title">SplitTrip Pro</string>
+    <string name="upgrade_dialog_confirm">Mejorar a Pro</string>
+    <string name="upgrade_dialog_dismiss">Ahora no</string>
+    <string name="badge_pro">PRO</string>
+
     <!-- App Name -->
     <string name="app_name" translatable="false">SplitTrip</string>
 </resources>

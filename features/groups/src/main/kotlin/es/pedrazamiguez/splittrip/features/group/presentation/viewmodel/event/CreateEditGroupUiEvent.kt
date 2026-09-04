@@ -23,4 +23,6 @@ sealed interface CreateEditGroupUiEvent {
     data object CloseWizard : CreateEditGroupUiEvent
     data class JumpToStep(val stepIndex: Int) : CreateEditGroupUiEvent
     data object Submit : CreateEditGroupUiEvent
+    data object UpgradeClicked : CreateEditGroupUiEvent
+    data object DismissUpgradeDialog : CreateEditGroupUiEvent
 }

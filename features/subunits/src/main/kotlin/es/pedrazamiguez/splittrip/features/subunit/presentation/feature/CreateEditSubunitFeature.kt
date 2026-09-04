@@ -12,7 +12,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.splittrip.core.common.presentation.asString
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalTabNavController
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.notification.LocalTopPillController
 import es.pedrazamiguez.splittrip.features.subunit.presentation.screen.CreateEditSubunitScreen
@@ -29,6 +31,7 @@ fun CreateEditSubunitFeature(
     viewModel: CreateEditSubunitViewModel = koinViewModel<CreateEditSubunitViewModel>()
 ) {
     val navController = LocalTabNavController.current
+    val rootNavController = LocalRootNavController.current
     val pillController = LocalTopPillController.current
     val context = LocalContext.current
 
@@ -63,6 +66,10 @@ fun CreateEditSubunitFeature(
 
                 CreateEditSubunitUiAction.RequestExitConfirmation -> {
                     showExitConfirmation = true
+                }
+
+                CreateEditSubunitUiAction.NavigateToSubscriptions -> {
+                    rootNavController.navigate(Routes.SETTINGS_SUBSCRIPTIONS)
                 }
             }
         }
