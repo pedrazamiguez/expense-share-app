@@ -267,4 +267,49 @@ class FeatureGateServiceImplTest {
             service.checkLimit(GatedLimit.MAX_MEMBERS_PER_GROUP, 10).first()
         )
     }
+
+    @Test
+    fun `acting PRO in Free group enables SUBUNIT_CREATION but keeps cover creator-bound`() = runTest {
+        coEvery { authenticationService.isAnonymous() } returns false
+        coEvery { userRepository.getCurrentUserProfile() } returns User(
+            userId = "acting_pro",
+            email = "pro@test.com",
+            tier = SubscriptionTier.PRO
+        )
+
+        val freeGroup = Group(id = "group_free", createdBy = "creator_free")
+        val freeCreator = User(userId = "creator_free", email = "free_creator@test.com", tier = SubscriptionTier.FREE)
+        coEvery { groupRepository.getGroupById("group_free") } returns freeGroup
+        coEvery { userRepository.getUsersByIds(listOf("creator_free")) } returns mapOf("creator_free" to freeCreator)
+
+        // Subunit creation is enabled because acting user is PRO
+        assertTrue(service.isFeatureEnabled(GatedFeature.SUBUNIT_CREATION, groupId = "group_free").first())
+
+        // Group cover upload remains disabled because creator is FREE
+        assertFalse(service.isFeatureEnabled(GatedFeature.GROUP_COVER_UPLOAD, groupId = "group_free").first())
+    }
+
+    @Test
+    fun `isActingUserPro returns true when user is Pro and false when Free or anonymous`() = runTest {
+        // Anonymous user -> false
+        coEvery { authenticationService.isAnonymous() } returns true
+        assertFalse(service.isActingUserPro().first())
+
+        // Authenticated Free user -> false
+        coEvery { authenticationService.isAnonymous() } returns false
+        coEvery { userRepository.getCurrentUserProfile() } returns User(
+            userId = "user_free",
+            email = "free@test.com",
+            tier = SubscriptionTier.FREE
+        )
+        assertFalse(service.isActingUserPro().first())
+
+        // Authenticated Pro user -> true
+        coEvery { userRepository.getCurrentUserProfile() } returns User(
+            userId = "user_pro",
+            email = "pro@test.com",
+            tier = SubscriptionTier.PRO
+        )
+        assertTrue(service.isActingUserPro().first())
+    }
 }

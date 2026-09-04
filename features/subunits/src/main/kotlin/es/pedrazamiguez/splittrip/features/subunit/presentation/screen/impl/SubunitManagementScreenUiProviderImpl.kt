@@ -50,22 +50,55 @@ class SubunitManagementScreenUiProviderImpl(
             val isSubunitCreationEnabled by featureGateService
                 .isFeatureEnabled(GatedFeature.SUBUNIT_CREATION, groupId)
                 .collectAsStateWithLifecycle(initialValue = true)
+            val isActingUserPro by featureGateService
+                .isActingUserPro()
+                .collectAsStateWithLifecycle(initialValue = false)
             val proRequiredMessage = stringResource(R.string.subunit_error_pro_required)
 
             return MainAction(
                 icon = TablerIcons.Outline.SquareRoundedPlus,
                 contentDescription = stringResource(R.string.subunit_create),
                 onClick = {
-                    if (isSubunitCreationEnabled) {
-                        navController.navigate(Routes.createEditSubunitRoute(groupId))
-                    } else {
-                        pillController.showPill(proRequiredMessage)
-                        rootNavController.navigate(Routes.SETTINGS_SUBSCRIPTIONS)
-                    }
+                    handleMainActionClick(
+                        isSubunitCreationEnabled = isSubunitCreationEnabled,
+                        isActingUserPro = isActingUserPro,
+                        groupId = groupId,
+                        proRequiredMessage = proRequiredMessage,
+                        navigateToCreate = { targetRoute -> navController.navigate(targetRoute) },
+                        navigateToSubscriptions = { rootNavController.navigate(Routes.SETTINGS_SUBSCRIPTIONS) },
+                        showNotification = { message -> pillController.showPill(message) }
+                    )
                 },
                 sharedTransitionKey = if (isSubunitCreationEnabled) CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY else null,
                 enabled = !isArchived,
-                showProBadge = !isSubunitCreationEnabled
+                showProBadge = shouldShowProBadge(
+                    isSubunitCreationEnabled = isSubunitCreationEnabled,
+                    isActingUserPro = isActingUserPro
+                )
             )
         }
+
+    internal fun handleMainActionClick(
+        isSubunitCreationEnabled: Boolean,
+        isActingUserPro: Boolean,
+        groupId: String,
+        proRequiredMessage: String,
+        navigateToCreate: (String) -> Unit,
+        navigateToSubscriptions: () -> Unit,
+        showNotification: (String) -> Unit
+    ) {
+        if (isSubunitCreationEnabled) {
+            navigateToCreate(Routes.createEditSubunitRoute(groupId))
+        } else {
+            showNotification(proRequiredMessage)
+            if (!isActingUserPro) {
+                navigateToSubscriptions()
+            }
+        }
+    }
+
+    internal fun shouldShowProBadge(
+        isSubunitCreationEnabled: Boolean,
+        isActingUserPro: Boolean
+    ): Boolean = !isSubunitCreationEnabled && !isActingUserPro
 }

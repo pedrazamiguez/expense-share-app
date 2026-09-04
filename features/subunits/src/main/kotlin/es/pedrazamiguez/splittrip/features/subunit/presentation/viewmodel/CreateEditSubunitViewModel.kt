@@ -407,7 +407,10 @@ class CreateEditSubunitViewModel(
                             UiText.StringResource(R.string.subunit_error_pro_required)
                         )
                     )
-                    _actions.emit(CreateEditSubunitUiAction.NavigateToSubscriptions)
+                    val isPro = featureGateService.isActingUserPro().first()
+                    if (!isPro) {
+                        _actions.emit(CreateEditSubunitUiAction.NavigateToSubscriptions)
+                    }
                     return@launch
                 }
             }

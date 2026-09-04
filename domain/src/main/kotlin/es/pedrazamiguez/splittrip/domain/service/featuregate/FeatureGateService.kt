@@ -11,8 +11,10 @@ interface FeatureGateService {
     /**
      * Checks if a specific premium or restricted feature is enabled.
      *
-     * For group-level capabilities (e.g. cover photo uploads, subunit creation),
-     * if [groupId] is provided, access is evaluated against the group creator's tier.
+     * For collaborative capabilities (e.g. [GatedFeature.SUBUNIT_CREATION]), access is enabled
+     * if either the acting authenticated user or the group creator is on the Pro tier.
+     * For group-level creator-bound capabilities (e.g. cover photo uploads), if [groupId] is provided,
+     * access is evaluated against the group creator's tier.
      * For user-level capabilities (e.g. AI receipt OCR scanning), access is evaluated
      * against the acting authenticated user's tier.
      *
@@ -20,6 +22,11 @@ interface FeatureGateService {
      * @param groupId The optional ID of the group context, if evaluating a group-level capability.
      */
     fun isFeatureEnabled(feature: GatedFeature, groupId: String? = null): Flow<Boolean>
+
+    /**
+     * Checks if the acting authenticated user is on the Pro subscription tier.
+     */
+    fun isActingUserPro(): Flow<Boolean>
 
     /**
      * Checks if the user is allowed to perform an action, considering current counts against limits.
