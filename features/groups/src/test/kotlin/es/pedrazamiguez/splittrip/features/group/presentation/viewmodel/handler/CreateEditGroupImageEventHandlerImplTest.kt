@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler
 
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.service.GroupImageStorageService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
@@ -105,6 +106,15 @@ class CreateEditGroupImageEventHandlerImplTest {
             assertEquals(
                 UiText.StringResource(R.string.group_error_limit_cover_upload_disabled),
                 stateFlow.value.error
+            )
+            assertTrue(stateFlow.value.showUpgradeDialog)
+            assertEquals(
+                UiText.StringResource(DesignSystemR.string.upgrade_dialog_title),
+                stateFlow.value.upgradeDialogTitle
+            )
+            assertEquals(
+                UiText.StringResource(R.string.group_error_limit_cover_upload_disabled),
+                stateFlow.value.upgradeDialogMessage
             )
             assertFalse(stateFlow.value.isLoading)
             assertTrue(actionsList.any { it is CreateEditGroupUiAction.ShowError })

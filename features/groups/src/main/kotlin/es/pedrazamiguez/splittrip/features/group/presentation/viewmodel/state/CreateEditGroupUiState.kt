@@ -30,6 +30,9 @@ data class CreateEditGroupUiState(
     // Errors
     val error: UiText? = null,
     val isNameValid: Boolean = true,
+    val showUpgradeDialog: Boolean = false,
+    val upgradeDialogTitle: UiText? = null,
+    val upgradeDialogMessage: UiText? = null,
 
     // Wizard
     val currentStep: CreateEditGroupStep = CreateEditGroupStep.INFO,

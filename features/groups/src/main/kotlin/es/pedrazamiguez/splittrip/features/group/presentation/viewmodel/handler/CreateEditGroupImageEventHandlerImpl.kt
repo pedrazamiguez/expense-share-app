@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler
 
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.service.GroupImageStorageService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
@@ -46,17 +47,17 @@ class CreateEditGroupImageEventHandlerImpl(
                 groupId = initialGroup?.id
             ).collect { isEnabled ->
                 if (!isEnabled) {
+                    val errorRes = UiText.StringResource(R.string.group_error_limit_cover_upload_disabled)
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            error = UiText.StringResource(R.string.group_error_limit_cover_upload_disabled)
+                            error = errorRes,
+                            showUpgradeDialog = true,
+                            upgradeDialogTitle = UiText.StringResource(DesignSystemR.string.upgrade_dialog_title),
+                            upgradeDialogMessage = errorRes
                         )
                     }
-                    _actions.emit(
-                        CreateEditGroupUiAction.ShowError(
-                            UiText.StringResource(R.string.group_error_limit_cover_upload_disabled)
-                        )
-                    )
+                    _actions.emit(CreateEditGroupUiAction.ShowError(errorRes))
                     return@collect
                 }
                 runCatching {

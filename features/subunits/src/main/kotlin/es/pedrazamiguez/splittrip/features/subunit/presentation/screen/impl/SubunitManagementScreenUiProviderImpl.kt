@@ -8,18 +8,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.SquareRoundedPlus
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.notification.LocalTopPillController
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.MainAction
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
+import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedFeature
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveSelectedGroupUseCase
 import es.pedrazamiguez.splittrip.features.subunit.R
 import es.pedrazamiguez.splittrip.features.subunit.presentation.screen.CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY
 
 class SubunitManagementScreenUiProviderImpl(
     private val observeSelectedGroupUseCase: ObserveSelectedGroupUseCase,
+    private val featureGateService: FeatureGateService,
     override val route: String = Routes.MANAGE_SUBUNITS
 ) : ScreenUiProvider {
 
@@ -38,14 +43,29 @@ class SubunitManagementScreenUiProviderImpl(
             val selectedGroup by observeSelectedGroupUseCase().collectAsStateWithLifecycle(initialValue = null)
             val isArchived = selectedGroup?.status == GroupStatus.ARCHIVED
             val navController = LocalTabNavController.current
+            val rootNavController = LocalRootNavController.current
+            val pillController = LocalTopPillController.current
             val backStackEntry by navController.currentBackStackEntryAsState()
             val groupId = backStackEntry?.arguments?.getString("groupId") ?: return null
+            val isSubunitCreationEnabled by featureGateService
+                .isFeatureEnabled(GatedFeature.SUBUNIT_CREATION, groupId)
+                .collectAsStateWithLifecycle(initialValue = true)
+            val proRequiredMessage = stringResource(R.string.subunit_error_pro_required)
+
             return MainAction(
                 icon = TablerIcons.Outline.SquareRoundedPlus,
                 contentDescription = stringResource(R.string.subunit_create),
-                onClick = { navController.navigate(Routes.createEditSubunitRoute(groupId)) },
-                sharedTransitionKey = CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY,
-                enabled = !isArchived
+                onClick = {
+                    if (isSubunitCreationEnabled) {
+                        navController.navigate(Routes.createEditSubunitRoute(groupId))
+                    } else {
+                        pillController.showPill(proRequiredMessage)
+                        rootNavController.navigate(Routes.SETTINGS_SUBSCRIPTIONS)
+                    }
+                },
+                sharedTransitionKey = if (isSubunitCreationEnabled) CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY else null,
+                enabled = !isArchived,
+                showProBadge = !isSubunitCreationEnabled
             )
         }
 }

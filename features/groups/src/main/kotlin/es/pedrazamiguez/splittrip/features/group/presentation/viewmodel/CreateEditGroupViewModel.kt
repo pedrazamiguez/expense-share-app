@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.splittrip.core.logging.LogTag
 import es.pedrazamiguez.splittrip.core.logging.sanitizer.maskEmail
@@ -153,6 +154,15 @@ class CreateEditGroupViewModel(
             is CreateEditGroupUiEvent.ShowImageSourceSheet -> imageEventHandler.handleShowImageSourceSheet(
                 event.show
             )
+            is CreateEditGroupUiEvent.UpgradeClicked -> {
+                _uiState.update { it.copy(showUpgradeDialog = false) }
+                viewModelScope.launch {
+                    _actions.emit(CreateEditGroupUiAction.NavigateToRoute(Routes.SETTINGS_SUBSCRIPTIONS))
+                }
+            }
+            is CreateEditGroupUiEvent.DismissUpgradeDialog -> {
+                _uiState.update { it.copy(showUpgradeDialog = false) }
+            }
         }
     }
 

@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler
 
+import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.core.logging.TelemetryTracker
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.User
@@ -14,6 +16,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.RemoveGroupMemberUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.UpdateGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetSelectedGroupUseCase
+import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.CreateEditGroupUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.CreateEditGroupUiState
 import io.mockk.coEvery
@@ -33,7 +36,9 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -186,6 +191,35 @@ class CreateEditGroupSubmitEventHandlerImplTest {
             advanceUntilIdle()
 
             assertTrue(actions.any { it is CreateEditGroupUiAction.ShowError })
+            assertTrue(stateFlow.value.showUpgradeDialog)
+            assertEquals(
+                UiText.StringResource(DesignSystemR.string.upgrade_dialog_title),
+                stateFlow.value.upgradeDialogTitle
+            )
+            assertEquals(
+                UiText.StringResource(R.string.group_error_limit_groups_exceeded),
+                stateFlow.value.upgradeDialogMessage
+            )
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `does not show upgrade dialog when group limit has no upgrade required`() = runTest(testDispatcher) {
+            coEvery { featureGateService.checkLimit(any(), any(), any()) } returns flowOf(
+                LimitResult.Blocked(limit = GatedLimit.MAX_OWNED_GROUPS_COUNT, upgradeRequired = false)
+            )
+            stateFlow.value = CreateEditGroupUiState(groupName = "New Group", isEditMode = false)
+
+            val actions = mutableListOf<CreateEditGroupUiAction>()
+            val collectJob = launch { actionsFlow.collect { actions.add(it) } }
+
+            handler.handleSubmit {}
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is CreateEditGroupUiAction.ShowError })
+            assertFalse(stateFlow.value.showUpgradeDialog)
+            assertNull(stateFlow.value.upgradeDialogTitle)
+            assertNull(stateFlow.value.upgradeDialogMessage)
             collectJob.cancel()
         }
 
@@ -349,6 +383,51 @@ class CreateEditGroupSubmitEventHandlerImplTest {
             advanceUntilIdle()
 
             assertTrue(actions.any { it is CreateEditGroupUiAction.ShowError })
+            assertTrue(stateFlow.value.showUpgradeDialog)
+            assertEquals(
+                UiText.StringResource(DesignSystemR.string.upgrade_dialog_title),
+                stateFlow.value.upgradeDialogTitle
+            )
+            assertEquals(
+                UiText.StringResource(R.string.group_error_limit_members_exceeded),
+                stateFlow.value.upgradeDialogMessage
+            )
+            coVerify(exactly = 0) { updateGroupUseCase(any()) }
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `blocks update without upgrade dialog when limit has no upgrade required`() = runTest(testDispatcher) {
+            handler.setInitialGroup(testGroup)
+            val newMember = User(userId = "user-3", email = "user3@test.com")
+            stateFlow.value = CreateEditGroupUiState(
+                groupName = "Updated Group",
+                isEditMode = true,
+                selectedMembers = persistentListOf(
+                    User(userId = "user-1", email = "user1@test.com"),
+                    User(userId = "user-2", email = "user2@test.com"),
+                    newMember
+                )
+            )
+
+            coEvery {
+                featureGateService.checkLimit(
+                    limit = GatedLimit.MAX_MEMBERS_PER_GROUP,
+                    currentCount = 3,
+                    groupId = testGroup.id
+                )
+            } returns flowOf(LimitResult.Blocked(GatedLimit.MAX_MEMBERS_PER_GROUP, upgradeRequired = false))
+
+            val actions = mutableListOf<CreateEditGroupUiAction>()
+            val collectJob = launch { actionsFlow.collect { actions.add(it) } }
+
+            handler.handleSubmit {}
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is CreateEditGroupUiAction.ShowError })
+            assertFalse(stateFlow.value.showUpgradeDialog)
+            assertNull(stateFlow.value.upgradeDialogTitle)
+            assertNull(stateFlow.value.upgradeDialogMessage)
             coVerify(exactly = 0) { updateGroupUseCase(any()) }
             collectJob.cancel()
         }

@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel
 
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.splittrip.core.logging.TelemetryTracker
 import es.pedrazamiguez.splittrip.domain.model.Group
@@ -678,6 +679,38 @@ class CreateEditGroupViewModelTest {
                 assertEquals("Alice", u1?.displayName)
                 assertEquals("", u2?.email) // fallback email is empty
                 assertEquals(null, u2?.displayName) // fallback displayName is null
+            }
+    }
+
+    @Nested
+    inner class UpgradeDialog {
+
+        @Test
+        fun `onEvent UpgradeClicked closes dialog and emits NavigateToRoute with SETTINGS_SUBSCRIPTIONS`() =
+            runTest(testDispatcher) {
+                val actionsList = mutableListOf<CreateEditGroupUiAction>()
+                val job = launch {
+                    viewModel.actions.collect { actionsList.add(it) }
+                }
+
+                viewModel.onEvent(CreateEditGroupUiEvent.UpgradeClicked) {}
+                advanceUntilIdle()
+
+                assertFalse(viewModel.uiState.value.showUpgradeDialog)
+                assertEquals(
+                    listOf(CreateEditGroupUiAction.NavigateToRoute(Routes.SETTINGS_SUBSCRIPTIONS)),
+                    actionsList
+                )
+                job.cancel()
+            }
+
+        @Test
+        fun `onEvent DismissUpgradeDialog closes upgrade dialog`() =
+            runTest(testDispatcher) {
+                viewModel.onEvent(CreateEditGroupUiEvent.DismissUpgradeDialog) {}
+                advanceUntilIdle()
+
+                assertFalse(viewModel.uiState.value.showUpgradeDialog)
             }
     }
 }

@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
+import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedFeature
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.DeleteSubunitUseCase
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -42,7 +45,8 @@ class SubunitManagementViewModel(
     private val getGroupByIdUseCase: GetGroupByIdUseCase,
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
     private val subunitUiMapper: SubunitUiMapper,
-    private val observeGroupUseCase: ObserveGroupUseCase
+    private val observeGroupUseCase: ObserveGroupUseCase,
+    private val featureGateService: FeatureGateService
 ) : ViewModel() {
 
     private val _groupId = MutableStateFlow("")
@@ -61,14 +65,16 @@ class SubunitManagementViewModel(
 
             combine(
                 getGroupSubunitsFlowUseCase(groupId),
-                groupFlow
-            ) { subunits, reactiveGroup ->
+                groupFlow,
+                featureGateService.isFeatureEnabled(GatedFeature.SUBUNIT_CREATION, groupId)
+            ) { subunits, reactiveGroup, isSubunitCreationEnabled ->
                 SubunitManagementUiState(
                     isLoading = false,
                     groupId = groupId,
                     groupName = groupName,
                     subunits = subunitUiMapper.toSubunitUiModelList(subunits, memberProfiles),
-                    isGroupArchived = reactiveGroup?.status == GroupStatus.ARCHIVED
+                    isGroupArchived = reactiveGroup?.status == GroupStatus.ARCHIVED,
+                    isSubunitCreationEnabled = isSubunitCreationEnabled
                 )
             }
         }
@@ -97,7 +103,15 @@ class SubunitManagementViewModel(
 
     private fun navigateToCreate() {
         viewModelScope.launch {
-            _actions.emit(SubunitManagementUiAction.NavigateToCreateSubunit(_groupId.value))
+            val isEnabled = featureGateService.isFeatureEnabled(
+                feature = GatedFeature.SUBUNIT_CREATION,
+                groupId = _groupId.value
+            ).first()
+            if (isEnabled) {
+                _actions.emit(SubunitManagementUiAction.NavigateToCreateSubunit(_groupId.value))
+            } else {
+                _actions.emit(SubunitManagementUiAction.NavigateToSubscriptions)
+            }
         }
     }
 
