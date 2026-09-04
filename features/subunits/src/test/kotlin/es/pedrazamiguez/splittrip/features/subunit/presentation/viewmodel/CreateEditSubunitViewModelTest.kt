@@ -105,6 +105,7 @@ class CreateEditSubunitViewModelTest {
         }
         featureGateService = mockk {
             every { isFeatureEnabled(any(), any()) } returns flowOf(true)
+            every { isActingUserPro() } returns flowOf(false)
         }
     }
 
@@ -361,6 +362,7 @@ class CreateEditSubunitViewModelTest {
             every {
                 featureGateService.isFeatureEnabled(GatedFeature.SUBUNIT_CREATION, "group-1")
             } returns flowOf(false)
+            every { featureGateService.isActingUserPro() } returns flowOf(false)
             createViewModel()
 
             val actions = mutableListOf<CreateEditSubunitUiAction>()
@@ -388,6 +390,45 @@ class CreateEditSubunitViewModelTest {
                 errorAction?.message
             )
             assertTrue(actions.any { it is CreateEditSubunitUiAction.NavigateToSubscriptions })
+
+            collectJob.cancel()
+            actionsJob.cancel()
+        }
+
+        @Test
+        fun `when creation disabled but user is Pro emits ShowError and no paywall`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            every {
+                featureGateService.isFeatureEnabled(GatedFeature.SUBUNIT_CREATION, "group-1")
+            } returns flowOf(false)
+            every { featureGateService.isActingUserPro() } returns flowOf(true)
+            createViewModel()
+
+            val actions = mutableListOf<CreateEditSubunitUiAction>()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.UpdateName("Family"))
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-3"))
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.Save)
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { createSubunitUseCase(any(), any()) }
+            assertFalse(viewModel.uiState.value.isSaving)
+            val errorAction = actions.filterIsInstance<CreateEditSubunitUiAction.ShowError>().firstOrNull()
+            assertNotNull(errorAction)
+            assertEquals(
+                UiText.StringResource(R.string.subunit_error_pro_required),
+                errorAction?.message
+            )
+            assertFalse(actions.any { it is CreateEditSubunitUiAction.NavigateToSubscriptions })
 
             collectJob.cancel()
             actionsJob.cancel()

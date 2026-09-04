@@ -110,7 +110,16 @@ class SubunitManagementViewModel(
             if (isEnabled) {
                 _actions.emit(SubunitManagementUiAction.NavigateToCreateSubunit(_groupId.value))
             } else {
-                _actions.emit(SubunitManagementUiAction.NavigateToSubscriptions)
+                val isPro = featureGateService.isActingUserPro().first()
+                if (isPro) {
+                    _actions.emit(
+                        SubunitManagementUiAction.ShowError(
+                            UiText.StringResource(R.string.subunit_error_pro_required)
+                        )
+                    )
+                } else {
+                    _actions.emit(SubunitManagementUiAction.NavigateToSubscriptions)
+                }
             }
         }
     }

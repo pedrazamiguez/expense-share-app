@@ -27,11 +27,15 @@ internal class FeatureGateServiceImpl(
 
         val effectiveTier = when (feature) {
             GatedFeature.AI_RECEIPT_SCANNING -> resolveActingUserTier()
-            GatedFeature.GROUP_COVER_UPLOAD,
-            GatedFeature.SUBUNIT_CREATION -> resolveEffectiveTier(groupId)
+            GatedFeature.GROUP_COVER_UPLOAD -> resolveEffectiveTier(groupId)
+            GatedFeature.SUBUNIT_CREATION -> resolveSubunitCreationTier(groupId)
         }
 
         emit(effectiveTier == SubscriptionTier.PRO)
+    }
+
+    override fun isActingUserPro(): Flow<Boolean> = flow {
+        emit(resolveActingUserTier() == SubscriptionTier.PRO)
     }
 
     override fun checkLimit(limit: GatedLimit, currentCount: Int, groupId: String?): Flow<LimitResult> = flow {
@@ -84,6 +88,13 @@ internal class FeatureGateServiceImpl(
         return runCatching {
             userRepository.getCurrentUserProfile()?.tier
         }.getOrNull() ?: SubscriptionTier.FREE
+    }
+
+    private suspend fun resolveSubunitCreationTier(groupId: String?): SubscriptionTier {
+        if (resolveActingUserTier() == SubscriptionTier.PRO) {
+            return SubscriptionTier.PRO
+        }
+        return resolveEffectiveTier(groupId)
     }
 
     private suspend fun resolveEffectiveTier(groupId: String?): SubscriptionTier {

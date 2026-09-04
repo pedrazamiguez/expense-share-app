@@ -118,6 +118,7 @@ class SubunitManagementViewModelTest {
         every { getGroupSubunitsFlowUseCase("group-1") } returns flowOf(subunits)
         every { observeGroupUseCase("group-1") } returns flowOf(testGroup)
         every { featureGateService.isFeatureEnabled(GatedFeature.SUBUNIT_CREATION, any()) } returns flowOf(true)
+        every { featureGateService.isActingUserPro() } returns flowOf(false)
         every {
             subunitUiMapper.toSubunitUiModelList(any(), any())
         } returns listOf(testSubunitUiModel).toImmutableList()
@@ -223,6 +224,7 @@ class SubunitManagementViewModelTest {
         fun `CreateSubunit emits NavigateToSubscriptions when disabled`() = runTest(testDispatcher) {
             setupDefaultMocks()
             every { featureGateService.isFeatureEnabled(GatedFeature.SUBUNIT_CREATION, any()) } returns flowOf(false)
+            every { featureGateService.isActingUserPro() } returns flowOf(false)
             createViewModel()
 
             val actions = mutableListOf<SubunitManagementUiAction>()
@@ -238,6 +240,32 @@ class SubunitManagementViewModelTest {
             advanceUntilIdle()
 
             assertTrue(actions.any { it is SubunitManagementUiAction.NavigateToSubscriptions })
+
+            collectJob.cancel()
+            actionsJob.cancel()
+        }
+
+        @Test
+        fun `CreateSubunit emits ShowError without paywall when acting user is Pro`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            every { featureGateService.isFeatureEnabled(GatedFeature.SUBUNIT_CREATION, any()) } returns flowOf(false)
+            every { featureGateService.isActingUserPro() } returns flowOf(true)
+            createViewModel()
+
+            val actions = mutableListOf<SubunitManagementUiAction>()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            viewModel.setGroupId("group-1")
+            advanceUntilIdle()
+
+            viewModel.onEvent(SubunitManagementUiEvent.CreateSubunit)
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is SubunitManagementUiAction.ShowError })
+            assertFalse(actions.any { it is SubunitManagementUiAction.NavigateToSubscriptions })
 
             collectJob.cancel()
             actionsJob.cancel()
