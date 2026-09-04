@@ -22,6 +22,7 @@ import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseValidationService
 import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
 import es.pedrazamiguez.splittrip.domain.service.impl.AddOnCalculationServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.ExchangeRateCalculationServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.ExpenseCalculatorServiceImpl
@@ -348,11 +349,15 @@ class AddExpenseViewModelTest {
             attachReceiptUseCase = attachReceiptUseCase
         )
 
+        val featureGateService = mockk<FeatureGateService>(relaxed = true) {
+            every { isFeatureEnabled(any(), any()) } returns flowOf(true)
+        }
         val receiptAutoFillEventHandler = ReceiptAutoFillEventHandler(
             extractReceiptFieldsUseCase = mockk<ExtractReceiptFieldsUseCase>(relaxed = true),
             receiptExtractionService = mockk<ReceiptExtractionService>(relaxed = true),
             formattingHelper = formattingHelper,
-            addExpenseUiMapper = addExpenseUiMapper
+            addExpenseUiMapper = addExpenseUiMapper,
+            featureGateService = featureGateService
         )
 
         val updateExpenseUseCase = mockk<UpdateExpenseUseCase>(relaxed = true)

@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler
 
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.service.GroupImageStorageService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedFeature
@@ -21,6 +22,7 @@ class CreateEditGroupImageEventHandlerImpl(
     private lateinit var _uiState: MutableStateFlow<CreateEditGroupUiState>
     private lateinit var _actions: MutableSharedFlow<CreateEditGroupUiAction>
     private lateinit var scope: CoroutineScope
+    private var initialGroup: Group? = null
 
     override fun bind(
         stateFlow: MutableStateFlow<CreateEditGroupUiState>,
@@ -32,10 +34,17 @@ class CreateEditGroupImageEventHandlerImpl(
         this.scope = scope
     }
 
+    override fun setInitialGroup(group: Group) {
+        this.initialGroup = group
+    }
+
     override fun handleGroupImagePicked(uri: String) {
         scope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            featureGateService.isFeatureEnabled(GatedFeature.GROUP_COVER_UPLOAD).collect { isEnabled ->
+            featureGateService.isFeatureEnabled(
+                feature = GatedFeature.GROUP_COVER_UPLOAD,
+                groupId = initialGroup?.id
+            ).collect { isEnabled ->
                 if (!isEnabled) {
                     _uiState.update {
                         it.copy(

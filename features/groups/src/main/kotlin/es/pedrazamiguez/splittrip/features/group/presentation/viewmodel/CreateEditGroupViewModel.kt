@@ -90,6 +90,14 @@ class CreateEditGroupViewModel(
         if (isInitialized) return
         isInitialized = true
 
+        if (groupId != null) {
+            viewModelScope.launch {
+                featureGateService.isFeatureEnabled(GatedFeature.GROUP_COVER_UPLOAD, groupId).collect { isEnabled ->
+                    _uiState.update { it.copy(isCoverUploadEnabled = isEnabled) }
+                }
+            }
+        }
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val email = authenticationService.currentUserEmail()
@@ -281,6 +289,7 @@ class CreateEditGroupViewModel(
         mappedCurrencies: ImmutableList<CurrencyUiModel>
     ) {
         submitEventHandler.setInitialGroup(group)
+        imageEventHandler.setInitialGroup(group)
 
         val selectedCurrencyModel = mappedCurrencies.find { it.code == group.currency }
         val extraCurrencyModels = mappedCurrencies.filter { it.code in group.extraCurrencies }

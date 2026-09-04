@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler
 
+import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.CreateEditGroupUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.CreateEditGroupUiState
 import kotlinx.coroutines.CoroutineScope
@@ -12,6 +13,7 @@ interface CreateEditGroupImageEventHandler {
         actionsFlow: MutableSharedFlow<CreateEditGroupUiAction>,
         scope: CoroutineScope
     )
+    fun setInitialGroup(group: Group)
     fun handleGroupImagePicked(uri: String)
     fun handleGroupImageRemoved()
     fun handleShowImageSourceSheet(show: Boolean)

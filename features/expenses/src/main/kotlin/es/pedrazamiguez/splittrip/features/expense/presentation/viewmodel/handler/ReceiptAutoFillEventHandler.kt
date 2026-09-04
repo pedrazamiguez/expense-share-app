@@ -8,6 +8,8 @@ import es.pedrazamiguez.splittrip.domain.model.ExtractionCapability
 import es.pedrazamiguez.splittrip.domain.model.ExtractionConfidence
 import es.pedrazamiguez.splittrip.domain.model.ReceiptAttachment
 import es.pedrazamiguez.splittrip.domain.service.ReceiptExtractionService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
+import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedFeature
 import es.pedrazamiguez.splittrip.domain.usecase.expense.ExtractReceiptFieldsUseCase
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpenseUiMapper
@@ -24,6 +26,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -33,7 +36,8 @@ class ReceiptAutoFillEventHandler(
     private val extractReceiptFieldsUseCase: ExtractReceiptFieldsUseCase,
     private val receiptExtractionService: ReceiptExtractionService,
     private val formattingHelper: FormattingHelper,
-    private val addExpenseUiMapper: AddExpenseUiMapper
+    private val addExpenseUiMapper: AddExpenseUiMapper,
+    private val featureGateService: FeatureGateService
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
@@ -138,6 +142,22 @@ class ReceiptAutoFillEventHandler(
         val state = _uiState.value
         if (state.isAiModeActive == active) return
 
+        if (active) {
+            scope.launch {
+                val isEnabled = featureGateService.isFeatureEnabled(GatedFeature.AI_RECEIPT_SCANNING).first()
+                if (!isEnabled) {
+                    _actionsFlow.emit(AddExpenseUiAction.NavigateToSubscriptions)
+                    return@launch
+                }
+                performSetAiModeActive(active = true)
+            }
+        } else {
+            performSetAiModeActive(active = false)
+        }
+    }
+
+    private fun performSetAiModeActive(active: Boolean) {
+        val state = _uiState.value
         _uiState.update { it.copy(isAiModeActive = active) }
 
         // If the user turned off AI mode while on the RECEIPT step, transition to TITLE.
