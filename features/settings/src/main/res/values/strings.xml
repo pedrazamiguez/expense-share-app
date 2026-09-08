@@ -72,6 +72,7 @@
     <string name="notification_prefs_reminder_title">Reminder Preferences</string>
     <string name="notification_prefs_select_timezone">Select Timezone</string>
     <string name="notification_prefs_timezone">Timezone</string>
+    <string name="notification_prefs_no_timezones_found">No timezones found</string>
     <string name="notification_prefs_reminder_time">Reminder Time (HH:MM)</string>
 
     <!-- Developer Services Playground -->
