@@ -1,6 +1,5 @@
 package es.pedrazamiguez.splittrip.features.settlement.presentation.component
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.extension.debouncedClickable
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.InfoCircle
@@ -73,8 +73,9 @@ internal fun RowScope.PocketCashTile(
                             contentDescription = stringResource(R.string.your_balance_cash_breakdown_view_cd),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                             modifier = Modifier
+                                .debouncedClickable(onClick = onInfoClick)
+                                .padding(MaterialTheme.spacing.ExtraSmall)
                                 .size(16.dp)
-                                .clickable(onClick = onInfoClick)
                         )
                     }
                 }

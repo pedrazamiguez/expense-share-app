@@ -1,7 +1,6 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -37,6 +36,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.extension.debouncedClickable
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Search
@@ -239,7 +239,7 @@ private fun SearchableTextField(
                     Icon(
                         imageVector = TablerIcons.Outline.X,
                         contentDescription = clearSearchContentDescription,
-                        modifier = Modifier.clickable { onClearSearch() }
+                        modifier = Modifier.debouncedClickable { onClearSearch() }
                     )
                 }
             },
