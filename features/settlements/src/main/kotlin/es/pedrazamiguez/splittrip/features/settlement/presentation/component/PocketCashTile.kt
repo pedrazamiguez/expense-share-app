@@ -9,16 +9,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.extension.debouncedClickableNoRipple
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.InfoCircle
@@ -38,11 +38,24 @@ internal fun RowScope.PocketCashTile(
     modifier: Modifier = Modifier,
     content: (@Composable () -> Unit)? = null
 ) {
+    val isClickable = showInfoIcon && onInfoClick != null
+    val cardModifier = if (isClickable) {
+        Modifier
+            .fillMaxWidth()
+            .debouncedClickableNoRipple(
+                role = Role.Button,
+                onClickLabel = stringResource(R.string.your_balance_cash_breakdown_view_cd),
+                onClick = onInfoClick
+            )
+    } else {
+        Modifier.fillMaxWidth()
+    }
+
     Box(
         modifier = modifier.weight(1f)
     ) {
         FlatCard(
-            modifier = Modifier.fillMaxWidth()
+            modifier = cardModifier
         ) {
             Column(
                 modifier = Modifier
@@ -68,18 +81,13 @@ internal fun RowScope.PocketCashTile(
                         CaptionText(text = label)
                     }
 
-                    if (showInfoIcon && onInfoClick != null) {
-                        IconButton(
-                            onClick = onInfoClick,
-                            modifier = Modifier.minimumInteractiveComponentSize()
-                        ) {
-                            Icon(
-                                imageVector = TablerIcons.Outline.InfoCircle,
-                                contentDescription = stringResource(R.string.your_balance_cash_breakdown_view_cd),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
+                    if (showInfoIcon) {
+                        Icon(
+                            imageVector = TablerIcons.Outline.InfoCircle,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            modifier = Modifier.size(14.dp)
+                        )
                     }
                 }
 

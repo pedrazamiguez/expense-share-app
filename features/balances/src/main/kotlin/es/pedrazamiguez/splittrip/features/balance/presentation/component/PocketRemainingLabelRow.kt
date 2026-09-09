@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -13,7 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.extension.debouncedClickableNoRipple
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.InfoCircle
@@ -26,7 +27,13 @@ internal fun PocketRemainingLabelRow(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier,
+        modifier = modifier
+            .minimumInteractiveComponentSize()
+            .debouncedClickableNoRipple(
+                role = Role.Button,
+                onClickLabel = stringResource(R.string.balances_metric_info_cd),
+                onClick = { onShowMetricInfo(BalanceMetricType.REMAINING) }
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -35,16 +42,11 @@ internal fun PocketRemainingLabelRow(
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
         Spacer(modifier = Modifier.width(MaterialTheme.spacing.ExtraSmall))
-        IconButton(
-            onClick = { onShowMetricInfo(BalanceMetricType.REMAINING) },
-            modifier = Modifier.minimumInteractiveComponentSize()
-        ) {
-            Icon(
-                imageVector = TablerIcons.Outline.InfoCircle,
-                contentDescription = stringResource(R.string.balances_metric_info_cd),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                modifier = Modifier.size(12.dp)
-            )
-        }
+        Icon(
+            imageVector = TablerIcons.Outline.InfoCircle,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            modifier = Modifier.size(14.dp)
+        )
     }
 }
